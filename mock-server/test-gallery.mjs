@@ -185,6 +185,16 @@ async function gidsFor(query) {
   return [...body.matchAll(/\/g\/(\d+)\//g)].map((m) => Number(m[1]));
 }
 
+/** Fetches a list page and returns { body, foundText } — the rendered pager
+ *  meta (`.searchtext` "Found N results." row) or null when absent. */
+async function pagerMetaFor(query) {
+  const res = await fetch(`${baseUrl}/${query}`);
+  assert.equal(res.status, 200);
+  const body = await res.text();
+  const m = /class="searchtext"><p>([\s\S]*?)<\/p>/.exec(body);
+  return { body, foundText: m ? m[1] : null };
+}
+
 test('list oracle: no params returns every fixture in default order', async () => {
   assert.deepEqual(await gidsFor(''), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
 });
@@ -314,6 +324,41 @@ test('list oracle: combined f_cats + f_sr + f_order', async () => {
 
 test('list oracle: keyword + page-count bound combine', async () => {
   assert.deepEqual(await gidsFor('?f_search=alpha&f_sp=on&f_spt=6'), [1001, 1002]);
+});
+
+// ---------------- pager meta honesty (V2 regression: constant 1x25 meta)
+//
+// The list pager meta must report the FILTERED result set: total is the real
+// post-filter row count, rendered as the modern EH wire shape — `.searchtext`
+// "Found N results." + `.searchnav` markers, no `.ptt` page table. That shape
+// makes GalleryListParser report pages=-1 / resultCount=N, so the backend
+// (GalleryService.searchGallery) derives total from the parsed items instead
+// of the pages*25 estimate that produced the constant 25.
+
+test('list oracle: pager meta total equals the full-corpus row count', async () => {
+  const { body, foundText } = await pagerMetaFor('');
+  assert.equal(foundText, `Found ${GALLERIES.length} results.`);
+  assert.ok(body.includes('class="searchnav"'), '.searchnav present');
+  assert.ok(!body.includes('class="ptt"'), 'no .ptt on the list page');
+});
+
+test('list oracle: pager meta total drops when f_cats excludes a category', async () => {
+  // f_cats=2 drops all five Doujinshi rows; total follows the filtered set.
+  const gids = await gidsFor('?f_cats=2');
+  assert.equal(gids.length, 2);
+  const { foundText } = await pagerMetaFor('?f_cats=2');
+  assert.equal(foundText, `Found ${gids.length} results.`);
+});
+
+test('list oracle: pager meta total follows keyword and combined filters', async () => {
+  // "alpha" matches the three version-chain titles only.
+  assert.equal((await pagerMetaFor('?f_search=alpha')).foundText, 'Found 3 results.');
+  // Torrent-bearing rows are 1003 + 2002; adding rating >= 4.5 leaves 1003.
+  assert.equal((await pagerMetaFor('?f_sto=on')).foundText, 'Found 2 results.');
+  assert.equal(
+    (await pagerMetaFor('?f_sto=on&f_sr=on&f_srdd=4.5')).foundText,
+    'Found 1 results.',
+  );
 });
 
 // ---------------------------------------------------------------- 404
