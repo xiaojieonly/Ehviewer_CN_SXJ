@@ -15,8 +15,8 @@ export interface GeneralPreferences {
   showTagTranslations: boolean
   showGalleryComment: boolean
   showGalleryRating: boolean
-  showSiteEvents: boolean
-  showSiteLimits: boolean
+  showEhEvents: boolean
+  showEhLimits: boolean
   /** Wave-1 B-2: 画廊卡片显示上传者 */
   showUploader: boolean
   /** Wave-1 B-2: 画廊卡片显示发布时间 */
@@ -88,8 +88,8 @@ export const DEFAULT_GENERAL_PREFERENCES: GeneralPreferences = {
   showTagTranslations: true,
   showGalleryComment: true,
   showGalleryRating: true,
-  showSiteEvents: true,
-  showSiteLimits: true,
+  showEhEvents: true,
+  showEhLimits: true,
   showUploader: false,
   showPostedTime: false,
   defaultFavoriteSlot: 0,

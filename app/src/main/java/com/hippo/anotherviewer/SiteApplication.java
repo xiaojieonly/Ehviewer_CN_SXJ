@@ -97,10 +97,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.Cache;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 
 public class SiteApplication extends RecordingApplication {
@@ -394,59 +391,6 @@ public class SiteApplication extends RecordingApplication {
         return application.mSiteProxySelector;
     }
 
-    /**
-     * Debug-only: rewrites requests for the real Gallery Site hosts to the dummy
-     * server (mock-server/gallery.mjs) when BuildConfig.MOCK_EH_BASE_URL is set.
-     * Hosts rewritten: gallery.test, gallery.test, lofi.gallery.test, gallery.test.
-     * Referer/Origin headers are rewritten the same way.
-     */
-    private static Interceptor createMockSiteInterceptor() {
-        final String mockBase = BuildConfig.MOCK_EH_BASE_URL;
-        if (mockBase.isEmpty()) {
-            return chain -> chain.proceed(chain.request());
-        }
-        // OkHttp 4.x: parse() stays (deprecated) as the only null-safe Java factory —
-        // HttpUrl.get would throw on malformed input where this code degrades to null.
-        final HttpUrl base = HttpUrl.parse(mockBase);
-        if (base == null) {
-            return chain -> chain.proceed(chain.request());
-        }
-        return chain -> {
-            Request request = chain.request();
-            HttpUrl url = request.url();
-            if (!isMockSiteHost(url.host())) {
-                return chain.proceed(request);
-            }
-            HttpUrl newUrl = url.newBuilder()
-                    .scheme(base.scheme())
-                    .host(base.host())
-                    .port(base.port())
-                    .build();
-            Request.Builder builder = request.newBuilder().url(newUrl);
-            String referer = request.header("Referer");
-            if (referer != null && isMockSiteHost(HttpUrl.parse(referer) != null ? HttpUrl.parse(referer).host() : "")) {
-                builder.header("Referer", rewriteMockSiteUrl(referer, base));
-            }
-            String origin = request.header("Origin");
-            if (origin != null && isMockSiteHost(HttpUrl.parse(origin) != null ? HttpUrl.parse(origin).host() : "")) {
-                builder.header("Origin", rewriteMockSiteUrl(origin, base));
-            }
-            return chain.proceed(builder.build());
-        };
-    }
-
-    private static boolean isMockSiteHost(@NonNull String host) {
-        return host.equals("gallery.test") || host.endsWith(".gallery.test");
-    }
-
-    private static String rewriteMockSiteUrl(@NonNull String url, @NonNull HttpUrl base) {
-        HttpUrl parsed = HttpUrl.parse(url);
-        if (parsed == null || !isMockSiteHost(parsed.host())) {
-            return url;
-        }
-        return parsed.newBuilder().scheme(base.scheme()).host(base.host()).port(base.port()).build().toString();
-    }
-
     @NonNull
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         SiteApplication application = ((SiteApplication) context.getApplicationContext());
@@ -475,11 +419,8 @@ public class SiteApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
 //                    .dispatcher(dispatcher)
-                    .addInterceptor(createMockSiteInterceptor())
                     // Wave-2 (ADR-0003 D3): Tier-2 routes Gallery Site browsing
-                    // through the paired WebUI server. Registered after the mock
-                    // interceptor so debug-mode rewrites win; in production the
-                    // mock is a pass-through and this applies per request.
+                    // through the paired WebUI server.
                     .addInterceptor(new com.hippo.anotherviewer.webui.WebUiTier2ProxyInterceptor(
                             new com.hippo.anotherviewer.webui.WebUiSettings(application)))
                     .dns(new SiteHosts(application))
@@ -566,11 +507,8 @@ public class SiteApplication extends RecordingApplication {
                     .cookieJar(getSiteCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
-                    .addInterceptor(createMockSiteInterceptor())
                     // Wave-2 (ADR-0003 D3): Tier-2 routes Gallery Site browsing
-                    // through the paired WebUI server. Registered after the mock
-                    // interceptor so debug-mode rewrites win; in production the
-                    // mock is a pass-through and this applies per request.
+                    // through the paired WebUI server.
                     .addInterceptor(new com.hippo.anotherviewer.webui.WebUiTier2ProxyInterceptor(
                             new com.hippo.anotherviewer.webui.WebUiSettings(application)))
                     .dns(new SiteHosts(application))
@@ -723,7 +661,7 @@ public class SiteApplication extends RecordingApplication {
 
     @NonNull
     public static String getDeveloperEmail() {
-        return "xiaojieonly$foxmail.com".replace('$', '@');
+        return "boblao0714$gmail.com".replace('$', '@');
     }
 
     public void registerActivity(Activity activity) {
@@ -820,7 +758,7 @@ public class SiteApplication extends RecordingApplication {
     }
 
     public void showEventPane(String html){
-        if (!Settings.getShowSiteEvents()){
+        if (!Settings.getShowEhEvents()){
             return;
         }
         if (html==null){

@@ -15,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "anotherviewer"
-include ':app', ':daogenerator'
+include ':app'
 include ':anotherviewer-core'
 include ':anotherviewer-web'

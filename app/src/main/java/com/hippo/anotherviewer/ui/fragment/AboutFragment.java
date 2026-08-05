@@ -40,7 +40,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.hippo.anotherviewer.AppConfig;
 import com.hippo.anotherviewer.SiteApplication;
 import com.hippo.anotherviewer.R;
-import com.hippo.anotherviewer.updater.AppUpdater;
 import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 
@@ -57,7 +56,6 @@ public class AboutFragment extends BasePreferenceFragmentCompat
 
     private static final String KEY_AUTHOR = "author";
     private static final String KEY_DONATE = "donate";
-    private static final String KEY_CHECK_FOR_UPDATES = "check_for_updates";
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
@@ -66,13 +64,11 @@ public class AboutFragment extends BasePreferenceFragmentCompat
 
         Preference author = findPreference(KEY_AUTHOR);
         Preference donate = findPreference(KEY_DONATE);
-        Preference checkForUpdate = findPreference(KEY_CHECK_FOR_UPDATES);
 
         author.setSummary(getString(R.string.settings_about_author_summary).replace('$', '@'));
 
         author.setOnPreferenceClickListener(this);
         donate.setOnPreferenceClickListener(this);
-        checkForUpdate.setOnPreferenceClickListener(this);
     }
 
     @Override
@@ -84,10 +80,6 @@ public class AboutFragment extends BasePreferenceFragmentCompat
                     "About AnotherViewer", null);
         } else if (KEY_DONATE.equals(key)) {
             showDonationDialog();
-        } else if (KEY_CHECK_FOR_UPDATES.equals(key)&&activity!=null) {
-//            Settings.setCheckUpdate(false);
-//            Distribute.checkForUpdate();
-            AppUpdater.update(activity,true);
         }
         return true;
     }

@@ -64,7 +64,7 @@ describe('DownloadItem (thumbnail handling, E2E-9 / E2E-3)', () => {
 
   it('swaps a failed thumbnail to the placeholder (no alt leak)', async () => {
     const wrapper = mount(DownloadItem, {
-      props: { item: makeDownload({ thumb: 'https://gallery.test/t/9001/cover.jpg' }) },
+      props: { item: makeDownload({ thumb: 'https://ehgt.org/t/9001/cover.jpg' }) },
     })
     const img = wrapper.find('.download-item__thumb img')
     expect(img.exists()).toBe(true)

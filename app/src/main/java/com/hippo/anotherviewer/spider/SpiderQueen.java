@@ -33,7 +33,6 @@ import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.anotherviewer.Analytics;
-import com.hippo.anotherviewer.BuildConfig;
 import com.hippo.anotherviewer.SiteApplication;
 import com.hippo.anotherviewer.GetText;
 import com.hippo.anotherviewer.R;
@@ -1413,13 +1412,9 @@ public final class SpiderQueen implements Runnable {
                         responseUrl = response.cacheResponse().request().url().toString();
                     }
                     // 反劫持校验：图片字节来源 URL 必须与站点 API 返回的 URL 一致。
-                    // mock 调试模式（BuildConfig.MOCK_EH_BASE_URL 非空）下拦截器会把
-                    // gallery.test 改写为本地 mock 地址，URL 必然不同——此时跳过校验
-                    //（仅 debug 构建生效，release 该字段恒为空，安全语义不变）。
-                    // Tier-2 浏览代理（ADR-0003 D3）激活时同理：拦截器把站点主机改写
+                    // Tier-2 浏览代理（ADR-0003 D3）激活时例外：拦截器把站点主机改写
                     // 为已配对 WebUI 服务器，属受信改写，同样豁免。
-                    if (BuildConfig.MOCK_EH_BASE_URL.isEmpty() &&
-                            !WebUiTier2ProxyInterceptor.isRoutingActive(mWebUiSettings) &&
+                    if (!WebUiTier2ProxyInterceptor.isRoutingActive(mWebUiSettings) &&
                             !targetImageUrl.equals(responseUrl)) {
                         error = "链接疑似被劫持\nThe link is suspected to be hijacked";
                         response.close();

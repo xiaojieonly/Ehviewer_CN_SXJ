@@ -54,8 +54,8 @@ function prefsFixture(general: Record<string, unknown> = {}): Preferences {
       showTagTranslations: false,
       showGalleryComment: false,
       showGalleryRating: false,
-      showSiteEvents: false,
-      showSiteLimits: false,
+      showEhEvents: false,
+      showEhLimits: false,
       ...general,
     },
     reader: {

@@ -68,7 +68,7 @@ class WebProxyManagerTest {
     @Test
     fun `disabled proxy yields null and NO_PROXY selector`() {
         assertNull(manager.activeProxy())
-        assertEquals(listOf(Proxy.NO_PROXY), manager.selector().select(URI.create("https://gallery.test/")))
+        assertEquals(listOf(Proxy.NO_PROXY), manager.selector().select(URI.create("https://e-hentai.org/")))
     }
 
     @Test
@@ -80,7 +80,7 @@ class WebProxyManagerTest {
         val addr = proxy.address() as InetSocketAddress
         assertEquals("192.168.1.5", addr.hostString)
         assertEquals(8080, addr.port)
-        assertTrue(manager.selector().select(URI.create("https://gallery.test/")).contains(proxy))
+        assertTrue(manager.selector().select(URI.create("https://e-hentai.org/")).contains(proxy))
     }
 
     @Test
@@ -105,7 +105,7 @@ class WebProxyManagerTest {
         serverConfig.set(WebProxyManager.KEY_USERNAME, "bob")
         serverConfig.set(WebProxyManager.KEY_PASSWORD, "secret")
 
-        val request = Request.Builder().url("https://gallery.test/").build()
+        val request = Request.Builder().url("https://e-hentai.org/").build()
         val response = Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)
@@ -124,7 +124,7 @@ class WebProxyManagerTest {
     @Test
     fun `authenticator stays silent when proxy auth is not configured`() {
         enableProxy("http", "192.168.1.5", 8080)
-        val request = Request.Builder().url("https://gallery.test/").build()
+        val request = Request.Builder().url("https://e-hentai.org/").build()
         val response = Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)

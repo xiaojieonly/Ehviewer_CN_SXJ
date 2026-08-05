@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:sqlite:${ANOTHERVIEWER_DATA_DIR:./data}/anotherviewer.db
+    url: jdbc:sqlite:${ANOTHERVIEWER_DATA_DIR:./data}/anotherviewer.db?journal_mode=WAL&busy_timeout=30000
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect

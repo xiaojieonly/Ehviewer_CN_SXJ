@@ -100,7 +100,7 @@ public class SiteEngine {
     private static final String SAD_PANDA_TYPE = "image/gif";
     private static final String SAD_PANDA_LENGTH = "9615";
 
-    private static final String KOKOMADE_URL = "https://gallery.test/img/kokomade.jpg";
+    private static final String KOKOMADE_URL = "https://exhentai.org/img/kokomade.jpg";
 
     public static final MediaType MEDIA_TYPE_JSON = MediaType.get("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_URLENCODED = MediaType.get("application/x-www-form-urlencoded");
@@ -176,8 +176,8 @@ public class SiteEngine {
                 .add("CookieDate", "1")
                 .add("temporary_https", "off");
         String url = SiteUrl.API_SIGN_IN;
-        String referer = "https://forums.gallery.test/index.php?act=Login&CODE=00";
-        String origin = "https://forums.gallery.test";
+        String referer = "https://forums.e-hentai.org/index.php?act=Login&CODE=00";
+        String origin = "https://forums.e-hentai.org";
         logger.debug( url);
         Request request = new SiteRequestBuilder(url, referer, origin)
                 .post(builder.build())
@@ -290,7 +290,7 @@ public class SiteEngine {
 
         fillGalleryList(task, okHttpClient, result.galleryInfoList, url, true);
 
-        if (code == 200 && url.equals("https://gallery.test/") && body.isEmpty()) {
+        if (code == 200 && url.equals("https://exhentai.org/") && body.isEmpty()) {
             result.customErrorString = GetText.getString(R.string.error_igneous_wrong);
         }
 
@@ -356,7 +356,7 @@ public class SiteEngine {
             throw e;
         }
     }
-//    https://gallery.test/g/2914213/fc8bce61d9/
+//    https://e-hentai.org/g/2914213/fc8bce61d9/
     public static GalleryDetail getGalleryDetail(SiteClient.Task task, OkHttpClient okHttpClient,
                                                  String url) throws Throwable {
         String referer = SiteUrl.getReferer();
@@ -1399,7 +1399,8 @@ public class SiteEngine {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("reset_imagelimit", "Reset Limit");
         String referer = SiteUrl.getReferer();
-        String url = SiteUrl.getHomeUrl();
+        // 重置图片额度表单位于 home.php（站点行为），首页根路径不含该表单
+        String url = SiteUrl.getHost() + "home.php";
         logger.debug( url);
         FormBody formBody = builder.build();
         Request request = new SiteRequestBuilder(url, referer).post(formBody).build();

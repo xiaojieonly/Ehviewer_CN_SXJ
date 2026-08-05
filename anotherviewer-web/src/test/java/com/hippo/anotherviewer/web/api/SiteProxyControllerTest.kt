@@ -27,10 +27,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Pins the W3 R4-13 site transparent proxy: host whitelist (400
- * VALIDATION_ERROR for everything outside gallery.test / *.gallery.test),
- * status/content-type/body pass-through for whitelisted fetches, and the
- * E2E-6 failure path (unreachable site -> 502 error envelope, never
- * fabricated content).
+ * VALIDATION_ERROR for everything outside the Gallery Site family —
+ * e-hentai.org, exhentai.org, ehgt.org, lofi.e-hentai.org and their
+ * subdomains), status/content-type/body pass-through for whitelisted
+ * fetches, and the E2E-6 failure path (unreachable site -> 502 error
+ * envelope, never fabricated content).
  */
 class SiteProxyControllerTest {
 
@@ -123,7 +124,7 @@ class SiteProxyControllerTest {
         site = FakeSite { canned(it, 200, "text/html", "") }
         setUpClient(site)
 
-        for (bad in listOf("https://gallery.test.evil.com/", "https://notgallery.test/")) {
+        for (bad in listOf("https://e-hentai.org.evil.com/", "https://not-e-hentai.org/")) {
             mockMvc.perform(get("/api/v1/site/proxy").param("url", bad))
                 .andExpect(status().isBadRequest)
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
@@ -142,14 +143,14 @@ class SiteProxyControllerTest {
         setUpClient(site)
 
         mockMvc.perform(
-            get("/api/v1/site/proxy").param("url", "https://gallery.test/?f_search=alpha&page=2")
+            get("/api/v1/site/proxy").param("url", "https://e-hentai.org/?f_search=alpha&page=2")
         )
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Type", "text/html; charset=UTF-8"))
             .andExpect(content().string(html))
 
         assertEquals(
-            "https://gallery.test/?f_search=alpha&page=2",
+            "https://e-hentai.org/?f_search=alpha&page=2",
             site.lastRequest.get()!!.url.toString(),
             "the proxy must fetch exactly the url it was given"
         )
@@ -160,11 +161,11 @@ class SiteProxyControllerTest {
         site = FakeSite { canned(it, 200, "image/png", "pngbytes") }
         setUpClient(site)
 
-        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://lofi.gallery.test/index.php"))
+        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://lofi.e-hentai.org/index.php"))
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Type", "image/png"))
 
-        assertEquals("https://lofi.gallery.test/index.php", site.lastRequest.get()!!.url.toString())
+        assertEquals("https://lofi.e-hentai.org/index.php", site.lastRequest.get()!!.url.toString())
     }
 
     @Test
@@ -183,7 +184,7 @@ class SiteProxyControllerTest {
         setUpClient(site)
 
         val result = mockMvc.perform(
-            get("/api/v1/site/proxy").param("url", "https://gallery.test/t/1001/cover.jpg")
+            get("/api/v1/site/proxy").param("url", "https://e-hentai.org/t/1001/cover.jpg")
         )
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Type", "image/png"))
@@ -197,7 +198,7 @@ class SiteProxyControllerTest {
         site = FakeSite { canned(it, 404, "text/html", "<div class=\"d\">Gallery not found</div>") }
         setUpClient(site)
 
-        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://gallery.test/g/9999/zzzz/"))
+        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://e-hentai.org/g/9999/zzzz/"))
             .andExpect(status().isNotFound)
             .andExpect(content().string("<div class=\"d\">Gallery not found</div>"))
     }
@@ -211,7 +212,7 @@ class SiteProxyControllerTest {
         site = FakeSite { throw IOException("connect timed out") }
         setUpClient(site)
 
-        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://gallery.test/?f_search=alpha"))
+        mockMvc.perform(get("/api/v1/site/proxy").param("url", "https://e-hentai.org/?f_search=alpha"))
             .andExpect(status().isBadGateway)
             .andExpect(jsonPath("$.error.code").value("BAD_GATEWAY"))
             .andExpect(jsonPath("$.error.status").value(502))

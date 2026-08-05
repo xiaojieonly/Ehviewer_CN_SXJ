@@ -41,7 +41,7 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
             return errorEnvelope(
                 HttpStatus.BAD_REQUEST,
                 "VALIDATION_ERROR",
-                "url must point at a Gallery Site host (gallery.test or *.gallery.test)"
+                "url must point at a Gallery Site host (e-hentai.org, exhentai.org, ehgt.org, lofi.e-hentai.org or their subdomains)"
             )
         }
 
@@ -63,8 +63,11 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
     companion object {
         private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
-        /** Same host predicate as the App's Tier-2 interceptor and the mock-site interceptor. */
+        /** Same host predicate as the App's Tier-2 interceptor. */
         fun isGallerySiteHost(host: String): Boolean =
-            host == "gallery.test" || host.endsWith(".gallery.test")
+            host == "e-hentai.org" || host == "exhentai.org" ||
+            host == "lofi.e-hentai.org" || host == "ehgt.org" ||
+            host.endsWith(".e-hentai.org") || host.endsWith(".exhentai.org") ||
+            host.endsWith(".ehgt.org")
     }
 }

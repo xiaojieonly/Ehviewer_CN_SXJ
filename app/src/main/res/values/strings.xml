@@ -20,7 +20,7 @@
     <string name="blacklist">黑名单</string>
     <string name="join_in_blacklist">加入黑名单</string>
     <string name="add_blacklist">添加屏蔽用户</string>
-    <string name="blacklist_tip">该屏蔽系统会在 Gallery 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
+    <string name="blacklist_tip">该屏蔽系统会在 EHentai 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
     <string name="blacklist_text">屏蔽用户</string>
     <string name="delete_blacklist">取消屏蔽用户“%s”？</string>
     <string name="blacklist_reason_text">屏蔽原因</string>
@@ -36,7 +36,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">内置gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
     <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
@@ -61,7 +61,7 @@
     <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
-    <string name="site_ex" translatable="false">gallery</string>
+    <string name="site_ex" translatable="false">exhentai</string>
 
     <!-- Theme -->
     <string name="theme_light">Light Theme</string>
@@ -214,7 +214,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">Which gallery site do you want to visit?</string>
-    <string name="select_scene_explain">e-hentai: available for anyone\ngallery: available for who has signed in</string>
+    <string name="select_scene_explain">e-hentai: available for anyone\nexhentai: available for who has signed in</string>
     <string name="no_select">Please select one site</string>
 
     <!-- Update -->
@@ -229,8 +229,8 @@
     <string name="update_ignore">Ignore</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">Search Gallery</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Search Gallery Site</string>
+    <string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Open the gallery</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
@@ -526,7 +526,7 @@
     <string name="add_filter">Add blocker</string>
     <string name="show_definition">Show definition</string>
     <string name="filter_text">Blocker text</string>
-    <string name="filter_tip">This blocking system filters the result of Gallery website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
+    <string name="filter_tip">This blocking system filters the result of EHentai website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">Set pattern protection</string>
@@ -535,7 +535,7 @@
     <string name="enable_fingerprint">Also allow fingerprint unlock</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Gallery settings</string>
+    <string name="u_config">EHentai settings</string>
     <string name="apply">Apply</string>
     <string name="apply_tip">Tap the check mark to save the settings</string>
 
@@ -584,10 +584,10 @@
     <string name="settings_eh_identity_cookies_signed">Identity cookies can be used to sign in to this account.&lt;br&gt;&lt;b&gt;KEEP IT SAFE&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">Not signed in.</string>
     <string name="settings_eh_identity_cookies_copy">Copy</string>
-    <string name="settings_u_config">Gallery settings</string>
-    <string name="settings_u_config_summary">Settings on Gallery website</string>
+    <string name="settings_u_config">EHentai settings</string>
+    <string name="settings_u_config_summary">Settings on EHentai website</string>
     <string name="settings_my_tags">My tags</string>
-    <string name="settings_my_tags_summary">My tags on Gallery website</string>
+    <string name="settings_my_tags_summary">My tags on EHentai website</string>
     <string name="settings_eh_theme">Theme</string>
     <string name="settings_eh_theme_light">Light</string>
     <string name="settings_eh_theme_dark">Dark</string>
@@ -620,7 +620,7 @@
     <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
     <string name="settings_eh_show_eh_event">Show EH events</string>
     <string name="settings_eh_show_eh_limits">Show EH limits</string>
-    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on Gallery website</string>
+    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
     <string name="settings_eh_show_tag_translations">Show tag translations</string>
@@ -799,9 +799,9 @@
 
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
-    <string name="settings_about_declaration_summary">AnotherViewer is not affiliated with Gallery Site.org in any way</string>
+    <string name="settings_about_declaration_summary">AnotherViewer is not affiliated with E-Hentai.org in any way</string>
     <string name="settings_about_author">Author</string>
-    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_author_summary" translatable="false">PegionFish &lt;boblao0714$gmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">Latest release</string>
     <string name="settings_about_website">Website</string>
@@ -823,8 +823,6 @@
     <string name="settings_privacy_enable_analytics">Enable analytics</string>
     <string name="settings_privacy_about_analytics">About analytics</string>
     <string name="settings_about_version">Build version</string>
-    <string name="settings_about_check_for_updates">Check for updates</string>
-    <string name="settings_close_automatic_updates">Turn off automatic updates</string>
     <string name="settings_about_beta_update_channel">Beta update channel</string>
     <string name="settings_about_beta_update_channel_summary">Beta versions may contain unsolved bugs.</string>
 
@@ -987,9 +985,9 @@
 
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">Are you sure you want to change the background?</string>
-    <string name="change_background_message">The background modification is limited to this software and cannot be synchronized to Gallery Site or other similar software.</string>
+    <string name="change_background_message">The background modification is limited to this software and cannot be synchronized to E-hentai or other similar software.</string>
     <string name="change_avatar_title">Are you sure you want to change your avatar?</string>
-    <string name="change_avatar_message">The avatar modification is limited to this software and cannot be synchronized to Gallery Site or other similar software.</string>
+    <string name="change_avatar_message">The avatar modification is limited to this software and cannot be synchronized to E-hentai or other similar software.</string>
     <string name="take_a_photograph">Take a photograph</string>
     <string name="choose_from_the_album">Choose from the album</string>
     <string name="request_camera_permission">AnotherViewer will request access to the device camera in order to take pictures. Would you like to authorize?</string>

@@ -383,7 +383,7 @@ Schema: `sync-schemas.json#/$defs/syncPolicy` = `SyncPolicy{conflictStrategy, cl
 - **端点**: `GET /api/v1/sync/policy` 返回当前策略；`PUT /api/v1/sync/policy` 设置（任一已认证客户端）。OpenAPI: `contracts/openapi.yaml`。
 - **pull 附 policy**: `SyncPullResponse.policy` 携带当前 SyncPolicy；客户端据此执行 merge（§6.2）。
 - **push 附 policy（D2 权威）**: android 平台 push 的 `SyncPushRequest.policy` 服务端必须持久化（等价 PUT）；WebUI 的 PUT 允许但会被下一次 android push 覆盖，WebUI 高级面板须明示该语义。
-- **clientTier**（D3）: 0=独立 / 1=同步+流式（默认） / 2=浏览代理 / 3=下载托管（押后）。档位由 App 选择并随 policy 声明；Tier-2/3 路由复用 `MOCK_EH_BASE_URL` 拦截器模式。
+- **clientTier**（D3）: 0=独立 / 1=同步+流式（默认） / 2=浏览代理 / 3=下载托管（押后）。档位由 App 选择并随 policy 声明；Tier-2/3 路由使用 `WebUiTier2ProxyInterceptor` 拦截器模式。
 - **autoSyncIntervalSec**（D4）: 网络感知自动同步间隔；0=仅网络变化触发；新网络不自动配对。
 - **兼容矩阵**: 旧 App×新服务器 → App 忽略 policy，服务器按 App 无 policy push 处理，收敛于 App 视图；新 App×旧服务器 → GET/PUT policy 404，App 回退 B，不报错；B = 完整回退兜底。
 - **客户端义务**: 所有客户端 MUST 忽略 SyncPolicy/pull/push 中未知字段（前向兼容）。

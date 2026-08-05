@@ -279,6 +279,14 @@ class BackupService(
             Files.move(target, bak)
             renamed += bak to target
         }
+        // 顺序关键：旧 db 的 -wal/-shm 必须在 Files.move 之前删除。若在替换之后才删，
+        // move 与删除之间的窗口里连接池可能把残留旧日志应用到新 db，或新建 -wal
+        // 被随后的删除误伤；先删旧 sidecar 只影响即将被换掉的旧 db，新 db 落位时
+        // 无任何 sidecar，窗口完全关闭（快照本身是 clean 的）。
+        if (target.fileName.toString().endsWith(".db")) {
+            Files.deleteIfExists(target.resolveSibling("${target.fileName}-wal"))
+            Files.deleteIfExists(target.resolveSibling("${target.fileName}-shm"))
+        }
         Files.move(source, target)
     }
 

@@ -33,7 +33,7 @@
         android:key="latest_release"
         android:title="@string/settings_about_latest_release"
         app:allowDividerAbove="true"
-        app:url="https://github.com/xiaojieonly/Anotherviewer_CN_SXJ/releases" />
+        app:url="https://github.com/PegionFish/AnotherViewer/releases" />
 
     <com.hippo.preference.UrlPreference
         android:ellipsize="end"
@@ -41,7 +41,7 @@
         android:singleLine="true"
         android:title="@string/settings_about_issue_help"
         app:allowDividerAbove="true"
-        app:url="https://github.com/xiaojieonly/Anotherviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/AnotherviewerIssue.md" />
+        app:url="https://github.com/PegionFish/AnotherViewer/issues" />
 
     <com.hippo.preference.ActivityPreference
         android:key="license"
@@ -53,16 +53,6 @@
     <com.hippo.anotherviewer.preference.VersionPreference
         android:key="version"
         app:allowDividerAbove="true" />
-
-    <Preference
-        android:key="check_for_updates"
-        android:title="@string/settings_about_check_for_updates"
-        app:allowDividerAbove="true" />
-
-    <com.hippo.preference.SwitchPreference
-        android:defaultValue="false"
-        android:key="close_auto_updates"
-        android:title="@string/settings_close_automatic_updates" />
 
     <Preference
         android:key="donate"

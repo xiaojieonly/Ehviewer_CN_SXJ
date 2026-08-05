@@ -468,7 +468,7 @@ public final class GalleryListScene extends BaseScene
         Drawable searchImage = DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24);
         SpannableStringBuilder ssb = new SpannableStringBuilder("   ");
         ssb.append(resources.getString(SiteUrl.SITE_EX == Settings.getGallerySite() ?
-                R.string.gallery_list_search_bar_hint_gallery :
+                R.string.gallery_list_search_bar_hint_exhentai :
                 R.string.gallery_list_search_bar_hint_e_hentai));
         int textSize = (int) (searchBar.getEditTextTextSize() * 1.25);
         if (searchImage != null) {

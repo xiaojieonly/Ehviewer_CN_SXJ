@@ -18,8 +18,6 @@ package com.hippo.anotherviewer.webui;
 
 import androidx.annotation.NonNull;
 
-import com.hippo.anotherviewer.BuildConfig;
-
 import java.io.IOException;
 
 import okhttp3.HttpUrl;
@@ -56,32 +54,28 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
     /**
      * Whether site traffic is currently routed through the paired server.
      * Exposed so guards that compare request URLs against site-issued URLs
-     * (e.g. the SpiderQueen anti-hijack check, which already exempts the
-     * MOCK_EH_BASE_URL rewrite) can apply the same exemption for Tier-2.
+     * (e.g. the SpiderQueen anti-hijack check) can apply the same exemption
+     * for Tier-2.
      */
     public static boolean isRoutingActive(@NonNull WebUiSettings settings) {
         return settings.clientTier() >= 2 && settings.isConfigured();
     }
 
     /**
-     * W3 R4-13 explicit yield gate: while MOCK_EH_BASE_URL debug mode is on,
-     * the mock interceptor owns the site rewrite and Tier-2 routing yields
-     * deterministically here — not merely by interceptor ordering.
+     * Host predicate for Gallery Site traffic: the site root domains and any
+     * subdomain of them (e.g. s.exhentai.org, lofi.e-hentai.org, ehgt.org).
      */
-    private static boolean isMockDebugActive() {
-        return !BuildConfig.MOCK_EH_BASE_URL.isEmpty();
-    }
-
-    /** Same host predicate as the mock-site interceptor in SiteApplication. */
     private static boolean isGallerySiteHost(@NonNull String host) {
-        return host.equals("gallery.test") || host.endsWith(".gallery.test");
+        return host.equals("exhentai.org") || host.endsWith(".exhentai.org")
+                || host.equals("e-hentai.org") || host.endsWith(".e-hentai.org")
+                || host.equals("lofi.e-hentai.org") || host.endsWith(".lofi.e-hentai.org")
+                || host.equals("ehgt.org") || host.endsWith(".ehgt.org");
     }
 
     @Override
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
-        if (isMockDebugActive()
-                || !isGallerySiteHost(request.url().host())
+        if (!isGallerySiteHost(request.url().host())
                 || settings.clientTier() < 2) {
             return chain.proceed(request);
         }

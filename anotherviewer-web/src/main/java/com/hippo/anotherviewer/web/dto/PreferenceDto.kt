@@ -33,8 +33,8 @@ data class GeneralPreferences(
     val showTagTranslations: Boolean = true,
     val showGalleryComment: Boolean = true,
     val showGalleryRating: Boolean = true,
-    val showSiteEvents: Boolean = true,
-    val showSiteLimits: Boolean = true,
+    val showEhEvents: Boolean = true,
+    val showEhLimits: Boolean = true,
     // ---- Wave-1 B 组（1b 浏览一致性） ----
     val showUploader: Boolean = false,
     val showPostedTime: Boolean = false,

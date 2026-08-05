@@ -1415,27 +1415,15 @@ public class Settings {
         putBoolean(KEY_SHOW_GALLERY_RATING, value);
     }
 
-    public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
-
-    private static boolean IS_CLOSE_AUTO_UPDATES = true;
-
-    public static boolean getCloseAutoUpdate() {
-        return getBoolean(KEY_CLOSE_AUTO_UPDATES, IS_CLOSE_AUTO_UPDATES);
-    }
-
-    public static void setKeyCloseAutoUpdates(boolean value) {
-        putBoolean(KEY_CLOSE_AUTO_UPDATES, value);
-    }
-
     public static final String KEY_SHOW_EH_EVENTS = "show_eh_events";
 
     private static boolean IS_SHOW_EH_EVENTS = true;
 
-    public static boolean getShowSiteEvents() {
+    public static boolean getShowEhEvents() {
         return getBoolean(KEY_SHOW_EH_EVENTS, IS_SHOW_EH_EVENTS) && isLogin();
     }
 
-    public static void setKeyShowSiteEvents(boolean value) {
+    public static void setKeyShowEhEvents(boolean value) {
         putBoolean(KEY_SHOW_EH_EVENTS, value);
     }
 
@@ -1443,11 +1431,11 @@ public class Settings {
 
     private static boolean IS_SHOW_EH_LIMITS = true;
 
-    public static boolean getShowSiteLimits() {
+    public static boolean getShowEhLimits() {
         return getBoolean(KEY_SHOW_EH_LIMITS, IS_SHOW_EH_LIMITS) && isLogin();
     }
 
-    public static void setKeyShowSiteLimits(boolean value) {
+    public static void setKeyShowEhLimits(boolean value) {
         putBoolean(KEY_SHOW_EH_LIMITS, value);
     }
 

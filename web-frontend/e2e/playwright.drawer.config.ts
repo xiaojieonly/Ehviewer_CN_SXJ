@@ -7,10 +7,10 @@ import { dirname, resolve } from 'node:path'
 // visual|fixed-bounds there, drawer here.
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// W4 抽屉回归连接「已在运行」的 WebUI 后端 —— 任务约定 :8085（该实例自带
-// ANOTHERVIEWER_GALLERY_MOCK_BASE_URL 环境）。因此这里 **不** 配 webServer
-// 自起 vite（那是 visual 套件的事）；后端不可达时 spec 的 beforeAll 探针
-// 会给出带指引的失败。baseURL 参数化：E2E_BASE_URL 可指向任意实例。
+// W4 抽屉回归连接「已在运行」的 WebUI 后端 —— 任务约定 :8085（真实站点测试
+// 环境）。因此这里 **不** 配 webServer 自起 vite（那是 visual 套件的事）；后端
+// 不可达时 spec 的 beforeAll 探针会给出带指引的失败。baseURL 参数化：
+// E2E_BASE_URL 可指向任意实例。
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:8085'
 
 export default defineConfig({

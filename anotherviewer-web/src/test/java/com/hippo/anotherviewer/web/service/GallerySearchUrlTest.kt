@@ -270,8 +270,9 @@ class GallerySearchUrlTest {
 
     @Test
     fun `unreachable gallery site yields success=false and empty data`() {
-        // gallery.test never resolves (RFC 6761 .test TLD), so this exercises
-        // the real failure path end-to-end through SiteEngine.
+        // The search URL targets the real Gallery Site host (SiteUrl.getHost()
+        // -> https://e-hentai.org/); in a sandboxed/offline environment the
+        // unreachable path is exercised end-to-end through SiteEngine.
         val response = service().searchGallery("anything", null, 0, 20)
 
         assertFalse(response.success)

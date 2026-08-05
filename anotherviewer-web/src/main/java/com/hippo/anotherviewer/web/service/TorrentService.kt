@@ -85,7 +85,7 @@ class TorrentService(
     private fun isAllowedTorrentHost(host: String): Boolean {
         val normalized = host.lowercase().removePrefix("www.")
         return normalized == "ehtracker.org" ||
-            normalized == "gallery.test" ||
-            normalized == "gallery.test"
+            normalized == "e-hentai.org" ||
+            normalized == "exhentai.org"
     }
 }

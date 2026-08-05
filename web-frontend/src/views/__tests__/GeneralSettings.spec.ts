@@ -31,8 +31,8 @@ function defaultPrefs(): Preferences {
       showTagTranslations: true,
       showGalleryComment: true,
       showGalleryRating: true,
-      showSiteEvents: true,
-      showSiteLimits: true,
+      showEhEvents: true,
+      showEhLimits: true,
       // Wave-1 B 组
       showUploader: false,
       showPostedTime: false,

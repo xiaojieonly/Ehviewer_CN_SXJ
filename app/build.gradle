@@ -61,16 +61,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.fileprovider"'
-            // Mock Gallery Site base URL (see mock-server/gallery.mjs). Empty = disabled.
-            // Override at build time: -PmockEhBaseUrl=http://<host>:4100
-            buildConfigField 'String', 'MOCK_EH_BASE_URL', "\"${project.findProperty('mockEhBaseUrl') ?: ''}\""
         }
         debug {
             applicationIdSuffix ".debug"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.debug.fileprovider"'
-            // Set via -PmockEhBaseUrl=http://<host>:4100 to route all gallery.test traffic
-            // to the dummy gallery site server (see mock-server/gallery.mjs). Empty = disabled.
-            buildConfigField 'String', 'MOCK_EH_BASE_URL', "\"${project.findProperty('mockEhBaseUrl') ?: ''}\""
         }
     }
 

@@ -156,13 +156,13 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(1);
 
         Request request = new Request.Builder()
-                .url("https://gallery.test/?f_search=alpha&page=2")
-                .header("Referer", "https://gallery.test/")
+                .url("https://e-hentai.org/?f_search=alpha&page=2")
+                .header("Referer", "https://e-hentai.org/")
                 .build();
         Request proceeded = proceed(request);
 
         assertSame("Tier-1 must forward the original request object", request, proceeded);
-        assertEquals("https://gallery.test/?f_search=alpha&page=2",
+        assertEquals("https://e-hentai.org/?f_search=alpha&page=2",
                 proceeded.url().toString());
     }
 
@@ -171,7 +171,7 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.saveConfig(SERVER);
         settings.setClientTier(0);
 
-        Request request = new Request.Builder().url("https://gallery.test/g/1001/aaa/").build();
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
         assertSame(request, proceed(request));
     }
 
@@ -180,7 +180,7 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
         assertFalse(settings.isConfigured());
 
-        Request request = new Request.Builder().url("https://gallery.test/g/1001/aaa/").build();
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
         assertSame("unpaired Tier-2 must not break browsing", request, proceed(request));
     }
 
@@ -221,7 +221,7 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/g/1001/aaa/?p=1")
+                .url("https://exhentai.org/g/1001/aaa/?p=1")
                 .build());
 
         assertEquals("http", proceeded.url().scheme());
@@ -229,7 +229,7 @@ public class WebUiTier2ProxyInterceptorTest {
         assertEquals(8080, proceeded.url().port());
         assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
         assertEquals("the original URL travels as the url param, path/query intact",
-                "https://gallery.test/g/1001/aaa/?p=1",
+                "https://exhentai.org/g/1001/aaa/?p=1",
                 proceeded.url().queryParameter("url"));
     }
 
@@ -240,7 +240,7 @@ public class WebUiTier2ProxyInterceptorTest {
 
         // '&' and '=' in the original query must not leak into the proxy
         // request's own query structure: exactly one param, round-trip intact.
-        String original = "https://gallery.test/?f_search=a+b&f_cats=2&advsearch=1";
+        String original = "https://e-hentai.org/?f_search=a+b&f_cats=2&advsearch=1";
         Request proceeded = proceed(new Request.Builder().url(original).build());
 
         assertEquals(1, proceeded.url().querySize());
@@ -259,11 +259,11 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://lofi.gallery.test/index.php")
+                .url("https://lofi.e-hentai.org/index.php")
                 .build());
 
         assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
-        assertEquals("https://lofi.gallery.test/index.php",
+        assertEquals("https://lofi.e-hentai.org/index.php",
                 proceeded.url().queryParameter("url"));
     }
 
@@ -273,11 +273,11 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(3);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/api.php")
+                .url("https://e-hentai.org/api.php")
                 .build());
 
         assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
-        assertEquals("https://gallery.test/api.php", proceeded.url().queryParameter("url"));
+        assertEquals("https://e-hentai.org/api.php", proceeded.url().queryParameter("url"));
     }
 
     @Test
@@ -286,13 +286,13 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("http://gallery.test/tag/alpha")
+                .url("http://e-hentai.org/tag/alpha")
                 .build());
 
         assertEquals("https", proceeded.url().scheme());
         assertEquals("10.0.0.5", proceeded.url().host());
         assertEquals(8443, proceeded.url().port());
-        assertEquals("http://gallery.test/tag/alpha", proceeded.url().queryParameter("url"));
+        assertEquals("http://e-hentai.org/tag/alpha", proceeded.url().queryParameter("url"));
     }
 
     // ------------------------------------------------------------------
@@ -302,12 +302,12 @@ public class WebUiTier2ProxyInterceptorTest {
     @Test
     public void testBearerAttachment() {
         // Helper-level: the pairing token travels as a Bearer header.
-        Request.Builder withToken = new Request.Builder().url("https://gallery.test/");
+        Request.Builder withToken = new Request.Builder().url("https://e-hentai.org/");
         WebUiTier2ProxyInterceptor.attachBearer(withToken, "tok123");
         assertEquals("Bearer tok123", withToken.build().header("Authorization"));
 
         // Empty token (auth-off pairing) adds nothing.
-        Request.Builder withoutToken = new Request.Builder().url("https://gallery.test/");
+        Request.Builder withoutToken = new Request.Builder().url("https://e-hentai.org/");
         WebUiTier2ProxyInterceptor.attachBearer(withoutToken, "");
         assertNull(withoutToken.build().header("Authorization"));
     }
@@ -323,36 +323,10 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/g/1001/aaa/")
+                .url("https://e-hentai.org/g/1001/aaa/")
                 .build());
 
         assertNull(proceeded.header("Authorization"));
-    }
-
-    // ------------------------------------------------------------------
-    // Mock-debug yield gate (explicit, not just interceptor ordering)
-    // ------------------------------------------------------------------
-
-    @Test
-    public void testMockDebugYieldGate() throws Exception {
-        // In the unit-test variant MOCK_EH_BASE_URL is empty, so the explicit
-        // yield gate is OPEN and routing behaves normally. When the debug
-        // mock base is set (debug builds), intercept() yields before any
-        // routing decision — verified here by the invariant that the gate
-        // condition and the routing outcome stay consistent.
-        settings.saveConfig(SERVER);
-        settings.setClientTier(2);
-
-        Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/")
-                .build());
-
-        if (com.hippo.anotherviewer.BuildConfig.MOCK_EH_BASE_URL.isEmpty()) {
-            assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
-        } else {
-            assertEquals("mock debug active must yield to the mock interceptor",
-                    "https://gallery.test/", proceeded.url().toString());
-        }
     }
 
     // ------------------------------------------------------------------
@@ -365,9 +339,9 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/g/1001/aaa/")
-                .header("Referer", "https://gallery.test/?f_search=alpha")
-                .header("Origin", "https://upld.gallery.test")
+                .url("https://e-hentai.org/g/1001/aaa/")
+                .header("Referer", "https://e-hentai.org/?f_search=alpha")
+                .header("Origin", "https://upld.e-hentai.org")
                 .build());
 
         // Structural (encoding-agnostic) assertions: the rewritten headers are
@@ -377,12 +351,12 @@ public class WebUiTier2ProxyInterceptorTest {
         assertEquals("192.168.1.10", referer.host());
         assertEquals(8080, referer.port());
         assertEquals("/api/v1/site/proxy", referer.encodedPath());
-        assertEquals("https://gallery.test/?f_search=alpha", referer.queryParameter("url"));
+        assertEquals("https://e-hentai.org/?f_search=alpha", referer.queryParameter("url"));
 
         okhttp3.HttpUrl origin = okhttp3.HttpUrl.parse(proceeded.header("Origin"));
         assertEquals("192.168.1.10", origin.host());
         assertEquals("/api/v1/site/proxy", origin.encodedPath());
-        assertEquals("https://upld.gallery.test/", origin.queryParameter("url"));
+        assertEquals("https://upld.e-hentai.org/", origin.queryParameter("url"));
     }
 
     @Test
@@ -391,7 +365,7 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/g/1001/aaa/")
+                .url("https://e-hentai.org/g/1001/aaa/")
                 .header("Referer", "https://example.com/start")
                 .header("Origin", "https://example.com")
                 .build());
@@ -406,7 +380,7 @@ public class WebUiTier2ProxyInterceptorTest {
         settings.setClientTier(2);
 
         Request proceeded = proceed(new Request.Builder()
-                .url("https://gallery.test/g/1001/aaa/")
+                .url("https://e-hentai.org/g/1001/aaa/")
                 .build());
 
         assertNull(proceeded.header("Referer"));
@@ -421,14 +395,14 @@ public class WebUiTier2ProxyInterceptorTest {
     public void testDecisionIsReadPerRequest() throws Exception {
         settings.saveConfig(SERVER);
         settings.setClientTier(1);
-        Request direct = proceed(new Request.Builder().url("https://gallery.test/").build());
-        assertEquals("https://gallery.test/", direct.url().toString());
+        Request direct = proceed(new Request.Builder().url("https://e-hentai.org/").build());
+        assertEquals("https://e-hentai.org/", direct.url().toString());
 
         // Flip to Tier-2 without touching the interceptor or the client.
         settings.setClientTier(2);
-        Request routed = proceed(new Request.Builder().url("https://gallery.test/").build());
+        Request routed = proceed(new Request.Builder().url("https://e-hentai.org/").build());
         assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
-        assertEquals("https://gallery.test/", routed.url().queryParameter("url"));
+        assertEquals("https://e-hentai.org/", routed.url().queryParameter("url"));
     }
 
     // ------------------------------------------------------------------
@@ -479,20 +453,20 @@ public class WebUiTier2ProxyInterceptorTest {
         OkHttpClient client = prebuiltClient();
 
         // Tier-1 passes the site request through untouched.
-        Request direct = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
-        assertEquals("https://gallery.test/?f_search=alpha", direct.url().toString());
+        Request direct = proceedThroughClient(client, "https://e-hentai.org/?f_search=alpha");
+        assertEquals("https://e-hentai.org/?f_search=alpha", direct.url().toString());
 
         // In-process flip to Tier-2: the SAME client instance rewrites
         // immediately — no rebuild, no restart (R4-16).
         settings.setClientTier(2);
-        Request routed = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
+        Request routed = proceedThroughClient(client, "https://e-hentai.org/?f_search=alpha");
         assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
-        assertEquals("https://gallery.test/?f_search=alpha", routed.url().queryParameter("url"));
+        assertEquals("https://e-hentai.org/?f_search=alpha", routed.url().queryParameter("url"));
 
         // Flipping back down is just as immediate on the same client.
         settings.setClientTier(1);
-        Request directAgain = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
-        assertEquals("https://gallery.test/?f_search=alpha", directAgain.url().toString());
+        Request directAgain = proceedThroughClient(client, "https://e-hentai.org/?f_search=alpha");
+        assertEquals("https://e-hentai.org/?f_search=alpha", directAgain.url().toString());
     }
 
     @Test
@@ -501,15 +475,15 @@ public class WebUiTier2ProxyInterceptorTest {
         OkHttpClient client = prebuiltClient();
 
         // Unpaired Tier-2 degrades to direct on this client ...
-        Request direct = proceedThroughClient(client, "https://gallery.test/g/1001/aaa/");
-        assertEquals("https://gallery.test/g/1001/aaa/", direct.url().toString());
+        Request direct = proceedThroughClient(client, "https://e-hentai.org/g/1001/aaa/");
+        assertEquals("https://e-hentai.org/g/1001/aaa/", direct.url().toString());
 
         // ... and pairing that happens AFTER the client was built still takes
         // effect per request on that same client — no rebuild (R4-16).
         settings.saveConfig(SERVER);
-        Request routed = proceedThroughClient(client, "https://gallery.test/g/1001/aaa/");
+        Request routed = proceedThroughClient(client, "https://e-hentai.org/g/1001/aaa/");
         assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
-        assertEquals("https://gallery.test/g/1001/aaa/", routed.url().queryParameter("url"));
+        assertEquals("https://e-hentai.org/g/1001/aaa/", routed.url().queryParameter("url"));
     }
 
     @Test

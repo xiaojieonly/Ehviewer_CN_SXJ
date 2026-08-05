@@ -197,16 +197,16 @@
             </PrefRow>
             <PrefRow icon="fire-black" title="显示 EH 事件" summary="显示站点事件横幅">
               <AppSwitch
-                :model-value="prefs.general.showSiteEvents"
+                :model-value="prefs.general.showEhEvents"
                 aria-label="显示 EH 事件"
-                @update:model-value="() => toggleGeneral('showSiteEvents')"
+                @update:model-value="() => toggleGeneral('showEhEvents')"
               />
             </PrefRow>
             <PrefRow icon="chart-accent" title="显示 EH 限额" summary="在顶部显示站点配额信息">
               <AppSwitch
-                :model-value="prefs.general.showSiteLimits"
+                :model-value="prefs.general.showEhLimits"
                 aria-label="显示 EH 限额"
-                @update:model-value="() => toggleGeneral('showSiteLimits')"
+                @update:model-value="() => toggleGeneral('showEhLimits')"
               />
             </PrefRow>
           </PrefCard>

@@ -62,6 +62,6 @@ class ArchiveController(private val archiveService: ArchiveService) {
      */
     private fun isAllowedArchiveHost(host: String): Boolean {
         val normalized = host.lowercase().removePrefix("www.")
-        return normalized == "gallery.test"
+        return normalized == "e-hentai.org" || normalized == "exhentai.org"
     }
 }

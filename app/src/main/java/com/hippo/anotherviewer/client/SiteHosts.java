@@ -51,7 +51,7 @@ public class SiteHosts implements Dns {
     static {
         Map<String, List<InetAddress>> map = new HashMap<>();
         if (Settings.getBuiltInHosts()) {
-            put(map, "gallery.test",
+            put(map, "e-hentai.org",
                     "104.20.18.168",
                     "104.20.19.168",
                     "172.66.132.196",
@@ -60,28 +60,29 @@ public class SiteHosts implements Dns {
                     "172.67.2.238"
 //                    "194.126.173.115"
             );
-            put(map, "repo.gallery.test",   "104.20.18.168",
+            put(map, "repo.e-hentai.org",   "104.20.18.168",
                     "104.20.19.168",
                     "172.67.2.238");
-            put(map, "forums.gallery.test",   "172.66.132.196",
+            put(map, "forums.e-hentai.org",   "172.66.132.196",
                     "172.66.140.62");
-            put(map, "upld.gallery.test", "89.149.221.236", "95.211.208.236");
-            put(map, "gallery.test",
+            put(map, "upld.e-hentai.org", "89.149.221.236", "95.211.208.236");
+            put(map, "ehgt.org",
                     "109.236.85.28",
                     "62.112.8.21",
                     "89.39.106.43",
                     "2a00:7c80:0:123::3a85",
                     "2a00:7c80:0:12d::38a1",
                     "2a00:7c80:0:13b::37a4");
-//            put(map, "gallery.test",
+//            put(map, "ehgt.org",
 //                    "109.236.85.28",
 //                    "62.112.8.21",
 //                    "89.39.106.43");
+            put(map, "raw.githubusercontent.com", "151.101.0.133", "151.101.64.133", "151.101.128.133", "151.101.192.133");
 
         }
 
         if (Settings.getBuiltEXHosts()) {
-            put(map, "gallery.test",
+            put(map, "exhentai.org",
                     "178.175.128.251",
                     "178.175.128.252",
                     "178.175.128.253",
@@ -95,8 +96,8 @@ public class SiteHosts implements Dns {
                     "178.175.132.21",
                     "178.175.132.22"
             );
-            put(map, "upld.gallery.test", "178.175.132.22", "178.175.129.254", "178.175.128.254");
-            put(map, "s.gallery.test",
+            put(map, "upld.exhentai.org", "178.175.132.22", "178.175.129.254", "178.175.128.254");
+            put(map, "s.exhentai.org",
 //                    "178.175.129.251",
 //                    "178.175.129.252",
                     "178.175.129.253",

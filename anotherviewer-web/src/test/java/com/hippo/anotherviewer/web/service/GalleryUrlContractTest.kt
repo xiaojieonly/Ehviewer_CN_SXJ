@@ -22,7 +22,7 @@ class GalleryUrlContractTest {
         val token = "0123456789abcdef"
 
         assertEquals(
-            "https://gallery.test/g/$gid/$token/",
+            "https://e-hentai.org/g/$gid/$token/",
             SiteUrl.getGalleryDetailUrl(gid, token)
         )
     }

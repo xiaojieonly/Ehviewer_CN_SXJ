@@ -31,13 +31,13 @@ public class GalleryDetailUrlParserTest {
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-        { "https://gallery.test/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://gallery.test/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://lofi.gallery.test/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://gallery.test/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://gallery.test/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://lofi.gallery.test/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
-        { "https://gallery.test/mpv/530350/8b3c7e4a21/#page1", true, false, 530350, "8b3c7e4a21" },
+        { "https://e-hentai.org/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://exhentai.org/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://lofi.e-hentai.org/g/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://e-hentai.org/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://exhentai.org/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://lofi.e-hentai.org/mpv/530350/8b3c7e4a21/", true, false, 530350, "8b3c7e4a21" },
+        { "https://e-hentai.org/mpv/530350/8b3c7e4a21/#page1", true, false, 530350, "8b3c7e4a21" },
         { "530350/8b3c7e4a21/#page1", true, true, 0, null },
 
         { "530350/8b3c7e4a21", false, false, 530350, "8b3c7e4a21" },

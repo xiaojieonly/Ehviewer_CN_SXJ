@@ -25,7 +25,7 @@ class SiteSessionManagerTest {
         Cookie.Builder()
             .name(name)
             .value("test-value")
-            .domain("gallery.test")
+            .domain("e-hentai.org")
             .path("/")
             .expiresAt(expiresAt)
             .build()

@@ -21,7 +21,7 @@
     <string name="blacklist">Liste noire</string>
     <string name="join_in_blacklist">Ajouter à la liste noire</string>
     <string name="add_blacklist">Ajouter un utilisateur bloqué</string>
-    <string name="blacklist_tip">Ce système de blocage continue de bloquer les commentaires en plus du système de commentaires du site Gallery.\n\nBlocage de commentateur : exclut les commentaires publiés par ce commentateur. Cela prendra plus de temps pour charger la liste des galeries.</string>
+    <string name="blacklist_tip">Ce système de blocage continue de bloquer les commentaires en plus du système de commentaires du site EHentai.\n\nBlocage de commentateur : exclut les commentaires publiés par ce commentateur. Cela prendra plus de temps pour charger la liste des galeries.</string>
     <string name="blacklist_text">Bloquer un utilisateur</string>
     <string name="delete_blacklist">Débloquer l\'utilisateur « %s » ?</string>
     <string name="blacklist_reason_text">Raison du blocage</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">Partager les favoris</string>
     <string name="share_favorites_dialog_message">Partager les favoris %s ?</string>
     <string name="add_favorites_dialog_message">Ajouter aux favoris %s ?</string>
-    <string name="settings_advanced_built_ex_hosts_title">hosts.txt gallery intégré</string>
+    <string name="settings_advanced_built_ex_hosts_title">hosts.txt exhentai intégré</string>
     <string name="settings_advanced_built_ex_hosts_summary">Mappage hôte vers IP fourni par l\'application\nPeut être remplacé par un hosts.txt personnalisé</string>
     <string name="network_remind">VPN détecté, veuillez faire attention à votre sécurité réseau</string>
     <string name="no_blicklist">Voici la liste noire</string>
@@ -155,8 +155,8 @@
     <string name="no_updates_available">Est déjà la dernière version</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">Chercher sur Gallery</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Chercher sur Gallery Site</string>
+    <string name="gallery_list_search_bar_hint_exhentai">Chercher sur ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Chercher sur E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Ouvrir la galerie spécifiée</string>
     <string name="gallery_list_empty_hit">Le monde est grand et le panda s\'assied tout seul.</string>
     <string name="gallery_list_empty_hit_subscription">Abonnez-vous à des tags dans Paramètres -> EH -> Mes tags</string>
@@ -455,7 +455,7 @@
     <string name="enable_fingerprint">Permettre le déverrouillage avec l\'empreinte digitale</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Paramètres Gallery</string>
+    <string name="u_config">Paramètres EHentai</string>
     <string name="apply">Appliquer</string>
     <string name="apply_tip">Appuyez sur la coche pour sauvegarder les changements</string>
 
@@ -475,10 +475,10 @@
     <string name="settings_eh_sign_out_warning">Voulez-vous vous déconnecter ?</string>
     <string name="settings_eh_sign_out_yes">@android:string/ok</string>
     <string name="settings_eh_sign_out_tip">Vous vous êtes déconnecté. Redémarrez l\'application pour vous connecter</string>
-    <string name="settings_u_config">Paramètres Gallery</string>
-    <string name="settings_u_config_summary">Paramètres sur le site Web Gallery</string>
+    <string name="settings_u_config">Paramètres EHentai</string>
+    <string name="settings_u_config_summary">Paramètres sur le site Web EHentai</string>
     <string name="settings_my_tags">Tags suivis</string>
-    <string name="settings_my_tags_summary">Gérer les tags suivis sur le site Web Gallery</string>
+    <string name="settings_my_tags_summary">Gérer les tags suivis sur le site Web EHentai</string>
     <string name="settings_eh_gallery_site">Site de galerie</string>
     <string name="settings_eh_launch_page">Écran par défaut après le lancement</string>
     <string name="settings_eh_list_mode">Mode de liste</string>
@@ -502,7 +502,7 @@
     <string name="settings_eh_excluded_tag_namespaces">Espaces de nom de tag exclues</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclure espaces de nom spécifiées de une recherche de tag par défaut</string>
     <string name="settings_eh_show_jpn_title">Montrer les titres japonais</string>
-    <string name="settings_eh_show_jpn_title_summary">Nécessite d\'activer le titre japonais dans les paramètres du site Web Gallery</string>
+    <string name="settings_eh_show_jpn_title_summary">Nécessite d\'activer le titre japonais dans les paramètres du site Web EHentai</string>
     <string name="settings_eh_show_gallery_comment">Afficher les commentaires de la galerie</string>
     <string name="settings_eh_show_gallery_rating">Afficher la note de la galerie</string>
     <string name="settings_eh_show_eh_event">Afficher les événements EH</string>
@@ -628,7 +628,7 @@
     <string name="wifi_download_dir_file_failed">Échec de la somme de contrôle du fichier, fichier ignoré</string>
 
     <string name="settings_about">À propos de l\'application</string>
-    <string name="settings_about_declaration_summary">AnotherViewer ne s\'affilie à Gallery Site de aucune manière.</string>
+    <string name="settings_about_declaration_summary">AnotherViewer ne s\'affilie à E-Hentai de aucune manière.</string>
     <string name="settings_about_author">Développeur</string>
     <string name="settings_about_latest_release">Dernière version</string>
     <string name="settings_about_telegram">Telegram</string>
@@ -643,8 +643,6 @@
     <string name="settings_privacy_enable_analytics">Activer l\'analyse</string>
     <string name="settings_privacy_about_analytics">A propos de l\'analyse</string>
     <string name="settings_about_version">Numéro de version</string>
-    <string name="settings_about_check_for_updates">Chercher mise à jour</string>
-    <string name="settings_close_automatic_updates">Désactiver les mises à jour automatiques</string>
     <string name="settings_about_beta_update_channel">Chaîne de mises à jour beta</string>
     <string name="settings_about_beta_update_channel_summary">Les versions beta risquent de ne pas fonctionner correctement sur votre appareil</string>
 

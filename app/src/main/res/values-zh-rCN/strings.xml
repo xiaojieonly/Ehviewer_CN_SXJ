@@ -143,8 +143,8 @@
     <string name="no_updates_available">已是最新版本</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">搜索 Gallery</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">搜索 Gallery Site</string>
+    <string name="gallery_list_search_bar_hint_exhentai">搜索 ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">搜索 E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">打开画廊</string>
     <string name="gallery_list_empty_hit">什么都没有找到</string>
     <string name="gallery_list_empty_hit_subscription">请至 设置->EH->我的标签 订阅标签</string>
@@ -434,7 +434,7 @@
     <string name="add_filter">添加屏蔽项</string>
     <string name="show_definition">查看定义</string>
     <string name="filter_text">屏蔽项文本</string>
-    <string name="filter_tip">该屏蔽系统会在 Gallery 网站屏蔽系统的基础上继续屏蔽画廊。\n\n标题屏蔽项：排除标题含有该关键字的画廊。\n\n上传者屏蔽项：排除该上传者上传的画廊。\n\n标签屏蔽项：排除包含该标签的画廊，这会使获取画廊列表花费更多时间。\n\n标签组屏蔽项：排除包含该标签组的画廊，这会使获取画廊列表花费更多时间。</string>
+    <string name="filter_tip">该屏蔽系统会在 EHentai 网站屏蔽系统的基础上继续屏蔽画廊。\n\n标题屏蔽项：排除标题含有该关键字的画廊。\n\n上传者屏蔽项：排除该上传者上传的画廊。\n\n标签屏蔽项：排除包含该标签的画廊，这会使获取画廊列表花费更多时间。\n\n标签组屏蔽项：排除包含该标签组的画廊，这会使获取画廊列表花费更多时间。</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">设置图案保护</string>
@@ -443,7 +443,7 @@
     <string name="enable_fingerprint">允许使用指纹解锁</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Gallery 设置</string>
+    <string name="u_config">EHentai 设置</string>
     <string name="apply">应用</string>
     <string name="apply_tip">点击右上角的对勾来保存设置</string>
 
@@ -493,10 +493,10 @@
     <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用于登录该账号。&lt;br&gt;&lt;b&gt;注意数据安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">未登录</string>
     <string name="settings_eh_identity_cookies_copy">复制</string>
-    <string name="settings_u_config">Gallery 设置</string>
-    <string name="settings_u_config_summary">Gallery 网站上的设置</string>
+    <string name="settings_u_config">EHentai 设置</string>
+    <string name="settings_u_config_summary">EHentai 网站上的设置</string>
     <string name="settings_my_tags">我的标签</string>
-    <string name="settings_my_tags_summary">Gallery 网站上的我的标签</string>
+    <string name="settings_my_tags_summary">EHentai 网站上的我的标签</string>
     <string name="settings_eh_theme">主题</string>
     <string name="settings_eh_theme_light">亮色</string>
     <string name="settings_eh_theme_dark">暗色</string>
@@ -531,7 +531,7 @@
     <string name="settings_eh_show_gallery_rating">显示画廊评分</string>
     <string name="settings_eh_show_eh_event">显示E站事件</string>
     <string name="settings_eh_show_eh_limits">显示E站配额</string>
-    <string name="settings_eh_show_jpn_title_summary">需同时在 Gallery 网站设置中启用 Japanese Title</string>
+    <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
     <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>
     <string name="settings_eh_show_tag_translations">显示标签翻译</string>
@@ -659,7 +659,7 @@
     <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的迁移数据</string>
 
     <string name="settings_about">更新与支持</string>
-    <string name="settings_about_declaration_summary">AnotherViewer 与 Gallery Site.org 无任何联系</string>
+    <string name="settings_about_declaration_summary">AnotherViewer 与 E-Hentai.org 无任何联系</string>
     <string name="settings_about_author">作者</string>
     <string name="settings_about_latest_release">最新版本</string>
     <string name="settings_about_website">网站</string>
@@ -680,8 +680,6 @@
     <string name="settings_privacy_enable_analytics">启用数据统计</string>
     <string name="settings_privacy_about_analytics">关于数据统计</string>
     <string name="settings_about_version">版本号</string>
-    <string name="settings_about_check_for_updates">检查更新</string>
-    <string name="settings_close_automatic_updates">关闭自动更新</string>
     <string name="settings_about_beta_update_channel">更新测试版</string>
     <string name="settings_about_beta_update_channel_summary">测试版可能在你的设备上出现不可预知的错误</string>
 
@@ -690,7 +688,7 @@
     <string name="blacklist">黑名单</string>
     <string name="join_in_blacklist">加入黑名单</string>
     <string name="add_blacklist">添加屏蔽用户</string>
-    <string name="blacklist_tip">该屏蔽系统会在 Gallery 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
+    <string name="blacklist_tip">该屏蔽系统会在 EHentai 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
     <string name="blacklist_text">屏蔽用户</string>
     <string name="delete_blacklist">取消屏蔽用户“%s”？</string>
     <string name="blacklist_reason_text">屏蔽原因</string>
@@ -705,7 +703,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">内置gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
 

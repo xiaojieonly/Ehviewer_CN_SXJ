@@ -13,6 +13,6 @@ public class SiteUtils {
 
     public static String handleThumbUrlResolution(String url) {
         if (url == null) return null;
-        return url.replace("gallery.test", "gallery.test");
+        return url.replace("ehgt.org", "ehgt.org");
     }
 }

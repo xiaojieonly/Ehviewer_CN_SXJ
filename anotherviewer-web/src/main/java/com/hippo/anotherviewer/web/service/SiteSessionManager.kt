@@ -3,11 +3,8 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.network.SiteCookieStore
 import okhttp3.Cookie
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -31,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference
 @Component
 class SiteSessionManager(
     private val proxyManager: WebProxyManager,
-    @Value("\${anotherviewer.gallery.mock-base-url:}") private val mockBaseUrl: String = "",
 ) {
 
     private val logger = LoggerFactory.getLogger(SiteSessionManager::class.java)
@@ -43,39 +39,15 @@ class SiteSessionManager(
      * OkHttp client whose cookie jar is [cookieStore]; use for all Gallery Site traffic.
      * The proxy selector/authenticator are consulted per connection, so the admin
      * proxy settings ([WebProxyManager]) take effect immediately without a rebuild.
-     *
-     * Dev/test only: when `anotherviewer.gallery.mock-base-url` is set (default
-     * empty = off), requests to the neutralized `gallery.test` host are rewritten
-     * to that base (e.g. `http://127.0.0.1:4100`) — path/query and existing
-     * headers (Referer etc.) are preserved, so the mock corpus drives the full
-     * WebUI E2E without touching production behavior.
      */
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .cookieJar(cookieStore)
         .proxySelector(proxyManager.selector())
         .proxyAuthenticator(proxyManager.authenticator())
-        .addInterceptor(mockRewriteInterceptor())
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
-
-    private fun mockRewriteInterceptor() = Interceptor { chain ->
-        val original = chain.request()
-        val host = original.url.host
-        val isMockHost = host == "gallery.test" || host.endsWith(".gallery.test")
-        if (mockBaseUrl.isBlank() || !isMockHost) {
-            chain.proceed(original)
-        } else {
-            val base = mockBaseUrl.toHttpUrlOrNull() ?: return@Interceptor chain.proceed(original)
-            val rewritten = original.url.newBuilder()
-                .scheme(base.scheme)
-                .host(base.host)
-                .port(base.port)
-                .build()
-            chain.proceed(original.newBuilder().url(rewritten).build())
-        }
-    }
 
     private val lastValidatedAt = AtomicLong(0L)
     private val lastState = AtomicReference(SessionState.SIGNED_OUT)

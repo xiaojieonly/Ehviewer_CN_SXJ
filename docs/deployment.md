@@ -215,3 +215,37 @@ chown -R www-data:www-data data cache downloads
   2. 含下载内容的大备份（GB 级）→ 手动解包分片/直接拷贝 data-dir（**WebUI 上传限 50MB**，面向元数据）
   3. 直接拷贝整个 data-dir（结构固定，目标路径可以不同）
 - **App 包名迁移（com.xjs.anotherviewer → com.pf.anotherviewer）**：旧包名 app 覆盖安装 legacy 包（`-PapplicationId=com.xjs.anotherviewer`）→ 手动同步推数据到服务器 → 新包名 app 配对拉全量；下载文件留在原存储位置，新包名 app 重新授权 SAF 目录即复用
+
+### 从原版 EhViewer 迁移
+
+原版 EhViewer 的本地数据可经「导出数据」得到 `.db` 文件；迁移有两条路径——路径 1 导入本 App 后经同步推上服务器，路径 2 由 WebUI 导入端点直接入库，完成跨 app 迁移。
+
+**迁移路径**（两条路径，都要求旧设备先经「导出数据」得到 `.db`）：
+
+**路径 1（legacy 包覆盖安装，零代码）**：
+
+1. 旧设备：原版 EhViewer「设置 → 高级 → 导出数据」，得到 `yyyy-MM-dd-HH-mm-ss-SSS.db`（导出到外置存储）
+2. 拷贝该 `.db` 到新机
+3. 用 **legacy 包**（`-PapplicationId=com.xjs.anotherviewer`，见 应用标识 词条）覆盖安装——legacy applicationId 覆盖安装后 app 内部数据目录原样保留，`okhttp3-cookie.db`（含 `ipb_member_id` / `ipb_pass_hash` / `igneous`）与 shared_prefs 随包迁移
+4. App「设置 → 高级 → 导入数据」，选择该 `.db`
+5. 手动触发同步，把数据推上 WebUI 服务器
+6. 新包名 app（`com.pf.anotherviewer`）配对后拉全量；下载文件留在原存储位置，重新授权 SAF 目录即复用
+
+**路径 2（WebUI 导入端点）**：
+
+- 管理界面「备份」页或直接调用 `POST /api/v1/backup/import-ehviewer`，multipart 上传 legacy EhViewer `.db`（可选 `cookies` 字段）
+- **表驱动扫描**：以 `PRAGMA table_info` 感知上传库实际存在的表与列集，缺列落默认值；8 张核心业务表映射到 sync 实体，`Black_List` → black_list，`Gallery_Tags` → gallery_tags，`DOWNLOAD_DIRNAME` → download_dirname；gid 冲突默认跳过（计 skipped），`force=true` 时 upsert
+- **可选 cookies**：上传 `okhttp3-cookie.db`（`OK_HTTP_3_COOKIE` 表）或 JSON cookie 数组；仅收容站点域（`e-hentai.org` / `exhentai.org` / `ehgt.org` / `forums.e-hentai.org` 及子域）写入 `SiteSessionManager.cookieStore`（会话级 cookieStore），使 WebUI 代理可带登录态抓取 EX 站；非站点域 cookie 忽略
+- **语义**：登录态**不进 sync 实体**（凭据安全 + 每设备独立）；cookieStore 为**会话级**（进程内，服务器重启即失效）；端点为管理员鉴权接受（Bearer token，同其余 `/api`）
+
+**导入语义（importDB）**：
+
+- importDB 自动把 v7 库升级到 v8：补齐同步元数据列，进度字段落 0，下载记录 STATE 保留
+- 迁移的数据 = 下载记录、下载目录名台账、历史、本地收藏、书签、过滤、快速搜索、下载标签
+- 偏好不迁移；黑名单 / 画廊标签随 legacy db 迁移被导入（黑名单→WebUI black_list，画廊标签→gallery_tags）
+
+**登录授权说明**：
+
+- 导出的 `.db` 文件**不含登录授权（cookies）**；登录态（`ipb_member_id` / `ipb_pass_hash` / `igneous` 等）保存在 app 内部数据目录的 `okhttp3-cookie.db` 与 shared_prefs
+- 覆盖安装 legacy 包时，登录态随应用数据目录原样保留，**无需额外操作**
+- 导入 `.db` 只迁业务表，不影响已保留的登录态

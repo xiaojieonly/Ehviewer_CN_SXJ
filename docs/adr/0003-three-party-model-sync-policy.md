@@ -14,7 +14,7 @@ v1 同步契约硬编码 LWW（+skew tie-break），无法表达「默认 App �
 
 - **D1 策略可配**：`conflictStrategy` ∈ {`device_priority`(默认), `lww`, `web_priority`}；平台序 `android > web` 置常量。A/C 下同键冲突**无条件**优先级胜——不为长期离线场景做保护设计（理论上不存在长期不可访问场景），时间戳仅用于高水位/增量 pull/展示。`lww` = v1 完整语义，作为回退兜底。
 - **D2 策略设置 App 权威**：policy 存服务器，随 pull 下发；WebUI 可改但下一次 android push 携带的 policy 覆盖之；WebUI 面板明示。
-- **D3 客户端模式分档**：Tier-0 独立 / Tier-1 同步+流式（默认） / Tier-2 浏览代理 / Tier-3 下载托管（押后独立波）。档位 App 可选；Tier-2/3 路由复用 `MOCK_EH_BASE_URL` 拦截器模式。
+- **D3 客户端模式分档**：Tier-0 独立 / Tier-1 同步+流式（默认） / Tier-2 浏览代理 / Tier-3 下载托管（押后独立波）。档位 App 可选；Tier-2/3 路由使用 `WebUiTier2ProxyInterceptor` 拦截器模式。
 - **D4 网络感知自动同步**：网络回调 + probe 已配对 baseUrl 分片；`autoSyncIntervalSec` 默认 900（0=仅网络变化触发）；新网络不自动配对；mDNS 后续可选。
 
 ## 推论
