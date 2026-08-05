@@ -1399,7 +1399,8 @@ public class SiteEngine {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("reset_imagelimit", "Reset Limit");
         String referer = SiteUrl.getReferer();
-        String url = SiteUrl.getHomeUrl();
+        // 重置图片额度表单位于 home.php（站点行为），首页根路径不含该表单
+        String url = SiteUrl.getHost() + "home.php";
         logger.debug( url);
         FormBody formBody = builder.build();
         Request request = new SiteRequestBuilder(url, referer).post(formBody).build();

@@ -54,7 +54,7 @@ public class SiteUrl {
     // e-hentai.org/home.php 对未登录用户 302 至登录页（站点行为），
     // 首页改用根路径，未登录即可浏览最新画廊。
     public static final String HOME_E = HOST_E;
-    public static final String HOME_EX = HOST_EX + "home.php";
+    public static final String HOME_EX = HOST_EX;
 
     public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
     public static final String URL_POPULAR_EX = "https://exhentai.org/popular";
@@ -101,8 +101,14 @@ public class SiteUrl {
         }
     }
 
-    public static String getHomeUrl(){
-        return HOME_E;
+    public static String getHomeUrl() {
+        switch (Settings.getGallerySite()) {
+            default:
+            case SITE_E:
+                return HOME_E;
+            case SITE_EX:
+                return HOME_EX;
+        }
     }
 
     public static String getMyTag() {
