@@ -74,8 +74,8 @@ public final class PreferenceSyncHelper {
     private static final String JSON_SHOW_TAG_TRANSLATIONS = "showTagTranslations";
     private static final String JSON_SHOW_GALLERY_COMMENT = "showGalleryComment";
     private static final String JSON_SHOW_GALLERY_RATING = "showGalleryRating";
-    private static final String JSON_SHOW_EH_EVENTS = "showSiteEvents";
-    private static final String JSON_SHOW_EH_LIMITS = "showSiteLimits";
+    private static final String JSON_SHOW_EH_EVENTS = "showEhEvents";
+    private static final String JSON_SHOW_EH_LIMITS = "showEhLimits";
 
     // reader fields
     private static final String JSON_READING_DIRECTION = "readingDirection";

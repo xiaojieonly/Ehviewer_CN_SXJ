@@ -272,7 +272,7 @@ paths:
           description: >-
             Sort order (v1.1+): 0/absent = default order, 1 = posted time desc,
             2 = rating desc, 3 = title asc. Passed through to the site URL as
-            f_order; mock-server implements this table as the test oracle.
+            f_order.
         - name: pageMin
           in: query
           required: false
@@ -951,8 +951,9 @@ paths:
       description: |
         Fetches `url` through the server's shared site session (cookies/proxy
         inherited) and passes status, content-type and body straight through.
-        The host must be gallery.test or *.gallery.test — anything else is
-        rejected, so the endpoint is not an open proxy. An unreachable site
+        The host must be e-hentai.org, exhentai.org, ehgt.org, or a
+        subdomain of these — anything else is rejected, so the endpoint is not
+        an open proxy. An unreachable site
         surfaces 502 (E2E-6: errors are passed through, never fabricated).
         App Tier-2 routing rewrites site-family requests here (ADR-0003 D3).
       parameters:
@@ -1037,8 +1038,8 @@ paths:
       summary: Proxy and cache an image by its original URL (W3 R4-13 fetch-on-miss)
       description: |
         URL-keyed cache lookup. On a miss for a Gallery Site URL
-        (gallery.test / *.gallery.test) the image is fetched through the
-        server's shared site session (cookies/proxy inherited), backfilled
+        (e-hentai.org / exhentai.org / ehgt.org family) the image is fetched
+        through the server's shared site session (cookies/proxy inherited), backfilled
         into the cache and served with the site's content-type. Non-site
         hosts are never fetched; an unreachable or erroring site keeps the
         404 error envelope (E2E-6: errors pass through, never fabricated).
@@ -3753,10 +3754,10 @@ components:
         showGalleryRating:
           type: boolean
           default: true
-        showSiteEvents:
+        showEhEvents:
           type: boolean
           default: true
-        showSiteLimits:
+        showEhLimits:
           type: boolean
           default: true
 
