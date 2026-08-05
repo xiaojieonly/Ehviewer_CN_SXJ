@@ -4,6 +4,8 @@
 **复核日期**: 2026-08-02
 **状态说明**: ✅ = 已对照代码验证属实 · ⚠️ = 事实属实但严重度/定性有保留 · 已修 = 已完成
 
+> **（以下为历史记录，mock-server 已删除）**：本文档为历史审计与执行记录。文中所有 mock 相关行（`mock-server/` 及其测试、`node --test mock-server/...`、`PORT=4100`、`-PmockEhBaseUrl`/`MOCK_EH_BASE_URL` 等运行/配置方式）对应的脚手架已于 2026-08-05（A9）整体删除，以下内容均为历史存档、不再可执行。
+
 ---
 
 ## 已修复（无需再处理）
@@ -197,7 +199,7 @@
 
 1. **一次 session 范围**: P0 全部（8 项）+ P1 中 C-2/H-1 二选一
 2. **P0 顺序**: C-1 → L-6 → L-7 → L-5 → M-8 → H-3 → M-2（先易后难，均有明确验收）
-3. **验证手段**: 每个改动后跑对应模块测试：`node --test mock-server/test-gallery.mjs`、`./gradlew :anotherviewer-web:test :app:assembleDebug`
+3. **验证手段**: 每个改动后跑对应模块测试：`./gradlew :anotherviewer-web:test :app:assembleDebug`
 4. **契约变更（M-13/M-14）**: 改代码前先改 `contracts/sync-schemas.json` + `contracts/openapi.yaml`，再同步两端实现与 mock
 5. **本文件与 `docs/audit-2026-08-02.md` 配套使用**；完成一项即勾掉一项并注明 commit
 
@@ -488,6 +490,8 @@
 - **范围校准**：agent 的 **N-2**（REST 服务未按 username 隔离，`clearHistory` 删全用户）与 **N-7**（自然键全局唯一，静默丢第二用户记录）属**多用户**问题，按本项目单用户设计**超范围**，降为 latent/low，仅当 H-1 翻转且多账户时才相关。
 
 ---
+
+> （以下为历史记录，mock-server 已删除）：本段为 mock-server 开发期的补全/语料/接线开发规格；脚手架已随 A9 整体删除，以下仅作历史存档、不再执行。
 
 ## mock-server 补全 + 画廊语料（百炼生成）+ 接线 —— 开发规格（供执行模型实现；本 session 不写产品代码）
 
