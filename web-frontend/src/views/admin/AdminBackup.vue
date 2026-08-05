@@ -131,7 +131,7 @@
               </div>
             </template>
           </PrefRow>
-          <PrefRow icon="cookie-brown" title="选择 Cookie 文件" summary="okhttp3-cookie.db 或 JSON cookie 数组（可选，用于登录授权）">
+          <PrefRow icon="cookie-brown" title="选择 Cookie 文件" summary="okhttp3-cookie.db 或 JSON cookie 数组（可选，用于登录授权；仅存于进程内会话，服务器重启即失效，登录态不参与同步）">
             <label class="backup__file-btn" aria-label="选择 Cookie 文件">
               选择文件
               <input
