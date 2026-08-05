@@ -3,8 +3,10 @@
 
 set -e
 
+# --configure-on-demand：web 构建只配置所需项目，避免根项目 AGP 连带配置 :app
+# 而要求 Android SDK（服务器只跑 web 时无需安装 Android 依赖）
 echo "=== 构建 anotherviewer-core ==="
-./gradlew :anotherviewer-core:build -x test
+./gradlew --configure-on-demand :anotherviewer-core:build -x test
 
 echo "=== dist 新鲜度门（防止把陈旧前端打进 jar）==="
 if [ -f anotherviewer-web/src/main/resources/static/index.html ] && find web-frontend/src web-frontend/package.json -newer anotherviewer-web/src/main/resources/static/index.html 2>/dev/null | grep -q .; then
@@ -19,7 +21,7 @@ npm run build
 cd ..
 
 echo "=== 构建 anotherviewer-web ==="
-./gradlew :anotherviewer-web:bootJar
+./gradlew --configure-on-demand :anotherviewer-web:bootJar
 
 echo "=== 构建完成 ==="
 echo "JAR 文件: anotherviewer-web/build/libs/anotherviewer-web-*.jar"

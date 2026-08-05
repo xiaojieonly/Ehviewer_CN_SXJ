@@ -78,7 +78,7 @@ if [ -z "$JAR_PATH" ]; then
     JAR_PATH=$(find "$REPO_ROOT/anotherviewer-web/build/libs" -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1 || true)
 fi
 if [ -z "$JAR_PATH" ] || [ ! -f "$JAR_PATH" ]; then
-    echo "错误: 未找到可执行 jar，请先构建: ./gradlew :anotherviewer-web:bootJar" >&2
+    echo "错误: 未找到可执行 jar，请先构建: ./gradlew --configure-on-demand :anotherviewer-web:bootJar" >&2
     exit 1
 fi
 JAR_PATH="$(cd "$(dirname "$JAR_PATH")" && pwd)/$(basename "$JAR_PATH")"

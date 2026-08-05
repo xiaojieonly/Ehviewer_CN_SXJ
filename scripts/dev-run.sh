@@ -180,7 +180,7 @@ build_frontend() {
 # 3. Backend build
 # ---------------------------------------------------------------------------
 build_backend() {
-    step "Building backend (gradlew :anotherviewer-web:bootJar -x test)..."
+    step "Building backend (gradlew --configure-on-demand :anotherviewer-web:bootJar -x test)..."
     cd "${PROJECT_ROOT}"
 
     if [[ ! -x "./gradlew" ]]; then
@@ -188,7 +188,8 @@ build_backend() {
         exit 1
     fi
 
-    ./gradlew :anotherviewer-web:bootJar -x test
+    # --configure-on-demand: skip configuring :app so no Android SDK is needed
+    ./gradlew --configure-on-demand :anotherviewer-web:bootJar -x test
 
     info "Backend build complete."
 }
