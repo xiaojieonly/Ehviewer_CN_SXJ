@@ -17,6 +17,10 @@ gradle/
 .codewhale/
 .deepseek/
 
+# AI 工具运行目录
+.claude/
+.mimocode/
+
 # Android
 local.properties
 app/.cxx/
@@ -30,9 +34,13 @@ web-frontend/dist/
 
 # Data
 data/
+data-dev-backup/
 *.db
 .dev-data/*
 !.dev-data/.gitkeep
+
+# Kotlin
+.kotlin/
 
 # Logs
 *.log
