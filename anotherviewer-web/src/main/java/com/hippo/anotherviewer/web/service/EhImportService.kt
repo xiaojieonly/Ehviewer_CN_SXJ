@@ -112,6 +112,9 @@ class EhImportService(
     }
 
     private fun tableColumns(conn: Connection, table: String): Set<String> {
+        // 上传库的 sqlite_master 不可信：仅当表名命中白名单才允许拼进 SQL，
+        // 其余一律跳过，绝不把任意表名作为标识符插值。
+        if (!isImportableTable(table)) return emptySet()
         val cols = mutableSetOf<String>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("PRAGMA table_info(\"$table\")").use { rs ->
@@ -122,6 +125,7 @@ class EhImportService(
     }
 
     private fun loadRows(conn: Connection, table: String): List<SourceRow> {
+        if (!isImportableTable(table)) return emptyList()
         val columns = tableColumns(conn, table)
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$table\"").use { rs ->
@@ -551,5 +555,14 @@ class EhImportService(
             "rows", "artist", "cosplayer", "character", "female", "group",
             "language", "male", "misc", "mixed", "other", "parody", "reclass",
         )
+        // 可导入的固定源表集合（对应 existingTables 的派发键）。仅这些表名允许
+        // 作为 SQL 标识符插值；上传库中的其余表（含伪造表名）一律跳过。
+        val IMPORTABLE_TABLE_KEYS = setOf(
+            "DOWNLOAD_LABELS", "DOWNLOADS", "DOWNLOAD_DIRNAME", "HISTORY",
+            "BOOKMARKS", "LOCAL_FAVORITES", "FILTER", "QUICK_SEARCH",
+            "BLACK_LIST", "GALLERY_TAGS",
+        )
+
+        fun isImportableTable(table: String): Boolean = table.uppercase() in IMPORTABLE_TABLE_KEYS
     }
 }
