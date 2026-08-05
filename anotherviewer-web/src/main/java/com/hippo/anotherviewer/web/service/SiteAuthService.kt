@@ -4,6 +4,8 @@ import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.AuthResponse
 import com.hippo.anotherviewer.web.dto.AuthStatusResponse
 import com.hippo.anotherviewer.web.dto.ChangePasswordRequest
+import com.hippo.anotherviewer.web.dto.EhSessionCookieDto
+import com.hippo.anotherviewer.web.dto.EhSessionResponse
 import com.hippo.anotherviewer.web.dto.LoginRequest
 import com.hippo.anotherviewer.web.dto.PairCodeResponse
 import com.hippo.anotherviewer.web.dto.PairCompleteRequest
@@ -142,6 +144,56 @@ class SiteAuthService(
             }
         )
     }
+
+    /**
+     * Tear down only the Gallery Site session. Unlike [logout], the WebUI token is
+     * left untouched: the caller stays authenticated to the server, just not to EH.
+     */
+    fun logoutEh() {
+        sessionManager.signOut()
+    }
+
+    /**
+     * Snapshot of the Gallery Site session: whether the identity cookies are present
+     * and expired, plus the identity cookies themselves (ipb_member_id / ipb_pass_hash
+     * and igneous when present) so clients can mirror the session or detect a lapsed login.
+     */
+    fun ehSession(): EhSessionResponse {
+        val status = sessionManager.getStatus()
+        val gallerySite = sessionManager.getGallerySite()
+        if (!status.signedIn) {
+            return EhSessionResponse(
+                signedIn = false,
+                expired = false,
+                cookies = emptyList(),
+                gallerySite = gallerySite,
+            )
+        }
+        val identityNames = setOf(
+            SiteSessionManager.KEY_IPB_MEMBER_ID,
+            SiteSessionManager.KEY_IPB_PASS_HASH,
+            SiteSessionManager.KEY_IGNEOUS,
+        )
+        val cookies = sessionManager.cookieStore.getAll().values.flatten()
+            .filter { it.name in identityNames }
+            .map {
+                EhSessionCookieDto(
+                    name = it.name,
+                    value = it.value,
+                    domain = it.domain,
+                    expiresAt = it.expiresAt,
+                )
+            }
+        return EhSessionResponse(
+            signedIn = status.signedIn,
+            expired = status.expired,
+            cookies = cookies,
+            gallerySite = gallerySite,
+        )
+    }
+
+    /** Switch the Gallery Site (0 = e-hentai, 1 = exhentai); false when the value is invalid. */
+    fun setGallerySite(site: Int): Boolean = sessionManager.setGallerySite(site)
 
     fun getStatus(token: String?): AuthStatusResponse {
         // Gallery Site session state is reported regardless of the WebUI token so clients

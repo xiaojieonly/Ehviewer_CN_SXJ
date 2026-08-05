@@ -28,6 +28,8 @@ class SyncService(
     private val preferenceRepository: UserPreferenceRepository,
     private val preferenceService: UserPreferenceService,
     private val serverConfig: ServerConfigService,
+    private val ehSessionRepository: EhSessionRepository,
+    private val siteSessionManager: SiteSessionManager,
 ) {
 
     // ---- SyncPolicy（契约 v2 §8，ADR-0003 D1/D2/D3/D4） ----
@@ -86,6 +88,8 @@ class SyncService(
         conflicts += e.filters.sumOf { if (mergeFilter(it, username, strategy, pushDeviceId)) 1 else 0 }
         conflicts += e.quickSearches.sumOf { if (mergeQuickSearch(it, username, strategy, pushDeviceId)) 1 else 0 }
         conflicts += e.downloadLabels.sumOf { if (mergeDownloadLabel(it, username, strategy, pushDeviceId)) 1 else 0 }
+        // ehSession（ADR-0004）：单例 LWW、策略独立，不参与 conflictStrategy。
+        conflicts += e.ehSession.sumOf { if (mergeEhSession(it, pushDeviceId)) 1 else 0 }
 
         e.preferences?.let { pref ->
             // last-write-wins: 仅当推送方 lastModified 明显新于存量 updatedAt 时覆盖（含时钟偏差容忍）。
@@ -118,6 +122,13 @@ class SyncService(
         val downloadLabels = select(downloadLabelRepository::findByUsername, downloadLabelRepository::findByUsernameAndLastModifiedGreaterThan)
         // M-14: wire 上的 label 是标签名，落库是 download_label.id；一次拉取只解析一次 id→名字映射。
         val labelNames = downloadLabels.mapNotNull { l -> if (l.id == 0L) null else l.id.toInt() to l.label }.toMap()
+        // ehSession（ADR-0004）：单例行；增量语义 = 仅当 lastModified > since 才返回（since=0 全量）。
+        val ehSessionDto = siteSessionManager.loadSyncEhSession()
+        val ehSessions = if (ehSessionDto != null && (since == 0L || ehSessionDto.lastModified > since)) {
+            listOf(ehSessionDto)
+        } else {
+            emptyList()
+        }
         // v2: deviceId 回显行级来源（last-writer），供客户端按策略本地 merge（契约 §6.2）；
         // 无来源记录的旧行保持 "server"（platformOf 归 web 侧，契约 §1.4）。
         val entities = SyncEntityCollection(
@@ -128,6 +139,7 @@ class SyncService(
             filters = filters.map { it.toSyncFilterDto(provenanceOf(username, TAG_FILTER, filterKey(it.type, it.text))) },
             quickSearches = quickSearches.map { it.toSyncQuickSearchDto(provenanceOf(username, TAG_QUICK_SEARCH, it.name)) },
             downloadLabels = downloadLabels.map { it.toSyncDownloadLabelDto(provenanceOf(username, TAG_DOWNLOAD_LABEL, it.label)) },
+            ehSession = ehSessions,
             preferences = SyncPreferencesDto(
                 preferences = preferenceService.getRaw(username),
                 lastModified = prefEntity?.updatedAt ?: 0,
@@ -159,6 +171,7 @@ class SyncService(
                 filters = filterRepository.countByUsername(username),
                 quickSearches = quickSearchRepository.countByUsername(username),
                 downloadLabels = downloadLabelRepository.countByUsername(username),
+                ehSession = if (ehSessionRepository.findByUsername(SiteSessionManager.EH_SESSION_OWNER)?.deleted == false) 1 else 0,
             ),
         )
     }
@@ -653,6 +666,14 @@ class SyncService(
         }
         return false
     }
+
+    /**
+     * ehSession（ADR-0004）：单例实体，LWW ±skew、策略独立（与 preferences 同级，A/C 平台序不适用）；
+     * deleted=true tombstone 无条件传播。合并逻辑委托 [SiteSessionManager.applySyncEhSession]
+     * （写库 + 生效到内存 cookieStore），返回 true = 覆盖了存量行（冲突计数）。
+     */
+    private fun mergeEhSession(incoming: SyncEhSessionDto, pushDeviceId: String): Boolean =
+        siteSessionManager.applySyncEhSession(incoming, pushDeviceId)
 
     // ---- Strategy arbitration helpers（契约 v2 §1.4 / §3.8） ----
 

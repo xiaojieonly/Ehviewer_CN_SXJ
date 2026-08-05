@@ -116,6 +116,35 @@ public final class WebUiSyncModels {
         public boolean deleted;
     }
 
+    /** syncEhCookie (sync-schemas.json syncEhCookie): a single EH session cookie. */
+    public static class SyncEhCookie {
+        public String name;
+        public String value;
+        public String domain;
+        public String path;
+        public long expiresAt;
+        public boolean secure;
+        public boolean httpOnly;
+        public boolean persistent;
+        public boolean hostOnly;
+    }
+
+    /**
+     * syncEhSession (sync-schemas.json syncEhSession): the single EH login
+     * session plus user-settings record. Singleton entity — at most one live
+     * row per user, merged last-write-wins by lastModified; a {@code deleted}
+     * row is a tombstone that propagates under every conflict strategy.
+     */
+    public static class SyncEhSession {
+        public List<SyncEhCookie> cookies = new ArrayList<>();
+        public String displayName;
+        public String avatar;
+        public Integer gallerySite;
+        public long lastModified;
+        public String deviceId = "";
+        public boolean deleted;
+    }
+
     /** syncEntityCollection — all entity arrays grouped by type. */
     public static class EntityCollection {
         public List<SyncFavorite> favorites = new ArrayList<>();
@@ -125,6 +154,7 @@ public final class WebUiSyncModels {
         public List<SyncFilter> filters = new ArrayList<>();
         public List<SyncQuickSearch> quickSearches = new ArrayList<>();
         public List<SyncDownloadLabel> downloadLabels = new ArrayList<>();
+        public List<SyncEhSession> ehSession = new ArrayList<>();
     }
 
     /** syncPolicy (sync-schemas.json syncPolicy, ADR-0003 / contract v2 §8). */

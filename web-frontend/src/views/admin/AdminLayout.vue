@@ -19,7 +19,7 @@ const sections = [
   { path: '/admin/server', label: '服务器', icon: 'settings-dark' },
   { path: '/admin/backup', label: '备份', icon: 'download-box-dark' },
   { path: '/admin/devices', label: '设备', icon: 'mobile-hand-left' },
-  { path: '/admin/proxy', label: '代理', icon: 'send-dark' },
+  { path: '/admin/eh', label: 'EH 会话', icon: 'cookie-brown' },
   { path: '/admin/access', label: '访问', icon: 'sec-primary' },
   { path: '/admin/processing', label: '图像处理', icon: 'similar-primary' },
   { path: '/admin/advanced', label: '高级', icon: 'dots-vertical-secondary-dark' },

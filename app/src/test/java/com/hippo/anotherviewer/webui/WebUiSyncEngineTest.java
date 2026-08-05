@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.hippo.anotherviewer.client.SiteCookieStore;
 import com.hippo.anotherviewer.dao.BookmarkInfo;
 import com.hippo.anotherviewer.dao.DownloadInfo;
 import com.hippo.anotherviewer.dao.DownloadLabel;
@@ -32,7 +33,10 @@ import com.hippo.anotherviewer.dao.LocalFavoriteInfo;
 import com.hippo.anotherviewer.dao.QuickSearch;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -910,5 +914,264 @@ public class WebUiSyncEngineTest {
                 engineA.syncInternal(config, android, recovery.serverTimestamp);
         assertEquals(0, steady.pushedFavorites);
         assertTrue(server.favorites.get(2L).deleted);
+    }
+
+    // ==================== ehSession (ADR-0004) ====================
+    // The singleton EH login session: local cookies + settings are pushed as a
+    // SyncEhSession (full cookie set, not just the identity pair), pulled
+    // sessions write the cookie jar + Settings, a deleted tombstone signs the
+    // device out, and the push ledger tracks a content fingerprint so a pulled
+    // session is not echoed back while real changes propagate.
+
+    /** In-memory EhSessionSource mirroring SiteEhSessionSource semantics. */
+    static final class FakeEhSession implements WebUiSyncEngine.EhSessionSource {
+        final Map<String, WebUiSyncModels.SyncEhCookie> cookies = new LinkedHashMap<>();
+        String displayName;
+        String avatar;
+        Integer gallerySite;
+        boolean needSignIn = true;
+
+        void putCookie(String name, String value) {
+            WebUiSyncModels.SyncEhCookie c = new WebUiSyncModels.SyncEhCookie();
+            c.name = name;
+            c.value = value;
+            c.domain = "e-hentai.org";
+            c.path = "/";
+            c.expiresAt = Long.MAX_VALUE;
+            c.persistent = true;
+            cookies.put(name, c);
+        }
+
+        boolean signedIn() {
+            return cookies.containsKey(SiteCookieStore.KEY_IPD_MEMBER_ID)
+                    && cookies.containsKey(SiteCookieStore.KEY_IPD_PASS_HASH);
+        }
+
+        @Override
+        public WebUiSyncModels.SyncEhSession loadLocal() {
+            if (cookies.isEmpty()) {
+                return null;
+            }
+            WebUiSyncModels.SyncEhSession s = new WebUiSyncModels.SyncEhSession();
+            s.cookies = new ArrayList<>(cookies.values());
+            s.displayName = displayName;
+            s.avatar = avatar;
+            s.gallerySite = gallerySite;
+            return s;
+        }
+
+        @Override
+        public void applyRemote(WebUiSyncModels.SyncEhSession session) {
+            if (session.deleted) {
+                cookies.clear();
+                displayName = null;
+                avatar = null;
+                gallerySite = null;
+                needSignIn = true;
+                return;
+            }
+            cookies.clear();
+            for (WebUiSyncModels.SyncEhCookie c : session.cookies) {
+                cookies.put(c.name, c);
+            }
+            displayName = session.displayName;
+            avatar = session.avatar;
+            if (session.gallerySite != null) {
+                gallerySite = session.gallerySite;
+            }
+        }
+    }
+
+    @Test
+    public void ehSession_localSessionPushed() throws IOException {
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "12345");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        sessionA.putCookie(SiteCookieStore.KEY_IGNEOUS, "igneA");
+        sessionA.displayName = "Alice";
+        sessionA.avatar = "https://ehgt.org/alice.png";
+        sessionA.gallerySite = 1;
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedEhSessions);
+        assertNotNull(server.ehSessions.get("session"));
+        WebUiSyncModels.SyncEhSession wire =
+                (WebUiSyncModels.SyncEhSession) server.ehSessions.get("session").dto;
+        assertFalse(wire.deleted);
+        // The full cookie set rides along, not just the identity pair.
+        assertEquals(3, wire.cookies.size());
+        assertTrue(wire.lastModified > 0);
+        assertEquals("devA", wire.deviceId);
+        assertEquals("Alice", wire.displayName);
+        assertEquals("https://ehgt.org/alice.png", wire.avatar);
+        assertEquals(Integer.valueOf(1), wire.gallerySite);
+    }
+
+    @Test
+    public void ehSession_remoteSessionAppliedWritesCookiesAndSettings() throws IOException {
+        // Seed the server with a live session from device A.
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "111");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        sessionA.putCookie(SiteCookieStore.KEY_IGNEOUS, "igneA");
+        sessionA.displayName = "Alice";
+        sessionA.avatar = "https://ehgt.org/alice.png";
+        sessionA.gallerySite = 1;
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+        engineA.syncInternal(config, "devA", 0);
+
+        // Fresh device B pulls and applies the session into its cookie jar and
+        // settings.
+        FakeEhSession sessionB = new FakeEhSession();
+        WebUiSyncEngine engineB = new WebUiSyncEngine(storeB, server, sessionB);
+        WebUiSyncEngine.Result pull = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, pull.pulledEhSessions);
+        assertTrue(sessionB.signedIn());
+        assertEquals("hashA", sessionB.cookies.get(SiteCookieStore.KEY_IPD_PASS_HASH).value);
+        assertEquals("igneA", sessionB.cookies.get(SiteCookieStore.KEY_IGNEOUS).value);
+        assertEquals("Alice", sessionB.displayName);
+        assertEquals("https://ehgt.org/alice.png", sessionB.avatar);
+        assertEquals(Integer.valueOf(1), sessionB.gallerySite);
+    }
+
+    @Test
+    public void ehSession_logoutTombstoneSignsOutRemoteDevice() throws IOException {
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "111");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        sessionA.displayName = "Alice";
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedEhSessions);
+
+        // Device B adopts the session.
+        FakeEhSession sessionB = new FakeEhSession();
+        sessionB.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "111");
+        sessionB.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        sessionB.displayName = "Alice";
+        WebUiSyncEngine engineB = new WebUiSyncEngine(storeB, server, sessionB);
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, bFirst.pulledEhSessions);
+        assertTrue(sessionB.signedIn());
+
+        // A logs out: the next cycle detects the missing session and pushes a
+        // deleted tombstone.
+        sessionA.cookies.clear();
+        sessionA.displayName = null;
+        sessionA.avatar = null;
+        WebUiSyncEngine.Result del = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(1, del.pushedEhSessions);
+        assertTrue(server.ehSessions.get("session").deleted);
+        // Converged: the signed-out device pushes nothing more.
+        assertEquals("", storeA.prefs.get(config.baseUrl() + ".snapshot.ehSession"));
+
+        // B pulls the tombstone and signs out locally: cookies cleared plus
+        // display_name/avatar cleared and need_sign_in=true.
+        WebUiSyncEngine.Result bSecond = engineB.syncInternal(config, "devB", bFirst.serverTimestamp);
+        assertEquals(1, bSecond.pulledEhSessions);
+        assertFalse(sessionB.signedIn());
+        assertNull(sessionB.displayName);
+        assertNull(sessionB.avatar);
+        assertTrue(sessionB.needSignIn);
+    }
+
+    @Test
+    public void ehSession_twoDeviceLww_lastSyncerWins() throws IOException {
+        // A and B hold different sessions. B (the later syncer) must win: A's
+        // unchanged session is not re-pushed, so B's session is pulled and
+        // adopted by A.
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "1");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+        WebUiSyncEngine.Result aFirst = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, aFirst.pushedEhSessions);
+
+        FakeEhSession sessionB = new FakeEhSession();
+        sessionB.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "2");
+        sessionB.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashB");
+        WebUiSyncEngine engineB = new WebUiSyncEngine(storeB, server, sessionB);
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, bFirst.pushedEhSessions);
+        // B's push carried a newer lastModified, so its session won the LWW on
+        // the server.
+        assertEquals("hashB", ((WebUiSyncModels.SyncEhSession)
+                server.ehSessions.get("session").dto)
+                .cookies.get(1).value);
+
+        // A's second cycle sends nothing (fingerprint unchanged) and adopts B's
+        // session from the pull — the later syncer wins, with no echo back.
+        WebUiSyncEngine.Result aSecond = engineA.syncInternal(config, "devA", aFirst.serverTimestamp);
+        assertEquals(0, aSecond.pushedEhSessions);
+        assertEquals(1, aSecond.pulledEhSessions);
+        assertEquals("hashB", sessionA.cookies.get(SiteCookieStore.KEY_IPD_PASS_HASH).value);
+        assertTrue(sessionA.signedIn());
+
+        // Converged: neither device re-pushes the adopted session.
+        WebUiSyncEngine.Result bSecond = engineB.syncInternal(config, "devB", bFirst.serverTimestamp);
+        assertEquals(0, bSecond.pushedEhSessions);
+        assertEquals(0, bSecond.pulledEhSessions);
+    }
+
+    @Test
+    public void ehSession_unchangedNotRepushed_cookieRotationIs() throws IOException {
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "1");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedEhSessions);
+
+        // Unchanged session: nothing crosses the wire.
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(0, second.pushedEhSessions);
+        assertEquals(0, second.pulledEhSessions);
+
+        // The server rotates igneous: the changed fingerprint pushes the
+        // updated session.
+        sessionA.putCookie(SiteCookieStore.KEY_IGNEOUS, "igneNew");
+        WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
+        assertEquals(1, third.pushedEhSessions);
+        assertEquals(3, ((WebUiSyncModels.SyncEhSession) server.ehSessions.get("session").dto)
+                .cookies.size());
+    }
+
+    @Test
+    public void ehSession_reloginAfterLogoutResurrects() throws IOException {
+        FakeEhSession sessionA = new FakeEhSession();
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "1");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashA");
+        WebUiSyncEngine engineA = new WebUiSyncEngine(storeA, server, sessionA);
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertFalse(server.ehSessions.get("session").deleted);
+
+        // Log out -> tombstone.
+        sessionA.cookies.clear();
+        sessionA.displayName = null;
+        sessionA.avatar = null;
+        WebUiSyncEngine.Result del = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(1, del.pushedEhSessions);
+        assertTrue(server.ehSessions.get("session").deleted);
+
+        // Log back in with fresh credentials: the newer live push resurrects
+        // the server record.
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_MEMBER_ID, "3");
+        sessionA.putCookie(SiteCookieStore.KEY_IPD_PASS_HASH, "hashC");
+        sessionA.displayName = "Carol";
+        WebUiSyncEngine.Result relogin = engineA.syncInternal(config, "devA", del.serverTimestamp);
+        assertEquals(1, relogin.pushedEhSessions);
+        WebUiSyncModels.SyncEhSession wire =
+                (WebUiSyncModels.SyncEhSession) server.ehSessions.get("session").dto;
+        assertFalse(wire.deleted);
+        assertEquals("Carol", wire.displayName);
+
+        // A fresh device adopts the resurrected session.
+        FakeEhSession sessionB = new FakeEhSession();
+        WebUiSyncEngine engineB = new WebUiSyncEngine(storeB, server, sessionB);
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, bFirst.pulledEhSessions);
+        assertTrue(sessionB.signedIn());
+        assertEquals("hashC", sessionB.cookies.get(SiteCookieStore.KEY_IPD_PASS_HASH).value);
     }
 }

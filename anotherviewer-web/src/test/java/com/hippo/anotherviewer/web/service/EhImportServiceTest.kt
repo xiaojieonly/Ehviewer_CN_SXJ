@@ -1,5 +1,6 @@
 package com.hippo.anotherviewer.web.service
 
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.EhCookieImportResult
 import com.hippo.anotherviewer.web.dto.EhImportedCounts
 import com.hippo.anotherviewer.web.entity.BlackListEntity
@@ -17,6 +18,7 @@ import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadDirnameRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.GalleryTagsRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
@@ -279,7 +281,15 @@ class EhImportServiceTest {
         val serverConfig = mock(ServerConfigService::class.java)
         `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenReturn(false)
         `when`(serverConfig.get(anyString(), anyString())).thenReturn("")
-        return SiteSessionManager(WebProxyManager(serverConfig))
+        val config = SiteCoreConfigProperties()
+        config.security.encryptionKeyPath = "${Files.createTempDirectory("ehimport-key").toAbsolutePath()}/security.key"
+        return SiteSessionManager(
+            WebProxyManager(serverConfig),
+            serverConfig,
+            mock(EhSessionRepository::class.java),
+            EncryptionService(),
+            config,
+        )
     }
 
     private fun file(db: ByteArray, filename: String = "ehviewer.db") =

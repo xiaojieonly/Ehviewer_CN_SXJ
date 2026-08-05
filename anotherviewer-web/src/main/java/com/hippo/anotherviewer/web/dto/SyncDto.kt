@@ -188,6 +188,32 @@ data class SyncDownloadLabelDto(
     val deleted: Boolean = false,
 )
 
+// --- ehSession（ADR-0004）：单例 EH 登录会话 + 用户设置，LWW、策略独立 ---
+
+/** 单条 EH 会话 cookie，字段镜像 okhttp3.Cookie / SiteCookieStore。value 服务端落库 enc:v1: 加密。 */
+data class SyncEhSessionCookieDto(
+    val name: String,
+    val value: String,
+    val domain: String,
+    val path: String,
+    val expiresAt: Long,
+    val secure: Boolean = false,
+    val httpOnly: Boolean = false,
+    val persistent: Boolean = false,
+    val hostOnly: Boolean = false,
+)
+
+/** 单例实体（每用户至多一条活记录）；LWW 合并，不参与 conflictStrategy。 */
+data class SyncEhSessionDto(
+    val cookies: List<SyncEhSessionCookieDto>? = null,
+    val displayName: String? = null,
+    val avatar: String? = null,
+    val gallerySite: Int? = null,
+    val lastModified: Long = 0,
+    val deviceId: String = "",
+    val deleted: Boolean = false,
+)
+
 // --- Wrapper messages ---
 
 data class SyncPreferencesDto(
@@ -204,6 +230,7 @@ data class SyncEntityCollection(
     val filters: List<SyncFilterDto> = emptyList(),
     val quickSearches: List<SyncQuickSearchDto> = emptyList(),
     val downloadLabels: List<SyncDownloadLabelDto> = emptyList(),
+    val ehSession: List<SyncEhSessionDto> = emptyList(),   // 单例；0 或 1 条（ADR-0004）
     val preferences: SyncPreferencesDto? = null,   // 新增
 )
 
@@ -249,6 +276,7 @@ data class EntityCountsDto(
     val filters: Long = 0,
     val quickSearches: Long = 0,
     val downloadLabels: Long = 0,
+    val ehSession: Long = 0,   // 单例：0/1（ADR-0004）
 )
 
 data class SyncStatusResponse(

@@ -7,6 +7,7 @@ import com.hippo.anotherviewer.web.dto.ConflictStrategy
 import com.hippo.anotherviewer.web.dto.SyncBookmarkDto
 import com.hippo.anotherviewer.web.dto.SyncDownloadDto
 import com.hippo.anotherviewer.web.dto.SyncDownloadLabelDto
+import com.hippo.anotherviewer.web.dto.SyncEhSessionDto
 import com.hippo.anotherviewer.web.dto.SyncEntityCollection
 import com.hippo.anotherviewer.web.dto.SyncFavoriteDto
 import com.hippo.anotherviewer.web.dto.SyncFilterDto
@@ -29,6 +30,7 @@ import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
@@ -91,6 +93,7 @@ class SyncServiceTest {
     private lateinit var deviceRepo: SyncDeviceRepository
     private lateinit var preferenceRepo: UserPreferenceRepository
     private lateinit var preferenceService: UserPreferenceService
+    private lateinit var siteSessionManager: SiteSessionManager
     private lateinit var service: SyncService
 
     @BeforeEach
@@ -105,10 +108,13 @@ class SyncServiceTest {
         deviceRepo = fakeDeviceRepo()
         preferenceRepo = fakePreferenceRepo()
         preferenceService = UserPreferenceService(preferenceRepo)
+        siteSessionManager = mock(SiteSessionManager::class.java)
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
             fakeServerConfig(),
+            mock(EhSessionRepository::class.java),
+            siteSessionManager,
         )
         // v1 回归套件钉在策略 B（lww）= v1.0 完整语义（契约 §1.4 回退兜底）。
         service.updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW))
@@ -412,6 +418,7 @@ class SyncServiceTest {
         filters: List<SyncFilterDto> = emptyList(),
         quickSearches: List<SyncQuickSearchDto> = emptyList(),
         downloadLabels: List<SyncDownloadLabelDto> = emptyList(),
+        ehSession: List<SyncEhSessionDto> = emptyList(),
         preferences: SyncPreferencesDto? = null,
     ): SyncPushResponse {
         clearInvocations(
@@ -428,6 +435,7 @@ class SyncServiceTest {
                     filters = filters,
                     quickSearches = quickSearches,
                     downloadLabels = downloadLabels,
+                    ehSession = ehSession,
                     preferences = preferences,
                 ),
                 deviceId = deviceId,
@@ -702,6 +710,75 @@ class SyncServiceTest {
 
         assertFalse(downloadLabelRepo.findByLabel("L4")!!.deleted)
         assertEquals(1, response.conflicts)
+    }
+
+    // ==================== ehSession（ADR-0004）====================
+
+    @Test
+    fun `ehSession push delegates to the session manager merge`() {
+        val incoming = SyncEhSessionDto(
+            cookies = listOf(
+                com.hippo.anotherviewer.web.dto.SyncEhSessionCookieDto(
+                    name = "ipb_member_id", value = "111", domain = "e-hentai.org", path = "/",
+                    expiresAt = 0,
+                ),
+            ),
+            lastModified = 1_000,
+            deviceId = "android-test",
+            deleted = false,
+        )
+        `when`(siteSessionManager.applySyncEhSession(incoming, "android-test")).thenReturn(true)
+
+        val response = push("A", ehSession = listOf(incoming))
+
+        verify(siteSessionManager).applySyncEhSession(incoming, "android-test")
+        // 覆盖存量行计一次冲突，与其它 merge 的 conflicts 语义一致。
+        assertEquals(1, response.conflicts)
+    }
+
+    @Test
+    fun `ehSession is absent from the collection when the session manager has none`() {
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(null)
+
+        val pulled = service.pull(0, "A")
+
+        assertEquals(0, pulled.entities.ehSession.size)
+    }
+
+    @Test
+    fun `ehSession pull includes the persisted session for a full pull`() {
+        val session = SyncEhSessionDto(
+            cookies = listOf(
+                com.hippo.anotherviewer.web.dto.SyncEhSessionCookieDto(
+                    name = "ipb_pass_hash", value = "aaa", domain = "exhentai.org", path = "/",
+                    expiresAt = 0,
+                ),
+            ),
+            lastModified = 2_000,
+            deviceId = "server",
+            deleted = false,
+        )
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(session)
+
+        val pulled = service.pull(0, "A")
+
+        assertEquals(1, pulled.entities.ehSession.size)
+        assertEquals(2_000L, pulled.entities.ehSession[0].lastModified)
+    }
+
+    @Test
+    fun `ehSession pull applies the incremental since filter`() {
+        val session = SyncEhSessionDto(lastModified = 2_000, deleted = false)
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(session)
+
+        val pulled = service.pull(1_000, "A")
+
+        assertEquals(1, pulled.entities.ehSession.size)
+
+        val stale = SyncEhSessionDto(lastModified = 500, deleted = false)
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(stale)
+        val pulledStale = service.pull(1_000, "A")
+        assertEquals(0, pulledStale.entities.ehSession.size)
     }
 
     // ==================== favorites / history key semantics ====================

@@ -35,6 +35,7 @@ import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
@@ -45,6 +46,7 @@ import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import com.hippo.anotherviewer.web.service.EncryptionService
 import com.hippo.anotherviewer.web.service.SiteAuthService
 import com.hippo.anotherviewer.web.service.ServerConfigService
+import com.hippo.anotherviewer.web.service.SiteSessionManager
 import com.hippo.anotherviewer.web.service.SyncService
 import com.hippo.anotherviewer.web.service.UserPreferenceService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -526,6 +528,8 @@ class SyncControllerTest {
             preferenceRepo,
             UserPreferenceService(preferenceRepo),
             newServerConfigService(),
+            mock(EhSessionRepository::class.java),
+            mock(SiteSessionManager::class.java),
         )
         // v1 回环套件钉在策略 B（lww）= v1.0 完整语义；v2 策略行为见 SyncStrategyMatrixTest。
         return service.apply { updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW)) }

@@ -1,9 +1,11 @@
 # AnotherViewer Sync Protocol — Conflict Resolution Rules
 
-> Version: 2.0
-> Date: 2026-08-03
+> Version: 3.0
+> Date: 2026-08-05
 > Schema: `contracts/sync-schemas.json` (draft 2020-12)
-> ADR: `docs/adr/0003-three-party-model-sync-policy.md`
+> ADR: `docs/adr/0003-three-party-model-sync-policy.md`、`docs/adr/0004-eh-session-in-sync.md`
+>
+> v3.0 变更摘要（相对 v2.0）：新增 ehSession 同步实体（EH 登录会话 + 用户设置，ADR-0004）；单例实体 LWW 双向同步（±5s skew），**不参与 conflictStrategy**（与 preferences 同级，ADR-0001/0003 先例）；登出/清 cookie = tombstone，任何策略下删除传播（§3.8 tombstone 实体）；Web 端 cookie 加密落库（`enc:v1:` + security.key）。v2.0 语义完整保留。
 >
 > v2.0 变更摘要（相对 v1.0）：引入可配置冲突策略 `conflictStrategy`（device_priority | lww | web_priority，默认 device_priority）；merge 全部参数化；A/C 下同键冲突无条件优先级胜；soft 实体删除传播按策略（§3.8）；tombstone 实体删除任何策略下传播；新增 §8 SyncPolicy 与 `/api/v1/sync/policy` 端点；§5.1 仲裁总序重写。v1.0 语义 = 策略 `lww`（B），完整保留为回退兜底。
 
@@ -60,6 +62,7 @@ Each entity type has a natural idempotency key that identifies a unique logical 
 | Filter | `(mode, text)` | Mirrors `Filter.equals()` / `hashCode()` in Android source |
 | QuickSearch | `name` | User-facing unique name for the preset |
 | DownloadLabel | `label` | Label names are unique in the Android UI |
+| EhSession | *单例（无自然键）* | 每用户至多一条活记录；服务器固定键（v3，ADR-0004） |
 
 ### 2.1 Idempotent Push
 
@@ -220,7 +223,7 @@ function mergeDownloadLabel(existing, incoming, strategy):
 
 ### 3.8 Strategy-Aware Delete/Resurrection & Priority Rules（v2 权威总规则）
 
-实体分两类：**tombstone 实体**（history, bookmark）与 **soft 实体**（favorite, download, filter, quickSearch, downloadLabel）。
+实体分两类：**tombstone 实体**（history, bookmark, ehSession——v3 新增，ADR-0004 D3）与 **soft 实体**（favorite, download, filter, quickSearch, downloadLabel）。
 
 ```
 function crossPlatform(a, b): platformOf(a.deviceId) != platformOf(b.deviceId)
@@ -262,6 +265,25 @@ function mergeDeleteVsAlive(existing, incoming, strategy):
 
 **Resurrection**（tomb 存量 vs live 推送）= 上表镜像：优先端 live 胜非优先端 tomb；非优先端 live vs 优先端 tomb → tomb 胜（soft）；tombstone 实体双活 vs tomb 按实体专属 LWW（新 live 复活，v1 同）。
 
+### 3.9 EH Login Session (SyncEhSession) — LWW Singleton + Tombstone（v3 新增）
+
+**Rule**: 单例实体（每用户至多一条活记录，无自然 idempotency key，服务器固定键）。仲裁恒为 **LWW**（±5s skew，§1.2），**不参与 conflictStrategy**——与 preferences 同级（ADR-0001/0003：单用户设置，后同步者即最终意图）；A/C 的平台序不适用。
+
+```
+function mergeEhSession(existing, incoming):
+    // ehSession 不参与 conflictStrategy（ADR-0004 D2）
+    if incoming.lastModified > existing.lastModified + SKEW_TOLERANCE:
+        return incoming
+    if existing.lastModified > incoming.lastModified + SKEW_TOLERANCE:
+        return existing
+    return incoming   // skew 内：last-received-wins（后同步者即最终设置）
+```
+
+- **Tombstone 语义**: 登出/清 cookie → `deleted=true` tombstone，**任何策略下传播**（对齐 §3.8 tombstone 实体、§4.2 lifecycle）；服务端 bump `lastModified` 保留 tombstone 行，增量 pull 传播到其他设备。客户端收到 tombstone 即清除本地 cookie 并登出。
+- **Provenance**: 沿用 §6.2——服务端按 `lastModified > since` 增量返回 ehSession（含 tombstone）；`SyncPullResponse.entities.ehSession` 缺省/空 = 服务器无该会话或未变更。
+- **字段**: `cookies[]`（name/value/domain/path/expiresAt/secure/httpOnly/persistent/hostOnly）、`displayName?`、`avatar?`、`gallerySite?`（0=e-hentai.org, 1=exhentai.org，null=不改对端）、`lastModified`、`deviceId`、`deleted`。仅收容站点域 cookie（e-hentai.org / exhentai.org / ehgt.org / forums.e-hentai.org 及子域）。
+- **凭据安全**: Web 端 cookie value 加密落库（`enc:v1:` + security.key，ADR-0004 D4），仅进程内解密；App 端按平台安全存储。明文不落盘。
+
 ## 4. Soft-Delete vs Hard-Delete Policy
 
 | Entity | Delete Type | 策略依赖（v2） | Rationale |
@@ -273,6 +295,7 @@ function mergeDeleteVsAlive(existing, incoming, strategy):
 | Filter | **Soft** | §3.8 | Additive bias — filters are safety/UX features |
 | QuickSearch | **Soft** | §3.8 | User-created presets; union preserves all devices' presets（B） |
 | DownloadLabel | **Soft** | §3.8 | Removing on one device shouldn't break another's organization（B） |
+| EhSession | **Tombstone** | 无（恒传播） | Logout / cookie clear is an explicit user intent that should propagate（v3，ADR-0004 D3） |
 
 ### 4.1 Soft-Delete Lifecycle
 

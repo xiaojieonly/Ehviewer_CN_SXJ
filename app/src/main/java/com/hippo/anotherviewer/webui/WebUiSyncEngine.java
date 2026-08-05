@@ -19,7 +19,13 @@ package com.hippo.anotherviewer.webui;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.hippo.anotherviewer.Settings;
+import com.hippo.anotherviewer.SiteApplication;
+import com.hippo.anotherviewer.client.SiteCookieStore;
+import com.hippo.anotherviewer.client.SiteUrl;
+import com.hippo.anotherviewer.client.SiteUtils;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
 import com.hippo.anotherviewer.dao.BookmarkInfo;
 import com.hippo.anotherviewer.dao.DownloadInfo;
@@ -32,21 +38,33 @@ import com.hippo.anotherviewer.dao.QuickSearch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import okhttp3.Cookie;
+import okhttp3.HttpUrl;
+
 /**
- * Timestamp-incremental sync against the WebUI server for all seven entities:
+ * Timestamp-incremental sync against the WebUI server for all eight entities:
  * favorites (union merge), history (last-write-wins), downloads (union merge +
  * status sync), bookmarks (last-write-wins, hard delete), filters (union merge,
- * soft delete), quick searches (union merge, soft delete) and download labels
- * (union merge, soft delete). Implements the push → pull → apply cycle from
- * sync-conflict-rules.md §6, reusing the existing GreenDAO storage via
- * SiteDB (behind the {@link WebUiSyncStore} seam).
+ * soft delete), quick searches (union merge, soft delete), download labels
+ * (union merge, soft delete) and the single EH login session ehSession
+ * (last-write-wins by lastModified, same tier as preferences — ADR-0004;
+ * a deleted tombstone propagates under every conflict strategy). Implements the
+ * push → pull → apply cycle from sync-conflict-rules.md §6, reusing the
+ * existing GreenDAO storage via SiteDB (behind the {@link WebUiSyncStore}
+ * seam). The ehSession entity has no natural idempotency key (a singleton), so
+ * its snapshot/pending sets hold one fixed key; its push ledger tracks a
+ * content fingerprint — the session carries no trusted change timestamp, so
+ * content identity stands in for lastModified (a pulled session is not echoed
+ * back, any real change is).
  *
  * <p>Deletion propagation: local removals are detected by diffing the current
  * local key sets against the snapshot of the last successful sync — the local
@@ -116,6 +134,13 @@ public final class WebUiSyncEngine {
     private static final String SUFFIX_PENDING_QUICK_SEARCHES = ".pending.quickSearches";
     private static final String SUFFIX_SNAPSHOT_DOWNLOAD_LABELS = ".snapshot.downloadLabels";
     private static final String SUFFIX_PENDING_DOWNLOAD_LABELS = ".pending.downloadLabels";
+    // The ehSession entity is a singleton: snapshot/pending hold one fixed key,
+    // and the push ledger tracks a content fingerprint (see isEhSessionChanged).
+    private static final String SUFFIX_SNAPSHOT_EH_SESSION = ".snapshot.ehSession";
+    private static final String SUFFIX_PENDING_EH_SESSION = ".pending.ehSession";
+    private static final String SUFFIX_LEDGER_EH_SESSION = ".ledger.ehSession";
+    /** Fixed key of the singleton ehSession entity in the key-set collections. */
+    private static final String KEY_EH_SESSION = "session";
     // B9 push ledgers (key -> lastModified last delivered/adopted), only for
     // the entities with a trusted change timestamp; filters, quick searches
     // and download labels stay full-push (see buildPushRequests).
@@ -170,6 +195,23 @@ public final class WebUiSyncEngine {
     }
 
     /**
+     * Supplies the device's local EH login session and applies a pulled one
+     * (ADR-0004). Production wires {@link SiteEhSessionSource}, which reads the
+     * {@link SiteCookieStore} jar plus the display/avatar/gallery-site Settings;
+     * tests substitute an in-memory source per device. A {@code null} result
+     * from {@link #loadLocal()} means signed out / no session — the engine then
+     * pushes a {@code deleted: true} tombstone when a session was previously
+     * synced. {@link #applyRemote} writes cookies back to the jar and mirrors
+     * the user-settings fields; a {@code deleted} session signs the device out.
+     */
+    public interface EhSessionSource {
+        @Nullable
+        WebUiSyncModels.SyncEhSession loadLocal();
+
+        void applyRemote(@NonNull WebUiSyncModels.SyncEhSession session);
+    }
+
+    /**
      * Contract v2 §3.8: a soft-entity tombstone is honored locally unless the
      * deleting device is non-priority while this (live, retaining) device is
      * the priority platform — in that case the local copy survives and is
@@ -209,9 +251,10 @@ public final class WebUiSyncEngine {
 
     private final WebUiSyncStore mStore;
     private final WebUiSyncTransport mTransport;
+    private final EhSessionSource mEhSessionSource;
 
     private WebUiSyncEngine() {
-        this(new SiteDbWebUiSyncStore(), new WebUiApiSyncTransport());
+        this(new SiteDbWebUiSyncStore(), new WebUiApiSyncTransport(), new SiteEhSessionSource());
     }
 
     /**
@@ -219,8 +262,131 @@ public final class WebUiSyncEngine {
      * a sync cycle can run without Android or the real server.
      */
     WebUiSyncEngine(WebUiSyncStore store, WebUiSyncTransport transport) {
+        this(store, transport, new SiteEhSessionSource());
+    }
+
+    /**
+     * Test-facing constructor with the EH session seam supplied explicitly.
+     * The default {@link SiteEhSessionSource} answers "no local session" when
+     * no app instance exists, so the two-argument form stays JVM-safe.
+     */
+    WebUiSyncEngine(WebUiSyncStore store, WebUiSyncTransport transport,
+            EhSessionSource ehSessionSource) {
         mStore = store;
         mTransport = transport;
+        mEhSessionSource = ehSessionSource;
+    }
+
+    /**
+     * Production {@link EhSessionSource}: the EH session lives in the
+     * {@link SiteCookieStore} jar (all gallery-site cookies, not just the
+     * identity pair) plus the display/avatar/gallery-site Settings. Cookie
+     * values travel plaintext in the wire model — the server encrypts them at
+     * rest (enc:v1: + security.key) and HTTPS protects them in transit.
+     */
+    private static final class SiteEhSessionSource implements EhSessionSource {
+
+        /** Gallery-site hosts whose stored cookies form the session (contract). */
+        private static final HttpUrl[] SITE_URLS = {
+                HttpUrl.parse(SiteUrl.HOST_E),
+                HttpUrl.parse(SiteUrl.HOST_EX),
+                HttpUrl.parse("https://" + SiteUrl.DOMAIN_FORUMS + "/"),
+                HttpUrl.parse("https://ehgt.org/"),
+        };
+
+        @Nullable
+        @Override
+        public WebUiSyncModels.SyncEhSession loadLocal() {
+            SiteApplication app = SiteApplication.getInstance();
+            if (app == null) {
+                return null;
+            }
+            SiteCookieStore store = SiteApplication.getSiteCookieStore(app);
+            Set<String> seen = new HashSet<>();
+            List<WebUiSyncModels.SyncEhCookie> cookies = new ArrayList<>();
+            for (HttpUrl url : SITE_URLS) {
+                for (Cookie cookie : store.getCookies(url)) {
+                    if (seen.add(cookie.name() + '|' + cookie.domain() + '|' + cookie.path())) {
+                        cookies.add(toDto(cookie));
+                    }
+                }
+            }
+            if (cookies.isEmpty()) {
+                return null;
+            }
+            WebUiSyncModels.SyncEhSession session = new WebUiSyncModels.SyncEhSession();
+            session.cookies = cookies;
+            session.displayName = Settings.getDisplayName();
+            session.avatar = Settings.getAvatar();
+            session.gallerySite = Settings.getGallerySite();
+            return session;
+        }
+
+        @Override
+        public void applyRemote(@NonNull WebUiSyncModels.SyncEhSession session) {
+            SiteApplication app = SiteApplication.getInstance();
+            if (app == null) {
+                return;
+            }
+            SiteCookieStore store = SiteApplication.getSiteCookieStore(app);
+            if (session.deleted) {
+                // Tombstone: the session was logged out / cleared elsewhere.
+                SiteUtils.signOut(app);
+                return;
+            }
+            // The pulled session is the authoritative EH session state: replace
+            // the jar contents, then mirror the user-settings fields.
+            store.clear();
+            for (WebUiSyncModels.SyncEhCookie dto : session.cookies) {
+                try {
+                    store.addCookie(toCookie(dto));
+                } catch (IllegalArgumentException ignored) {
+                    // Skip a cookie the local Cookie.Builder rejects.
+                }
+            }
+            Settings.putDisplayName(session.displayName);
+            Settings.putAvatar(session.avatar);
+            if (session.gallerySite != null) {
+                // Contract: absent/null gallerySite keeps the current selection.
+                Settings.putGallerySite(session.gallerySite);
+            }
+        }
+
+        private static WebUiSyncModels.SyncEhCookie toDto(Cookie cookie) {
+            WebUiSyncModels.SyncEhCookie dto = new WebUiSyncModels.SyncEhCookie();
+            dto.name = cookie.name();
+            dto.value = cookie.value();
+            dto.domain = cookie.domain();
+            dto.path = cookie.path();
+            dto.expiresAt = cookie.persistent() ? cookie.expiresAt() : 0L;
+            dto.secure = cookie.secure();
+            dto.httpOnly = cookie.httpOnly();
+            dto.persistent = cookie.persistent();
+            dto.hostOnly = cookie.hostOnly();
+            return dto;
+        }
+
+        private static Cookie toCookie(WebUiSyncModels.SyncEhCookie dto) {
+            Cookie.Builder builder = new Cookie.Builder();
+            builder.name(dto.name);
+            builder.value(dto.value);
+            if (dto.hostOnly) {
+                builder.hostOnlyDomain(dto.domain);
+            } else {
+                builder.domain(dto.domain);
+            }
+            builder.path(dto.path);
+            if (dto.expiresAt > 0L) {
+                builder.expiresAt(dto.expiresAt);
+            }
+            if (dto.secure) {
+                builder.secure();
+            }
+            if (dto.httpOnly) {
+                builder.httpOnly();
+            }
+            return builder.build();
+        }
     }
 
     private static WebUiSyncEngine instance() {
@@ -245,6 +411,7 @@ public final class WebUiSyncEngine {
         public int pushedDownloads, pulledDownloads, pushedBookmarks, pulledBookmarks;
         public int pushedFilters, pulledFilters, pushedQuickSearches, pulledQuickSearches;
         public int pushedDownloadLabels, pulledDownloadLabels;
+        public int pushedEhSessions, pulledEhSessions;
         public long serverTimestamp;
     }
 
@@ -278,6 +445,7 @@ public final class WebUiSyncEngine {
         Set<String> snapshotFilters = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS);
         Set<String> snapshotQuickSearches = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES);
         Set<String> snapshotDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS);
+        Set<String> snapshotEhSession = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_EH_SESSION);
 
         Set<Long> pendingFavorites = mStore.loadKeySet(serverKey, SUFFIX_PENDING_FAVORITES);
         Set<Long> pendingHistory = mStore.loadKeySet(serverKey, SUFFIX_PENDING_HISTORY);
@@ -292,6 +460,7 @@ public final class WebUiSyncEngine {
         Set<String> pendingFilters = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_FILTERS);
         Set<String> pendingQuickSearches = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES);
         Set<String> pendingDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS);
+        Set<String> pendingEhSession = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION);
 
         Set<Long> currentFavorites = collectFavoriteKeys();
         Set<Long> currentHistory = collectHistoryKeys();
@@ -300,6 +469,10 @@ public final class WebUiSyncEngine {
         Set<String> currentFilters = collectFilterKeys();
         Set<String> currentQuickSearches = collectQuickSearchKeys();
         Set<String> currentDownloadLabels = collectDownloadLabelKeys();
+        WebUiSyncModels.SyncEhSession localEhSession = mEhSessionSource.loadLocal();
+        Set<String> currentEhSession = localEhSession != null
+                ? Collections.singleton(KEY_EH_SESSION)
+                : Collections.<String>emptySet();
 
         pendingFavorites = detectDeletions(snapshotFavorites, pendingFavorites, currentFavorites);
         pendingHistory = detectDeletions(snapshotHistory, pendingHistory, currentHistory);
@@ -308,6 +481,7 @@ public final class WebUiSyncEngine {
         pendingFilters = detectDeletions(snapshotFilters, pendingFilters, currentFilters);
         pendingQuickSearches = detectDeletions(snapshotQuickSearches, pendingQuickSearches, currentQuickSearches);
         pendingDownloadLabels = detectDeletions(snapshotDownloadLabels, pendingDownloadLabels, currentDownloadLabels);
+        pendingEhSession = detectDeletions(snapshotEhSession, pendingEhSession, currentEhSession);
 
         // W5 write-through (R4-15 audit §2.1 hardening): persist the detected
         // pending tombstones NOW — at detection time, before the push — not
@@ -327,6 +501,7 @@ public final class WebUiSyncEngine {
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, pendingFilters);
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, pendingQuickSearches);
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, pendingDownloadLabels);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, pendingEhSession);
 
         // B9: the push ledgers (key -> lastModified last delivered/adopted).
         // A null (corrupt/unreadable) ledger normalizes to empty, which marks
@@ -335,6 +510,12 @@ public final class WebUiSyncEngine {
         Map<String, Long> ledgerHistory = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_HISTORY);
         Map<String, Long> ledgerBookmarks = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_BOOKMARKS);
         Map<String, Long> ledgerDownloads = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_DOWNLOADS);
+        // ehSession: the ledger value is a content fingerprint (no trusted
+        // change timestamp exists), so unchanged content is not re-pushed and a
+        // pulled session is not echoed back.
+        Map<String, Long> ledgerEhSession = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_EH_SESSION);
+        boolean pushLiveEhSession = localEhSession != null
+                && isEhSessionChanged(ledgerEhSession, localEhSession);
 
         // 1. Push local state, including tombstones for pending deletions.
         // B9 incremental: only new/changed live records (per the ledgers) and
@@ -353,7 +534,8 @@ public final class WebUiSyncEngine {
         List<WebUiSyncModels.PushRequest> requests = buildPushRequests(deviceId, now,
                 favoritesToPush, historyToPush, bookmarksToPush, downloadsToPush,
                 pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
-                pendingFilters, pendingQuickSearches, pendingDownloadLabels);
+                pendingFilters, pendingQuickSearches, pendingDownloadLabels,
+                pendingEhSession, localEhSession, pushLiveEhSession);
         for (WebUiSyncModels.PushRequest push : requests) {
             WebUiSyncModels.PushResponse pushResponse = mTransport.push(config, push);
             if (!pushResponse.success) {
@@ -367,6 +549,7 @@ public final class WebUiSyncEngine {
             result.pushedFilters += entities.filters.size();
             result.pushedQuickSearches += entities.quickSearches.size();
             result.pushedDownloadLabels += entities.downloadLabels.size();
+            result.pushedEhSessions += entities.ehSession.size();
         }
 
         // The push is the new baseline; the pending deletions were delivered.
@@ -397,6 +580,14 @@ public final class WebUiSyncEngine {
         for (long gid : pendingDownloads) {
             ledgerDownloads.remove(Long.toString(gid));
         }
+        if (pushLiveEhSession) {
+            ledgerEhSession.put(KEY_EH_SESSION, fingerprintEhSession(localEhSession));
+        }
+        if (pendingEhSession.contains(KEY_EH_SESSION)) {
+            // The logged-out tombstone was delivered; a later re-login pushes
+            // as new again.
+            ledgerEhSession.remove(KEY_EH_SESSION);
+        }
 
         // The snapshot is finalized at save time (re-collected from the local
         // store after apply), not here — see the save block below (R4-15 W1/W2).
@@ -420,6 +611,9 @@ public final class WebUiSyncEngine {
         applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
         applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
         applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
+        // ehSession follows the server unconditionally (the server already
+        // resolved the LWW merge); a pulled tombstone signs the device out.
+        applyEhSession(pull.entities.ehSession, result, snapshotEhSession, ledgerEhSession);
 
         // R4-15 W1/W2: the snapshot is finalized HERE — re-collected from the
         // local store at save time, after apply — instead of reusing the
@@ -444,6 +638,7 @@ public final class WebUiSyncEngine {
         snapshotFilters = collectFilterKeys();
         snapshotQuickSearches = collectQuickSearchKeys();
         snapshotDownloadLabels = collectDownloadLabelKeys();
+        snapshotEhSession = collectEhSessionKeys();
 
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
@@ -452,6 +647,7 @@ public final class WebUiSyncEngine {
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS, snapshotFilters);
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES, snapshotQuickSearches);
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS, snapshotDownloadLabels);
+        mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_EH_SESSION, snapshotEhSession);
         mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, Collections.emptySet());
         mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, Collections.emptySet());
         mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, Collections.emptySet());
@@ -459,10 +655,12 @@ public final class WebUiSyncEngine {
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, Collections.emptySet());
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, Collections.emptySet());
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, Collections.emptySet());
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, Collections.emptySet());
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_FAVORITES, ledgerFavorites);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_HISTORY, ledgerHistory);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_BOOKMARKS, ledgerBookmarks);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_DOWNLOADS, ledgerDownloads);
+        mStore.savePushLedger(serverKey, SUFFIX_LEDGER_EH_SESSION, ledgerEhSession);
 
         result.serverTimestamp = pull.serverTimestamp;
         return result;
@@ -568,7 +766,9 @@ public final class WebUiSyncEngine {
             Set<Long> pendingFavorites, Set<Long> pendingHistory,
             Set<Long> pendingDownloads, Set<Long> pendingBookmarks,
             Set<String> pendingFilters, Set<String> pendingQuickSearches,
-            Set<String> pendingDownloadLabels) {
+            Set<String> pendingDownloadLabels,
+            Set<String> pendingEhSession, WebUiSyncModels.SyncEhSession localEhSession,
+            boolean pushLiveEhSession) {
         List<Long> downloadTombstones = new ArrayList<>(pendingDownloads);
 
         // Downloads are the only realistically huge entity; chunk both live
@@ -600,6 +800,7 @@ public final class WebUiSyncEngine {
                 fillFilters(request.entities, deviceId, now, pendingFilters);
                 fillQuickSearches(request.entities, deviceId, now, pendingQuickSearches);
                 fillDownloadLabels(request.entities, deviceId, now, pendingDownloadLabels);
+                fillEhSession(request.entities, deviceId, now, localEhSession, pushLiveEhSession, pendingEhSession);
             }
 
             int from = i * PUSH_BATCH_SIZE;
@@ -795,6 +996,30 @@ public final class WebUiSyncEngine {
             dto.deviceId = deviceId;
             dto.deleted = true;
             entities.downloadLabels.add(dto);
+        }
+    }
+
+    /**
+     * Singleton ehSession: a pending deletion pushes a {@code deleted: true}
+     * tombstone; otherwise the live session rides along only when its content
+     * changed since the last push (see {@link #isEhSessionChanged}).
+     */
+    private void fillEhSession(WebUiSyncModels.EntityCollection entities,
+            String deviceId, long now, WebUiSyncModels.SyncEhSession localSession,
+            boolean pushLive, Set<String> pendingEhSession) {
+        if (pendingEhSession.contains(KEY_EH_SESSION)) {
+            // Tombstone: the user logged out / cookies cleared on this device;
+            // the deletion propagates under every conflict strategy.
+            WebUiSyncModels.SyncEhSession tomb = new WebUiSyncModels.SyncEhSession();
+            tomb.lastModified = now;
+            tomb.deviceId = deviceId;
+            tomb.deleted = true;
+            entities.ehSession.add(tomb);
+        } else if (pushLive && localSession != null) {
+            localSession.lastModified = now;
+            localSession.deviceId = deviceId;
+            localSession.deleted = false;
+            entities.ehSession.add(localSession);
         }
     }
 
@@ -1118,6 +1343,33 @@ public final class WebUiSyncEngine {
     }
 
     /**
+     * The singleton ehSession follows the server unconditionally (the server
+     * already resolved the last-write-wins merge; same tier as preferences):
+     * a live session replaces the local cookies/settings, a tombstone signs
+     * the device out. The ledger is advanced to a fingerprint of the LOCAL
+     * state after apply so the next push does not echo the session back.
+     */
+    private void applyEhSession(List<WebUiSyncModels.SyncEhSession> sessions,
+            Result result, Set<String> snapshotEhSession, Map<String, Long> ledger) {
+        for (WebUiSyncModels.SyncEhSession session : sessions) {
+            mEhSessionSource.applyRemote(session);
+            if (session.deleted) {
+                snapshotEhSession.remove(KEY_EH_SESSION);
+                ledger.remove(KEY_EH_SESSION);
+            } else {
+                snapshotEhSession.add(KEY_EH_SESSION);
+                WebUiSyncModels.SyncEhSession local = mEhSessionSource.loadLocal();
+                if (local != null) {
+                    ledger.put(KEY_EH_SESSION, fingerprintEhSession(local));
+                } else {
+                    ledger.remove(KEY_EH_SESSION);
+                }
+            }
+            result.pulledEhSessions++;
+        }
+    }
+
+    /**
      * Keys pushed before (or already pending) that no longer exist locally are
      * deletions to propagate. Keys present locally again (re-added) are dropped
      * so the next push resurrects them instead of re-deleting them.
@@ -1189,6 +1441,72 @@ public final class WebUiSyncEngine {
             keys.add(dl.getLabel());
         }
         return keys;
+    }
+
+    /** The singleton ehSession is keyed by a fixed key when a session exists. */
+    private Set<String> collectEhSessionKeys() {
+        return mEhSessionSource.loadLocal() != null
+                ? Collections.singleton(KEY_EH_SESSION)
+                : Collections.<String>emptySet();
+    }
+
+    /**
+     * The ehSession carries no trusted change timestamp, so the push ledger
+     * tracks a content fingerprint instead of a lastModified: the live session
+     * is re-pushed only when its content differs from what was last
+     * delivered/adopted — unchanged content (including a session adopted from
+     * a pull) is never echoed back.
+     */
+    private boolean isEhSessionChanged(Map<String, Long> ledger,
+            WebUiSyncModels.SyncEhSession local) {
+        Long known = ledger.get(KEY_EH_SESSION);
+        return known == null || known.longValue() != fingerprintEhSession(local);
+    }
+
+    /**
+     * Deterministic 64-bit fingerprint over the session content (cookies sorted
+     * by name/domain/path, then the user-settings fields). Cookie order from
+     * the cookie jar is not stable across cycles, so it is normalized here.
+     */
+    static long fingerprintEhSession(WebUiSyncModels.SyncEhSession session) {
+        long h = 1469598103934665603L; // FNV-1a 64-bit offset basis
+        List<WebUiSyncModels.SyncEhCookie> cookies =
+                session != null && session.cookies != null ? session.cookies
+                        : Collections.<WebUiSyncModels.SyncEhCookie>emptyList();
+        List<WebUiSyncModels.SyncEhCookie> sorted = new ArrayList<>(cookies);
+        sorted.sort(Comparator.comparing((WebUiSyncModels.SyncEhCookie c) -> c.name,
+                        Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(c -> c.domain, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(c -> c.path, Comparator.nullsFirst(Comparator.naturalOrder())));
+        for (WebUiSyncModels.SyncEhCookie dto : sorted) {
+            h = mixFingerprint(h, dto.name);
+            h = mixFingerprint(h, dto.value);
+            h = mixFingerprint(h, dto.domain);
+            h = mixFingerprint(h, dto.path);
+            h = mixFingerprint(h, Long.toString(dto.expiresAt));
+            h = mixFingerprint(h, Boolean.toString(dto.secure));
+            h = mixFingerprint(h, Boolean.toString(dto.httpOnly));
+            h = mixFingerprint(h, Boolean.toString(dto.persistent));
+            h = mixFingerprint(h, Boolean.toString(dto.hostOnly));
+        }
+        if (session != null) {
+            h = mixFingerprint(h, session.displayName);
+            h = mixFingerprint(h, session.avatar);
+            h = mixFingerprint(h, session.gallerySite != null
+                    ? Integer.toString(session.gallerySite) : null);
+        }
+        return h;
+    }
+
+    private static long mixFingerprint(long h, String s) {
+        if (s == null) {
+            return (h ^ 0xffL) * 1099511628211L; // FNV-1a prime
+        }
+        long result = h;
+        for (int i = 0; i < s.length(); i++) {
+            result = (result ^ s.charAt(i)) * 1099511628211L;
+        }
+        return result;
     }
 
     private String filterKey(int mode, String text) {

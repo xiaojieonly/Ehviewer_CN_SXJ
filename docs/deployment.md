@@ -235,8 +235,8 @@ chown -R www-data:www-data data cache downloads
 
 - 管理界面「备份」页或直接调用 `POST /api/v1/backup/import-ehviewer`，multipart 上传 legacy EhViewer `.db`（可选 `cookies` 字段）
 - **表驱动扫描**：以 `PRAGMA table_info` 感知上传库实际存在的表与列集，缺列落默认值；8 张核心业务表映射到 sync 实体，`Black_List` → black_list，`Gallery_Tags` → gallery_tags，`DOWNLOAD_DIRNAME` → download_dirname；gid 冲突默认跳过（计 skipped），`force=true` 时 upsert
-- **可选 cookies**：上传 `okhttp3-cookie.db`（`OK_HTTP_3_COOKIE` 表）或 JSON cookie 数组；仅收容站点域（`e-hentai.org` / `exhentai.org` / `ehgt.org` / `forums.e-hentai.org` 及子域）写入 `SiteSessionManager.cookieStore`（会话级 cookieStore），使 WebUI 代理可带登录态抓取 EX 站；非站点域 cookie 忽略
-- **语义**：登录态**不进 sync 实体**（凭据安全 + 每设备独立）；cookieStore 为**会话级**（进程内，服务器重启即失效）；端点为管理员鉴权接受（Bearer token，同其余 `/api`）
+- **可选 cookies**：上传 `okhttp3-cookie.db`（`OK_HTTP_3_COOKIE` 表）或 JSON cookie 数组；仅收容站点域（`e-hentai.org` / `exhentai.org` / `ehgt.org` / `forums.e-hentai.org` 及子域）写入 `SiteSessionManager.cookieStore`，使 WebUI 代理可带登录态抓取 EX 站；非站点域 cookie 忽略；cookie 同时作为 ehSession 同步实体加密落库（见下）
+- **语义**：登录态为同步实体 **ehSession**（EH 登录会话 + 设置，双端 LWW 双向同步，登出=tombstone 传播；Web 端 cookie 加密落库 `enc:v1:` + security.key，进程内解密，重启后从库恢复）——见 ADR-0004；旧决策「登录态不进 sync 实体；cookieStore 会话级、重启即失效」已推翻。端点为管理员鉴权接受（Bearer token，同其余 `/api`）
 
 **导入语义（importDB）**：
 

@@ -83,6 +83,33 @@ class AuthController(
         return ResponseEntity.ok(AuthResponse(true, "Logged out"))
     }
 
+    @PostMapping("/eh-login")
+    fun ehLogin(@Valid @RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
+        val response = authService.loginEh(request.username, request.password)
+        return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
+    }
+
+    @PostMapping("/eh-logout")
+    fun ehLogout(): ResponseEntity<AuthResponse> {
+        authService.logoutEh()
+        return ResponseEntity.ok(AuthResponse(true, "Logged out"))
+    }
+
+    @GetMapping("/eh-session")
+    fun ehSession(): ResponseEntity<EhSessionResponse> = ResponseEntity.ok(authService.ehSession())
+
+    /** Switch the Gallery Site (0 = e-hentai, 1 = exhentai); invalid values fail validation or return 400. */
+    @PutMapping("/eh-site")
+    fun setEhSite(@Valid @RequestBody request: EhSiteRequest): ResponseEntity<AuthResponse> {
+        val site = request.gallerySite
+            ?: return ResponseEntity.badRequest().body(AuthResponse(false, "Invalid gallery site value"))
+        return if (authService.setGallerySite(site)) {
+            ResponseEntity.ok(AuthResponse(true, "Gallery site updated"))
+        } else {
+            ResponseEntity.badRequest().body(AuthResponse(false, "Invalid gallery site value"))
+        }
+    }
+
     @PostMapping("/pair")
     fun generatePairCode(authentication: Authentication): ResponseEntity<PairCodeResponse> {
         return ResponseEntity.ok(authService.generatePairCode(authentication.name))

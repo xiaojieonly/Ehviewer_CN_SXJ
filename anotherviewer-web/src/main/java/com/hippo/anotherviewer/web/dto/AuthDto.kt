@@ -1,6 +1,9 @@
 package com.hippo.anotherviewer.web.dto
 
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class LoginRequest(
@@ -44,6 +47,30 @@ data class AuthStatusResponse(
     // Gallery Site session state sourced from the unified cookie store shared with anotherviewer-core.
     val ehSessionValid: Boolean = false,
     val ehSessionExpired: Boolean = false
+)
+
+// --- Gallery Site (EH) session ---
+
+data class EhSessionCookieDto(
+    val name: String,
+    val value: String,
+    val domain: String,
+    val expiresAt: Long,
+)
+
+data class EhSessionResponse(
+    val signedIn: Boolean,
+    val expired: Boolean,
+    val cookies: List<EhSessionCookieDto>,
+    // Selected Gallery Site: 0 = e-hentai, 1 = exhentai.
+    val gallerySite: Int = 0,
+)
+
+data class EhSiteRequest(
+    @field:NotNull
+    @field:Min(0)
+    @field:Max(1)
+    val gallerySite: Int?,
 )
 
 // --- Device pairing ---

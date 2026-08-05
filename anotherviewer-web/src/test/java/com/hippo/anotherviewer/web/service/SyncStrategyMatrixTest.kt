@@ -26,6 +26,7 @@ import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
@@ -106,6 +107,8 @@ class SyncStrategyMatrixTest {
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, fakeDeviceRepo(), preferenceRepo,
             UserPreferenceService(preferenceRepo), fakeServerConfig(),
+            mock(EhSessionRepository::class.java),
+            mock(SiteSessionManager::class.java),
         )
     }
 

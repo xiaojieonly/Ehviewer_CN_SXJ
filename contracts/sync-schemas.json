@@ -360,6 +360,104 @@
       },
       "required": ["label", "time", "lastModified", "deviceId"]
     },
+    "syncEhSession": {
+      "$id": "https://anotherviewer.local/schemas/sync/eh-session.json",
+      "title": "SyncEhSession",
+      "description": "The single E-Hentai login session plus user-settings record (ADR-0004). Singleton entity — at most one live row per user, no natural idempotency key. Merge strategy: last-write-wins by lastModified, independent of conflictStrategy (same tier as preferences, ADR-0001/0003). A deleted=true push is a tombstone that propagates under every strategy (§3.8 tombstone semantics; ADR-0004 D3). Cookie values are encrypted at rest on the server (enc:v1: + security.key, ADR-0004 D4) and decrypted in-process only.",
+      "type": "object",
+      "properties": {
+        "cookies": {
+          "type": "array",
+          "description": "EH session cookies with full identity fields. Only gallery-site domains (e-hentai.org / exhentai.org / ehgt.org / forums.e-hentai.org and subdomains) are accepted; non-site cookies are ignored.",
+          "items": { "$ref": "#/$defs/syncEhCookie" }
+        },
+        "displayName": {
+          "type": ["string", "null"],
+          "description": "EH member display name",
+          "maxLength": 256
+        },
+        "avatar": {
+          "type": ["string", "null"],
+          "description": "EH member avatar image URL",
+          "maxLength": 2048
+        },
+        "gallerySite": {
+          "type": ["integer", "null"],
+          "description": "Gallery site selection: 0 = e-hentai.org, 1 = exhentai.org (Settings.SITE_E / Settings.SITE_EX). Absent or null = keep the receiving side's current selection.",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lastModified": {
+          "type": "integer",
+          "description": "Epoch milliseconds when this entity was last modified on the source device. Used for last-write-wins conflict resolution.",
+          "minimum": 0
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Unique identifier of the device that last modified this entity. Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete (tombstone) flag. true = the user logged out / cookies were cleared on the source device; the deletion propagates under every conflict strategy (§3.8 tombstone semantics, ADR-0004 D3).",
+          "default": false
+        }
+      },
+      "required": ["lastModified", "deleted"],
+      "additionalProperties": false
+    },
+    "syncEhCookie": {
+      "$id": "https://anotherviewer.local/schemas/sync/eh-cookie.json",
+      "title": "SyncEhCookie",
+      "description": "A single EH session cookie. Field set mirrors okhttp3.Cookie / SiteCookieStore entries so both sides can round-trip the session without loss.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Cookie name (e.g. ipb_member_id, ipb_pass_hash, igneous)",
+          "maxLength": 256
+        },
+        "value": {
+          "type": "string",
+          "description": "Cookie value. Encrypted at rest on the server (enc:v1: + security.key, ADR-0004 D4).",
+          "maxLength": 4096
+        },
+        "domain": {
+          "type": "string",
+          "description": "Cookie domain",
+          "maxLength": 256
+        },
+        "path": {
+          "type": "string",
+          "description": "Cookie path",
+          "maxLength": 1024
+        },
+        "expiresAt": {
+          "type": "integer",
+          "description": "Cookie expiry as epoch milliseconds; 0 = session cookie",
+          "minimum": 0
+        },
+        "secure": {
+          "type": "boolean",
+          "description": "Whether the cookie is restricted to HTTPS"
+        },
+        "httpOnly": {
+          "type": "boolean",
+          "description": "Whether the cookie is HTTP-only"
+        },
+        "persistent": {
+          "type": "boolean",
+          "description": "Whether the cookie persists across sessions (false = session cookie)"
+        },
+        "hostOnly": {
+          "type": "boolean",
+          "description": "Whether the cookie applies only to its exact host domain"
+        }
+      },
+      "required": ["name", "value", "domain", "path", "expiresAt", "secure", "httpOnly", "persistent", "hostOnly"],
+      "additionalProperties": false
+    },
     "syncPolicy": {
       "$id": "https://anotherviewer.local/schemas/sync/policy.json",
       "title": "SyncPolicy",
@@ -428,6 +526,11 @@
           "type": "array",
           "items": { "$ref": "#/$defs/syncDownloadLabel" },
           "description": "Download label categories"
+        },
+        "ehSession": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncEhSession" },
+          "description": "E-Hentai login session + user settings (singleton; ADR-0004)"
         },
         "preferences": {
           "type": "object",
@@ -549,9 +652,10 @@
         "bookmarks": { "type": "integer", "minimum": 0 },
         "filters": { "type": "integer", "minimum": 0 },
         "quickSearches": { "type": "integer", "minimum": 0 },
-        "downloadLabels": { "type": "integer", "minimum": 0 }
+        "downloadLabels": { "type": "integer", "minimum": 0 },
+        "ehSession": { "type": "integer", "minimum": 0 }
       },
-      "required": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
+      "required": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels", "ehSession"]
     },
     "syncStatusResponse": {
       "$id": "https://anotherviewer.local/schemas/sync/status-response.json",

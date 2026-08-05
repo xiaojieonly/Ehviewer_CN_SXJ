@@ -8,7 +8,7 @@ const ADMIN_PATHS = [
   '/admin/server',
   '/admin/backup',
   '/admin/devices',
-  '/admin/proxy',
+  '/admin/eh',
   '/admin/access',
   '/admin/processing',
   '/admin/advanced',
@@ -45,14 +45,14 @@ describe('AdminLayout (UX-04)', () => {
 
   it('marks the tab matching the current route as active', async () => {
     const router = makeRouter()
-    await router.push('/admin/proxy')
+    await router.push('/admin/eh')
     await router.isReady()
     wrapper = mount(AdminLayout, { global: { plugins: [router] } })
     const active = wrapper
       .findAll('.admin-layout__link')
       .filter((link) => link.classes().includes('is-active'))
     expect(active).toHaveLength(1)
-    expect(active[0].text()).toBe('代理')
+    expect(active[0].text()).toBe('EH 会话')
   })
 
   it('scrolls the active tab into view on mount and on route change', async () => {

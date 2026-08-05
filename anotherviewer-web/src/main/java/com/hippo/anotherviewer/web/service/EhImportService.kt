@@ -440,6 +440,8 @@ class EhImportService(
                 imported++
             }
         }
+        // ADR-0004：导入即持久化，重启后经 ehSession 恢复（不再会话级失效）。
+        if (imported > 0) sessionManager.saveSessionSnapshot()
         return EhCookieImportResult(imported = imported, siteDomain = siteDomain)
     }
 

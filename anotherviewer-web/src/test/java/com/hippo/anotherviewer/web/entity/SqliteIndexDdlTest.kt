@@ -65,5 +65,12 @@ class SqliteIndexDdlTest {
             bookmarkIndexes.contains("idx_bookmark_username_lm"),
             "idx_bookmark_username_lm missing on bookmark_info, got: $bookmarkIndexes",
         )
+
+        // ADR-0004: ehSession 单例行依赖 (username, last_modified) 索引。
+        val ehSessionIndexes = indexNames("eh_session")
+        assertTrue(
+            ehSessionIndexes.contains("idx_eh_session_username_lm"),
+            "idx_eh_session_username_lm missing on eh_session, got: $ehSessionIndexes",
+        )
     }
 }

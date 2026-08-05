@@ -78,6 +78,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
             if (dto instanceof WebUiSyncModels.SyncQuickSearch) {
                 return ((WebUiSyncModels.SyncQuickSearch) dto).lastModified;
             }
+            if (dto instanceof WebUiSyncModels.SyncEhSession) {
+                return ((WebUiSyncModels.SyncEhSession) dto).lastModified;
+            }
             return ((WebUiSyncModels.SyncDownloadLabel) dto).lastModified;
         }
     }
@@ -101,6 +104,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     public final Map<String, Record> filters = new LinkedHashMap<>();
     public final Map<String, Record> quickSearches = new LinkedHashMap<>();
     public final Map<String, Record> downloadLabels = new LinkedHashMap<>();
+    /** The singleton ehSession entity, keyed by the engine's fixed key. */
+    public final Map<String, Record> ehSessions = new LinkedHashMap<>();
+    private static final String EH_SESSION_KEY = "session";
 
     @NonNull
     @Override
@@ -120,7 +126,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         pushRequestCount++;
         totalPushedEntities += e.favorites.size() + e.history.size() + e.downloads.size()
                 + e.bookmarks.size() + e.filters.size() + e.quickSearches.size()
-                + e.downloadLabels.size();
+                + e.downloadLabels.size() + e.ehSession.size();
         for (WebUiSyncModels.SyncFavorite fav : e.favorites) {
             mergeUnion(favorites, fav.gid, fav, fav.deleted);
         }
@@ -142,6 +148,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         for (WebUiSyncModels.SyncDownloadLabel dl : e.downloadLabels) {
             mergeUnion(downloadLabels, dl.label, dl, dl.deleted);
         }
+        for (WebUiSyncModels.SyncEhSession s : e.ehSession) {
+            mergeEhSession(s);
+        }
         response.success = true;
         response.serverTimestamp = serverTimestamp;
         return response;
@@ -157,6 +166,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (dto instanceof WebUiSyncModels.GalleryBase) return WebUiSyncEngine.platformOf(((WebUiSyncModels.GalleryBase) dto).deviceId);
         if (dto instanceof WebUiSyncModels.SyncFilter) return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncFilter) dto).deviceId);
         if (dto instanceof WebUiSyncModels.SyncQuickSearch) return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncQuickSearch) dto).deviceId);
+        if (dto instanceof WebUiSyncModels.SyncEhSession) return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncEhSession) dto).deviceId);
         return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncDownloadLabel) dto).deviceId);
     }
 
@@ -164,6 +174,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (dto instanceof WebUiSyncModels.GalleryBase) return ((WebUiSyncModels.GalleryBase) dto).lastModified;
         if (dto instanceof WebUiSyncModels.SyncFilter) return ((WebUiSyncModels.SyncFilter) dto).lastModified;
         if (dto instanceof WebUiSyncModels.SyncQuickSearch) return ((WebUiSyncModels.SyncQuickSearch) dto).lastModified;
+        if (dto instanceof WebUiSyncModels.SyncEhSession) return ((WebUiSyncModels.SyncEhSession) dto).lastModified;
         return ((WebUiSyncModels.SyncDownloadLabel) dto).lastModified;
     }
 
@@ -391,9 +402,27 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         fillFilterPull(response.entities.filters, filters, since);
         fillQuickSearchPull(response.entities.quickSearches, quickSearches, since);
         fillDownloadLabelPull(response.entities.downloadLabels, downloadLabels, since);
+        fillEhSessionPull(response.entities.ehSession, ehSessions, since);
         response.serverTimestamp = serverTimestamp;
         response.policy = policy;
         return response;
+    }
+
+    /**
+     * The singleton ehSession merges last-write-wins by lastModified,
+     * independent of the conflict strategy (same tier as preferences): an
+     * incoming record at least as new as the stored one — live or tombstone —
+     * replaces it, so a deletion whose lastModified is newer propagates under
+     * every strategy. The {@code >=} tie-break (incoming wins on an equal
+     * lastModified) keeps same-millisecond pushes deterministic; tests never
+     * rely on wall-clock ordering.
+     */
+    private void mergeEhSession(WebUiSyncModels.SyncEhSession incoming) {
+        Record existing = ehSessions.get(EH_SESSION_KEY);
+        if (existing == null || incoming.lastModified >= existing.dtoLastModified()) {
+            ehSessions.put(EH_SESSION_KEY,
+                    new Record(serverTimestamp, incoming.deleted, incoming));
+        }
     }
 
     private static void fillFavoritePull(java.util.List<WebUiSyncModels.SyncFavorite> out,
@@ -455,6 +484,15 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         for (Record record : map.values()) {
             if (record.serverModified > since) {
                 out.add((WebUiSyncModels.SyncDownloadLabel) record.dto);
+            }
+        }
+    }
+
+    private static void fillEhSessionPull(java.util.List<WebUiSyncModels.SyncEhSession> out,
+            Map<String, Record> map, long since) {
+        for (Record record : map.values()) {
+            if (record.serverModified > since) {
+                out.add((WebUiSyncModels.SyncEhSession) record.dto);
             }
         }
     }

@@ -241,6 +241,89 @@ paths:
         '401':
           description: Authentication required (token missing or invalid)
 
+  /api/v1/auth/eh-login:
+    post:
+      tags: [Auth]
+      operationId: ehLogin
+      summary: Sign in to the Gallery Site (EH) via the shared cookie store
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Gallery Site login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Gallery Site login failed (invalid credentials or site unreachable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /api/v1/auth/eh-logout:
+    post:
+      tags: [Auth]
+      operationId: ehLogout
+      summary: Sign out of the Gallery Site session only (the WebUI token is kept)
+      responses:
+        '200':
+          description: Gallery Site session cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication required (token missing or invalid)
+
+  /api/v1/auth/eh-session:
+    get:
+      tags: [Auth]
+      operationId: ehSession
+      summary: Report the current Gallery Site session and its identity cookies
+      responses:
+        '200':
+          description: Gallery Site session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EhSessionResponse'
+        '401':
+          description: Authentication required (token missing or invalid)
+
+  /api/v1/auth/eh-site:
+    put:
+      tags: [Auth]
+      operationId: setEhSite
+      summary: Switch the Gallery Site used by all site traffic (0 = e-hentai, 1 = exhentai)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EhSiteRequest'
+      responses:
+        '200':
+          description: Gallery Site switched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid gallery site value (must be 0 or 1) or missing field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication required (token missing or invalid)
+
   # ============================================================
   # Gallery
   # ============================================================
@@ -2000,6 +2083,48 @@ components:
           type: boolean
           description: Whether the Gallery Site session has expired and needs re-authentication
 
+    EhSessionResponse:
+      type: object
+      properties:
+        signedIn:
+          type: boolean
+          description: Whether Gallery Site identity cookies are present
+        expired:
+          type: boolean
+          description: Whether the Gallery Site session has expired and needs re-authentication
+        gallerySite:
+          type: integer
+          default: 0
+          description: Selected Gallery Site (0 = e-hentai, 1 = exhentai)
+        cookies:
+          type: array
+          items:
+            $ref: '#/components/schemas/EhSessionCookieDto'
+
+    EhSiteRequest:
+      type: object
+      required: [gallerySite]
+      properties:
+        gallerySite:
+          type: integer
+          minimum: 0
+          maximum: 1
+          description: Target Gallery Site (0 = e-hentai, 1 = exhentai)
+
+    EhSessionCookieDto:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        domain:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+          description: Cookie expiry timestamp (ms epoch); 253402300799999 for cookies without an explicit expiry
+
     PairCodeResponse:
       type: object
       properties:
@@ -2953,6 +3078,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SyncDownloadLabelDto'
+        ehSession:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncEhSessionDto'
+          description: E-Hentai login session + user settings (singleton; ADR-0004)
         preferences:
           $ref: '#/components/schemas/SyncPreferencesDto'
 
@@ -3310,6 +3440,71 @@ components:
           format: int64
         deviceId:
           type: string
+
+    SyncEhSessionDto:
+      type: object
+      required: [lastModified, deleted]
+      description: E-Hentai login session + user settings (ADR-0004). Singleton entity; LWW merge, independent of conflictStrategy.
+      properties:
+        cookies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncEhSessionCookieDto'
+          description: EH session cookies, full identity fields; only gallery-site domains (e-hentai.org / exhentai.org / ehgt.org / forums.e-hentai.org and subdomains) are accepted
+        displayName:
+          type: string
+          nullable: true
+          description: EH member display name
+        avatar:
+          type: string
+          nullable: true
+          description: EH member avatar image URL
+        gallerySite:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Gallery site selection (0 = e-hentai.org, 1 = exhentai.org); absent or null = keep receiving side's current selection
+        lastModified:
+          type: integer
+          format: int64
+          description: Epoch ms when the session was last modified on the source device (LWW)
+        deviceId:
+          type: string
+          description: Device that last modified this session
+        deleted:
+          type: boolean
+          description: Tombstone flag — true = logged out / cookies cleared on the originating device (ADR-0004 D3); propagates under every strategy
+
+    SyncEhSessionCookieDto:
+      type: object
+      description: A single EH session cookie (mirrors okhttp3.Cookie / SiteCookieStore).
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+          description: "Cookie value; encrypted at rest on the server (enc:v1: + security.key, ADR-0004 D4)"
+        domain:
+          type: string
+        path:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+          description: Cookie expiry as epoch ms; 0 = session cookie
+        secure:
+          type: boolean
+          description: Whether the cookie is restricted to HTTPS
+        httpOnly:
+          type: boolean
+          description: Whether the cookie is HTTP-only
+        persistent:
+          type: boolean
+          description: Whether the cookie persists across sessions (false = session cookie)
+        hostOnly:
+          type: boolean
+          description: Whether the cookie applies only to its exact host domain
 
     SyncStatusResponse:
       type: object

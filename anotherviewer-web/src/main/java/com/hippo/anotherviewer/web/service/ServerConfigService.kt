@@ -84,6 +84,9 @@ class ServerConfigService(
         // Sync 行级来源（last-writer deviceId）命名空间前缀；具体键由 SyncService 生成。
         const val KEY_PREFIX_SYNC_PROVENANCE = "sync.prov."
 
+        // Gallery Site 站点选择（Settings.gallery_site）：0=e-hentai, 1=exhentai。
+        const val KEY_SITE_GALLERY = "site.gallery_site"
+
         val defaults = mapOf(
             // LAN personal deployment: auth is off by default; the operator
             // opts in via ANOTHERVIEWER_REQUIRE_AUTH or a DB value.
@@ -93,6 +96,7 @@ class ServerConfigService(
             KEY_SYNC_CONFLICT_STRATEGY to "device_priority",
             KEY_SYNC_CLIENT_TIER to "1",
             KEY_SYNC_AUTO_SYNC_INTERVAL_SEC to "900",
+            KEY_SITE_GALLERY to "0",
         )
     }
 }
