@@ -477,24 +477,24 @@ describe('GalleryCard (R4-9 site thumbnail proxy rewrite)', () => {
   it('rewrites site-host thumbnails through the image proxy (list mode)', () => {
     const wrapper = mount(GalleryCard, {
       props: {
-        gallery: makeGallery({ thumb: 'https://gallery.test/t/123/cover.jpg' }),
+        gallery: makeGallery({ thumb: 'https://ehgt.org/t/123/cover.jpg' }),
         mode: 'list',
       },
     })
     expect(wrapper.find('.gallery-card__thumb img').attributes('src')).toBe(
-      '/api/v1/image/proxy?url=' + encodeURIComponent('https://gallery.test/t/123/cover.jpg'),
+      '/api/v1/image/proxy?url=' + encodeURIComponent('https://ehgt.org/t/123/cover.jpg'),
     )
   })
 
   it('rewrites site-host thumbnails in grid mode too', () => {
     const wrapper = mount(GalleryCard, {
       props: {
-        gallery: makeGallery({ thumb: 'https://t.gallery.test/t/9001/1.jpg' }),
+        gallery: makeGallery({ thumb: 'https://lofi.e-hentai.org/t/9001/1.jpg' }),
         mode: 'grid',
       },
     })
     expect(wrapper.find('.gallery-card__tile img').attributes('src')).toBe(
-      '/api/v1/image/proxy?url=' + encodeURIComponent('https://t.gallery.test/t/9001/1.jpg'),
+      '/api/v1/image/proxy?url=' + encodeURIComponent('https://lofi.e-hentai.org/t/9001/1.jpg'),
     )
   })
 
@@ -684,7 +684,7 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
       expect(writeTextMock).toHaveBeenCalledTimes(1)
       const url = writeTextMock.mock.calls[0][0] as string
       expect(url).toBe(`${window.location.origin}/gallery/12345`)
-      expect(url).not.toContain('gallery.test')
+      expect(url).not.toContain('exhentai')
       expect(url).not.toContain('e-hentai')
     })
 

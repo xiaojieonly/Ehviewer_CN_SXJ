@@ -2,26 +2,39 @@
  * Same-origin rewrite for Gallery Site asset URLs (R4-9).
  *
  * Gallery metadata carries site-hosted asset URLs (thumbnails, covers), e.g.
- * `https://gallery.test/t/123/cover.jpg`. The browser cannot fetch those
- * directly — the site host is not publicly resolvable in the LAN deployment
- * and cross-origin fetches run into CSP / cookie walls. Routing them through
- * the WebUI server's image proxy keeps everything same-origin:
+ * `https://e-hentai.org/t/123/cover.jpg`. The browser cannot fetch those
+ * directly — cross-origin fetches run into CSP / cookie walls. Routing them
+ * through the WebUI server's image proxy keeps everything same-origin:
  *
- *   https://gallery.test/t/123/cover.jpg
- *     → /api/v1/image/proxy?url=https%3A%2F%2Fgallery.test%2Ft%2F123%2Fcover.jpg
+ *   https://e-hentai.org/t/123/cover.jpg
+ *     → /api/v1/image/proxy?url=https%3A%2F%2Fe-hentai.org%2Ft%2F123%2Fcover.jpg
  *
- * The host family mirrors the app-side interceptors (`SiteUrl.DOMAIN_E` +
- * subdomains): `gallery.test`, `t.gallery.test`, `upld.gallery.test`, …
+ * The host family mirrors the backend SSRF predicate
+ * (`SiteProxyController.isGallerySiteHost`): `e-hentai.org`, `exhentai.org`,
+ * `lofi.e-hentai.org`, `ehgt.org` and their subdomains.
  */
 
-/** The Gallery Site domain (SiteUrl.DOMAIN_E/DOMAIN_EX in the app). */
-export const SITE_ASSET_DOMAIN = 'gallery.test'
+/** The Gallery Site primary domain (SiteUrl.DOMAIN_E in the app). */
+export const SITE_ASSET_DOMAIN = 'e-hentai.org'
 
-/** Matches the site domain itself and any subdomain of it. */
+const SITE_ASSET_HOSTS = [
+  'e-hentai.org',
+  'exhentai.org',
+  'lofi.e-hentai.org',
+  'ehgt.org',
+]
+
+/**
+ * Matches the Gallery Site host family itself and any subdomain of each —
+ * the same set as the backend SSRF predicate
+ * (`SiteProxyController.isGallerySiteHost`).
+ */
 export function isSiteAssetUrl(url: string): boolean {
   try {
     const host = new URL(url).host
-    return host === SITE_ASSET_DOMAIN || host.endsWith('.' + SITE_ASSET_DOMAIN)
+    return SITE_ASSET_HOSTS.some(
+      (domain) => host === domain || host.endsWith('.' + domain),
+    )
   } catch {
     return false
   }

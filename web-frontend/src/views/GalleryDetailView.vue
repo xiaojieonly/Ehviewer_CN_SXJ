@@ -253,7 +253,7 @@ const galleryId = computed(() => Number(props.gid))
 
 /**
  * R4-9: the cover `thumb` may point at the unresolvable Gallery Site host
- * (`gallery.test` family); rewrite those through the server's same-origin
+ * (`e-hentai.org` family); rewrite those through the server's same-origin
  * image proxy so the cover actually loads. Non-site URLs pass through.
  */
 const coverSrc = computed(() =>

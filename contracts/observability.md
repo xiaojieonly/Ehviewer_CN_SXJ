@@ -89,7 +89,7 @@ Emitted when an image is fetched from the remote source. Level: **DEBUG** (succe
   "event": "image.download",
   "galleryId": 123456,
   "page": 3,
-  "url": "https://gallery.test/...",
+  "url": "https://e-hentai.org/...",
   "durationMs": 340,
   "sizeBytes": 245760,
   "status": "success"
@@ -310,7 +310,7 @@ GET /api/health
 |-----------|-------------|--------------|----------------|
 | `database` | Execute `SELECT 1` on SQLite | Query succeeds within 5s | Query fails or times out |
 | `diskCache` | Check directory exists + writable + free space | Writable AND freeSpace > 100MB | Not writable OR freeSpace < 100MB |
-| `galleryApi` | HTTP HEAD to `https://gallery.test` (cached, max every 60s) | Response 2xx/3xx within 10s | Timeout or connection refused |
+| `galleryApi` | HTTP HEAD to `https://e-hentai.org` (cached, max every 60s) | Response 2xx/3xx within 10s | Timeout or connection refused |
 | `waifu2x` | HTTP GET to configured URL `/health` (if configured) | Response 200 within 5s | Not configured, or unreachable |
 
 ### 2.5 Caching

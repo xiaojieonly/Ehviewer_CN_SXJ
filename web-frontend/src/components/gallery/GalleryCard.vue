@@ -307,7 +307,7 @@ const hasThumb = computed(() => Boolean(props.gallery.thumb) && !thumbFailed.val
 
 /**
  * R4-9: the raw `thumb` may point at the unresolvable Gallery Site host
- * (`gallery.test` family); rewrite those through the server's same-origin
+ * (`e-hentai.org` family); rewrite those through the server's same-origin
  * image proxy so the thumbnail actually loads. Non-site URLs pass through.
  */
 const thumbSrc = computed(() => rewriteSiteAssetUrl(props.gallery.thumb))
@@ -443,9 +443,9 @@ function openDetail(): void {
 }
 
 /**
- * Copy the app's own detail link. Neutralize red line: never emits a real
- * gallery-site URL — the internal route is the shareable address, and
- * `gallery.test` (should it ever appear) stays the only site host.
+ * Copy the app's own detail link. Never emits a real gallery-site URL — the
+ * internal route is the shareable address, and the site host (`e-hentai.org`)
+ * never leaks into the copied link.
  */
 async function copyLink(): Promise<void> {
   const url = `${window.location.origin}/gallery/${props.gallery.gid}`
