@@ -98,7 +98,6 @@ import com.hippo.anotherviewer.ui.scene.SolidScene;
 import com.hippo.anotherviewer.ui.scene.WarningScene;
 import com.hippo.anotherviewer.ui.scene.sign.WebViewSignInScene;
 import com.hippo.anotherviewer.ui.splash.SplashActivity;
-import com.hippo.anotherviewer.updater.AppUpdater;
 import com.hippo.anotherviewer.widget.SiteDrawerLayout;
 import com.hippo.anotherviewer.widget.LimitsCountView;
 import com.hippo.io.UniFileInputStreamPipe;
@@ -450,9 +449,6 @@ public final class MainActivity extends StageActivity
     @Override
     protected void onStart() {
         super.onStart();
-        if (!Settings.getCloseAutoUpdate()){
-            AppUpdater.update(this,false);
-        }
     }
 
     private void initUserImage() {
