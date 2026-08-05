@@ -153,7 +153,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">어느 갤러리 사이트를 사용하시겠습니까?</string>
-    <string name="select_scene_explain">e-hentai: 모든 사람들이 사용할 수 있음\ngallery: 로그인한 사람만 사용할 수 있음</string>
+    <string name="select_scene_explain">e-hentai: 모든 사람들이 사용할 수 있음\nexhentai: 로그인한 사람만 사용할 수 있음</string>
     <string name="no_select">두 사이트 중 하나를 선택하세요.</string>
 
     <!-- Update -->

@@ -61,7 +61,7 @@
     <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
-    <string name="site_ex" translatable="false">gallery</string>
+    <string name="site_ex" translatable="false">exhentai</string>
 
     <!-- Theme -->
     <string name="theme_light">Light Theme</string>
@@ -214,7 +214,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">Which gallery site do you want to visit?</string>
-    <string name="select_scene_explain">e-hentai: available for anyone\ngallery: available for who has signed in</string>
+    <string name="select_scene_explain">e-hentai: available for anyone\nexhentai: available for who has signed in</string>
     <string name="no_select">Please select one site</string>
 
     <!-- Update -->
