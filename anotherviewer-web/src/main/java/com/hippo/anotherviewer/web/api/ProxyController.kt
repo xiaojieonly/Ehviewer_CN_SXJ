@@ -43,7 +43,7 @@ class ProxyController(private val proxyManager: WebProxyManager) {
             .build()
         val start = System.currentTimeMillis()
         return try {
-            client.newCall(Request.Builder().url("https://gallery.test/").get().build()).execute().use { response ->
+            client.newCall(Request.Builder().url("https://e-hentai.org/").get().build()).execute().use { response ->
                 val ok = response.isSuccessful || response.code < 500
                 ResponseEntity.ok(
                     ProxyTestResponse(ok, System.currentTimeMillis() - start, if (ok) "" else "HTTP ${response.code}")

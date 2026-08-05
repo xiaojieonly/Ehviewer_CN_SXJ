@@ -14,7 +14,7 @@ import java.io.File
  * shared Gallery Site session client.
  *
  * [downloadArchive] accepts a user-supplied archiver URL; the host is
- * validated against gallery.test / gallery.test (SSRF guard) before anything
+ * validated against e-hentai.org / exhentai.org (SSRF guard) before anything
  * is requested. The EH archiver flow is credit-gated (H@H form): the full
  * core flow (list → archiver form → dltype/dlcheck POST → final download URL)
  * is executed, and the final archive is streamed into the download directory.
@@ -135,6 +135,6 @@ class ArchiveService(
 
     private fun isAllowedArchiveHost(host: String): Boolean {
         val normalized = host.lowercase().removePrefix("www.")
-        return normalized == "gallery.test"
+        return normalized == "e-hentai.org" || normalized == "exhentai.org"
     }
 }
