@@ -11,7 +11,7 @@ describe('rewriteSiteAssetUrl (R4-9 thumbnail/cover proxy rewrite)', () => {
   it('rewrites subdomain hosts of the site family', () => {
     for (const url of [
       'https://lofi.e-hentai.org/t/9001/1.jpg',
-      'http://upload.e-hentai.org/img/abc.png',
+      'http://upld.e-hentai.org/img/abc.png',
     ]) {
       expect(rewriteSiteAssetUrl(url)).toBe(
         '/api/v1/image/proxy?url=' + encodeURIComponent(url),
