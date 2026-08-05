@@ -51,7 +51,9 @@ public class SiteUrl {
     public static final String API_E = HOST_E + "api.php";
     public static final String API_EX = HOST_EX + "api.php";
 
-    public static final String HOME_E = HOST_E + "home.php";
+    // e-hentai.org/home.php 对未登录用户 302 至登录页（站点行为），
+    // 首页改用根路径，未登录即可浏览最新画廊。
+    public static final String HOME_E = HOST_E;
     public static final String HOME_EX = HOST_EX + "home.php";
 
     public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
