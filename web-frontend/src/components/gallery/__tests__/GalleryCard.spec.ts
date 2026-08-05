@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import GalleryCard, {
   DEFAULT_FAVORITE_SLOT_NAMES,
@@ -10,8 +10,26 @@ import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
 import { usePreferencesStore } from '@/stores/preferences'
+import { favoriteApi } from '@/api/favorite'
+import { downloadApi } from '@/api/download'
 import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo } from '@/types/components'
+
+/* F-UX6 action wiring — the card calls the same APIs the detail/download
+   views use; the router is stubbed to a push spy. */
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: pushMock }),
+}))
+
+vi.mock('@/api/favorite', () => ({
+  favoriteApi: { addFavorite: vi.fn(), removeFavorite: vi.fn() },
+}))
+
+vi.mock('@/api/download', () => ({
+  downloadApi: { add: vi.fn() },
+}))
 
 /** Build a GalleryInfo fixture; `overrides` patches individual fields. */
 function makeGallery(overrides: Partial<GalleryInfo> = {}): GalleryInfo {
@@ -143,6 +161,47 @@ describe('GalleryCard (grid mode)', () => {
       props: { gallery: makeGallery({ thumbWidth: 0, thumbHeight: 0 }), mode: 'grid' },
     })
     expect(wrapper.find('.gallery-card__tile').attributes('style')).toContain('aspect-ratio: 2 / 3')
+  })
+
+  describe('grid meta region (F-UX1 flowing title + sub line)', () => {
+    it('wraps the title in the flowing meta region', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      const meta = wrapper.find('.gallery-card__grid-meta')
+      expect(meta.exists()).toBe(true)
+      expect(meta.find('.gallery-card__grid-title').exists()).toBe(true)
+    })
+
+    it('renders no sub line when the grid-sub slot is absent (home-style cards)', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      expect(wrapper.find('.gallery-card__grid-sub').exists()).toBe(false)
+    })
+
+    it('renders the grid-sub slot as a flowing sibling of the title', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+        slots: { 'grid-sub': '<span class="sub-marker">Today 14:32</span>' },
+      })
+      const meta = wrapper.find('.gallery-card__grid-meta')
+      const title = meta.find('.gallery-card__grid-title')
+      const sub = meta.find('.gallery-card__grid-sub')
+      expect(sub.exists()).toBe(true)
+      expect(sub.text()).toBe('Today 14:32')
+      // Two lines are normal-flow siblings inside the meta region — no
+      // absolute positioning can overlap them.
+      expect(title.element.nextElementSibling).toBe(sub.element)
+      expect(sub.element.parentElement).toBe(meta.element)
+    })
+
+    it('does not render the grid meta region in list mode', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'list' },
+      })
+      expect(wrapper.find('.gallery-card__grid-meta').exists()).toBe(false)
+    })
   })
 })
 
@@ -454,5 +513,205 @@ describe('GalleryCard (R4-9 site thumbnail proxy rewrite)', () => {
     })
     expect(wrapper.find('.gallery-card__thumb img').exists()).toBe(false)
     expect(wrapper.find('.gallery-card__thumb-placeholder').exists()).toBe(true)
+  })
+})
+
+describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
+  const writeTextMock = vi.fn()
+
+  /** Stub the `(pointer: fine)` media query (happy-dom reports no match). */
+  function stubPointerQuery(fine: boolean): void {
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: fine && query === '(pointer: fine)',
+          media: query,
+          onchange: null,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          dispatchEvent: () => false,
+        }) as unknown as MediaQueryList,
+    )
+  }
+
+  function setViewportWidth(width: number): void {
+    const happyDOM = (
+      window as unknown as { happyDOM?: { setInnerWidth?: (width: number) => void } }
+    ).happyDOM
+    if (happyDOM?.setInnerWidth) happyDOM.setInnerWidth(width)
+    else Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+  }
+
+  function mountPcCard(overrides: Partial<GalleryInfo> = {}, mode: 'grid' | 'list' = 'grid') {
+    stubPointerQuery(true)
+    setViewportWidth(1280)
+    return mount(GalleryCard, { props: { gallery: makeGallery(overrides), mode } })
+  }
+
+  function contextMenuItems(): HTMLButtonElement[] {
+    return Array.from(document.body.querySelectorAll('.card-context-menu__item'))
+  }
+
+  beforeEach(() => {
+    pushMock.mockClear()
+    writeTextMock.mockReset().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: writeTextMock },
+    })
+    vi.mocked(favoriteApi.addFavorite).mockReset().mockResolvedValue({ success: true })
+    vi.mocked(favoriteApi.removeFavorite).mockReset().mockResolvedValue({ success: true })
+    vi.mocked(downloadApi.add).mockReset().mockResolvedValue(true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    setViewportWidth(1024) // happy-dom default
+  })
+
+  describe('hover quick-action bar (PC form only)', () => {
+    it('renders the three quick actions on a fine-pointer ≥720px viewport (grid)', () => {
+      // favoriteSlot -2 = not favorited, so the first action is "Favorite".
+      const wrapper = mountPcCard({ favoriteSlot: -2 })
+      const bar = wrapper.find('.card-quick-actions')
+      expect(bar.exists()).toBe(true)
+      expect(bar.classes()).toContain('card-quick-actions--grid')
+      const buttons = bar.findAll('button')
+      expect(buttons).toHaveLength(3)
+      expect(buttons.map((b) => b.attributes('aria-label'))).toEqual([
+        'Favorite',
+        'Download',
+        'Details',
+      ])
+    })
+
+    it('renders the pill variant in list mode', () => {
+      const wrapper = mountPcCard({}, 'list')
+      const bar = wrapper.find('.card-quick-actions')
+      expect(bar.exists()).toBe(true)
+      expect(bar.classes()).toContain('card-quick-actions--list')
+    })
+
+    it('does NOT render under a 375px viewport (mobile red line)', () => {
+      stubPointerQuery(true)
+      setViewportWidth(375)
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      expect(wrapper.find('.card-quick-actions').exists()).toBe(false)
+    })
+
+    it('does NOT render with a coarse pointer on a wide viewport', () => {
+      stubPointerQuery(false)
+      setViewportWidth(1280)
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      expect(wrapper.find('.card-quick-actions').exists()).toBe(false)
+    })
+
+    it('favorite action calls favoriteApi.addFavorite with the defaultFavoriteSlot', async () => {
+      seedPrefs({ defaultFavoriteSlot: 3 })
+      const wrapper = mountPcCard({ favoriteSlot: -2 }) // not favorited → add
+      await wrapper.findAll('.card-quick-actions__btn')[0].trigger('click')
+      expect(favoriteApi.addFavorite).toHaveBeenCalledWith(12345, 'abc123', 0x2, 3)
+      await flushPromises()
+      expect(wrapper.find('.gallery-card__toast').text()).toBe('Favorited')
+    })
+
+    it('favorite action omits the slot while preferences are unloaded', async () => {
+      const wrapper = mountPcCard({ favoriteSlot: -2 }) // not favorited → add
+      await wrapper.findAll('.card-quick-actions__btn')[0].trigger('click')
+      expect(favoriteApi.addFavorite).toHaveBeenCalledWith(12345, 'abc123', 0x2, undefined)
+    })
+
+    it('a favorited gallery offers removal (aria-pressed + removeFavorite)', async () => {
+      const wrapper = mountPcCard({ favoriteSlot: 5 })
+      const favBtn = wrapper.findAll('.card-quick-actions__btn')[0]
+      expect(favBtn.attributes('aria-pressed')).toBe('true')
+      expect(favBtn.attributes('aria-label')).toBe('Remove from favorites')
+      await favBtn.trigger('click')
+      expect(favoriteApi.removeFavorite).toHaveBeenCalledWith(12345, 'abc123')
+      expect(favoriteApi.addFavorite).not.toHaveBeenCalled()
+    })
+
+    it('download action queues the gallery via downloadApi.add', async () => {
+      const wrapper = mountPcCard()
+      await wrapper.findAll('.card-quick-actions__btn')[1].trigger('click')
+      expect(downloadApi.add).toHaveBeenCalledWith(
+        12345,
+        'abc123',
+        '(C99) Test Gallery Title [English]',
+        'https://example.com/thumb.jpg',
+      )
+      await flushPromises()
+      expect(wrapper.find('.gallery-card__toast').text()).toBe('Added to downloads')
+    })
+
+    it('details action navigates to the gallery detail route', async () => {
+      const wrapper = mountPcCard()
+      await wrapper.findAll('.card-quick-actions__btn')[2].trigger('click')
+      expect(pushMock).toHaveBeenCalledWith('/gallery/12345')
+    })
+
+    it('quick-action clicks never trigger the card navigation', async () => {
+      const wrapper = mountPcCard()
+      await wrapper.findAll('.card-quick-actions__btn')[1].trigger('click')
+      expect(wrapper.emitted('click')).toBeUndefined()
+    })
+  })
+
+  describe('right-click context menu', () => {
+    it('opens with details / favorite / download / copy-link on contextmenu', async () => {
+      // favoriteSlot -2 = not favorited, so the menu offers "Favorite".
+      const wrapper = mountPcCard({ favoriteSlot: -2 })
+      await wrapper.trigger('contextmenu', { clientX: 120, clientY: 80 })
+      expect(contextMenuItems().map((item) => item.textContent?.trim())).toEqual([
+        'Details',
+        'Favorite',
+        'Download',
+        'Copy link',
+      ])
+    })
+
+    it('copy link writes the app-internal detail URL (neutralized, no site host)', async () => {
+      const wrapper = mountPcCard()
+      await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
+      contextMenuItems()[3].click()
+      await flushPromises()
+      expect(writeTextMock).toHaveBeenCalledTimes(1)
+      const url = writeTextMock.mock.calls[0][0] as string
+      expect(url).toBe(`${window.location.origin}/gallery/12345`)
+      expect(url).not.toContain('gallery.test')
+      expect(url).not.toContain('e-hentai')
+    })
+
+    it('menu favorite honors the favorited state', async () => {
+      const wrapper = mountPcCard({ favoriteSlot: 0 })
+      await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
+      const labels = contextMenuItems().map((item) => item.textContent?.trim())
+      expect(labels).toContain('Remove from favorites')
+    })
+
+    it('invoking a menu action closes the menu and runs the action', async () => {
+      const wrapper = mountPcCard()
+      await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
+      contextMenuItems()[0].click() // Details
+      await flushPromises()
+      expect(pushMock).toHaveBeenCalledWith('/gallery/12345')
+      expect(document.body.querySelector('.card-context-menu')).toBeNull()
+    })
+
+    it('does NOT open on non-PC viewports (375px)', async () => {
+      stubPointerQuery(true)
+      setViewportWidth(375)
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
+      expect(document.body.querySelector('.card-context-menu')).toBeNull()
+    })
   })
 })

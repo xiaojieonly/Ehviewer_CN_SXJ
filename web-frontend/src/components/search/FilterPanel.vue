@@ -40,7 +40,7 @@
         </button>
       </header>
 
-      <div class="filter-panel__body">
+      <div ref="bodyRef" class="filter-panel__body" @scroll="updateScrollCue">
         <!-- Keyword mode — absorbed from the legacy search surface
              (W3 R4-10 single filter surface). -->
         <div class="filter-panel__section">
@@ -167,7 +167,10 @@
         </div>
       </div>
 
-      <footer class="filter-panel__footer">
+      <footer
+        class="filter-panel__footer"
+        :class="{ 'filter-panel__footer--raised': scrollableBelow }"
+      >
         <button type="button" class="filter-panel__btn-text" @click="reset">
           Reset
         </button>
@@ -183,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { SearchFilters, SearchSortOrder } from '@/api/gallery'
 import type { GalleryCategory, NormalSearchMode } from '@/types/components'
 import {
@@ -227,6 +230,37 @@ const emit = defineEmits<{
 }>()
 
 const panelRef = ref<HTMLElement | null>(null)
+const bodyRef = ref<HTMLElement | null>(null)
+
+/* F-UX3 scroll cue ---------------------------------------------------------
+   The body is the panel's only scroll container; the sticky-feeling footer
+   sits flush below it. Without a hint, content ending right above the
+   action bar reads as "panel overflows the last section" and gives no clue
+   there is more to scroll. While content remains below the fold the footer
+   therefore raises a top shadow (present from the moment the body
+   overflows, i.e. also at scrollTop > 0; gone once the bottom is reached). */
+
+/** True while the body has scrollable content below the current viewport. */
+const scrollableBelow = ref(false)
+
+function updateScrollCue(): void {
+  const el = bodyRef.value
+  if (!el) {
+    scrollableBelow.value = false
+    return
+  }
+  const overflowing = el.scrollHeight > el.clientHeight
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+  scrollableBelow.value = overflowing && !atBottom
+}
+
+/** Re-measures when the panel/body size changes (72dvh cap, content). */
+let bodyResizeObserver: ResizeObserver | null = null
+
+function stopBodyObserver(): void {
+  bodyResizeObserver?.disconnect()
+  bodyResizeObserver = null
+}
 
 const sortOptions = SORT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
 const ratingOptions = MIN_RATING_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
@@ -294,12 +328,23 @@ function onDocumentMousedown(event: MouseEvent): void {
 
 watch(
   () => props.open,
-  (open) => {
+  async (open) => {
     if (open) {
       // Defer so the opening click itself is not treated as "outside".
       requestAnimationFrame(() => document.addEventListener('mousedown', onDocumentMousedown))
+      // F-UX3: measure once laid out, then keep the cue honest when the
+      // panel/body size changes (72dvh cap, window resize, filter edits).
+      await nextTick()
+      updateScrollCue()
+      if (typeof ResizeObserver !== 'undefined' && bodyRef.value) {
+        stopBodyObserver()
+        bodyResizeObserver = new ResizeObserver(updateScrollCue)
+        bodyResizeObserver.observe(bodyRef.value)
+      }
     } else {
       document.removeEventListener('mousedown', onDocumentMousedown)
+      scrollableBelow.value = false
+      stopBodyObserver()
     }
   },
   { immediate: true },
@@ -307,6 +352,7 @@ watch(
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocumentMousedown)
+  stopBodyObserver()
 })
 </script>
 
@@ -366,7 +412,10 @@ onBeforeUnmount(() => {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 16px 8px;
+  /* F-UX3: bottom clearance ≥ footer height (~54px) so the last section
+     (Advanced options) can scroll fully clear of the action bar instead of
+     ending crushed against it. */
+  padding: 4px 16px 56px;
 }
 
 .filter-panel__section {
@@ -531,6 +580,13 @@ onBeforeUnmount(() => {
   gap: 4px;
   padding: 8px 12px 10px;
   border-top: 1px solid var(--color-divider);
+  transition: box-shadow 160ms var(--ease-decelerate-quart);
+}
+
+/* F-UX3 scroll cue: raised top shadow while body content remains below the
+   fold (see `scrollableBelow` in the script). */
+.filter-panel__footer--raised {
+  box-shadow: 0 -6px 10px -6px var(--shadow-color);
 }
 
 .filter-panel__btn-text {
@@ -592,7 +648,8 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .filter-panel-enter-active,
-  .filter-panel-leave-active {
+  .filter-panel-leave-active,
+  .filter-panel__footer {
     transition: none;
   }
 }

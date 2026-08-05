@@ -30,6 +30,13 @@
       <template #cell-extra="{ gallery, index }">
         <slot name="item-extra" :gallery="gallery" :index="index" />
       </template>
+      <!-- F-UX1: optional in-card meta sub line for the grid form (History's
+           last-viewed stamp flows below the title). Threaded only when the
+           consumer supplies it, so Home / Favorites keep their single-line
+           grid meta. -->
+      <template v-if="$slots['item-sub']" #cell-sub="{ gallery, index }">
+        <slot name="item-sub" :gallery="gallery" :index="index" />
+      </template>
     </GalleryGrid>
 
     <!-- List form: rows of horizontal cards. Auto-column at the 480dp
@@ -82,6 +89,9 @@ export function resolveListMode(raw: unknown): ListMode {
  *   entrance (fill `backwards`, natural-state `opacity: 1`).
  * - The `item-extra` scoped slot threads per-item addons (History's
  *   last-viewed badge, Favorites' slot badge) into both forms.
+ * - The `item-sub` scoped slot (F-UX1) threads an in-card meta sub line
+ *   into the grid form only (History's last-viewed stamp flowing below the
+ *   title instead of overlapping it).
  *
  * Preference access is defensive (optional chaining + defaults) because the
  * schema keys are being added by a parallel work stream.
