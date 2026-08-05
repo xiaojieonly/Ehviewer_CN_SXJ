@@ -1,5 +1,5 @@
 <template>
-  <AppCard :mode="mode" @click="emit('click', gallery)">
+  <AppCard :mode="mode" @click="emit('click', gallery)" @contextmenu="onContextMenu">
     <!-- List mode — replicates `item_gallery_list.xml`: fixed 80×120dp (2:3)
          thumbnail left, info column right (title / japanese title / rating /
          category chip / page count / tags / posted). -->
@@ -41,6 +41,17 @@
           </span>
         </div>
       </div>
+      <!-- F-UX6 (PC form only): hover / focus-within quick actions. -->
+      <CardQuickActions
+        v-if="pcInput"
+        variant="list"
+        :is-favorited="isFavorited"
+        :favorite-pending="favoritePending"
+        :download-state="downloadState"
+        @favorite="toggleFavorite"
+        @download="download"
+        @detail="openDetail"
+      />
     </template>
 
     <!-- Grid mode — replicates `item_gallery_grid.xml` + `TileThumb`:
@@ -72,6 +83,17 @@
           {{ gallery.simpleLanguage }}
         </span>
         <slot name="overlay" />
+        <!-- F-UX6 (PC form only): hover / focus-within quick actions. -->
+        <CardQuickActions
+          v-if="pcInput"
+          variant="grid"
+          :is-favorited="isFavorited"
+          :favorite-pending="favoritePending"
+          :download-state="downloadState"
+          @favorite="toggleFavorite"
+          @download="download"
+          @detail="openDetail"
+        />
       </div>
       <!-- F-UX1: the grid meta area is a FLOWING two-line region — title
            line plus an optional `grid-sub` line (e.g. History's last-viewed
@@ -87,6 +109,21 @@
         </div>
       </div>
     </template>
+
+    <!-- Transient action feedback (F-UX6 PC quick actions / context menu). -->
+    <div v-if="toastMessage" class="gallery-card__toast" role="status">
+      {{ toastMessage }}
+    </div>
+
+    <!-- F-UX6: right-click menu (teleported; action state lives here). -->
+    <CardContextMenu
+      v-if="menuState"
+      :x="menuState.x"
+      :y="menuState.y"
+      :items="menuItems"
+      @action="onMenuAction"
+      @close="menuState = null"
+    />
   </AppCard>
 </template>
 
@@ -158,7 +195,8 @@ export function parseFavoriteSlotNames(raw: unknown): string[] {
  * they are being added to the preferences schema by a parallel work stream,
  * so the card must behave identically whether or not they exist yet.
  */
-import { computed, onMounted, ref, useSlots } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   CATEGORY_BY_BIT,
   type GalleryCardEmits,
@@ -167,12 +205,16 @@ import {
 } from '@/types/components'
 import { usePreferencesStore } from '@/stores/preferences'
 import type { GeneralPreferences } from '@/api/preferences'
+import { favoriteApi } from '@/api/favorite'
+import { downloadApi } from '@/api/download'
 import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
 import AppCard from '@/components/atoms/AppCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
+import CardContextMenu, { type CardContextMenuItem } from './CardContextMenu.vue'
+import CardQuickActions from './CardQuickActions.vue'
 
 /**
  * General-preference keys consumed by the card but added by the parallel
@@ -283,6 +325,188 @@ function onImgError(): void {
 onMounted(() => {
   if (imgRef.value?.complete) imgLoaded.value = true
 })
+
+/* --------------------------------------------------------------------------
+   F-UX6 — PC quick actions + right-click menu (roadmap §3.1). PC form ONLY:
+   rendered under `pointer: fine` AND viewport ≥720px (§0 red line — mobile
+   forms never see these). Actions reuse the established API usage of
+   GalleryDetailView / DownloadView; no new backend surface is introduced.
+   -------------------------------------------------------------------------- */
+
+const router = useRouter()
+
+/** Minimum viewport width for the PC-only affordances. */
+const PC_MIN_WIDTH = 720
+
+const finePointer = ref(false)
+const wideViewport = ref(false)
+
+/** PC input gate — fine pointer AND ≥720px viewport. */
+const pcInput = computed(() => finePointer.value && wideViewport.value)
+
+function refreshPcInput(): void {
+  finePointer.value =
+    typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches
+  wideViewport.value = window.innerWidth >= PC_MIN_WIDTH
+}
+
+// Initialize at setup time (not onMounted) so the FIRST render already
+// carries the correct gate — no one-frame flash, no render-tick dependency.
+refreshPcInput()
+
+let pointerMql: MediaQueryList | null = null
+
+onMounted(() => {
+  refreshPcInput()
+  if (typeof window.matchMedia === 'function') {
+    pointerMql = window.matchMedia('(pointer: fine)')
+    pointerMql.addEventListener('change', refreshPcInput)
+  }
+  window.addEventListener('resize', refreshPcInput)
+})
+
+/* ------------------------------------------------------------ actions ---- */
+
+/**
+ * Favorite state — seeded from the row's `favoriteSlot` (-2 = not favorited;
+ * -1 default folder / 0-9 custom slots = favorited), toggled optimistically
+ * exactly like GalleryDetailView.
+ */
+const isFavorited = ref(props.gallery.favoriteSlot >= -1)
+const favoritePending = ref(false)
+const downloadState = ref<'idle' | 'busy' | 'done'>('idle')
+
+/** Cards are keyed by gid elsewhere; a recycled instance resets on swap. */
+watch(
+  () => props.gallery.gid,
+  () => {
+    isFavorited.value = props.gallery.favoriteSlot >= -1
+    favoritePending.value = false
+    downloadState.value = 'idle'
+    menuState.value = null
+  },
+)
+
+/** Optimistic favorite toggle (GalleryDetailView pattern). The target folder
+    follows `general.defaultFavoriteSlot` (B-3) when it names a real folder;
+    the backend default folder (-1) applies while prefs are unloaded or the
+    configured slot is unsettable (< -1). */
+async function toggleFavorite(): Promise<void> {
+  if (favoritePending.value) return
+  favoritePending.value = true
+  const next = !isFavorited.value
+  isFavorited.value = next
+  try {
+    const slot = preferencesStore.prefs?.general?.defaultFavoriteSlot
+    const targetSlot = typeof slot === 'number' && slot >= -1 ? slot : undefined
+    const res = next
+      ? await favoriteApi.addFavorite(
+          props.gallery.gid,
+          props.gallery.token,
+          props.gallery.category,
+          targetSlot,
+        )
+      : await favoriteApi.removeFavorite(props.gallery.gid, props.gallery.token)
+    if (!res.success) throw new Error('favorite action rejected')
+    showToast(next ? 'Favorited' : 'Removed from favorites')
+  } catch (error) {
+    console.error('Failed to toggle favorite', error)
+    isFavorited.value = !next
+    showToast('Favorite update failed')
+  } finally {
+    favoritePending.value = false
+  }
+}
+
+/** Queue the gallery in the downloader — GalleryDetailView usage. */
+async function download(): Promise<void> {
+  if (downloadState.value !== 'idle') return
+  downloadState.value = 'busy'
+  try {
+    await downloadApi.add(
+      props.gallery.gid,
+      props.gallery.token,
+      props.gallery.title,
+      props.gallery.thumb,
+    )
+    downloadState.value = 'done'
+    showToast('Added to downloads')
+  } catch (error) {
+    console.error('Failed to add download', error)
+    downloadState.value = 'idle'
+    showToast('Download failed')
+  }
+}
+
+function openDetail(): void {
+  void router.push(`/gallery/${props.gallery.gid}`)
+}
+
+/**
+ * Copy the app's own detail link. Neutralize red line: never emits a real
+ * gallery-site URL — the internal route is the shareable address, and
+ * `gallery.test` (should it ever appear) stays the only site host.
+ */
+async function copyLink(): Promise<void> {
+  const url = `${window.location.origin}/gallery/${props.gallery.gid}`
+  try {
+    await navigator.clipboard.writeText(url)
+    showToast('Link copied')
+  } catch (error) {
+    console.error('Failed to copy link', error)
+    showToast('Unable to copy link')
+  }
+}
+
+/* --------------------------------------------------------------- toast --- */
+
+const toastMessage = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+function showToast(message: string): void {
+  toastMessage.value = message
+  if (toastTimer !== undefined) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = null
+  }, 1600)
+}
+
+/* ------------------------------------------------- context menu (F-UX6) --- */
+
+const menuState = ref<{ x: number; y: number } | null>(null)
+
+const menuItems = computed<CardContextMenuItem[]>(() => [
+  { id: 'detail', icon: 'info-outline-dark', label: 'Details' },
+  {
+    id: 'favorite',
+    icon: isFavorited.value ? 'heart' : 'heart-outline-primary',
+    label: isFavorited.value ? 'Remove from favorites' : 'Favorite',
+  },
+  { id: 'download', icon: 'download', label: 'Download' },
+  { id: 'copy-link', icon: 'copy', label: 'Copy link' },
+])
+
+function onContextMenu(event: MouseEvent): void {
+  // Non-PC forms keep their native context menu untouched (§0 red line).
+  if (!pcInput.value) return
+  event.preventDefault()
+  menuState.value = { x: event.clientX, y: event.clientY }
+}
+
+function onMenuAction(id: CardContextMenuItem['id']): void {
+  menuState.value = null
+  if (id === 'detail') openDetail()
+  else if (id === 'favorite') void toggleFavorite()
+  else if (id === 'download') void download()
+  else if (id === 'copy-link') void copyLink()
+}
+
+onBeforeUnmount(() => {
+  pointerMql?.removeEventListener('change', refreshPcInput)
+  pointerMql = null
+  window.removeEventListener('resize', refreshPcInput)
+  if (toastTimer !== undefined) clearTimeout(toastTimer)
+})
 </script>
 
 <style scoped>
@@ -301,8 +525,43 @@ onMounted(() => {
   animation-delay: var(--enter-delay, 0ms);
 }
 
+.app-card {
+  /* Anchor for the F-UX6 list-form quick-action pill + the toast. */
+  position: relative;
+}
+
 .app-card:active {
   transform: scale(0.98);
+}
+
+/* F-UX6 (PC form only): the quick-action bar rides on hover AND
+   focus-within, so tabbing into a card's action buttons reveals it exactly
+   like the mouse does (keyboard reachable). */
+.app-card:hover .card-quick-actions,
+.app-card:focus-within .card-quick-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Transient action feedback, floating over the card bottom. */
+.gallery-card__toast {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 16px);
+  padding: 5px 12px;
+  border-radius: var(--card-radius);
+  background: var(--color-background-floating);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  color: var(--text-color-primary);
+  font-size: var(--text-super-small);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 /* --------------------------------------------------------------------------

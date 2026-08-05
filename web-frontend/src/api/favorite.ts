@@ -24,8 +24,26 @@ export const favoriteApi = {
     return data
   },
 
-  async addFavorite(gid: number, token: string, category = 0): Promise<{ success: boolean }> {
-    const { data } = await client.post('/favorite/add', { gid, token, category })
+  /**
+   * `slot` is the optional target folder (Android favoriteSlot semantics:
+   * -1 default folder, 0-9 custom; the backend DTO defaults to -1 when
+   * omitted). Callers that don't target a folder leave it out — existing
+   * call sites are unaffected (F-UX6 card quick action passes the
+   * `defaultFavoriteSlot` preference).
+   */
+  async addFavorite(
+    gid: number,
+    token: string,
+    category = 0,
+    slot?: number,
+  ): Promise<{ success: boolean }> {
+    const body: { gid: number; token: string; category: number; slot?: number } = {
+      gid,
+      token,
+      category,
+    }
+    if (slot !== undefined) body.slot = slot
+    const { data } = await client.post('/favorite/add', body)
     return data
   },
 
