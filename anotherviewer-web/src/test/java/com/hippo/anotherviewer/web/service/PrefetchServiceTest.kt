@@ -70,7 +70,7 @@ class PrefetchServiceTest {
         `when`(galleryLookup.findToken(gid)).thenReturn(token)
         `when`(galleryLookup.fetchPageCount(gid, token)).thenReturn(pageCount)
         `when`(galleryLookup.fetchImageUrl(anyLong(), anyString(), anyInt()))
-            .thenReturn("https://gallery.test/example/image.jpg")
+            .thenReturn("https://e-hentai.org/example/image.jpg")
 
         config = SiteCoreConfigProperties()
         config.reader.prefetchPages = 3
@@ -225,7 +225,7 @@ class PrefetchServiceTest {
             } finally {
                 active.decrementAndGet()
             }
-            "https://gallery.test/example/image.jpg"
+            "https://e-hentai.org/example/image.jpg"
         }
 
         service.prefetchAround(gid, 0)
@@ -243,7 +243,7 @@ class PrefetchServiceTest {
         val release = CountDownLatch(1)
         `when`(galleryLookup.fetchImageUrl(anyLong(), anyString(), anyInt())).thenAnswer {
             assertTrue(release.await(5, TimeUnit.SECONDS))
-            "https://gallery.test/example/image.jpg"
+            "https://e-hentai.org/example/image.jpg"
         }
 
         repeat(9) { service.prefetchAround(gid, 0) } // 8 permits → 9th submission dropped

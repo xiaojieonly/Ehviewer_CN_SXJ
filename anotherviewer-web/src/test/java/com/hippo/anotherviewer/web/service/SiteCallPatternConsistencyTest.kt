@@ -20,9 +20,9 @@ class SiteCallPatternConsistencyTest {
 
     @Test
     fun `request carries the same browser fingerprint as the app ChromeRequestBuilder`() {
-        val request = SiteRequestBuilder("https://gallery.test/g/123/abc", "https://gallery.test/").build()
+        val request = SiteRequestBuilder("https://e-hentai.org/g/123/abc", "https://e-hentai.org/").build()
 
-        assertEquals("gallery.test", request.header("Host"))
+        assertEquals("e-hentai.org", request.header("Host"))
         assertEquals(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
             request.header("User-Agent")
@@ -35,17 +35,17 @@ class SiteCallPatternConsistencyTest {
             "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
             request.header("Accept-Language")
         )
-        assertEquals("https://gallery.test/", request.header("Referer"))
+        assertEquals("https://e-hentai.org/", request.header("Referer"))
     }
 
     @Test
     fun `post requests keep the browser fingerprint and body`() {
         val body = "x=1".toRequestBody(null)
-        val request = SiteRequestBuilder("https://gallery.test/api.php", "https://gallery.test/")
+        val request = SiteRequestBuilder("https://e-hentai.org/api.php", "https://e-hentai.org/")
             .post(body)
             .build()
 
-        assertEquals("gallery.test", request.header("Host"))
+        assertEquals("e-hentai.org", request.header("Host"))
         assertEquals("POST", request.method)
     }
 

@@ -85,7 +85,7 @@ class ImageProxyControllerTest {
 
     @Test
     fun `proxyImage serves a cache hit without fetching`() {
-        val url = "https://gallery.test/t/1001/cover.jpg"
+        val url = "https://e-hentai.org/t/1001/cover.jpg"
         `when`(imageCacheService.getCachedImage(url)).thenReturn(byteArrayOf(1, 2, 3))
         site = FakeSite { canned(it, 200, "image/jpeg", "") }
         setUpClient(site)
@@ -104,7 +104,7 @@ class ImageProxyControllerTest {
 
     @Test
     fun `proxyImage fetch-on-miss backfills the cache and passes the content-type through`() {
-        val url = "https://gallery.test/t/1001/cover.jpg"
+        val url = "https://e-hentai.org/t/1001/cover.jpg"
         `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
         site = FakeSite { canned(it, 200, "image/png", "PNGBYTES") }
         setUpClient(site)
@@ -139,7 +139,7 @@ class ImageProxyControllerTest {
 
     @Test
     fun `proxyImage returns the 404 envelope when the site is unreachable`() {
-        val url = "https://gallery.test/t/1001/cover.jpg"
+        val url = "https://e-hentai.org/t/1001/cover.jpg"
         `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
         site = FakeSite { throw IOException("connect timed out") }
         setUpClient(site)
@@ -155,7 +155,7 @@ class ImageProxyControllerTest {
 
     @Test
     fun `proxyImage returns the 404 envelope when the site answers with an error status`() {
-        val url = "https://gallery.test/t/9999/cover.jpg"
+        val url = "https://e-hentai.org/t/9999/cover.jpg"
         `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
         site = FakeSite { canned(it, 404, "text/html", "not here") }
         setUpClient(site)

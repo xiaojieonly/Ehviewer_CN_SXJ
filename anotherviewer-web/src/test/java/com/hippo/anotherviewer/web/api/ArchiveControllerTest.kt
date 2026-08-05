@@ -21,10 +21,10 @@ class ArchiveControllerTest {
 
     @Test
     fun `download returns success with relative path when archive is saved`() {
-        `when`(archiveService.downloadArchive(123L, "https://gallery.test/archiver.php?gid=123"))
+        `when`(archiveService.downloadArchive(123L, "https://e-hentai.org/archiver.php?gid=123"))
             .thenReturn(true)
 
-        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test/archiver.php?gid=123"))
+        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://e-hentai.org/archiver.php?gid=123"))
 
         assertEquals(200, response.statusCode.value())
         val body = response.body as ArchiveDownloadResponse
@@ -35,10 +35,10 @@ class ArchiveControllerTest {
 
     @Test
     fun `download returns 502 uniform envelope when the archiver flow fails`() {
-        `when`(archiveService.downloadArchive(123L, "https://gallery.test/archiver.php?gid=123"))
+        `when`(archiveService.downloadArchive(123L, "https://e-hentai.org/archiver.php?gid=123"))
             .thenReturn(false)
 
-        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test/archiver.php?gid=123"))
+        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://e-hentai.org/archiver.php?gid=123"))
 
         assertEquals(502, response.statusCode.value())
         val body = response.body as ApiErrorEnvelope
@@ -74,7 +74,7 @@ class ArchiveControllerTest {
 
     @Test
     fun `download rejects gallery-prefixed hosts`() {
-        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test.evil.example/archive.zip"))
+        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://e-hentai.org.evil.example/archive.zip"))
 
         assertEquals(400, response.statusCode.value())
         val body = response.body as ApiErrorEnvelope
