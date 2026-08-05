@@ -1415,18 +1415,6 @@ public class Settings {
         putBoolean(KEY_SHOW_GALLERY_RATING, value);
     }
 
-    public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
-
-    private static boolean IS_CLOSE_AUTO_UPDATES = true;
-
-    public static boolean getCloseAutoUpdate() {
-        return getBoolean(KEY_CLOSE_AUTO_UPDATES, IS_CLOSE_AUTO_UPDATES);
-    }
-
-    public static void setKeyCloseAutoUpdates(boolean value) {
-        putBoolean(KEY_CLOSE_AUTO_UPDATES, value);
-    }
-
     public static final String KEY_SHOW_EH_EVENTS = "show_eh_events";
 
     private static boolean IS_SHOW_EH_EVENTS = true;
