@@ -1232,7 +1232,10 @@ public class SiteDB {
             }
 
             // Bookmarks
-            // TODO
+            List<BookmarkInfo> bookmarkInfoList = session.getBookmarksDao().queryBuilder().list();
+            for (BookmarkInfo info : bookmarkInfoList) {
+                putBookmark(info);
+            }
 
             // Filter
             List<Filter> filterList = session.getFilterDao().queryBuilder().list();
