@@ -280,6 +280,12 @@ class BackupService(
             renamed += bak to target
         }
         Files.move(source, target)
+        // WAL 模式下旧 db 的 -wal/-shm 残留会让 SQLite 打开新快照时误应用旧日志，
+        // 导致还原的库数据丢失/损坏——替换 db 后必须清掉（快照本身是 clean 的）。
+        if (target.fileName.toString().endsWith(".db")) {
+            Files.deleteIfExists(target.resolveSibling("${target.fileName}-wal"))
+            Files.deleteIfExists(target.resolveSibling("${target.fileName}-shm"))
+        }
     }
 
     private fun applyTree(source: Path, target: Path) {
