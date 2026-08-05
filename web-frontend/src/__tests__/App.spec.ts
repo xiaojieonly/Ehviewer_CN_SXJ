@@ -5,9 +5,14 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import App from '../App.vue'
 
+const { pushMock, routeState } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  routeState: { name: 'Homepage', path: '/', fullPath: '/' },
+}))
+
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ name: 'Homepage', path: '/' }),
-  useRouter: () => ({ push: vi.fn() }),
+  useRoute: () => routeState,
+  useRouter: () => ({ push: pushMock }),
 }))
 
 function appCss(): string {
@@ -20,11 +25,43 @@ describe('App (UX-13 hamburger reserved slot)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    pushMock.mockClear()
   })
 
   afterEach(() => {
     wrapper?.unmount()
     vi.clearAllMocks()
+  })
+
+  it('maps the feed nav items to the home route with feed queries', async () => {
+    wrapper = mount(App)
+    const clickItem = async (label: string) => {
+      const button = wrapper
+        .findAll('[data-testid="drawer-item"]')
+        .find((b) => b.text().includes(label))
+      expect(button).toBeDefined()
+      await button!.trigger('click')
+      routeState.fullPath = pushMock.mock.calls.at(-1)?.[0] as string
+    }
+
+    await clickItem('订阅')
+    expect(pushMock).toHaveBeenCalledWith('/?feed=subscription')
+
+    await clickItem('热门')
+    expect(pushMock).toHaveBeenCalledWith('/?feed=popular')
+
+    await clickItem('排行榜')
+    expect(pushMock).toHaveBeenCalledWith('/?feed=toplist')
+  })
+
+  it('does not re-push the currently active feed target', async () => {
+    routeState.fullPath = '/?feed=popular'
+    wrapper = mount(App)
+    const hotButton = wrapper
+      .findAll('[data-testid="drawer-item"]')
+      .find((b) => b.text().includes('热门'))
+    await hotButton!.trigger('click')
+    expect(pushMock).not.toHaveBeenCalled()
   })
 
   it('renders the hamburger with its accessible label', () => {

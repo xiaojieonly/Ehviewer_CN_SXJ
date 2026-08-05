@@ -79,11 +79,13 @@ const activeNavId = computed(() => {
 
 function handleNavSelect(item: NavItem) {
   drawerOpen.value = false
+  // subscription / whats_hot / top_lists share the home route and select the
+  // feed via the `feed` query param (frozen feed contract).
   const paths: Record<string, string> = {
     homepage: '/',
-    subscription: '/',
-    whats_hot: '/',
-    top_lists: '/',
+    subscription: '/?feed=subscription',
+    whats_hot: '/?feed=popular',
+    top_lists: '/?feed=toplist',
     favourite: '/favorites',
     history: '/history',
     downloads: '/downloads',
@@ -91,7 +93,9 @@ function handleNavSelect(item: NavItem) {
     admin: '/admin',
   }
   const target = paths[item.id] ?? '/'
-  if (route.path !== target) {
+  // Compare the full path (query included) — path-only comparison would treat
+  // /?feed=popular and /?feed=toplist as the same target and skip the push.
+  if (route.fullPath !== target) {
     router.push(target)
   }
 }

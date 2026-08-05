@@ -1,5 +1,10 @@
 import client from './client'
-import type { GalleryListResponse, GalleryDetail, QuickSearch } from '@/types'
+import type {
+  GalleryListResponse,
+  GalleryDetail,
+  QuickSearch,
+  TopListResponse,
+} from '@/types'
 
 /**
  * The backend reports gallery-upstream failures with HTTP 200 +
@@ -8,11 +13,38 @@ import type { GalleryListResponse, GalleryDetail, QuickSearch } from '@/types'
  * instead of returning the same shape as an empty list — callers' existing
  * catch paths then show the error state.
  */
-function ensureSuccess(response: GalleryListResponse): GalleryListResponse {
+function ensureSuccess<T extends { success: boolean }>(response: T): T {
   if (response.success === false) {
     throw new Error('Gallery request failed')
   }
   return response
+}
+
+/** Feed modes accepted by `GET /gallery/feed?mode=` (frozen contract). */
+export type FeedMode = 'subscription' | 'popular' | 'toplist'
+
+/**
+ * Home feeds — `GET /gallery/feed?mode=subscription|popular|toplist`
+ * (frozen contract). subscription / popular return the same GalleryInfo
+ * envelope as search; toplist returns ranked rows (tag/value/href).
+ */
+async function feed(
+  mode: 'subscription' | 'popular',
+  page?: number,
+  pageSize?: number,
+): Promise<GalleryListResponse>
+async function feed(mode: 'toplist', page?: number, pageSize?: number): Promise<TopListResponse>
+async function feed(
+  mode: FeedMode,
+  page = 0,
+  pageSize = 20,
+): Promise<GalleryListResponse | TopListResponse> {
+  const params = new URLSearchParams()
+  params.set('mode', mode)
+  params.set('page', page.toString())
+  params.set('pageSize', pageSize.toString())
+  const { data } = await client.get(`/gallery/feed?${params.toString()}`)
+  return ensureSuccess(data)
 }
 
 /**
@@ -115,6 +147,8 @@ export const galleryApi = {
     const { data } = await client.get(`/gallery/search?${params.toString()}`)
     return ensureSuccess(data)
   },
+
+  feed,
 
   async getDetail(gid: number): Promise<GalleryDetail> {
     const { data } = await client.get(`/gallery/${gid}`)

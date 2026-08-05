@@ -59,6 +59,32 @@ class GalleryController(private val galleryService: GalleryService) {
         )
     }
 
+    /**
+     * Feed endpoint (contracts/openapi.yaml GET /api/v1/gallery/feed):
+     * subscription/popular return the search-shaped GalleryListResponse,
+     * toplist returns TopListResponse. An invalid `mode` is a 400 with the
+     * frozen `{success:false, message}` body; an unreachable site surfaces
+     * `success=false` from the service with HTTP 200 (E2E-6, same as /search).
+     */
+    @GetMapping("/feed")
+    fun feed(
+        @RequestParam(required = false) mode: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int
+    ): ResponseEntity<*> {
+        if (mode == null || mode !in FEED_MODES) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(FeedErrorResponse(success = false, message = "mode must be one of: ${FEED_MODES.joinToString(", ")}"))
+        }
+        // Same M-5 clamping as /search.
+        val clampedPage = page.coerceAtLeast(0)
+        val clampedPageSize = pageSize.coerceIn(1, MAX_PAGE_SIZE)
+        return when (mode) {
+            "toplist" -> ResponseEntity.ok(galleryService.topListFeed())
+            else -> ResponseEntity.ok(galleryService.feedGallery(mode, clampedPage, clampedPageSize))
+        }
+    }
+
     @GetMapping("/{gid}")
     fun getDetail(@PathVariable gid: Long): ResponseEntity<*> {
         val detail = galleryService.getGalleryDetail(gid)
@@ -116,5 +142,8 @@ class GalleryController(private val galleryService: GalleryService) {
 
         /** Contract values for the `sort` param (openapi enum 0..3). */
         val SORT_RANGE = 0..3
+
+        /** Contract values for the feed `mode` param (openapi enum). */
+        val FEED_MODES = setOf("subscription", "popular", "toplist")
     }
 }

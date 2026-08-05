@@ -479,6 +479,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/GalleryListResponse'
 
+  /api/v1/gallery/feed:
+    get:
+      tags: [Gallery]
+      operationId: galleryFeed
+      summary: >-
+        Gallery feed by mode: subscription (watched), popular (what's hot), or
+        toplist (EH top lists)
+      parameters:
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [subscription, popular, toplist]
+          description: >-
+            Feed kind. subscription = watched galleries, popular = what's hot,
+            toplist = EH top list (first non-empty time slot, yesterday first).
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-based); used by subscription/popular only
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of results per page (clamped to 1..200)
+      responses:
+        '200':
+          description: >-
+            subscription/popular return GalleryListResponse (identical to
+            GET /gallery/search); toplist returns TopListResponse. An
+            unreachable site surfaces success=false with empty data and
+            total 0 (E2E-6, same as /search).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GalleryListResponse'
+                  - $ref: '#/components/schemas/TopListResponse'
+        '400':
+          description: Invalid or missing mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedErrorResponse'
+
   /api/v1/gallery/{gid}:
     get:
       tags: [Gallery]
@@ -2245,6 +2296,46 @@ components:
         favoriteName:
           type: string
           nullable: true
+
+    TopListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopListFeedItemDto'
+        total:
+          type: integer
+
+    TopListFeedItemDto:
+      type: object
+      properties:
+        gid:
+          type: string
+          nullable: true
+        token:
+          type: string
+          nullable: true
+        tag:
+          type: string
+          nullable: true
+        value:
+          type: string
+          nullable: true
+        href:
+          type: string
+          nullable: true
+
+    FeedErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
 
     GalleryDetailDto:
       type: object

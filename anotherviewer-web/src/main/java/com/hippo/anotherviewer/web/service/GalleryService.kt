@@ -6,6 +6,7 @@ import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.SiteUtils
 import com.hippo.anotherviewer.client.data.GalleryInfo
 import com.hippo.anotherviewer.client.data.ListUrlBuilder
+import com.hippo.anotherviewer.client.data.topList.TopListItem
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.entity.GalleryInfoBase
 import com.hippo.anotherviewer.web.entity.HistoryInfoEntity
@@ -101,6 +102,65 @@ class GalleryService(
             logger.warn("Gallery Site search failed for keyword={}", keyword, e)
             GalleryListResponse(success = false, data = emptyList(), total = 0)
         }
+    }
+
+    /**
+     * Gallery Site feed (contracts/openapi.yaml GET /api/v1/gallery/feed):
+     * `subscription` = watched galleries, `popular` = what's hot. Both reuse
+     * the shared core [ListUrlBuilder] and the same total semantics as
+     * [searchGallery] (result pages × 25, EH lists 25 per page).
+     *
+     * E2E-6 failure semantics preserved: an unreachable site (or a watched
+     * redirect to the login page when unauthenticated) surfaces
+     * `success=false` with empty data.
+     */
+    fun feedGallery(mode: String, page: Int, pageSize: Int): GalleryListResponse {
+        return try {
+            val siteMode = feedMode(mode)
+            val url = buildFeedUrl(mode, page)
+            val result = SiteEngine.getGalleryList(null, client, url, siteMode)
+            val items = result.galleryInfoList.map { it.toDto() }
+            val total = if (result.pages > 0) result.pages * 25 else items.size
+            GalleryListResponse(success = true, data = items, total = total)
+        } catch (e: Exception) {
+            logger.warn("Gallery Site feed failed for mode={}: {}", mode, e.message)
+            GalleryListResponse(success = false, data = emptyList(), total = 0)
+        }
+    }
+
+    /**
+     * Top-list feed (contracts/openapi.yaml GET /api/v1/gallery/feed mode
+     * `toplist`): fetches the gallery top list and flattens the first
+     * non-empty time slot — yesterday first, then past month / past year /
+     * all time (the core parser allocates 10 slots, trailing ones stay null).
+     */
+    fun topListFeed(): TopListResponse {
+        return try {
+            val detail = SiteEngine.getTopList(null, client, SiteUrl.getTopListUrl())
+            val info = detail.galleryTopListInfo
+            val selected = (0 until (info?.size() ?: 0)).firstNotNullOfOrNull { i ->
+                info.get(i)?.itemArray?.takeIf { it.isNotEmpty() }
+            }
+            val items = selected?.filterNotNull()?.map { it.toDto() } ?: emptyList()
+            TopListResponse(success = true, data = items, total = items.size)
+        } catch (e: Exception) {
+            logger.warn("Gallery Site top list failed: {}", e.message)
+            TopListResponse(success = false, data = emptyList(), total = 0)
+        }
+    }
+
+    /** Feed-mode → core ListUrlBuilder mode mapping (only valid modes reach here). */
+    private fun feedMode(mode: String): Int = when (mode) {
+        "subscription" -> ListUrlBuilder.MODE_SUBSCRIPTION
+        else -> ListUrlBuilder.MODE_WHATS_HOT
+    }
+
+    /** Builds the upstream feed URL through the shared core [ListUrlBuilder]. */
+    internal fun buildFeedUrl(mode: String, page: Int): String {
+        val builder = ListUrlBuilder()
+        builder.mode = feedMode(mode)
+        builder.pageIndex = page
+        return builder.build()
     }
 
     /**
@@ -340,6 +400,14 @@ class GalleryService(
     fun deleteQuickSearch(id: Long) {
         quickSearchRepository.deleteById(id)
     }
+
+    private fun TopListItem.toDto() = TopListFeedItemDto(
+        gid = gid,
+        token = token,
+        tag = tag,
+        value = value,
+        href = href
+    )
 
     private fun GalleryInfoBase.toDto() = GalleryItemDto(
         gid = gid,

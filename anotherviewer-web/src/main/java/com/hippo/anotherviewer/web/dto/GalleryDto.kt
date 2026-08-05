@@ -32,6 +32,35 @@ data class GalleryItemDto(
     val favoriteName: String?
 )
 
+data class TopListResponse(
+    val success: Boolean,
+    val data: List<TopListFeedItemDto>,
+    val total: Int
+)
+
+/**
+ * One EH top-list row (contracts/openapi.yaml TopListFeedItemDto). Fields
+ * mirror the core [com.hippo.anotherviewer.client.data.topList.TopListItem];
+ * the site parser only fills `value`/`href`, so gid/token/tag are typically
+ * null.
+ */
+data class TopListFeedItemDto(
+    val gid: String?,
+    val token: String?,
+    val tag: String?,
+    val value: String?,
+    val href: String?
+)
+
+/**
+ * Frozen 400 body for /api/v1/gallery/feed invalid mode
+ * (contracts/openapi.yaml FeedErrorResponse): `{success:false, message}`.
+ */
+data class FeedErrorResponse(
+    val success: Boolean,
+    val message: String
+)
+
 data class GalleryDetailDto(
     val gid: Long,
     val token: String,

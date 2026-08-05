@@ -82,3 +82,19 @@ export interface GalleryListResponse {
   total: number
 }
 
+/** One ranked entry of the toplist feed (GET /gallery/feed?mode=toplist). */
+export interface TopListItem {
+  gid: number
+  token: string
+  tag: string
+  value: number
+  href: string
+}
+
+/** Response envelope of the toplist feed — data rows differ from GalleryInfo. */
+export interface TopListResponse {
+  success: boolean
+  data: TopListItem[]
+  total: number
+}
+

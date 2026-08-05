@@ -73,13 +73,30 @@
           </button>
         </div>
       </template>
+      <!-- Toplist feed: lightweight ranked rows (rank + tag + value).
+           Feed mode replaces the virtualized gallery grid entirely. -->
+      <div v-if="feedMode === 'toplist'" class="home__toplist">
+        <a
+          v-for="(item, index) in topList"
+          :key="item.gid"
+          class="home__toplist-row"
+          :href="item.href"
+          target="_blank"
+          rel="noopener"
+          :data-testid="`toplist-row-${index}`"
+        >
+          <span class="home__toplist-rank">{{ index + 1 }}</span>
+          <span class="home__toplist-tag">{{ item.tag }}</span>
+          <span class="home__toplist-value">{{ item.value }}</span>
+        </a>
+      </div>
       <!-- Virtualized gallery list: only the rows intersecting the viewport
            (+ overscan) are mounted; the spacers above/below preserve the full
            scroll height so the scrollbar and the load-more footer (rendered
            after the slot by ContentLayout) keep working. GalleryList (B-1)
            renders the grid/list form from `prefs.general.listMode` and owns
            the view-mode toggle. -->
-      <div ref="virtualHostRef" class="home__virtual">
+      <div v-else ref="virtualHostRef" class="home__virtual">
         <div
           class="home__virtual-spacer"
           :style="{ height: `${topSpacerHeight}px` }"
@@ -132,8 +149,8 @@
  * stored value is written into preferences and the key then removed.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { galleryApi } from '@/api/gallery'
+import { useRoute, useRouter } from 'vue-router'
+import { galleryApi, type FeedMode } from '@/api/gallery'
 import { isOfflineError } from '@/api/client'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
@@ -157,6 +174,7 @@ import type {
   SearchBarState,
   SearchSuggestion,
 } from '@/types/components'
+import type { TopListItem } from '@/types'
 
 /** ContentLayout's view states (frozen `ContentState` + its `error` extra). */
 type HomeContentState = ContentState | 'error'
@@ -170,13 +188,32 @@ const PAGE_SIZE = 25
  */
 const LIST_MODE_KEY = 'anotherviewer-webui:gallery-list-mode'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
 
+/* -------------------------------- feed mode ----------------------------- */
+
+/** CN labels for the frozen feed modes (`?feed=` query on the home route). */
+const FEED_TITLES: Record<FeedMode, string> = {
+  subscription: '订阅',
+  popular: '热门',
+  toplist: '排行榜',
+}
+
+/** Active feed mode from the route query; undefined = plain search home. */
+const feedMode = computed<FeedMode | undefined>(() => {
+  const q = route.query.feed
+  return typeof q === 'string' && q in FEED_TITLES ? (q as FeedMode) : undefined
+})
+
+const feedTitle = computed(() => (feedMode.value ? FEED_TITLES[feedMode.value] : undefined))
+
 /* -------------------------------- list state ---------------------------- */
 
 const galleries = ref<GalleryInfo[]>([])
+const topList = ref<TopListItem[]>([])
 const page = ref(0)
 const total = ref(0)
 const fetchedPages = ref(0)
@@ -191,36 +228,68 @@ const contentLayoutRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** Monotonic request guard — stale responses (fast refresh / search) drop. */
 let requestSeq = 0
 
+/** Append-with-dedupe by gid — bumped galleries can reappear across pages. */
+function appendDeduped<T extends { gid: number }>(
+  existing: T[],
+  fresh: T[],
+): { items: T[]; noMore: boolean } {
+  const seen = new Set(existing.map((g) => g.gid))
+  const added = fresh.filter((g) => !seen.has(g.gid))
+  return { items: [...existing, ...added], noMore: fresh.length === 0 || added.length === 0 }
+}
+
+/**
+ * Commit a fetched page onto a gid-keyed list and drive the shared
+ * page/total/fetched/no-more bookkeeping for both the search and feed paths.
+ * Returns the resulting list so the caller can assign its ref.
+ */
+function commitPage<T extends { gid: number }>(
+  current: T[],
+  next: T[],
+  target: number,
+  count: number,
+  mode: 'replace' | 'append',
+): T[] {
+  page.value = target
+  total.value = count
+  if (mode === 'replace') {
+    fetchedPages.value = 1
+    noMoreData.value = next.length === 0
+    return next
+  }
+  const { items, noMore } = appendDeduped(current, next)
+  if (noMore) noMoreData.value = true
+  else fetchedPages.value += 1
+  return items
+}
+
 async function loadPage(target: number, mode: 'replace' | 'append'): Promise<void> {
   const seq = ++requestSeq
   if (mode === 'append') loadingMore.value = true
   try {
-    const res = await galleryApi.search(
-      appliedKeyword.value || undefined,
-      undefined,
-      target,
-      PAGE_SIZE,
-      isFilterActive(activeFilters.value) ? activeFilters.value : undefined,
-    )
-    if (seq !== requestSeq) return
-    page.value = target
-    total.value = res.total
-    if (mode === 'replace') {
-      galleries.value = res.data
-      fetchedPages.value = 1
-      noMoreData.value = res.data.length === 0
+    // Feed mode drives the data source; the search keyword is ignored there
+    // (frozen feed contract — subscription/popular mirror search's envelope).
+    const feed = feedMode.value
+    if (feed === 'toplist') {
+      const res = await galleryApi.feed('toplist', target, PAGE_SIZE)
+      if (seq !== requestSeq) return
+      topList.value = commitPage(topList.value, res.data, target, res.total, mode)
+    } else if (feed) {
+      const res = await galleryApi.feed(feed, target, PAGE_SIZE)
+      if (seq !== requestSeq) return
+      galleries.value = commitPage(galleries.value, res.data, target, res.total, mode)
     } else {
-      // Dedupe by gid — bumped galleries can reappear across pages.
-      const seen = new Set(galleries.value.map((g) => g.gid))
-      const fresh = res.data.filter((g) => !seen.has(g.gid))
-      galleries.value = [...galleries.value, ...fresh]
-      if (res.data.length === 0 || fresh.length === 0) {
-        noMoreData.value = true
-      } else {
-        fetchedPages.value += 1
-      }
+      const res = await galleryApi.search(
+        appliedKeyword.value || undefined,
+        undefined,
+        target,
+        PAGE_SIZE,
+        isFilterActive(activeFilters.value) ? activeFilters.value : undefined,
+      )
+      if (seq !== requestSeq) return
+      galleries.value = commitPage(galleries.value, res.data, target, res.total, mode)
     }
-    contentState.value = galleries.value.length > 0 ? 'content' : 'empty'
+    contentState.value = (feed === 'toplist' ? topList.value : galleries.value).length > 0 ? 'content' : 'empty'
   } catch (error) {
     if (seq !== requestSeq) return
     console.error('[HomeView] 加载画廊列表失败', error)
@@ -343,8 +412,8 @@ function onFilterPanelSearch(): void {
 const suggestions = ref<SearchSuggestion[]>([])
 let quickSearchesLoaded = false
 
-/** Title row shows the active keyword, falling back to a neutral label. */
-const searchTitle = computed(() => appliedKeyword.value || '搜索')
+/** Title row: feed name in feed mode, else the active keyword / neutral label. */
+const searchTitle = computed(() => feedTitle.value ?? (appliedKeyword.value || '搜索'))
 
 function enterSearchMode(): void {
   searchState.value = suggestions.value.length > 0 ? 'search-list' : 'search'
@@ -602,6 +671,24 @@ onMounted(() => {
   void loadPage(0, 'replace')
 })
 
+/**
+ * Feed navigation (/?feed=popular → /?feed=toplist, or a feed → the plain
+ * home) reuses this component instance — reload page 0 when the query
+ * changes (requestSeq drops any stale in-flight page).
+ */
+watch(
+  () => route.query.feed,
+  () => {
+    topList.value = []
+    galleries.value = []
+    page.value = 0
+    fetchedPages.value = 0
+    noMoreData.value = false
+    contentState.value = 'loading'
+    void loadPage(0, 'replace')
+  },
+)
+
 /** (Re)attach once ContentLayout swaps in the scrolling content view. */
 watch(
   contentState,
@@ -671,6 +758,40 @@ onBeforeUnmount(detachVirtualScroll)
    themselves). */
 .home__virtual {
   --gallery-list-clear-top: var(--gallery-padding-top-search-bar);
+}
+
+/* Toplist feed rows — clear the floating SearchBar like the gallery list. */
+.home__toplist {
+  padding-top: var(--gallery-padding-top-search-bar);
+}
+
+.home__toplist-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: 12px var(--keyline-margin);
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--text-color-primary);
+  text-decoration: none;
+}
+
+.home__toplist-rank {
+  min-width: 24px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.home__toplist-tag {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home__toplist-value {
+  flex: none;
+  color: var(--text-color-secondary);
 }
 
 /* Empty-state guided CTA (UX-07): sadpanda + informative copy + actions.

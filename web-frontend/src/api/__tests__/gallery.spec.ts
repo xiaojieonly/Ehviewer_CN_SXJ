@@ -205,3 +205,38 @@ describe('galleryApi.createQuickSearch (POST /gallery/quick-search)', () => {
     expect(mockedPost).toHaveBeenCalledWith('/gallery/quick-search', payload)
   })
 })
+
+describe('galleryApi.feed (GET /gallery/feed, frozen feed contract)', () => {
+  beforeEach(() => {
+    mockedGet.mockReset()
+  })
+
+  it('calls /gallery/feed with mode/page/pageSize for subscription/popular', async () => {
+    mockedGet.mockResolvedValue(okResponse({ success: true, data: [], total: 0 }))
+    await galleryApi.feed('subscription', 2, 50)
+    const q = searchQuery()
+    expect(mockedGet.mock.calls[0][0]).toContain('/gallery/feed')
+    expect(q.get('mode')).toBe('subscription')
+    expect(q.get('page')).toBe('2')
+    expect(q.get('pageSize')).toBe('50')
+
+    await galleryApi.feed('popular', 0, 20)
+    expect(searchQuery(1).get('mode')).toBe('popular')
+  })
+
+  it('passes mode=toplist through and returns the ranked TopListResponse', async () => {
+    const payload = {
+      success: true,
+      data: [{ gid: 1, token: 'a', tag: 'parody:one piece', value: 999, href: 'https://e-hentai.org/g/1/a/' }],
+      total: 1,
+    }
+    mockedGet.mockResolvedValue({ data: payload })
+    await expect(galleryApi.feed('toplist', 0, 20)).resolves.toEqual(payload)
+    expect(searchQuery().get('mode')).toBe('toplist')
+  })
+
+  it('rejects a feed answered with success:false', async () => {
+    mockedGet.mockResolvedValue(okResponse({ success: false, data: [], total: 0 }))
+    await expect(galleryApi.feed('popular', 0, 20)).rejects.toThrow()
+  })
+})

@@ -1,26 +1,45 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { reactive } from 'vue'
 import HomeView from '../HomeView.vue'
 import { galleryApi } from '@/api/gallery'
 import { preferencesApi } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
 import type { Preferences } from '@/api/preferences'
-import type { GalleryInfo } from '@/types'
+import type { GalleryInfo, GalleryListResponse, TopListItem } from '@/types'
 
-const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+const { pushMock, routeMock } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  routeMock: { query: {} },
+}))
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: pushMock }),
+  // Return a reactive wrapper so query mutations (via the cached proxy in
+  // tests) re-trigger HomeView's feed watcher.
+  useRoute: () => reactive(routeMock),
 }))
 
 vi.mock('@/api/gallery', () => ({
-  galleryApi: { search: vi.fn(), getQuickSearches: vi.fn() },
+  galleryApi: { search: vi.fn(), feed: vi.fn(), getQuickSearches: vi.fn() },
 }))
 
 vi.mock('@/api/preferences', () => ({
   preferencesApi: { get: vi.fn(), update: vi.fn() },
 }))
+
+/**
+ * `vi.mocked(galleryApi.feed)` resolves to the last (toplist) overload, so the
+ * subscription/popular mocks are typed through this list-overload alias.
+ */
+const feedListMock = vi.mocked(
+  galleryApi.feed as (
+    mode: 'subscription' | 'popular',
+    page?: number,
+    pageSize?: number,
+  ) => Promise<GalleryListResponse>,
+)
 
 /** Legacy localStorage key of the pre-preferences list mode (B-1 migration). */
 const LIST_MODE_KEY = 'anotherviewer-webui:gallery-list-mode'
@@ -53,6 +72,17 @@ function gallery(overrides: Partial<GalleryInfo> = {}): GalleryInfo {
   }
 }
 
+function toplistItem(overrides: Partial<TopListItem> = {}): TopListItem {
+  return {
+    gid: 1,
+    token: 'abc123',
+    tag: 'parody:one piece',
+    value: 1000,
+    href: 'https://e-hentai.org/g/1/abc123/',
+    ...overrides,
+  }
+}
+
 describe('HomeView (首页)', () => {
   let wrapper: VueWrapper
 
@@ -60,6 +90,7 @@ describe('HomeView (首页)', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     pushMock.mockClear()
+    routeMock.query = {}
     vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
     // Default: preferences resolve with the grid layout (the pre-migration
     // tests below can override per case).
@@ -166,6 +197,74 @@ describe('HomeView (首页)', () => {
     expect(spacers[0].attributes('style')).toContain('1312.5px')
     expect(spacers[1].attributes('style')).toContain('6187.5px')
   })
+
+  it('loads the popular feed through galleryApi.feed when ?feed=popular', async () => {
+    routeMock.query = { feed: 'popular' }
+    feedListMock.mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(galleryApi.feed).toHaveBeenCalledWith('popular', 0, 25)
+    expect(galleryApi.search).not.toHaveBeenCalled()
+    expect(wrapper.find('.app-card').exists()).toBe(true)
+  })
+
+  it('loads the subscription feed when ?feed=subscription', async () => {
+    routeMock.query = { feed: 'subscription' }
+    feedListMock.mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(galleryApi.feed).toHaveBeenCalledWith('subscription', 0, 25)
+    expect(galleryApi.search).not.toHaveBeenCalled()
+  })
+
+  it('renders ranked toplist rows when ?feed=toplist', async () => {
+    routeMock.query = { feed: 'toplist' }
+    vi.mocked(galleryApi.feed).mockResolvedValue({
+      success: true,
+      data: [
+        toplistItem({ tag: 'parody:one piece', value: 999 }),
+        toplistItem({ gid: 2, token: 'def456', tag: 'language:chinese', value: 42 }),
+      ],
+      total: 2,
+    })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(galleryApi.feed).toHaveBeenCalledWith('toplist', 0, 25)
+    expect(galleryApi.search).not.toHaveBeenCalled()
+    const rows = wrapper.findAll('[data-testid^="toplist-row-"]')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].text()).toContain('parody:one piece')
+    expect(rows[0].text()).toContain('999')
+    expect(rows[1].text()).toContain('language:chinese')
+    // The gallery grid is not rendered in toplist mode.
+    expect(wrapper.find('.app-card').exists()).toBe(false)
+  })
+
+  it('keeps the search path when no feed query is present', async () => {
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(galleryApi.search).toHaveBeenCalled()
+    expect(galleryApi.feed).not.toHaveBeenCalled()
+  })
+
+  it('reloads page 0 with the new mode when the feed query changes', async () => {
+    routeMock.query = { feed: 'subscription' }
+    feedListMock.mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+    expect(galleryApi.feed).toHaveBeenCalledWith('subscription', 0, 25)
+
+    // Mutate through Vue's cached proxy so the query watcher re-fires
+    // (raw mutation of routeMock would bypass reactivity).
+    reactive(routeMock).query = { feed: 'toplist' }
+    await flushPromises()
+    expect(galleryApi.feed).toHaveBeenLastCalledWith('toplist', 0, 25)
+  })
 })
 
 describe('HomeView (B-1 localStorage → preferences listMode migration)', () => {
@@ -175,6 +274,7 @@ describe('HomeView (B-1 localStorage → preferences listMode migration)', () =>
     setActivePinia(createPinia())
     localStorage.clear()
     pushMock.mockClear()
+    routeMock.query = {}
     vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
     vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
     vi.mocked(preferencesApi.update).mockResolvedValue(makePrefs({}))

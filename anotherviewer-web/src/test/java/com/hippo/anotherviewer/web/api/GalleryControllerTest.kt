@@ -3,6 +3,9 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
 import com.hippo.anotherviewer.web.dto.AddHistoryRequest
+import com.hippo.anotherviewer.web.dto.GalleryListResponse
+import com.hippo.anotherviewer.web.dto.TopListFeedItemDto
+import com.hippo.anotherviewer.web.dto.TopListResponse
 import com.hippo.anotherviewer.web.service.GalleryService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -341,5 +344,92 @@ class GalleryControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
         verify(galleryService, never()).createQuickSearch(any())
+    }
+
+    // ---------------------------------------------------------------------
+    // feed (contracts/openapi.yaml GET /api/v1/gallery/feed)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `feed subscription forwards mode page and pageSize to the service`() {
+        `when`(galleryService.feedGallery("subscription", 2, 40))
+            .thenReturn(GalleryListResponse(success = true, data = emptyList(), total = 0))
+
+        mockMvc.perform(
+            get("/api/v1/gallery/feed")
+                .param("mode", "subscription")
+                .param("page", "2")
+                .param("pageSize", "40")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+        verify(galleryService).feedGallery("subscription", 2, 40)
+    }
+
+    @Test
+    fun `feed popular forwards mode with default pagination`() {
+        mockMvc.perform(get("/api/v1/gallery/feed").param("mode", "popular"))
+            .andExpect(status().isOk)
+        verify(galleryService).feedGallery("popular", 0, 20)
+    }
+
+    @Test
+    fun `feed toplist calls topListFeed and serializes TopListResponse`() {
+        `when`(galleryService.topListFeed()).thenReturn(
+            TopListResponse(
+                success = true,
+                data = listOf(
+                    TopListFeedItemDto(gid = "1", token = "t1", tag = "pt1", value = "Alpha", href = "/g/1/t1")
+                ),
+                total = 1
+            )
+        )
+
+        mockMvc.perform(get("/api/v1/gallery/feed").param("mode", "toplist"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.total").value(1))
+            .andExpect(jsonPath("$.data[0].gid").value("1"))
+            .andExpect(jsonPath("$.data[0].token").value("t1"))
+            .andExpect(jsonPath("$.data[0].tag").value("pt1"))
+            .andExpect(jsonPath("$.data[0].value").value("Alpha"))
+            .andExpect(jsonPath("$.data[0].href").value("/g/1/t1"))
+        verify(galleryService).topListFeed()
+    }
+
+    @Test
+    fun `feed rejects invalid mode with frozen 400 success-false body`() {
+        mockMvc.perform(get("/api/v1/gallery/feed").param("mode", "bogus"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").isNotEmpty)
+        verify(galleryService, never()).feedGallery(any(), anyInt(), anyInt())
+        verify(galleryService, never()).topListFeed()
+    }
+
+    @Test
+    fun `feed rejects missing mode with frozen 400 success-false body`() {
+        mockMvc.perform(get("/api/v1/gallery/feed"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").isNotEmpty)
+        verify(galleryService, never()).feedGallery(any(), anyInt(), anyInt())
+        verify(galleryService, never()).topListFeed()
+    }
+
+    @Test
+    fun `feed clamps oversized pageSize to 200`() {
+        mockMvc.perform(get("/api/v1/gallery/feed").param("mode", "popular").param("pageSize", "999"))
+            .andExpect(status().isOk)
+        verify(galleryService).feedGallery("popular", 0, 200)
+    }
+
+    @Test
+    fun `feed clamps negative page up to 0 and pageSize up to 1`() {
+        mockMvc.perform(
+            get("/api/v1/gallery/feed").param("mode", "subscription").param("page", "-5").param("pageSize", "0")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).feedGallery("subscription", 0, 1)
     }
 }
