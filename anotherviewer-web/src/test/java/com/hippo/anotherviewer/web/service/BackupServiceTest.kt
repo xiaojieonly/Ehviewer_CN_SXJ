@@ -82,6 +82,11 @@ class BackupServiceTest {
 
     @Test
     fun `export to restore round trip preserves db key and config`() {
+        // 预置连接池残留的旧 db sidecar：还原后必须被清掉，不得留在新 db 旁边
+        // （否则 SQLite 打开新快照时可能误应用旧日志，见 applyCoreFile 的顺序约定）。
+        Files.write(dataDir.resolve("anotherviewer.db-wal"), byteArrayOf(1, 2, 3))
+        Files.write(dataDir.resolve("anotherviewer.db-shm"), byteArrayOf(9, 9))
+
         val result = service.export(includeDownloads = false)
         val slices = result.slices.associateBy { it.fileName.toString() }
 
@@ -92,6 +97,8 @@ class BackupServiceTest {
         assertEquals("test-secret-key", Files.readString(dataDir.resolve("security.key")))
         assertTrue(Files.isRegularFile(dataDir.resolve("anotherviewer.db.bak")))
         assertTrue(savedConfigs.any { it.key == ServerConfigService.KEY_DOWNLOAD_PATH })
+        assertFalse(Files.exists(dataDir.resolve("anotherviewer.db-wal")))
+        assertFalse(Files.exists(dataDir.resolve("anotherviewer.db-shm")))
     }
 
     @Test
