@@ -32,9 +32,9 @@ public class SiteUrl {
     public static final int SITE_E = 0;
     public static final int SITE_EX = 1;
 
-    public static final String DOMAIN_EX = "gallery.test";
-    public static final String DOMAIN_E = "gallery.test";
-    public static final String DOMAIN_LOFI = "lofi.gallery.test";
+    public static final String DOMAIN_EX = "exhentai.org";
+    public static final String DOMAIN_E = "e-hentai.org";
+    public static final String DOMAIN_LOFI = "lofi.e-hentai.org";
 
     public static final String REFERER_EX = "https://" + DOMAIN_EX;
     public static final String REFERER_E = "https://" + DOMAIN_E;
@@ -42,7 +42,7 @@ public class SiteUrl {
     public static final String HOST_EX = REFERER_EX + "/";
     public static final String HOST_E = REFERER_E + "/";
 
-    public static final String API_SIGN_IN = "https://forums.gallery.test/index.php?act=Login&CODE=01";
+    public static final String API_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login&CODE=01";
 
     public static final String URL_NEWS_E = HOST_E+"news.php";
 
@@ -52,21 +52,21 @@ public class SiteUrl {
     public static final String HOME_E = HOST_E + "home.php";
     public static final String HOME_EX = HOST_EX + "home.php";
 
-    public static final String URL_POPULAR_E = "https://gallery.test/popular";
-    public static final String URL_POPULAR_EX = "https://gallery.test/popular";
+    public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
+    public static final String URL_POPULAR_EX = "https://exhentai.org/popular";
 
     public static final String URL_TOP_LIST_E = HOST_E+"toplist.php";
     public static final String URL_TOP_LIST_EX = HOST_EX+"toplist.php";
 
-    public static final String URL_IMAGE_SEARCH_E = "https://upld.gallery.test/image_lookup.php";
-    public static final String URL_IMAGE_SEARCH_EX = "https://upld.gallery.test/upld/image_lookup.php";
+    public static final String URL_IMAGE_SEARCH_E = "https://upld.e-hentai.org/image_lookup.php";
+    public static final String URL_IMAGE_SEARCH_EX = "https://upld.exhentai.org/upld/image_lookup.php";
 
-    public static final String URL_SIGN_IN = "https://forums.gallery.test/index.php?act=Login";
-    public static final String URL_REGISTER = "https://forums.gallery.test/index.php?act=Reg&CODE=00";
+    public static final String URL_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login";
+    public static final String URL_REGISTER = "https://forums.e-hentai.org/index.php?act=Reg&CODE=00";
     public static final String URL_FAVORITES_E = HOST_E + "favorites.php";
     public static final String URL_FAVORITES_EX = HOST_EX + "favorites.php";
-    public static final String DOMAIN_FORUMS = "forums.gallery.test";
-    public static final String URL_FORUMS = "https://forums.gallery.test/";
+    public static final String DOMAIN_FORUMS = "forums.e-hentai.org";
+    public static final String URL_FORUMS = "https://forums.e-hentai.org/";
 
     public static final String ORIGIN_EX = REFERER_EX;
     public static final String ORIGIN_E = REFERER_E;
@@ -80,8 +80,8 @@ public class SiteUrl {
     public static final String URL_WATCHED_E = HOST_E + "watched";
     public static final String URL_WATCHED_EX = HOST_EX + "watched";
 
-    private static final String URL_PREFIX_THUMB_E = "https://gallery.test/";
-    private static final String URL_PREFIX_THUMB_EX = "https://gallery.test/t/";
+    private static final String URL_PREFIX_THUMB_E = "https://ehgt.org/";
+    private static final String URL_PREFIX_THUMB_EX = "https://exhentai.org/t/";
 
     public static String getGalleryDetailUrl(long gid, String token) {
         return getGalleryDetailUrl(gid, token, 0, false);

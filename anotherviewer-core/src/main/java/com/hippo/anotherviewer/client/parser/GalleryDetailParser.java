@@ -310,7 +310,7 @@ public class GalleryDetailParser {
         }
     }
 
-    // width:250px; height:356px; background:transparent url(https://gallery.test/t/fe/1f/fe1fcfa9bf8fba2f03982eda0aa347cc9d6a6372-145921-1050-1492-jpg_250.jpg) 0 0 no-repeat
+    // width:250px; height:356px; background:transparent url(https://e-hentai.org/t/fe/1f/fe1fcfa9bf8fba2f03982eda0aa347cc9d6a6372-145921-1050-1492-jpg_250.jpg) 0 0 no-repeat
     private static String parseCoverStyle(String str) {
         Matcher matcher = PATTERN_COVER.matcher(str);
         if (matcher.find()) {

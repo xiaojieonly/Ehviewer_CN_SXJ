@@ -17,7 +17,7 @@
 package com.hippo.anotherviewer.client.exception;
 
 /**
- * It is an exception for get offensive tip for g.gallery.test
+ * It is an exception for get offensive tip for g.e-hentai.org
  */
 public class OffensiveException extends SiteException {
 

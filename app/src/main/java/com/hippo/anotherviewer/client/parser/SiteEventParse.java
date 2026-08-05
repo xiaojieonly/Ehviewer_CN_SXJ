@@ -11,7 +11,7 @@ public class SiteEventParse {
     public static String parse(String body){
 //        String s = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n" +
 //                "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n" +
-//                "<!-- saved from url=(0029)https://gallery.test/news.php -->\n" +
+//                "<!-- saved from url=(0029)https://e-hentai.org/news.php -->\n" +
 //                "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n" +
 //                "<body>\n" +
 //                "<div id=\"newsouter\">\n" +
@@ -29,8 +29,8 @@ public class SiteEventParse {
 //                "    <div class=\"baredge\"></div>\n" +
 //                "</div>\n" +
 //                "<div class=\"dp\" style=\"margin:0 auto 5px\">\n" +
-//                "    <a href=\"https://gallery.test/\">Front Page</a>\n" +
-//                "    &nbsp; <a href=\"https://gallery.test/tos.php\">Terms of Service</a> &nbsp; <a\n" +
+//                "    <a href=\"https://e-hentai.org/\">Front Page</a>\n" +
+//                "    &nbsp; <a href=\"https://e-hentai.org/tos.php\">Terms of Service</a> &nbsp; <a\n" +
 //                "        href=\"mailto:luke@juicyads.com\">Advertise</a>\n" +
 //                "\n" +
 //                "</div>\n" +

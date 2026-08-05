@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Like http://gallery.test/g/1234567/a1b2c3d4e5<br>
+ * Like http://e-hentai.org/g/1234567/a1b2c3d4e5<br>
  *
  */
 public final class GalleryDetailUrlParser {
