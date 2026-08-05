@@ -1598,6 +1598,52 @@ paths:
         '401':
           description: Invalid or missing API token
 
+  /api/v1/backup/import-ehviewer:
+    post:
+      tags: [Backup]
+      operationId: importEhViewer
+      summary: Import an original EhViewer backup db (optional cookies db/JSON) into local user data (B3)
+      description: |
+        Table-driven scan of the uploaded sqlite export; known tables are mapped
+        per-table, gid conflicts are skipped unless force=true (upsert). Optional
+        cookies file accepts an okhttp3-cookie.db or an equivalent JSON array;
+        only gallery-site domain cookies are imported.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: EhViewer export db (anotherviewer.db)
+                cookies:
+                  type: string
+                  format: binary
+                  description: Optional okhttp3-cookie.db or cookie JSON array
+                force:
+                  type: boolean
+                  default: false
+                  description: Upsert on gid conflicts instead of skipping
+      responses:
+        '200':
+          description: Import succeeded with per-table counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EhImportResponse'
+        '400':
+          description: Import failed (empty file / unreadable db / import error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API token
+
   # ============================================================
   # Archive
   # ============================================================
@@ -2827,6 +2873,54 @@ components:
         restorePending:
           type: boolean
           description: true = a restore succeeded and a server restart is required to take effect (R4-2); false otherwise (fresh instance / after restart)
+
+    EhImportedCounts:
+      type: object
+      description: Per-table imported row counts (B3 contract)
+      properties:
+        downloads:
+          type: integer
+        history:
+          type: integer
+        filters:
+          type: integer
+        quickSearches:
+          type: integer
+        labels:
+          type: integer
+        bookmarks:
+          type: integer
+        favorites:
+          type: integer
+        dirnames:
+          type: integer
+        blackList:
+          type: integer
+        galleryTags:
+          type: integer
+
+    EhCookieImportResult:
+      type: object
+      description: Cookie segment result; siteDomain = cookies on gallery-site domains, imported = actually written to the session cookie store
+      properties:
+        imported:
+          type: integer
+        siteDomain:
+          type: integer
+
+    EhImportResponse:
+      type: object
+      required: [success, imported, cookies, skipped]
+      properties:
+        success:
+          type: boolean
+        imported:
+          $ref: '#/components/schemas/EhImportedCounts'
+        cookies:
+          $ref: '#/components/schemas/EhCookieImportResult'
+        skipped:
+          type: integer
+          description: Gid conflicts skipped (or whole rows rejected)
 
     SyncEntityCollection:
       type: object
