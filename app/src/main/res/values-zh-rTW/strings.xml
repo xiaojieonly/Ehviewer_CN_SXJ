@@ -144,8 +144,8 @@
     <string name="update_ignore">忽略</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 中搜尋</string>
-<string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
+    <string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 中搜尋</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
     <string name="gallery_list_search_bar_open_gallery">開啟圖庫</string>
     <string name="gallery_list_empty_hit">什麼都沒找到</string>
     <string name="gallery_list_empty_hit_subscription">請至 設定->EH->我的標籤 訂閱標籤</string>
@@ -683,8 +683,6 @@
     <string name="settings_privacy_enable_analytics">啟用資料統計</string>
     <string name="settings_privacy_about_analytics">關於資料統計</string>
     <string name="settings_about_version">版本號碼</string>
-    <string name="settings_about_check_for_updates">檢查更新</string>
-    <string name="settings_close_automatic_updates">關閉自動更新</string>
     <string name="settings_about_beta_update_channel">安裝測試更新版</string>
     <string name="settings_about_beta_update_channel_summary">測試更新版可能會使裝置出現不可預期的錯誤</string>
 
@@ -849,7 +847,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">內建gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">內建exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">應用提供的主機到IP的映射\n可被自訂 hosts.txt 覆蓋</string>
     <string name="network_remind">檢測到開啟了vpn，請注意您的網路安全</string>
 

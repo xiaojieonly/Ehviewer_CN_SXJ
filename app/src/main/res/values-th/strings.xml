@@ -167,8 +167,8 @@
     <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">ค้นหาใน ExHentai</string>
-<string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_exhentai">ค้นหาใน ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">เปิดแกลเลอรี่</string>
     <string name="gallery_list_empty_hit">โลกนั้นนะมันกว้างงงงงใหญ่ไพรศาล และแพนด้านั่งโดดเดี่ยวเดียวดายในโลกกลมๆ</string>
     <string name="gallery_list_empty_hit_subscription">สมัครสมาชิกแท็กในการตั้งค่า->EH->แท็กของฉัน</string>
@@ -687,8 +687,6 @@
     <string name="settings_privacy_enable_analytics">เปิดการวิเคราะห์ข้อมูล</string>
     <string name="settings_privacy_about_analytics">เกี่ยวกับการวิเคราะห์ข้อมูล</string>
     <string name="settings_about_version">เวอร์ชั่นแอป</string>
-    <string name="settings_about_check_for_updates">ตรวจสอบการอัพเดต</string>
-    <string name="settings_close_automatic_updates">ปิดการอัพเดตอัตโนมัติ</string>
     <string name="settings_about_beta_update_channel">ใช้เวอร์ชั่นทดสอบ (Beta)</string>
     <string name="settings_about_beta_update_channel_summary">ในเวอร์ชั่นทดสอบอาจมีบัคที่ยังไม่ได้แก้ไข</string>
 

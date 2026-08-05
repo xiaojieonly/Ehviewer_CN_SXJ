@@ -158,8 +158,8 @@
     <string name="update_ignore">Ignorar</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">Buscar ExHentai</string>
-<string name="gallery_list_search_bar_hint_e_hentai">Buscar E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_exhentai">Buscar ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Buscar E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Abrir la galería</string>
     <string name="gallery_list_empty_hit">El mundo es grande y el panda está sentado solo</string>
     <string name="gallery_list_empty_hit_subscription">Suscríbase a etiquetas en Configuración->EH->Mis etiquetas</string>
@@ -653,8 +653,6 @@
     <string name="settings_privacy_enable_analytics">Habilitar analytics</string>
     <string name="settings_privacy_about_analytics">Acerca de analytics</string>
     <string name="settings_about_version">Versión de compilación</string>
-    <string name="settings_about_check_for_updates">Verificar actualizaciones</string>
-    <string name="settings_close_automatic_updates">Desactivar actualizaciones automáticas</string>
     <string name="settings_about_beta_update_channel">Canal de versiones de prueba</string>
     <string name="settings_about_beta_update_channel_summary">Las versiones de prueba podrían tener errores</string>
 

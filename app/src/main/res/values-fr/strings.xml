@@ -155,8 +155,8 @@
     <string name="no_updates_available">Est déjà la dernière version</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">Chercher sur ExHentai</string>
-<string name="gallery_list_search_bar_hint_e_hentai">Chercher sur E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_exhentai">Chercher sur ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Chercher sur E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Ouvrir la galerie spécifiée</string>
     <string name="gallery_list_empty_hit">Le monde est grand et le panda s\'assied tout seul.</string>
     <string name="gallery_list_empty_hit_subscription">Abonnez-vous à des tags dans Paramètres -> EH -> Mes tags</string>
@@ -643,8 +643,6 @@
     <string name="settings_privacy_enable_analytics">Activer l\'analyse</string>
     <string name="settings_privacy_about_analytics">A propos de l\'analyse</string>
     <string name="settings_about_version">Numéro de version</string>
-    <string name="settings_about_check_for_updates">Chercher mise à jour</string>
-    <string name="settings_close_automatic_updates">Désactiver les mises à jour automatiques</string>
     <string name="settings_about_beta_update_channel">Chaîne de mises à jour beta</string>
     <string name="settings_about_beta_update_channel_summary">Les versions beta risquent de ne pas fonctionner correctement sur votre appareil</string>
 

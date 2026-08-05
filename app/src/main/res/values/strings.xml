@@ -36,7 +36,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">内置gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
     <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
@@ -229,8 +229,8 @@
     <string name="update_ignore">Ignore</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
-<string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Open the gallery</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
@@ -823,8 +823,6 @@
     <string name="settings_privacy_enable_analytics">Enable analytics</string>
     <string name="settings_privacy_about_analytics">About analytics</string>
     <string name="settings_about_version">Build version</string>
-    <string name="settings_about_check_for_updates">Check for updates</string>
-    <string name="settings_close_automatic_updates">Turn off automatic updates</string>
     <string name="settings_about_beta_update_channel">Beta update channel</string>
     <string name="settings_about_beta_update_channel_summary">Beta versions may contain unsolved bugs.</string>
 

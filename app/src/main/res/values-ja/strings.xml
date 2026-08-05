@@ -149,8 +149,8 @@
     <string name="update_to_date">AnotherViewer は既に最新のバージョンです。</string>
     <string name="update_ignore">無視</string>
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">ExHentai を検索</string>
-<string name="gallery_list_search_bar_hint_e_hentai">E-Hentai を検索</string>
+    <string name="gallery_list_search_bar_hint_exhentai">ExHentai を検索</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai を検索</string>
     <string name="gallery_list_search_bar_open_gallery">ギャラリーを開く</string>
     <string name="gallery_list_empty_hit">何も見つかりませんでした。</string>
     <string name="gallery_list_empty_hit_subscription">リストは空です。設定-&gt;EH-&gt;マイタグにてタグを購読することができます。</string>
@@ -652,8 +652,6 @@
     <string name="settings_privacy_enable_analytics">データ統計に参加</string>
     <string name="settings_privacy_about_analytics">データ統計について</string>
     <string name="settings_about_version">バージョン</string>
-    <string name="settings_about_check_for_updates">更新を確認する</string>
-    <string name="settings_close_automatic_updates">自動更新を OFF にする</string>
     <string name="settings_about_beta_update_channel">ベータ版を使用する</string>
     <string name="settings_about_beta_update_channel_summary">ベータ版では予期せぬエラーが発生する可能性があります</string>
     <string name="proxy_enable">有効化する</string>

@@ -131,8 +131,8 @@
     <string name="update_to_date">AnotherViewer ist auf dem neusten Stand.</string>
     <string name="no_updates_available">Da liegt das neueste raus</string>
     <string name="update_ignore">Ignorieren</string>
-<string name="gallery_list_search_bar_hint_exhentai">ExHentai durchsuchen</string>
-<string name="gallery_list_search_bar_hint_e_hentai">E-Hentai durchsuchen</string>
+    <string name="gallery_list_search_bar_hint_exhentai">ExHentai durchsuchen</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai durchsuchen</string>
     <string name="gallery_list_search_bar_open_gallery">Galerie öffnen</string>
     <string name="gallery_list_empty_hit">Die Welt ist so groß und der Panda sitzt ganz allein</string>
     <string name="gallery_list_empty_hit_subscription">Abonniere Etiketten in Einstellungen->EH->Meine Etiketten</string>
@@ -651,7 +651,6 @@
     <string name="settings_privacy_enable_analytics">Analyse aktivieren</string>
     <string name="settings_privacy_about_analytics">Über die Analyse</string>
     <string name="settings_about_version">Versionnummer</string>
-    <string name="settings_about_check_for_updates">Auf Update überprüfen</string>
     <string name="settings_about_beta_update_channel">Beta-Version testen</string>
     <string name="settings_about_beta_update_channel_summary">Beta-Version kann funktionieren möglicherweise nicht</string>
     <string name="proxy_enable">Aktivieren</string>
@@ -704,7 +703,6 @@
     <string name="settings_save_image_weChat">WeChat-QR-Code speichern</string>
     <string name="settings_about_donate_copy">E-Mail kopieren</string>
     <string name="settings_about_donate_copied">Kopiert</string>
-    <string name="settings_close_automatic_updates">Automatische Updates deaktivieren</string>
     <string name="settings_eh_identity_cookies">Konto-Cookies</string>
     <string name="settings_eh_identity_cookies_summary">Die Cookies, die dich angemeldet halten.</string>
     <string name="settings_eh_identity_cookies_signed">Wenn jemand die folgenden Informationen hat, kann er sich als du anmelden. &lt;br&gt;&lt;b&gt;ALSO GEHEIM HALTEN!&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>

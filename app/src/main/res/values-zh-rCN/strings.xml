@@ -143,8 +143,8 @@
     <string name="no_updates_available">已是最新版本</string>
 
     <!-- Gallery List -->
-<string name="gallery_list_search_bar_hint_exhentai">搜索 ExHentai</string>
-<string name="gallery_list_search_bar_hint_e_hentai">搜索 E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_exhentai">搜索 ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">搜索 E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">打开画廊</string>
     <string name="gallery_list_empty_hit">什么都没有找到</string>
     <string name="gallery_list_empty_hit_subscription">请至 设置->EH->我的标签 订阅标签</string>
@@ -680,8 +680,6 @@
     <string name="settings_privacy_enable_analytics">启用数据统计</string>
     <string name="settings_privacy_about_analytics">关于数据统计</string>
     <string name="settings_about_version">版本号</string>
-    <string name="settings_about_check_for_updates">检查更新</string>
-    <string name="settings_close_automatic_updates">关闭自动更新</string>
     <string name="settings_about_beta_update_channel">更新测试版</string>
     <string name="settings_about_beta_update_channel_summary">测试版可能在你的设备上出现不可预知的错误</string>
 
@@ -705,7 +703,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">内置gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
 
