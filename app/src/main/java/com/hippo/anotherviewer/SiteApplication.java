@@ -661,7 +661,7 @@ public class SiteApplication extends RecordingApplication {
 
     @NonNull
     public static String getDeveloperEmail() {
-        return "xiaojieonly$foxmail.com".replace('$', '@');
+        return "boblao0714$gmail.com".replace('$', '@');
     }
 
     public void registerActivity(Activity activity) {

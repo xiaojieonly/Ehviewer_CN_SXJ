@@ -29,9 +29,9 @@ import kotlin.properties.Delegates
 
 class UpdateDialog(private val activity: Activity) {
     companion object {
-        const val GITHUB_RELEASE_URL = "https://github.com/xiaojieonly/Anotherviewer_CN_SXJ/releases"
+        const val GITHUB_RELEASE_URL = "https://github.com/PegionFish/AnotherViewer/releases"
         const val GITHUB_README_URL =
-            "https://github.com/xiaojieonly/Anotherviewer_CN_SXJ/blob/BiLi_PC_Gamer/README.md"
+            "https://github.com/PegionFish/AnotherViewer/blob/master/README.md"
         const val INSTALL_PERMISSION_CODE = 1002
 
         // TODO more lock for different language
