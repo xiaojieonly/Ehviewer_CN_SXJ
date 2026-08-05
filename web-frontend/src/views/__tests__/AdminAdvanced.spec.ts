@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminAdvanced from '../admin/AdminAdvanced.vue'
 import { AppSelect, AppSwitch, PrefRow, SectionHeader } from '@/components/form'
+import { backupApi } from '@/api/backup'
+
+vi.mock('@/api/backup', () => ({
+  backupApi: {
+    exportBackup: vi.fn(),
+    restoreBackup: vi.fn(),
+    getBackupState: vi.fn(),
+  },
+}))
 
 const UI_KEY = 'anotherviewer-admin-advanced-ui'
 
@@ -10,6 +19,9 @@ describe('AdminAdvanced (高级)', () => {
 
   beforeEach(() => {
     localStorage.clear()
+    // 挂载时会读取 R4-2 restore 运行态——缺省置 false，避免未 mock 的
+    // vi.fn() 返回 undefined 破坏 onMounted 链。
+    vi.mocked(backupApi.getBackupState).mockResolvedValue({ restorePending: false })
   })
 
   afterEach(() => {
@@ -87,5 +99,120 @@ describe('AdminAdvanced (高级)', () => {
     expect(localStorage.getItem('anotherviewer-search-history')).toBeNull()
     expect(localStorage.getItem('anotherviewer-admin-download-ui')).toBeNull()
     expect(wrapper.text()).toContain('已清除 2 项本地数据')
+  })
+
+  it('uses a trash icon for 清除本地数据 (F-UX4 icon semantics)', () => {
+    wrapper = mount(AdminAdvanced)
+    const button = wrapper.find('[aria-label="清除本地数据"]')
+    expect(button.find('[aria-label="delete-dark"]').exists()).toBe(true)
+  })
+
+  /* ------------------- F-UX4: 数据区接入备份 REST ------------------- */
+
+  it('removes the TODO badges and shows export/import action states', async () => {
+    wrapper = mount(AdminAdvanced)
+    expect(wrapper.text()).not.toContain('TODO')
+    expect(wrapper.text()).toContain('导出')
+    expect(wrapper.text()).toContain('导入')
+  })
+
+  it('exports via backup REST and triggers a blob download', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true })
+    vi.mocked(backupApi.exportBackup).mockResolvedValue(new Blob(['zipdata']))
+
+    wrapper = mount(AdminAdvanced)
+    await wrapper.find('[aria-label="导出数据"]').trigger('click')
+    await flushPromises()
+
+    // 本页固定元数据备份（includeDownloads=false）；含下载内容留在专门页面。
+    expect(backupApi.exportBackup).toHaveBeenCalledWith(false)
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('备份已生成，下载已开始')
+  })
+
+  it('surfaces a snack when the export fails', async () => {
+    vi.mocked(backupApi.exportBackup).mockRejectedValue(new Error('boom'))
+    wrapper = mount(AdminAdvanced)
+    await wrapper.find('[aria-label="导出数据"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('导出失败，请稍后重试')
+  })
+
+  it('imports a backup zip and shows the restart banner afterwards', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.mocked(backupApi.restoreBackup).mockResolvedValue({
+      success: true,
+      message: '还原成功，重启后生效',
+    })
+    wrapper = mount(AdminAdvanced)
+    expect(wrapper.find('.advanced__restart-banner').exists()).toBe(false)
+
+    // happy-dom 不允许对 type="file" setValue，注入 files 后触发 change。
+    const file = new File(['zipdata'], 'backup.zip', { type: 'application/zip' })
+    const input = wrapper.find('input[type="file"]')
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(backupApi.restoreBackup).toHaveBeenCalledTimes(1)
+    const banner = wrapper.find('.advanced__restart-banner')
+    expect(banner.exists()).toBe(true)
+    expect(banner.attributes('role')).toBe('alert')
+    expect(banner.text()).toContain('还原已完成，重启服务后生效')
+  })
+
+  it('aborts the import when the destructive-op confirm is cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    wrapper = mount(AdminAdvanced)
+
+    const file = new File(['zipdata'], 'backup.zip', { type: 'application/zip' })
+    const input = wrapper.find('input[type="file"]')
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(backupApi.restoreBackup).not.toHaveBeenCalled()
+    expect(wrapper.find('.advanced__restart-banner').exists()).toBe(false)
+  })
+
+  it('rejects backup files above the 50MB metadata cap', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    wrapper = mount(AdminAdvanced)
+
+    const file = new File(['x'], 'big.zip', { type: 'application/zip' })
+    Object.defineProperty(file, 'size', { value: 51 * 1024 * 1024 })
+    const input = wrapper.find('input[type="file"]')
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(backupApi.restoreBackup).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('≤50MB')
+  })
+
+  it('shows the restart banner on mount when the server reports restorePending (R4-2)', async () => {
+    vi.mocked(backupApi.getBackupState).mockResolvedValue({ restorePending: true })
+    wrapper = mount(AdminAdvanced)
+    await flushPromises()
+    expect(backupApi.getBackupState).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('.advanced__restart-banner').exists()).toBe(true)
+  })
+
+  it('copies the restart command from the banner', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    vi.mocked(backupApi.getBackupState).mockResolvedValue({ restorePending: true })
+    wrapper = mount(AdminAdvanced)
+    await flushPromises()
+
+    await wrapper.find('.advanced__restart-copy').trigger('click')
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith('./stop.sh && ./start.sh')
   })
 })
