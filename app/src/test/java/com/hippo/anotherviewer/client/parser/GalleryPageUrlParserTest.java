@@ -31,8 +31,8 @@ public class GalleryPageUrlParserTest {
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-        { "https://gallery.test/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
-        { "https://gallery.test/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
+        { "https://e-hentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
+        { "https://exhentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
         { "7b87643838/530350-1", true, true, 0, null, 0},
 
         { "7b87643838/530350-1", false, false, 530350, "7b87643838", 0},

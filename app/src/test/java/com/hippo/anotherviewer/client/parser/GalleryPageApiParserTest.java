@@ -41,6 +41,6 @@ public class GalleryPageApiParserTest {
     GalleryPageApiParser.Result result = GalleryPageApiParser.parse(body);
     assertEquals("http://69.30.203.46:60111/h/6047fa2f194742f6fa541ec1f631ec3ab438f960-183117-1280-960-jpg/keystamp=1550291100-c4438f48c8;fileindex=67379169;xres=1280/Valentines_2019_002.jpg", result.imageUrl);
     assertEquals("15151-430636", result.skipHathKey);
-    assertEquals("https://gallery.test/fullimg.php?gid=1366222&page=3&key=puxxvyg98a4", result.originImageUrl);
+    assertEquals("https://e-hentai.org/fullimg.php?gid=1366222&page=3&key=puxxvyg98a4", result.originImageUrl);
   }
 }

@@ -32,17 +32,15 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /**
- * R4-8 / W3 task #12: end-to-end DOM-alignment proof for the mock Gallery Site
- * cloud-favorites page. The three fixtures are the byte-for-byte output of the
- * mock-server {@code GET /favorites.php} route (captured via curl), so this
- * test proves {@link FavoritesParser} succeeds on exactly what the mock serves
- * — the page shape that previously caused "解析失败".
+ * R4-8 / W3 task #12: end-to-end DOM-alignment proof for the cloud-favorites
+ * page. The three fixtures are frozen historical captures of the
+ * {@code favorites.php} response, so this test proves {@link FavoritesParser}
+ * succeeds on exactly the page shape that previously caused "解析失败".
  *
- * Fixtures (mock-server/gallery.mjs favoritesHtml, corpus from
- * gallery-fixtures.mjs FAVORITES = {0:[1003,2002], 1:[2001], 2:[3002]}):
- *   FavoritesParserDefault.html -> GET /favorites.php            (all, 4 rows)
- *   FavoritesParserFolder0.html -> GET /favorites.php?favcat=0   (2 rows)
- *   FavoritesParserEmpty.html   -> GET /favorites.php?favcat=5   (empty folder)
+ * Fixtures (FAVORITES corpus {0:[1003,2002], 1:[2001], 2:[3002]}):
+ *   FavoritesParserDefault.html -> favorites.php            (all, 4 rows)
+ *   FavoritesParserFolder0.html -> favorites.php?favcat=0   (2 rows)
+ *   FavoritesParserEmpty.html   -> favorites.php?favcat=5   (empty folder)
  */
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
