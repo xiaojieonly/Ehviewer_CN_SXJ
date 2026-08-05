@@ -21,7 +21,7 @@
     <string name="blacklist">รายชื่อดำ</string>
     <string name="join_in_blacklist">เพิ่มเข้าในรายชื่อดำ</string>
     <string name="add_blacklist">เพิ่มผู้ใช้ที่ต้องการบล็อก</string>
-    <string name="blacklist_tip">ระบบบล็อกนี้จะบล็อกความคิดเห็นต่อจากระบบบล็อกความคิดเห็นของเว็บไซต์ Gallery\n\nบล็อกผู้แสดงความคิดเห็น: แยกความคิดเห็นที่ผู้ใช้คนนั้นอัพโหลดออกไป ซึ่งจะทำให้การโหลดรายการแกลเลอรี่ใช้เวลามากขึ้น</string>
+    <string name="blacklist_tip">ระบบบล็อกนี้จะบล็อกความคิดเห็นต่อจากระบบบล็อกความคิดเห็นของเว็บไซต์ EHentai\n\nบล็อกผู้แสดงความคิดเห็น: แยกความคิดเห็นที่ผู้ใช้คนนั้นอัพโหลดออกไป ซึ่งจะทำให้การโหลดรายการแกลเลอรี่ใช้เวลามากขึ้น</string>
     <string name="blacklist_text">บล็อกผู้ใช้</string>
     <string name="delete_blacklist">ยกเลิกการบล็อกผู้ใช้ \"%s\" หรือไม่?</string>
     <string name="blacklist_reason_text">เหตุผลในการบล็อก</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">แชร์รายการโปรด</string>
     <string name="share_favorites_dialog_message">แชร์รายการโปรด %s หรือไม่?</string>
     <string name="add_favorites_dialog_message">เพิ่มรายการโปรด %s หรือไม่?</string>
-    <string name="settings_advanced_built_ex_hosts_title">hosts.txt ของ gallery ที่มีอยู่แล้ว</string>
+    <string name="settings_advanced_built_ex_hosts_title">hosts.txt ของ exhentai ที่มีอยู่แล้ว</string>
     <string name="settings_advanced_built_ex_hosts_summary">การแมปโฮสต์ไปยัง IP ที่แอปให้มา\nสามารถถูกแทนที่ด้วย hosts.txt ที่ปรับแต่งเอง</string>
     <string name="network_remind">ตรวจพบว่าเปิดใช้งาน VPN แล้ว โปรดระวังความปลอดภัยเครือข่ายของคุณ</string>
     <string name="no_blicklist">นี่คือรายชื่อดำ</string>
@@ -167,8 +167,8 @@
     <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">ค้นหาใน Gallery</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน Gallery Site</string>
+<string name="gallery_list_search_bar_hint_exhentai">ค้นหาใน ExHentai</string>
+<string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">เปิดแกลเลอรี่</string>
     <string name="gallery_list_empty_hit">โลกนั้นนะมันกว้างงงงงใหญ่ไพรศาล และแพนด้านั่งโดดเดี่ยวเดียวดายในโลกกลมๆ</string>
     <string name="gallery_list_empty_hit_subscription">สมัครสมาชิกแท็กในการตั้งค่า->EH->แท็กของฉัน</string>
@@ -455,7 +455,7 @@
     <string name="add_filter">เพิ่มตัวบล็อก</string>
     <string name="show_definition">แสดงความหมาย</string>
     <string name="filter_text">ข้อความตัวบล็อก</string>
-    <string name="filter_tip">ระบบบล็อกนี้จะกรองผลลัพธ์ของระบบบล็อกของเว็บไซต์ Gallery\n\nบล็อกชื่อเรื่อง: แยกแกลเลอรี่ที่มีชื่อเรื่องประกอบด้วยคำนั้น\n\nบล็อกผู้อัพโหลด: แยกแกลเลอรี่ที่ถูกอัพโหลดโดยผู้อัพโหลดนั้น\n\nบล็อกแท็ก: แยกแกลเลอรี่ที่มีแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่\n\nบล็อกเนมสเปซแท็ก: แยกแกลเลอรี่ที่มีเนมสเปซแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่</string>
+    <string name="filter_tip">ระบบบล็อกนี้จะกรองผลลัพธ์ของระบบบล็อกของเว็บไซต์ EHentai\n\nบล็อกชื่อเรื่อง: แยกแกลเลอรี่ที่มีชื่อเรื่องประกอบด้วยคำนั้น\n\nบล็อกผู้อัพโหลด: แยกแกลเลอรี่ที่ถูกอัพโหลดโดยผู้อัพโหลดนั้น\n\nบล็อกแท็ก: แยกแกลเลอรี่ที่มีแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่\n\nบล็อกเนมสเปซแท็ก: แยกแกลเลอรี่ที่มีเนมสเปซแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่</string>
     <string name="filter_the_uploader">บล็อกผู้อัพโหลด \"%s\" หรือไม่?</string>
     <string name="filter_the_tag">บล็อกแท็ก \"%s\" หรือไม่?</string>
     <string name="filter_added">เพิ่มตัวบล็อกแล้ว</string>
@@ -468,7 +468,7 @@
     <string name="enable_fingerprint">อนุญาตใช้สแกนลายนิ้วมือเพื่อปลดล็อกเช่นกัน</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">การตั้งค่า Gallery</string>
+    <string name="u_config">การตั้งค่า EHentai</string>
     <string name="apply">ยืนยัน</string>
     <string name="apply_tip">แตะเครื่องหมายถูกเพื่อบันทึกการตั้งค่าแล้ว</string>
 
@@ -508,10 +508,10 @@
     <string name="settings_eh_identity_cookies_tourist">ยังไม่ลงชื่อเข้าสู่ระบบ</string>
     <string name="settings_eh_identity_cookies_copy">คัดลอก</string>
     <string name="settings_eh_sign_out_restart">กำลังรีสตาร์ทอัตโนมัติให้คุณ กรุณารอสักครู่</string>
-    <string name="settings_u_config">การตั้งค่า Gallery</string>
-    <string name="settings_u_config_summary">การตั้งค่าบนเว็บไซต์ Gallery</string>
+    <string name="settings_u_config">การตั้งค่า EHentai</string>
+    <string name="settings_u_config_summary">การตั้งค่าบนเว็บไซต์ EHentai</string>
     <string name="settings_my_tags">แท็กของฉัน</string>
-    <string name="settings_my_tags_summary">แท็กของฉันบนเว็บไซต์ Gallery</string>
+    <string name="settings_my_tags_summary">แท็กของฉันบนเว็บไซต์ EHentai</string>
     <string name="settings_eh_theme">ธีม</string>
     <string name="settings_eh_theme_light">สว่าง</string>
     <string name="settings_eh_theme_dark">มืด</string>
@@ -544,7 +544,7 @@
     <string name="settings_eh_show_gallery_comment">แสดงความคิดเห็นแกลเลอรี่</string>
     <string name="settings_eh_show_eh_event">แสดงกิจกรรม EH</string>
     <string name="settings_eh_show_eh_limits">แสดงขีดจำกัด EH</string>
-    <string name="settings_eh_show_jpn_title_summary">ต้องเปิดใช้งานชื่อเรื่องญี่ปุ่นในการตั้งค่าบนเว็บไซต์ Gallery</string>
+    <string name="settings_eh_show_jpn_title_summary">ต้องเปิดใช้งานชื่อเรื่องญี่ปุ่นในการตั้งค่าบนเว็บไซต์ EHentai</string>
     <string name="settings_eh_show_gallery_pages">แสดงจำนวนหน้าของแกลเลอรี่</string>
     <string name="settings_eh_show_gallery_pages_summary">แสดงจำนวนหน้าที่มีอยู่ในแต่ละแกลเลอรี่</string>
     <string name="settings_eh_show_tag_translations">แสดงแท็กการแปลภาษา</string>
@@ -665,9 +665,9 @@
 
     <string name="settings_about">เกี่ยวกับ</string>
     <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
-    <string name="settings_about_declaration_summary">AnotherViewer ไม่มีความแตกต่างจากตัวเว็บ Gallery Site.org แต่อย่างใด</string>
+    <string name="settings_about_declaration_summary">AnotherViewer ไม่มีความแตกต่างจากตัวเว็บ E-Hentai.org แต่อย่างใด</string>
     <string name="settings_about_author">นักพัฒนา</string>
-    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_author_summary" translatable="false">PegionFish &lt;boblao0714$gmail.com&gt;</string>
     <string name="settings_about_telegram">Telegram</string>
     <string name="settings_about_website">เว็บไซต์</string>
     <string name="settings_about_source">ซอร์สโค้ด</string>
@@ -891,9 +891,9 @@
 
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนพื้นหลัง?</string>
-    <string name="change_background_message">การแก้ไขพื้นหลังจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง Gallery Site หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="change_background_message">การแก้ไขพื้นหลังจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
     <string name="change_avatar_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนอวตาร?</string>
-    <string name="change_avatar_message">การแก้ไขอวตารจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง Gallery Site หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="change_avatar_message">การแก้ไขอวตารจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
     <string name="take_a_photograph">ถ่ายภาพ</string>
     <string name="choose_from_the_album">เลือกจากอัลบั้ม</string>
     <string name="request_camera_permission">AnotherViewer จะขอสิทธิ์เข้าถึงกล้องของอุปกรณ์เพื่อถ่ายภาพ คุณต้องการอนุญาตหรือไม่?</string>

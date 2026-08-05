@@ -21,7 +21,7 @@
     <string name="blacklist">차단 목록</string>
     <string name="join_in_blacklist">차단 목록에 추가</string>
     <string name="add_blacklist">사용자 차단 추가</string>
-    <string name="blacklist_tip">이 차단 시스템은 Gallery 웹사이트 댓글 시스템을 기반으로 댓글을 계속 차단합니다.\n\n댓글 작성자 차단 항목: 해당 댓글 작성자가 업로드한 댓글을 제외합니다. 이로 인해 갤러리 목록을 불러오는 데 더 많은 시간이 걸립니다.</string>
+    <string name="blacklist_tip">이 차단 시스템은 EHentai 웹사이트 댓글 시스템을 기반으로 댓글을 계속 차단합니다.\n\n댓글 작성자 차단 항목: 해당 댓글 작성자가 업로드한 댓글을 제외합니다. 이로 인해 갤러리 목록을 불러오는 데 더 많은 시간이 걸립니다.</string>
     <string name="blacklist_text">사용자 차단</string>
     <string name="delete_blacklist">사용자 \"%s\" 차단을 해제하시겠습니까?</string>
     <string name="blacklist_reason_text">차단 사유</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">즐겨찾기 공유</string>
     <string name="share_favorites_dialog_message">즐겨찾기 %s을(를) 공유하시겠습니까?</string>
     <string name="add_favorites_dialog_message">즐겨찾기에 %s을(를) 추가하시겠습니까?</string>
-    <string name="settings_advanced_built_ex_hosts_title">내장 gallery hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">내장 exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">앱에서 제공하는 호스트-IP 매핑\n사용자 지정 hosts.txt로 덮어쓸 수 있음</string>
     <string name="network_remind">VPN이 활성화된 것으로 감지되었습니다. 네트워크 보안에 주의하세요</string>
 
@@ -168,8 +168,8 @@
     <string name="no_updates_available">최신 버전입니다</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">Gallery 검색</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Gallery Site 검색</string>
+<string name="gallery_list_search_bar_hint_exhentai">ExHentai 검색</string>
+<string name="gallery_list_search_bar_hint_e_hentai">E-Hentai 검색</string>
     <string name="gallery_list_search_bar_open_gallery">갤러리 열기</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">설정->EH->마이태그 구독태그까지 부탁드립니다.</string>
@@ -461,7 +461,7 @@
     <string name="add_filter">차단 항목 추가</string>
     <string name="show_definition">정의 표시</string>
     <string name="filter_text">차단 항목 텍스트</string>
-    <string name="filter_tip">본 차단 시스템은 Gallery 웹 사이트 차단 시스템을 기반으로 갤러리를 계속 차단합니다. \n\n 제목 차단 항목: 키워드를 포함하는 갤러리를 제외합니다. \n\n 게시자 차단 항목: 게시자가 업로드한 갤러리를 제외합니다. \n\n 태그 차단 항목: 태그를 포함하는 갤러리를 제외합니다. \n\n 태그 그룹 차단 항목: 태그 그룹을 포함하는 갤러리를 제외합니다. 갤러리 목록을 가져오는 데 더 많은 시간이 걸립니다.</string>
+    <string name="filter_tip">본 차단 시스템은 EHentai 웹 사이트 차단 시스템을 기반으로 갤러리를 계속 차단합니다. \n\n 제목 차단 항목: 키워드를 포함하는 갤러리를 제외합니다. \n\n 게시자 차단 항목: 게시자가 업로드한 갤러리를 제외합니다. \n\n 태그 차단 항목: 태그를 포함하는 갤러리를 제외합니다. \n\n 태그 그룹 차단 항목: 태그 그룹을 포함하는 갤러리를 제외합니다. 갤러리 목록을 가져오는 데 더 많은 시간이 걸립니다.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">패턴 보호 사용</string>
@@ -470,7 +470,7 @@
     <string name="enable_fingerprint">지문으로 잠금 해제 허용</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Gallery Site 설정</string>
+    <string name="u_config">E-Hentai 설정</string>
     <string name="apply">적용</string>
     <string name="apply_tip">설정을 저장하려면 체크 표시를 누르세요.</string>
 
@@ -518,10 +518,10 @@
     <string name="settings_eh_identity_cookies_signed">식별용 쿠키를 사용하여 이 계정으로 로그인할 수 있습니다.&lt;br&gt;&lt;b&gt;안전하게 보관하세요.&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">로그인 상태가 아닙니다.</string>
     <string name="settings_eh_identity_cookies_copy">복사</string>
-    <string name="settings_u_config">Gallery Site 설정</string>
-    <string name="settings_u_config_summary">Gallery Site 사이트의 설정 페이지를 엽니다.</string>
+    <string name="settings_u_config">E-Hentai 설정</string>
+    <string name="settings_u_config_summary">E-Hentai 사이트의 설정 페이지를 엽니다.</string>
     <string name="settings_my_tags">내 태그</string>
-    <string name="settings_my_tags_summary">Gallery 사이트에 있는 내 태그</string>
+    <string name="settings_my_tags_summary">EHentai 사이트에 있는 내 태그</string>
     <string name="settings_eh_theme">테마</string>
     <string name="settings_eh_theme_light">밝은 테마</string>
     <string name="settings_eh_theme_dark">어두운 테마</string>
@@ -554,7 +554,7 @@
     <string name="settings_eh_show_gallery_rating">갤러리 평점 표시</string>
     <string name="settings_eh_show_eh_event">EH 이벤트 표시</string>
     <string name="settings_eh_show_eh_limits">EH 제한 표시</string>
-    <string name="settings_eh_show_jpn_title_summary">Gallery 웹 사이트 설정에서 Japanese Title을 사용하도록 설정해야 함</string>
+    <string name="settings_eh_show_jpn_title_summary">EHentai 웹 사이트 설정에서 Japanese Title을 사용하도록 설정해야 함</string>
     <string name="settings_eh_show_gallery_pages">갤러리 페이지 수 표시</string>
     <string name="settings_eh_show_gallery_pages_summary">갤러리 목록에 해당 갤러리의 페이지 수를 표시합니다</string>
     <string name="settings_eh_show_tag_translations">번역된 태그 표시</string>
@@ -686,9 +686,9 @@
 
     <string name="settings_about">앱 정보</string>
     <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
-    <string name="settings_about_declaration_summary">AnotherViewer는 Gallery Site.org 사이트와 아무런 관계가 없습니다.</string>
+    <string name="settings_about_declaration_summary">AnotherViewer는 E-Hentai.org 사이트와 아무런 관계가 없습니다.</string>
     <string name="settings_about_author">개발자</string>
-    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_author_summary" translatable="false">PegionFish &lt;boblao0714$gmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">최신 버전</string>
     <string name="settings_about_website">웹사이트</string>

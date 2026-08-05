@@ -189,8 +189,8 @@
     <string name="update_ignore">Ignore</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">Search Gallery</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Search Gallery Site</string>
+<string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
+<string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">Open the gallery</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
@@ -438,7 +438,7 @@
     <string name="add_filter">Add blocker</string>
     <string name="show_definition">Show definition</string>
     <string name="filter_text">Blocker text</string>
-    <string name="filter_tip">This blocking system filters the result of Gallery website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
+    <string name="filter_tip">This blocking system filters the result of EHentai website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">Set pattern protection</string>
@@ -447,7 +447,7 @@
     <string name="enable_fingerprint">Also allow fingerprint unlock</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Gallery settings</string>
+    <string name="u_config">EHentai settings</string>
     <string name="apply">Apply</string>
     <string name="apply_tip">Tap the check mark to save the settings</string>
 
@@ -494,10 +494,10 @@
     <string name="settings_eh_identity_cookies_signed">Identity cookies can be used to sign in to this account.&lt;br&gt;&lt;b&gt;KEEP IT SAFE&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">Not signed in.</string>
     <string name="settings_eh_identity_cookies_copy">Copy</string>
-    <string name="settings_u_config">Gallery settings</string>
-    <string name="settings_u_config_summary">Settings on Gallery website</string>
+    <string name="settings_u_config">EHentai settings</string>
+    <string name="settings_u_config_summary">Settings on EHentai website</string>
     <string name="settings_my_tags">My tags</string>
-    <string name="settings_my_tags_summary">My tags on Gallery website</string>
+    <string name="settings_my_tags_summary">My tags on EHentai website</string>
     <string name="settings_eh_theme">Theme</string>
     <string name="settings_eh_theme_light">Light</string>
     <string name="settings_eh_theme_dark">Dark</string>
@@ -526,7 +526,7 @@
     <string name="settings_eh_excluded_tag_namespaces">Excluded tag namespaces</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclude certain namespaces from a default tag search</string>
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
-    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on Gallery website</string>
+    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
     <string name="settings_eh_show_tag_translations">Show tag translations</string>
@@ -688,9 +688,9 @@
 
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
-    <string name="settings_about_declaration_summary">AnotherViewer is not affiliated with Gallery Site.org in any way</string>
+    <string name="settings_about_declaration_summary">AnotherViewer is not affiliated with E-Hentai.org in any way</string>
     <string name="settings_about_author">Author</string>
-    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_author_summary" translatable="false">PegionFish &lt;boblao0714$gmail.com&gt;</string>
     <string name="settings_about_telegram">Telegram</string>
     <string name="settings_about_latest_release">Latest release</string>
     <string name="settings_about_website">Website</string>

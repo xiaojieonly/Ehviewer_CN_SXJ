@@ -22,7 +22,7 @@
     <string name="blacklist">黑名單</string>
     <string name="join_in_blacklist">加入黑名單</string>
     <string name="add_blacklist">新增封鎖用戶</string>
-    <string name="blacklist_tip">該封鎖系統會在 Gallery 網站評論系統的基礎上繼續封鎖留言。\n\n留言者封鎖項：排除該留言者上載的留言。這會增加畫廊的載入時間。</string>
+    <string name="blacklist_tip">該封鎖系統會在 EHentai 網站評論系統的基礎上繼續封鎖留言。\n\n留言者封鎖項：排除該留言者上載的留言。這會增加畫廊的載入時間。</string>
     <string name="blacklist_text">封鎖用戶</string>
     <string name="delete_blacklist">解封用戶“%s”？</string>
     <string name="blacklist_reason_text">封鎖原因</string>
@@ -199,8 +199,8 @@
     <string name="no_updates_available">已是最新版本</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_gallery">在 Gallery 搜尋</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">在 Gallery Site 搜尋</string>
+<string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 搜尋</string>
+<string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
     <string name="gallery_list_search_bar_open_gallery">開啟畫廊</string>
     <string name="gallery_list_empty_hit">甚麼都沒有找到</string>
     <string name="gallery_list_empty_hit_subscription">請至 設定->EH->我的標籤 訂閲標籤</string>
@@ -494,7 +494,7 @@
     <string name="add_filter">新增封鎖項目</string>
     <string name="show_definition">顯示定義</string>
     <string name="filter_text">封鎖項文字</string>
-    <string name="filter_tip">該封鎖系統會在 Gallery 網站封鎖系統的基礎上繼續封鎖畫廊。\n\n標題封鎖項：排除標題含有該關鍵字的畫廊。\n\n上傳者封鎖項：排除該上傳者上傳的畫廊。\n\n標籤封鎖項：排除包含該標籤的畫廊，這會使獲取畫廊列表花費更多時間。\n\n標籤組封鎖項：排除包含該標籤組的畫廊，這會使獲取畫廊列表花費更多時間。</string>
+    <string name="filter_tip">該封鎖系統會在 EHentai 網站封鎖系統的基礎上繼續封鎖畫廊。\n\n標題封鎖項：排除標題含有該關鍵字的畫廊。\n\n上傳者封鎖項：排除該上傳者上傳的畫廊。\n\n標籤封鎖項：排除包含該標籤的畫廊，這會使獲取畫廊列表花費更多時間。\n\n標籤組封鎖項：排除包含該標籤組的畫廊，這會使獲取畫廊列表花費更多時間。</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">設定圖形解鎖</string>
@@ -503,7 +503,7 @@
     <string name="enable_fingerprint">啟用指紋解鎖</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">Gallery 設定</string>
+    <string name="u_config">EHentai 設定</string>
     <string name="apply">應用</string>
     <string name="apply_tip">輕觸右上角的剔號來儲存設定</string>
 
@@ -551,10 +551,10 @@
     <string name="settings_eh_identity_cookies_signed">身份識別 Cookie 可用於登入該帳號。&lt;br&gt;&lt;b&gt;請注意數據安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">未登入</string>
     <string name="settings_eh_identity_cookies_copy">複製</string>
-    <string name="settings_u_config">Gallery 設定</string>
-    <string name="settings_u_config_summary">Gallery 網站上的設定</string>
+    <string name="settings_u_config">EHentai 設定</string>
+    <string name="settings_u_config_summary">EHentai 網站上的設定</string>
     <string name="settings_my_tags">我的標籤</string>
-    <string name="settings_my_tags_summary">Gallery 網站上的我的標籤</string>
+    <string name="settings_my_tags_summary">EHentai 網站上的我的標籤</string>
     <string name="settings_eh_theme">主題</string>
     <string name="settings_eh_theme_light">亮色</string>
     <string name="settings_eh_theme_dark">暗色</string>
@@ -587,7 +587,7 @@
     <string name="settings_eh_show_gallery_rating">顯示畫廊評分</string>
     <string name="settings_eh_show_eh_event">顯示 EH 活動</string>
     <string name="settings_eh_show_eh_limits">顯示 EH 配額</string>
-    <string name="settings_eh_show_jpn_title_summary">需同時在 Gallery 網站設定中啟用 Japanese Title</string>
+    <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示畫廊頁數</string>
     <string name="settings_eh_show_gallery_pages_summary">在畫廊列表中顯示頁數</string>
     <string name="settings_eh_show_tag_translations">顯示標籤翻譯</string>
@@ -711,9 +711,9 @@
 
     <string name="settings_about">關於</string>
     <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
-    <string name="settings_about_declaration_summary">AnotherViewer 與 Gallery Site.org 無任何聯繫</string>
+    <string name="settings_about_declaration_summary">AnotherViewer 與 E-Hentai.org 無任何聯繫</string>
     <string name="settings_about_author">作者</string>
-    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_author_summary" translatable="false">PegionFish &lt;boblao0714$gmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">最新版本</string>
     <string name="settings_about_website">網站</string>
@@ -902,9 +902,9 @@
 
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">你確定要更換背景圖片嗎？</string>
-    <string name="change_background_message">更換背景圖片只會在此應用程式生效，無法與 Gallery Site 或其他類似程式同步。</string>
+    <string name="change_background_message">更換背景圖片只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
     <string name="change_avatar_title">你確定要更換你的頭像嗎？</string>
-    <string name="change_avatar_message">更換頭像只會在此應用程式生效，無法與 Gallery Site 或其他類似程式同步。</string>
+    <string name="change_avatar_message">更換頭像只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
     <string name="take_a_photograph">拍照</string>
     <string name="choose_from_the_album">在相簿中選擇</string>
     <string name="request_camera_permission">AnotherViewer 需要取得相機權限才能拍照。你願意授權嗎？</string>
