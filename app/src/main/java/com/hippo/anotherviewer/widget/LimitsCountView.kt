@@ -77,7 +77,7 @@ class LimitsCountView : FrameLayout {
     private fun init(context: Context) {
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.limits_count_main, this)
-        val login = Settings.isLogin() && Settings.getShowSiteLimits()
+        val login = Settings.isLogin() && Settings.getShowEhLimits()
         if (!login) {
             this.visibility = GONE
             return
@@ -135,7 +135,7 @@ class LimitsCountView : FrameLayout {
         if (!Settings.isLogin()) {
             return
         }
-        if (!Settings.getShowSiteLimits()) {
+        if (!Settings.getShowEhLimits()) {
             this.visibility = GONE
             return
         } else {

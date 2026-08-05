@@ -51,7 +51,7 @@ class SplashActivity : SiteActivity() {
                 this@SplashActivity.finish()
             })
         }).start()
-        if (!openNews && Settings.getShowSiteEvents()) {
+        if (!openNews && Settings.getShowEhEvents()) {
             signInNews()
         }
     }

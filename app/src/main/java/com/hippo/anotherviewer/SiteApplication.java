@@ -758,7 +758,7 @@ public class SiteApplication extends RecordingApplication {
     }
 
     public void showEventPane(String html){
-        if (!Settings.getShowSiteEvents()){
+        if (!Settings.getShowEhEvents()){
             return;
         }
         if (html==null){
