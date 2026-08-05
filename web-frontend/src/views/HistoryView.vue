@@ -18,8 +18,10 @@
       @retry="onRetry"
     >
       <!-- Shared gallery list (B-1): renders the grid/list form from
-           prefs.general.listMode (R4-1 — no hardcoded layout anymore). The
-           last-viewed badge rides along in both forms via item-extra. -->
+           prefs.general.listMode (R4-1 — no hardcoded layout anymore).
+           List form: the absolute corner badge (item-extra). Grid form: the
+           last-viewed stamp flows inside the card meta as a second line
+           (item-sub, F-UX1 — the corner badge is hidden there). -->
       <GalleryList :items="galleries" @select="openGallery">
         <template #item-extra="{ index }">
           <span
@@ -28,6 +30,16 @@
             :title="`Last viewed ${new Date(entries[index].time).toLocaleString()}`"
           >
             <AppIcon name="history-black" size="14px" />
+            {{ formatViewTime(entries[index].time) }}
+          </span>
+        </template>
+        <template #item-sub="{ index }">
+          <span
+            v-if="entries[index]"
+            class="time-row"
+            :title="`Last viewed ${new Date(entries[index].time).toLocaleString()}`"
+          >
+            <AppIcon name="history-black" size="12px" />
             {{ formatViewTime(entries[index].time) }}
           </span>
         </template>
@@ -314,7 +326,8 @@ onMounted(() => {
 /* Row layout, entrance animation and stagger live in GalleryList (B-1);
    only the history-specific last-viewed badge is styled here. */
 
-/* Last-viewed timestamp — clock glyph + compact date/time, secondary ink. */
+/* Last-viewed timestamp — clock glyph + compact date/time, secondary ink.
+   List-form only: an absolute corner badge over the horizontal card. */
 .time-badge {
   position: absolute;
   right: 10px;
@@ -324,6 +337,29 @@ onMounted(() => {
   gap: 4px;
   color: var(--text-color-secondary);
   font-size: var(--text-super-small); /* 12sp */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* F-UX1: in the grid form the corner badge would sit on top of the card
+   title — the last-viewed stamp renders inside the card meta instead
+   (`.time-row` below), so the badge is suppressed there. */
+.gallery-grid__cell .time-badge {
+  display: none;
+}
+
+/* Grid-form last-viewed line — flows inside the card meta region as the
+   second line below the title (F-UX1), stretching the card instead of
+   overlapping the title. */
+.time-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-color-secondary);
+  font-size: inherit;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   pointer-events: none;

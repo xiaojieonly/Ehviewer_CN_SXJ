@@ -40,12 +40,17 @@
     >
       <!-- Shared gallery list (B-1): renders the grid/list form from
            prefs.general.listMode (R4-1 — no hardcoded layout anymore). The
-           favorite-slot badge rides along in both forms via item-extra. -->
+           favorite-slot badge rides along in both forms via item-extra.
+
+           F-UX5: the badge renders the ITEM's real favoriteSlot (carried by
+           FavoriteItem since the tab-0 semantics fix), not the active tab
+           number. Slot -1 (default folder, only ever listed in tab 0) shows
+           the heart alone — the app's badge carries no number either. -->
       <GalleryList :items="favorites" @select="openGallery">
-        <template #item-extra>
-          <span class="slot-badge" :title="`In ${slotNames[activeSlot]}`">
+        <template #item-extra="{ gallery }">
+          <span class="slot-badge" :title="`In ${slotBadgeName(gallery.favoriteSlot)}`">
             <AppIcon name="heart" size="12px" />
-            {{ activeSlot }}
+            <template v-if="gallery.favoriteSlot >= 0">{{ gallery.favoriteSlot }}</template>
           </span>
         </template>
       </GalleryList>
@@ -74,6 +79,11 @@
  * The API is slot-scoped (`/favorite/list?slot=N&page=M`), mirroring the
  * Android scene which always shows exactly one folder; each row carries a
  * heart badge with the folder number it belongs to.
+ *
+ * F-UX5 — tab semantics align with the Android FavoritesScene: tab 0 is the
+ * DEFAULT FOLDER (server filters `favoriteSlot in (-1, 0)`), tabs 1-9 are
+ * the custom folders (`favoriteSlot == N`). The chip strip still sends
+ * 0-9 exactly as before; only the server-side tab-0 mapping changed.
  *
  * Backend note: `FavoriteItem.category` is the stringified `SiteConfig` bit
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
@@ -155,8 +165,23 @@ const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** Monotonic request guard — stale responses (slot switches / refresh) drop. */
 let requestSeq = 0
 
+/** Maps an item slot onto its folder-tab index — slot -1 (default folder)
+ *  is listed in tab 0, mirroring the Android FavoritesScene first tab. */
+function slotTabIndex(slot: number): number {
+  return slot >= 0 ? slot : 0
+}
+
+/** Folder display name for the badge title of an item with the given slot. */
+function slotBadgeName(slot: number): string {
+  return slotNames.value[slotTabIndex(slot)] ?? ''
+}
+
 /** Maps a backend favorite row onto the `GalleryInfo` shape the list renders. */
 function toGalleryInfo(item: FavoriteItem): GalleryInfo {
+  // F-UX5: the row's REAL slot rides along (FavoriteItem.favoriteSlot) so the
+  // ♥ badge shows the true folder — tab 0 mixes slots -1 and 0. Legacy
+  // servers without the field fall back to the active tab number.
+  const slot = item.favoriteSlot ?? activeSlot.value
   return {
     gid: item.gid,
     token: item.token,
@@ -174,8 +199,8 @@ function toGalleryInfo(item: FavoriteItem): GalleryInfo {
     thumbWidth: 0,
     thumbHeight: 0,
     pages: 0,
-    favoriteSlot: activeSlot.value,
-    favoriteName: slotNames.value[activeSlot.value] ?? '',
+    favoriteSlot: slot,
+    favoriteName: slotBadgeName(slot),
   }
 }
 

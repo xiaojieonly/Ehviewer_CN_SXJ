@@ -11,7 +11,18 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
 
     /**
      * List favorites with 1-based pagination (contract: `page` starts at 1)
-     * and optional folder-slot filtering (`slot <= 0` returns all slots).
+     * and folder-slot filtering aligned with the Android `FavoritesScene`
+     * tabs (F-UX5):
+     *
+     *  - `slot == 0` → the default folder: rows with `favoriteSlot` in
+     *    (-1, 0). -1 is "added with the default folder", 0 is explicit
+     *    Favorites 0; the app's first tab shows both.
+     *  - `slot > 0`  → exactly that custom folder (`favoriteSlot == slot`).
+     *  - `slot < 0`  → all slots. The openapi contract only documents slots
+     *    0-9 and only a 200 response for this endpoint, so out-of-domain
+     *    negative values keep the legacy total mapping instead of gaining an
+     *    undocumented 4xx; no first-party client sends them (WebUI tabs are
+     *    0-9).
      */
     fun listFavorites(slot: Int, page: Int, pageSize: Int = 20): FavoriteListResponse {
         val startPage = page.coerceAtLeast(1)
@@ -19,7 +30,11 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
         // 增量同步需要墓碑行落库（SyncService.mergeFavorite），但 /favorite/list
         // 只呈现存活收藏；total/分页也只按存活行计（R4-17）。
         val all = favoriteRepository.findAllByOrderByTimeDesc().filter { !it.deleted }
-        val filtered = if (slot <= 0) all else all.filter { it.favoriteSlot == slot }
+        val filtered = when {
+            slot == 0 -> all.filter { it.favoriteSlot == SLOT_DEFAULT_FOLDER || it.favoriteSlot == 0 }
+            slot > 0 -> all.filter { it.favoriteSlot == slot }
+            else -> all
+        }
         val total = filtered.size
         val totalPages = (total + pageSize - 1) / pageSize
         val paged = filtered.drop((startPage - 1) * pageSize).take(pageSize)
@@ -33,7 +48,10 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
                 category = entity.category,
                 rating = entity.rating,
                 uploader = entity.uploader,
-                posted = entity.posted
+                posted = entity.posted,
+                // F-UX5: 条目真实 slot 随行下发——收藏页的 ♥ 徽章据此渲染真值，
+                // 不再退化为当前页签号。
+                favoriteSlot = entity.favoriteSlot
             )
         }
         return FavoriteListResponse(items, totalPages, startPage)
