@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.client.SiteConfig
 import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.SiteUtils
+import com.hippo.anotherviewer.client.data.GalleryComment
 import com.hippo.anotherviewer.client.data.GalleryDetail
 import com.hippo.anotherviewer.client.data.GalleryInfo
 import com.hippo.anotherviewer.client.data.ListUrlBuilder
@@ -305,7 +306,11 @@ class GalleryService(
         }
     }
 
-    /** Local history → detail DTO, enriched from the site when the page count is absent. */
+    /**
+     * Local history → detail DTO. The site detail is always attempted so the
+     * response carries the real comments (and fills any missing fields); an
+     * unreachable site keeps the history-based dto (E2E-6 semantics).
+     */
     private fun enrichHistoryDetail(gid: Long, history: HistoryInfoEntity): GalleryDetailDto {
         val tags = galleryTagsRepository.findByGid(gid)
         val dto = GalleryDetailDto(
@@ -330,10 +335,6 @@ class GalleryService(
             tags = tags.map { TagDto(it.tagNamespace, it.tag) },
             imageUrl = history.thumb
         )
-        if (dto.pages > 0) return dto
-        // History rows seeded via REST carry no page count; fetch the site
-        // detail so the WebUI reader can open. E2E-6 semantics preserved: an
-        // unreachable site keeps the (pageless) history-based dto.
         return try {
             val detail = SiteEngine.getGalleryDetail(
                 null, client, SiteUrl.getGalleryDetailUrl(history.gid, history.token)
@@ -347,8 +348,9 @@ class GalleryService(
                 uploader = dto.uploader ?: detail.uploader,
                 rating = if (dto.rating != 0f) dto.rating else detail.rating,
                 simpleTags = dto.simpleTags.ifEmpty { detail.simpleTags?.toList() ?: emptyList() },
-                pages = detail.pages,
+                pages = if (dto.pages > 0) dto.pages else detail.pages,
                 imageUrl = dto.imageUrl ?: detail.thumb,
+                comments = detail.comments?.comments?.toList().orEmpty().map { it.toCommentItem() }
             )
         } catch (e: Exception) {
             logger.warn("Site detail fallback failed for gid={}: {}", gid, e.message)
@@ -497,7 +499,7 @@ class GalleryService(
         favoriteName = favoriteName
     )
 
-    /** core GalleryDetail（站点直取）→ 详情 DTO。tags 按 GalleryTagGroup 展平。 */
+    /** core GalleryDetail（站点直取）→ 详情 DTO。tags 按 GalleryTagGroup 展平；评论映射站点真实数据。 */
     private fun GalleryDetail.toDetailDto() = GalleryDetailDto(
         gid = gid,
         token = token,
@@ -520,6 +522,16 @@ class GalleryService(
         tags = tags.orEmpty().flatMap { group ->
             (0 until group.size()).map { i -> TagDto(group.groupName, group.getTagAt(i)) }
         },
-        imageUrl = thumb
+        imageUrl = thumb,
+        comments = comments?.comments?.toList().orEmpty().map { it.toCommentItem() }
+    )
+
+    /** 站点 GalleryComment → wire CommentItem（uploader=user，time 转可读字符串）。 */
+    private fun GalleryComment.toCommentItem() = CommentItem(
+        id = id,
+        uploader = user,
+        comment = comment,
+        time = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(time)),
+        score = score,
     )
 }

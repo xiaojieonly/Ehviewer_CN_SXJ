@@ -312,8 +312,9 @@ async function load() {
   const seq = ++loadSeq
   loading.value = true
   error.value = null
+  let detail: GalleryDetail | null = null
   try {
-    const detail = await galleryApi.getDetail(galleryId.value, entryToken.value)
+    detail = await galleryApi.getDetail(galleryId.value, entryToken.value)
     if (seq !== loadSeq) return
     gallery.value = detail
     isFavorited.value = (detail.favoriteSlot ?? -1) >= 0
@@ -324,13 +325,22 @@ async function load() {
   } finally {
     if (seq === loadSeq) loading.value = false
   }
-  void loadComments()
+  void loadComments(detail?.comments)
 }
 
-async function loadComments() {
+/**
+ * 评论数据源：优先用详情接口随画廊返回的站点真实评论（GalleryDetail.comments），
+ * 缺省（本地历史详情 / 旧数据）时回退 Web 内存评论服务。
+ */
+async function loadComments(fromDetail?: CommentItem[] | null) {
   const seq = loadSeq
   commentsLoading.value = true
   try {
+    if (fromDetail && fromDetail.length > 0) {
+      if (seq !== loadSeq) return
+      comments.value = fromDetail
+      return
+    }
     const res = await commentApi.listComments(galleryId.value)
     if (seq !== loadSeq) return
     comments.value = res.comments ?? []

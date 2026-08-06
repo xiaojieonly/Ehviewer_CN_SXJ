@@ -81,7 +81,9 @@ data class GalleryDetailDto(
     val favoriteSlot: Int,
     val favoriteName: String?,
     val tags: List<TagDto>,
-    val imageUrl: String?
+    val imageUrl: String?,
+    /** 站点真实评论（GalleryDetail.comments）；本地详情（history）路径为空。 */
+    val comments: List<CommentItem> = emptyList()
 )
 
 data class TagDto(

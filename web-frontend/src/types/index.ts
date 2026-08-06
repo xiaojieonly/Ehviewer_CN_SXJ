@@ -23,6 +23,14 @@ export interface GalleryInfo {
 export interface GalleryDetail extends GalleryInfo {
   tags: TagInfo[]
   imageUrl: string
+  /** 站点真实评论（详情接口随画廊返回；本地历史路径为空）。 */
+  comments?: Array<{
+    id: number
+    uploader: string
+    comment: string
+    time: string
+    score: number
+  }>
 }
 
 export interface TagInfo {
