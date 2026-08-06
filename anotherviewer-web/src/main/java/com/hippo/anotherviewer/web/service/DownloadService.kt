@@ -99,29 +99,36 @@ class DownloadService(
 
     // ── query ───────────────────────────────────────────────────
 
-    fun listDownloads(labelId: Int? = null, offset: Int = 0, limit: Int = 100, sort: String = "time_desc"): DownloadListResponse {
+    fun listDownloads(
+        labelId: Int? = null,
+        offset: Int = 0,
+        limit: Int = 100,
+        sort: String = "time_desc",
+        q: String? = null,
+    ): DownloadListResponse {
         // A5 契约：offset 为行偏移、limit 为每页条数。PageRequest 以页码为参数，
         // 换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）。
         // 排序（sort 参数，未知值回落默认 time_desc=添加时间倒序=最新在前）：
         //   time_desc / time_asc / title_asc / title_desc
+        // 搜索（q 非空时按标题/标题日文模糊匹配，服务端过滤——负载留在服务器）。
         val size = limit.coerceIn(1, 500)
         val pageable = PageRequest.of(offset.coerceAtLeast(0) / size, size, sortOf(sort))
         val labels = labelRepository.findAll()
 
-        if (labelId != null && labelId != 0) {
-            val page = downloadRepository.findByLabel(labelId, pageable)
-            return DownloadListResponse(
-                downloads = page.content.map { it.toItem() },
-                labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
-                total = downloadRepository.countByLabel(labelId).toInt()
-            )
-        }
+        val labelFilter = labelId?.takeIf { it != 0 }
+        val qFilter = q?.takeIf { it.isNotBlank() }?.let(::escapeLike)
 
-        val page = downloadRepository.findAll(pageable)
+        val (page, totalCount) = when {
+            qFilter != null -> downloadRepository.searchDownloads(labelFilter, qFilter, pageable) to
+                downloadRepository.countSearchDownloads(labelFilter, qFilter)
+            labelFilter != null -> downloadRepository.findByLabel(labelFilter, pageable) to
+                downloadRepository.countByLabel(labelFilter)
+            else -> downloadRepository.findAll(pageable) to downloadRepository.count()
+        }
         return DownloadListResponse(
             downloads = page.content.map { it.toItem() },
             labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
-            total = downloadRepository.count().toInt()
+            total = totalCount.toInt()
         )
     }
 
@@ -132,6 +139,10 @@ class DownloadService(
         "title_desc" -> Sort.by(Sort.Direction.DESC, "title")
         else -> Sort.by(Sort.Direction.DESC, "time")
     }
+
+    /** LIKE 通配符转义（与 repository 查询的 ESCAPE '\' 配对）。 */
+    private fun escapeLike(raw: String): String =
+        raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
     fun getDownloadInfo(id: Long): DownloadItem? {
         return downloadRepository.findById(id).orElse(null)?.toItem()
@@ -256,37 +267,49 @@ class DownloadService(
     }
 
     // ── 批量操作（Android 多选模式 Start/Stop/Delete/Move 的 WebUI 对等物）──
+    // all=true 时忽略 ids，按 (label, q) 过滤条件在服务端解析全集（跨页全选）。
 
     /** 批量开始：返回成功开始的数量。 */
-    fun startDownloads(ids: List<Long>): Int {
+    fun startDownloads(ids: List<Long>?, all: Boolean, label: Int?, q: String?): Int {
         var started = 0
-        ids.forEach { if (startDownload(it)) started++ }
+        resolveBatchIds(ids, all, label, q).forEach { if (startDownload(it)) started++ }
         return started
     }
 
     /** 批量停止（暂停）：返回成功暂停的数量。 */
-    fun pauseDownloads(ids: List<Long>): Int {
+    fun pauseDownloads(ids: List<Long>?, all: Boolean, label: Int?, q: String?): Int {
         var paused = 0
-        ids.forEach { if (pauseDownload(it)) paused++ }
+        resolveBatchIds(ids, all, label, q).forEach { if (pauseDownload(it)) paused++ }
         return paused
     }
 
     /** 批量删除：返回已删除的数量（含下载目录文件）。 */
-    fun deleteDownloads(ids: List<Long>): Int {
+    fun deleteDownloads(ids: List<Long>?, all: Boolean, label: Int?, q: String?): Int {
         var removed = 0
-        ids.forEach { if (deleteDownload(it)) removed++ }
+        resolveBatchIds(ids, all, label, q).forEach { if (deleteDownload(it)) removed++ }
         return removed
     }
 
     /** 批量移动标签：labelId=0 表示移回默认标签；返回成功更新的数量。 */
-    fun moveDownloads(ids: List<Long>, labelId: Int): Int {
+    fun moveDownloads(ids: List<Long>?, all: Boolean, label: Int?, q: String?, labelId: Int): Int {
         if (labelId != 0 && !labelRepository.existsById(labelId.toLong())) return 0
         var moved = 0
-        ids.forEach { id ->
+        resolveBatchIds(ids, all, label, q).forEach { id ->
             updateEntity(id) { it.label = labelId }
             moved++
         }
         return moved
+    }
+
+    /** 批量目标解析：all=true → 按 (label, q) 过滤全集取 id（服务端投影，不加载实体）；
+     *  否则直接用 ids。 */
+    private fun resolveBatchIds(ids: List<Long>?, all: Boolean, label: Int?, q: String?): List<Long> {
+        if (!all) return ids.orEmpty()
+        val labelFilter = label?.takeIf { it != 0 }
+        val qFilter = q?.takeIf { it.isNotBlank() }?.let(::escapeLike)
+        return downloadRepository
+            .findAllIdsBy(labelFilter, qFilter, PageRequest.of(0, MAX_BATCH_IDS))
+            .content
     }
 
     // ── labels ──────────────────────────────────────────────────
@@ -596,5 +619,10 @@ class DownloadService(
         tasks.values.forEach { it.requestStop() }
         workerPool.shutdownNow()
         tasks.values.forEach { it.pageExecutor.shutdownNow() }
+    }
+
+    private companion object {
+        /** 跨页全选/批量单次解析的全集上限（9000+ 级规模安全；超限取前 N 条）。 */
+        const val MAX_BATCH_IDS = 100_000
     }
 }

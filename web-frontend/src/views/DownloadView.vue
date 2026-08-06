@@ -16,6 +16,28 @@
       </button>
     </nav>
 
+    <!-- Server-side search (Android download_search_dialog replica): 输入即
+         防抖搜索，q 走 /download/list 服务端过滤，负载留在服务器。 -->
+    <div class="search-bar">
+      <AppIcon name="magnify-dark" size="18px" />
+      <input
+        v-model="searchQuery"
+        class="search-bar__input"
+        type="search"
+        placeholder="搜索标题…"
+        aria-label="搜索下载"
+      />
+      <button
+        v-if="searchQuery"
+        type="button"
+        class="search-bar__clear"
+        aria-label="清除搜索"
+        @click="clearSearch"
+      >
+        <AppIcon name="close-dark" size="16px" />
+      </button>
+    </div>
+
     <!-- Multi-select toolbar (Android custom choice mode: 全选/开始/停止/
          删除/移动；长按或右键条目进入) -->
     <div
@@ -228,7 +250,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { StompSubscription } from '@stomp/stompjs'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { downloadApi } from '@/api/download'
-import type { DownloadItem, DownloadLabel } from '@/api/download'
+import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/download'
 import { useWebSocket } from '@/composables/useWebSocket'
 import type { DownloadProgress } from '@/composables/useWebSocket'
 import type { FabAction } from '@/types/components'
@@ -334,10 +356,42 @@ const virtualizer = useVirtualizer(
 /** Monotonic request guard — stale responses (fast label switches) drop. */
 let requestSeq = 0
 
+/* ---------------------------------- server-side search -------------------- */
+
+/** 搜索词：防抖后作为 q 传给 /download/list（服务端过滤）。 */
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(searchQuery, (next) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (debouncedQuery.value !== next) {
+      debouncedQuery.value = next
+      // 搜索词变化 → 重置分页重新加载（负载在服务端）。
+      state.value = 'loading'
+      void load()
+    }
+  }, 400)
+})
+
+function clearSearch(): void {
+  searchQuery.value = ''
+  debouncedQuery.value = ''
+  state.value = 'loading'
+  void load()
+}
+
 async function load(): Promise<void> {
   const seq = ++requestSeq
   try {
-    const result = await downloadApi.list(activeLabel.value ?? undefined, 0, PAGE_SIZE, SORT_MODE)
+    const result = await downloadApi.list(
+      activeLabel.value ?? undefined,
+      0,
+      PAGE_SIZE,
+      SORT_MODE,
+      debouncedQuery.value || null,
+    )
     if (seq !== requestSeq) return
     downloads.value = result.downloads
     labels.value = result.labels
@@ -367,6 +421,7 @@ async function loadMore(): Promise<void> {
       downloads.value.length,
       PAGE_SIZE,
       SORT_MODE,
+      debouncedQuery.value || null,
     )
     if (seq !== requestSeq) return
     downloads.value.push(...result.downloads)
@@ -505,8 +560,30 @@ function toggleSelect(id: number): void {
 }
 
 function selectAll(): void {
+  // 全选当前已加载页；若已加载页全选且仍有未加载条目（length < total），
+  // 批量操作时以 all=true 让服务端按过滤条件处理全集（跨页全选）。
   const all = downloads.value.map((d) => d.id)
   selectedIds.value = new Set(all)
+}
+
+/** 跨页全选判定：已加载页全部选中且存在未加载条目 → 服务端 all 模式。 */
+const selectAllAcrossPages = computed(
+  () =>
+    downloads.value.length > 0 &&
+    selectedIds.value.size === downloads.value.length &&
+    downloads.value.length < total.value,
+)
+
+/** 批量操作目标：跨页全选传 all + 当前过滤条件（label/q），否则传已选 ids。 */
+function batchTarget(): DownloadBatchTarget {
+  if (selectAllAcrossPages.value) {
+    return {
+      all: true,
+      label: activeLabel.value,
+      q: debouncedQuery.value || null,
+    }
+  }
+  return { ids: Array.from(selectedIds.value) }
 }
 
 function exitSelectMode(): void {
@@ -520,7 +597,8 @@ async function onBatchStart(): Promise<void> {
   if (ids.length === 0 || batchBusy.value) return
   batchBusy.value = true
   try {
-    const started = await downloadApi.startRange(ids)
+    const target = batchTarget()
+    const started = await downloadApi.startRange(target)
     for (const item of downloads.value) {
       if (selectedIds.value.has(item.id) && ids.includes(item.id)) item.state = STATE_WAIT
     }
@@ -539,7 +617,7 @@ async function onBatchStop(): Promise<void> {
   if (ids.length === 0 || batchBusy.value) return
   batchBusy.value = true
   try {
-    const stopped = await downloadApi.stopRange(ids)
+    const stopped = await downloadApi.stopRange(batchTarget())
     for (const item of downloads.value) {
       if (selectedIds.value.has(item.id) && ids.includes(item.id)) item.state = STATE_NONE
     }
@@ -555,13 +633,14 @@ async function onBatchStop(): Promise<void> {
 }
 
 async function onBatchDelete(): Promise<void> {
-  const ids = Array.from(selectedIds.value)
-  if (ids.length === 0 || batchBusy.value) return
+  if (selectedIds.value.size === 0 || batchBusy.value) return
+  const target = batchTarget()
+  const count = selectAllAcrossPages.value ? total.value : selectedIds.value.size
   // Android DeleteRangeDialogHelper：删除会同时移除下载文件（WebUI 删除语义一致）。
-  if (!window.confirm(`删除选中的 ${ids.length} 项下载？下载文件将一并删除。`)) return
+  if (!window.confirm(`删除选中的 ${count} 项下载？下载文件将一并删除。`)) return
   batchBusy.value = true
   try {
-    const removed = await downloadApi.deleteRange(ids)
+    const removed = await downloadApi.deleteRange(target)
     downloads.value = downloads.value.filter((d) => !selectedIds.value.has(d.id))
     total.value = Math.max(0, total.value - removed)
     if (downloads.value.length === 0) state.value = 'empty'
@@ -585,12 +664,11 @@ function closeMoveDialog(): void {
 }
 
 async function confirmMove(labelId: number): Promise<void> {
-  const ids = Array.from(selectedIds.value)
   closeMoveDialog()
-  if (ids.length === 0 || batchBusy.value) return
+  if (selectedIds.value.size === 0 || batchBusy.value) return
   batchBusy.value = true
   try {
-    const moved = await downloadApi.move(ids, labelId)
+    const moved = await downloadApi.move({ ...batchTarget(), labelId })
     for (const item of downloads.value) {
       if (selectedIds.value.has(item.id)) item.label = labelId
     }
@@ -849,6 +927,54 @@ onUnmounted(() => {
 .label-tabs__tab:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
+}
+
+/* -------------------------------------------------- server-side search ---- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin: 0 var(--keyline-margin) 8px;
+  padding: 0 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--text-color-secondary);
+}
+
+.search-bar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-small);
+  outline: none;
+}
+
+.search-bar__input::placeholder {
+  color: var(--text-color-secondary);
+}
+
+.search-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+}
+
+.search-bar__clear:hover {
+  background: var(--color-surface-activated);
 }
 
 /* -------------------------------------------------- multi-select bar ---- */

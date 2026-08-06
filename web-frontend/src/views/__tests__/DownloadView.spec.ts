@@ -161,7 +161,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await mountView()
 
     // 默认偏好：每页 50 条（与 Android 一致）+ 添加时间倒序（最新在前）。
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 50, 'time_desc', null)
     expect(wrapper.find('[data-testid="content-state-content"]').exists()).toBe(true)
     const items = wrapper.findAll('.download-list__item')
     // Virtualized: only the rows around the window are mounted — without
@@ -183,20 +183,20 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     // 50 rows × 160px estimate → last row starts at 49 × 160 = 7840.
     const el = scroller()
     await scrollTo(el, 49 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 50, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 50, 50, 'time_desc', null)
     expect(downloadApi.list).toHaveBeenCalledTimes(2)
 
     // 逐段下探：每页 50 行 → 100/150/200 行，最后 250 total 封顶不再请求。
     await scrollTo(el, 99 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 50, 'time_desc', null)
     expect(downloadApi.list).toHaveBeenCalledTimes(3)
 
     await scrollTo(el, 149 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 150, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 150, 50, 'time_desc', null)
     expect(downloadApi.list).toHaveBeenCalledTimes(4)
 
     await scrollTo(el, 199 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 50, 'time_desc', null)
     expect(downloadApi.list).toHaveBeenCalledTimes(5)
 
     // 250 total reached — further scrolling must not request page 6.
@@ -228,11 +228,11 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await flushPromises()
 
     // Label switch restarts at offset 0 with the label param.
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 50, 'time_desc', null)
     expect(wrapper.text()).toContain('Dl 1')
     // Scrolling to the (160-row) labeled tail loads its remaining pages.
     await scrollTo(scroller(), 49 * 160)
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 50, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 50, 50, 'time_desc', null)
   })
 
   it('rewrites external thumbnails through the image proxy in rendered rows', async () => {
@@ -342,7 +342,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
     await flushPromises()
 
-    expect(downloadApi.startRange).toHaveBeenCalledWith([1, 2])
+    expect(downloadApi.startRange).toHaveBeenCalledWith({ ids: [1, 2, 3] })
     expect(downloadApi.startRange).toHaveBeenCalledTimes(1)
     // Toast teleports to body — assert on document.
     expect(document.querySelector('.toast')?.textContent).toContain('Started 2 downloads')
@@ -369,7 +369,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '停止')!.trigger('click')
     await flushPromises()
 
-    expect(downloadApi.stopRange).toHaveBeenCalledWith([1, 2])
+    expect(downloadApi.stopRange).toHaveBeenCalledWith({ ids: [1, 2, 3] })
     expect(document.querySelector('.toast')?.textContent).toContain('Stopped 2 downloads')
   })
 
@@ -388,7 +388,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await flushPromises()
 
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('删除选中的 1 项'))
-    expect(downloadApi.deleteRange).toHaveBeenCalledWith([1])
+    expect(downloadApi.deleteRange).toHaveBeenCalledWith({ ids: [1] })
     expect(wrapper.find('.select-bar').exists()).toBe(false)
     confirm.mockRestore()
   })
@@ -414,7 +414,76 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     ;(workOption as HTMLElement).click()
     await flushPromises()
 
-    expect(downloadApi.move).toHaveBeenCalledWith([1], 5)
+    expect(downloadApi.move).toHaveBeenCalledWith({ ids: [1], labelId: 5 })
     expect(document.querySelector('.dialog__label-list')).toBeNull()
+})
+  /* ---------------- server-side search + cross-page select-all ---------------- */
+
+  it('debounces the search input and reloads with the q param', async () => {
+    vi.useFakeTimers()
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50, _s, q) => {
+      const rows = q ? pages(250)(offset, limit).filter((d) => (d.title ?? '').includes('Dl 1')) : pages(250)(offset, limit)
+      return { downloads: rows, labels: [], total: q ? rows.length : 250 }
+    })
+    await mountView()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null)
+
+    const input = wrapper.find('.search-bar__input')
+    await input.setValue('futa')
+    // 防抖 400ms 内不触发请求
+    await vi.advanceTimersByTimeAsync(200)
+    expect(downloadApi.list).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', 'futa')
+
+    // 清空搜索恢复全量。
+    await wrapper.find('.search-bar__clear').trigger('click')
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null)
+    vi.useRealTimers()
+  })
+
+  it('select-all across pages sends the all-mode target with current filters', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: pages(250)(0, 50).slice(0, 50),
+      labels: [],
+      total: 250,
+    }))
+    vi.mocked(downloadApi.startRange).mockResolvedValue(40)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    // 已加载 50 条 < total 250 → 跨页全选。
+    expect(wrapper.find('.select-bar__count').text()).toBe('共 250 条 · 已选 50 条')
+
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
+    await flushPromises()
+
+    expect(downloadApi.startRange).toHaveBeenCalledWith({ all: true, label: null, q: null })
+    expect(document.querySelector('.toast')?.textContent).toContain('Started 40 downloads')
+  })
+
+  it('cross-page delete confirms with the total count and clamps it', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: pages(250)(0, 50).slice(0, 50),
+      labels: [],
+      total: 250,
+    }))
+    vi.mocked(downloadApi.deleteRange).mockResolvedValue(250)
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '删除')!.trigger('click')
+    await flushPromises()
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('删除选中的 250 项'))
+    expect(downloadApi.deleteRange).toHaveBeenCalledWith({ all: true, label: null, q: null })
+    confirm.mockRestore()
 })
 })

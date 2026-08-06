@@ -32,24 +32,36 @@ export interface DownloadListResponse {
   total: number
 }
 
+/** 批量操作目标（Android multi-select）：`all=true` 时忽略 ids，按当前
+    (label, q) 过滤条件在服务端解析全集（跨页全选）。 */
+export interface DownloadBatchTarget {
+  ids?: number[]
+  all?: boolean
+  label?: number | null
+  q?: string | null
+}
+
 export const downloadApi = {
   /**
-   * Paginated download list. `offset`/`limit`/`sort` are only sent when
+   * Paginated download list. `offset`/`limit`/`sort`/`q` are only sent when
    * defined (callers without paging keep the legacy behaviour); the server
-   * clamps `limit` into [1, 500] and falls back to `time_desc` on unknown
-   * sort values.
+   * clamps `limit` into [1, 500], falls back to `time_desc` on unknown sort
+   * values, and filters by `q` (case-insensitive title/titleJpn search,
+   * server-side).
    */
   async list(
     label?: number,
     offset?: number,
     limit?: number,
     sort?: DownloadSort,
+    q?: string | null,
   ): Promise<DownloadListResponse> {
     const params: Record<string, string> = {}
     if (label !== undefined) params.label = label.toString()
     if (offset !== undefined) params.offset = offset.toString()
     if (limit !== undefined) params.limit = limit.toString()
     if (sort !== undefined) params.sort = sort
+    if (q !== undefined && q !== null && q !== '') params.q = q
     const { data } = await client.get('/download/list', { params })
     return data
   },
@@ -91,23 +103,23 @@ export const downloadApi = {
 
   // ── batch (Android multi-select Start/Stop/Delete/Move) ──────
 
-  async startRange(ids: number[]): Promise<number> {
-    const { data } = await client.post('/download/start-range', { ids })
+  async startRange(target: DownloadBatchTarget): Promise<number> {
+    const { data } = await client.post('/download/start-range', target)
     return data
   },
 
-  async stopRange(ids: number[]): Promise<number> {
-    const { data } = await client.post('/download/stop-range', { ids })
+  async stopRange(target: DownloadBatchTarget): Promise<number> {
+    const { data } = await client.post('/download/stop-range', target)
     return data
   },
 
-  async deleteRange(ids: number[]): Promise<number> {
-    const { data } = await client.post('/download/delete-range', { ids })
+  async deleteRange(target: DownloadBatchTarget): Promise<number> {
+    const { data } = await client.post('/download/delete-range', target)
     return data
   },
 
-  async move(ids: number[], labelId: number): Promise<number> {
-    const { data } = await client.post('/download/move', { ids, labelId })
+  async move(target: DownloadBatchTarget & { labelId: number }): Promise<number> {
+    const { data } = await client.post('/download/move', target)
     return data
   },
 

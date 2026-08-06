@@ -811,6 +811,16 @@ paths:
             Sort mode (default `time_desc` = add time newest-first; unknown
             values fall back to the default). `time_*` sorts by the add-time
             column, `title_*` sorts by the gallery title.
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 256
+          description: >-
+            Server-side case-insensitive search over title / titleJpn
+            (LIKE match; the load stays on the server). Blank/absent = no
+            filter.
       responses:
         '200':
           description: Download list with labels and total count
@@ -2926,7 +2936,9 @@ components:
 
     DownloadRangeRequest:
       type: object
-      required: [ids]
+      description: >-
+        Batch target. `all=true` ignores ids and resolves the whole set
+        server-side using the (label, q) filters (cross-page select-all).
       properties:
         ids:
           type: array
@@ -2934,10 +2946,22 @@ components:
           items:
             type: integer
             format: int64
+          description: Explicit id list (required when all=false)
+        all:
+          type: boolean
+          default: false
+          description: Act on the full filtered set instead of ids
+        label:
+          type: integer
+          description: Label filter for all-mode (0/absent = every label)
+        q:
+          type: string
+          maxLength: 256
+          description: Title search filter for all-mode (absent = every entry)
 
     DownloadMoveRequest:
       type: object
-      required: [ids]
+      description: Move batch — same target semantics as DownloadRangeRequest.
       properties:
         ids:
           type: array
@@ -2945,6 +2969,17 @@ components:
           items:
             type: integer
             format: int64
+          description: Explicit id list (required when all=false)
+        all:
+          type: boolean
+          default: false
+        label:
+          type: integer
+          description: Label filter for all-mode (0/absent = every label)
+        q:
+          type: string
+          maxLength: 256
+          description: Title search filter for all-mode (absent = every entry)
         labelId:
           type: integer
           minimum: 0

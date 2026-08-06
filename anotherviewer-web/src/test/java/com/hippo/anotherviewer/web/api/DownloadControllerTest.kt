@@ -327,8 +327,6 @@ class DownloadControllerTest {
         verify(downloadRepository).findAll(captureK(captor))
         assertEquals(0, captor.value.pageNumber)
     }
-}
-
     // ── batch (Android multi-select Start/Stop/Delete/Move) ─────
 
     @Test
@@ -337,7 +335,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.startDownloads(listOf(1L, 2L))).thenReturn(2)
+        `when`(service.startDownloads(listOf(1L, 2L), false, null, null)).thenReturn(2)
 
         mvc.perform(
             post("/api/v1/download/start-range")
@@ -346,7 +344,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(2))
-        verify(service).startDownloads(listOf(1L, 2L))
+        verify(service).startDownloads(listOf(1L, 2L), false, null, null)
     }
 
     @Test
@@ -355,7 +353,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.pauseDownloads(listOf(3L))).thenReturn(1)
+        `when`(service.pauseDownloads(listOf(3L), false, null, null)).thenReturn(1)
 
         mvc.perform(
             post("/api/v1/download/stop-range")
@@ -364,7 +362,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(1))
-        verify(service).pauseDownloads(listOf(3L))
+        verify(service).pauseDownloads(listOf(3L), false, null, null)
     }
 
     @Test
@@ -373,7 +371,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.deleteDownloads(listOf(1L, 2L, 3L))).thenReturn(3)
+        `when`(service.deleteDownloads(listOf(1L, 2L, 3L), false, null, null)).thenReturn(3)
 
         mvc.perform(
             post("/api/v1/download/delete-range")
@@ -382,7 +380,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(3))
-        verify(service).deleteDownloads(listOf(1L, 2L, 3L))
+        verify(service).deleteDownloads(listOf(1L, 2L, 3L), false, null, null)
     }
 
     @Test
@@ -391,7 +389,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.moveDownloads(listOf(1L, 2L), 7)).thenReturn(2)
+        `when`(service.moveDownloads(listOf(1L, 2L), false, null, null, 7)).thenReturn(2)
 
         mvc.perform(
             post("/api/v1/download/move")
@@ -400,7 +398,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(2))
-        verify(service).moveDownloads(listOf(1L, 2L), 7)
+        verify(service).moveDownloads(listOf(1L, 2L), false, null, null, 7)
     }
 
     @Test
@@ -409,7 +407,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.moveDownloads(listOf(1L), -1)).thenReturn(0)
+        `when`(service.moveDownloads(listOf(1L), false, null, null, -1)).thenReturn(0)
 
         mvc.perform(
             post("/api/v1/download/move")
@@ -419,3 +417,54 @@ class DownloadControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
+
+    @Test
+    fun `batch range forwards all mode with label and q filters`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.startDownloads(null, true, 7, "futa")).thenReturn(42)
+
+        mvc.perform(
+            post("/api/v1/download/start-range")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"all":true,"label":7,"q":"futa"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(42))
+        verify(service).startDownloads(null, true, 7, "futa")
+    }
+
+    @Test
+    fun `batch range rejects missing ids when all is false`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+
+        mvc.perform(
+            post("/api/v1/download/delete-range")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[]}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+        verify(service, never()).deleteDownloads(anyList(), anyBoolean(), nullable(Int::class.java), nullable(String::class.java))
+    }
+
+    @Test
+    fun `list forwards the search q to the search queries`() {
+        `when`(downloadRepository.searchDownloads(nullable(Int::class.java), eq("futa"), any(Pageable::class.java)))
+            .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 100), 0))
+        `when`(downloadRepository.countSearchDownloads(nullable(Int::class.java), eq("futa"))).thenReturn(0L)
+        `when`(labelRepository.findAll()).thenReturn(emptyList())
+
+        mockMvc.perform(get("/api/v1/download/list").param("q", "futa"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.total").value(0))
+        verify(downloadRepository).searchDownloads(nullable(Int::class.java), eq("futa"), any(Pageable::class.java))
+        verify(downloadRepository).countSearchDownloads(nullable(Int::class.java), eq("futa"))
+        verify(downloadRepository, never()).findAll(any(Pageable::class.java))
+    }
+}

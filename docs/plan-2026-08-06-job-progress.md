@@ -102,12 +102,23 @@ IMPORT 终态：worker 返回后置 COMPLETED，result 为计数；异常（含�
 
 ## A5. 下载列表分页
 
-- `GET /api/v1/download/list?label=&offset=0&limit=100&sort=time_desc` → `{downloads, labels, total}`
+- `GET /api/v1/download/list?label=&offset=0&limit=100&sort=time_desc&q=` → `{downloads, labels, total}`
 - 默认 offset=0、limit=100；服务端 clamp limit ∈ [1, 500]。
 - 语义：label 空/0 → 全量；否则 findByLabel。total = 当前 label 下的总条数（分页前计数）。
 - `offset` 为**行偏移**：服务端换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）。
 - `sort` 取值：`time_desc`（默认，添加时间倒序=最新在前）/ `time_asc` / `title_asc` / `title_desc`；未知值回落 `time_desc`。
+- `q`（可选）：**服务端**标题/标题日文大小写不敏感 LIKE 搜索（`%`/`_`/`\` 转义防通配符注入）；空/缺省不过滤。搜索时 total = 匹配总数。
 - `DownloadListResponse` 增加 `total: Int` 字段。
+
+## A5c. 批量操作跨页全选（all 模式）
+
+- 批量端点请求体（start-range/stop-range/delete-range/move 共用目标语义）：
+  `{ids?: number[], all?: boolean, label?: number|null, q?: string|null}`（move 另有 `labelId`）。
+- `all=false`（默认）：按 ids 操作，ids 为空 → 400 VALIDATION_ERROR。
+- `all=true`：忽略 ids，服务端按 (label, q) 过滤条件投影全集 id 后执行（跨页全选，
+  负载留在服务器；label 空/0=全部标签，q 空=全部条目）。
+- 前端"全选"后若已加载页全选且 downloads.length < total → 批量操作传 `all=true`
+  + 当前 activeLabel/searchQuery。
 
 ## A5b. 下载列表设备本地偏好（web-frontend）
 

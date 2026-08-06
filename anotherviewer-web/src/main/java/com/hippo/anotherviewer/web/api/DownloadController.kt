@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.DownloadService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -15,9 +16,10 @@ class DownloadController(private val downloadService: DownloadService) {
         @RequestParam(required = false) label: Int?,
         @RequestParam(defaultValue = "0") offset: Int,
         @RequestParam(defaultValue = "100") limit: Int,
-        @RequestParam(defaultValue = "time_desc") sort: String
+        @RequestParam(defaultValue = "time_desc") sort: String,
+        @RequestParam(required = false) q: String?
     ): ResponseEntity<DownloadListResponse> {
-        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit, sort))
+        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit, sort, q))
     }
 
     @GetMapping("/info/{id}")
@@ -42,23 +44,35 @@ class DownloadController(private val downloadService: DownloadService) {
     }
 
     @PostMapping("/start-range")
-    fun startRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
-        return ResponseEntity.ok(downloadService.startDownloads(request.ids))
+    fun startRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<*> {
+        if (!request.all && request.ids.isNullOrEmpty()) {
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
+        }
+        return ResponseEntity.ok(downloadService.startDownloads(request.ids, request.all, request.label, request.q))
     }
 
     @PostMapping("/stop-range")
-    fun stopRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
-        return ResponseEntity.ok(downloadService.pauseDownloads(request.ids))
+    fun stopRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<*> {
+        if (!request.all && request.ids.isNullOrEmpty()) {
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
+        }
+        return ResponseEntity.ok(downloadService.pauseDownloads(request.ids, request.all, request.label, request.q))
     }
 
     @PostMapping("/delete-range")
-    fun deleteRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
-        return ResponseEntity.ok(downloadService.deleteDownloads(request.ids))
+    fun deleteRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<*> {
+        if (!request.all && request.ids.isNullOrEmpty()) {
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
+        }
+        return ResponseEntity.ok(downloadService.deleteDownloads(request.ids, request.all, request.label, request.q))
     }
 
     @PostMapping("/move")
-    fun move(@Valid @RequestBody request: DownloadMoveRequest): ResponseEntity<Int> {
-        return ResponseEntity.ok(downloadService.moveDownloads(request.ids, request.labelId))
+    fun move(@Valid @RequestBody request: DownloadMoveRequest): ResponseEntity<*> {
+        if (!request.all && request.ids.isNullOrEmpty()) {
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
+        }
+        return ResponseEntity.ok(downloadService.moveDownloads(request.ids, request.all, request.label, request.q, request.labelId))
     }
 
     @PostMapping("/pause/{id}")
