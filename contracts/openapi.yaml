@@ -693,6 +693,25 @@ paths:
             type: integer
             default: 1
           description: Page number (1-based)
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 256
+          description: >-
+            Case-insensitive title/titleJpn LIKE substring search (A5d).
+            Blank/absent = no filter.
+        - name: regex
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >-
+            When true, `q` is interpreted as a regular expression (A5d); an
+            invalid pattern → 400 REGEX_INVALID. Absent/false = LIKE
+            substring match.
       responses:
         '200':
           description: Favorite list
@@ -700,6 +719,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FavoriteListResponse'
+        '400':
+          description: 'Invalid regex in q (code=REGEX_INVALID)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   /api/v1/favorite/add:
     post:
@@ -746,7 +771,42 @@ paths:
     get:
       tags: [History]
       operationId: listHistory
-      summary: List all browsing history entries
+      summary: List browsing history entries (optionally filtered, A5d)
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-based)
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of entries per page
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 256
+          description: >-
+            Case-insensitive title/titleJpn LIKE substring search (A5d).
+            Blank/absent = no filter.
+        - name: regex
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >-
+            When true, `q` is interpreted as a regular expression (A5d); an
+            invalid pattern → 400 REGEX_INVALID. Absent/false = LIKE
+            substring match. Any non-blank q/regex runs the filter over the
+            full history set in memory (no DB LIKE path).
       responses:
         '200':
           description: History list
@@ -754,6 +814,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HistoryListResponse'
+        '400':
+          description: 'Invalid regex in q (code=REGEX_INVALID)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   /api/v1/history/clear:
     delete:
@@ -771,6 +837,53 @@ paths:
   # ============================================================
   # Download
   # ============================================================
+  /api/v1/download/slots:
+    get:
+      tags: [Download]
+      operationId: listFilterSlots
+      summary: List the configured filter slots (named regex presets, A5d)
+      description: |
+        A filter slot is a named regex preset (`{id, name, pattern}`) stored
+        in the serverConfig KV `download.filterSlots` (JSON array, exported
+        with backups). The download / favorite / history list pages share the
+        same slot set: selecting one filters the list by its pattern.
+        Unconfigured server → empty `slots` array.
+      responses:
+        '200':
+          description: Filter slot list (empty array when none configured)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterSlotsResponse'
+    put:
+      tags: [Download]
+      operationId: updateFilterSlots
+      summary: Replace the whole filter slot list (A5d)
+      description: |
+        Whole-list replacement (no partial update). Validation: at most 20
+        slots, non-empty name (≤32 chars), non-empty regex pattern (≤256
+        chars) that compiles. Any violation → 400 VALIDATION_ERROR with the
+        M-6 envelope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilterSlotsRequest'
+      responses:
+        '200':
+          description: Echo of the stored slot list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterSlotsResponse'
+        '400':
+          description: 'Validation failed (code=VALIDATION_ERROR)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
   /api/v1/download/list:
     get:
       tags: [Download]
@@ -821,6 +934,16 @@ paths:
             Server-side case-insensitive search over title / titleJpn
             (LIKE match; the load stays on the server). Blank/absent = no
             filter.
+        - name: regex
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >-
+            When true, `q` is interpreted as a regular expression and matched
+            server-side against title / titleJpn (A5). An invalid pattern →
+            400 REGEX_INVALID. Absent/false = LIKE substring match.
       responses:
         '200':
           description: Download list with labels and total count
@@ -828,6 +951,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DownloadListResponse'
+        '400':
+          description: 'Invalid regex in q (code=REGEX_INVALID)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   /api/v1/download/info/{id}:
     get:
@@ -2842,6 +2971,45 @@ components:
     # ----------------------------------------------------------
     # Download
     # ----------------------------------------------------------
+    FilterSlotDto:
+      type: object
+      required: [id, name, pattern]
+      description: A named regex preset (筛选槽位, A5d).
+      properties:
+        id:
+          type: string
+          description: Stable slot identifier (uuid), referenced by the list pages
+        name:
+          type: string
+          maxLength: 32
+          description: Display name (non-empty)
+        pattern:
+          type: string
+          maxLength: 256
+          description: Regex pattern the list filter is matched against (must compile)
+
+    FilterSlotsRequest:
+      type: object
+      required: [slots]
+      description: Whole-list replacement for PUT /api/v1/download/slots (A5d).
+      properties:
+        slots:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/FilterSlotDto'
+          description: Replacement slot list (≤ 20 entries)
+
+    FilterSlotsResponse:
+      type: object
+      required: [slots]
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterSlotDto'
+          description: Stored slot list (empty array when none configured)
+
     DownloadListResponse:
       type: object
       properties:
@@ -2938,7 +3106,8 @@ components:
       type: object
       description: >-
         Batch target. `all=true` ignores ids and resolves the whole set
-        server-side using the (label, q) filters (cross-page select-all).
+        server-side using the (label, q, regex) filters (cross-page
+        select-all).
       properties:
         ids:
           type: array
@@ -2958,6 +3127,13 @@ components:
           type: string
           maxLength: 256
           description: Title search filter for all-mode (absent = every entry)
+        regex:
+          type: boolean
+          default: false
+          description: >-
+            Regex mode for the all-mode `q` filter (A5): when true, `q` is
+            interpreted as a regular expression; an invalid pattern → 400
+            REGEX_INVALID. Absent/false = LIKE substring match.
 
     DownloadMoveRequest:
       type: object
@@ -2980,6 +3156,13 @@ components:
           type: string
           maxLength: 256
           description: Title search filter for all-mode (absent = every entry)
+        regex:
+          type: boolean
+          default: false
+          description: >-
+            Regex mode for the all-mode `q` filter (A5): when true, `q` is
+            interpreted as a regular expression; an invalid pattern → 400
+            REGEX_INVALID. Absent/false = LIKE substring match.
         labelId:
           type: integer
           minimum: 0

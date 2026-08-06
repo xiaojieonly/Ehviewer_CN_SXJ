@@ -108,15 +108,17 @@ IMPORT 终态：worker 返回后置 COMPLETED，result 为计数；异常（含�
 - `offset` 为**行偏移**：服务端换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）。
 - `sort` 取值：`time_desc`（默认，添加时间倒序=最新在前）/ `time_asc` / `title_asc` / `title_desc`；未知值回落 `time_desc`。
 - `q`（可选）：**服务端**标题/标题日文大小写不敏感 LIKE 搜索（`%`/`_`/`\` 转义防通配符注入）；空/缺省不过滤。搜索时 total = 匹配总数。
+- `regex`（可选）：`true` 时 `q` 按**正则表达式**解释（服务端对 title/titleJpn 匹配，非法正则 → 400 `REGEX_INVALID`）；缺省/`false` 为 LIKE 子串匹配。搜索时 total = 正则匹配总数。
 - `DownloadListResponse` 增加 `total: Int` 字段。
 
 ## A5c. 批量操作跨页全选（all 模式）
 
 - 批量端点请求体（start-range/stop-range/delete-range/move 共用目标语义）：
-  `{ids?: number[], all?: boolean, label?: number|null, q?: string|null}`（move 另有 `labelId`）。
+  `{ids?: number[], all?: boolean, label?: number|null, q?: string|null, regex?: boolean}`（move 另有 `labelId`）。
 - `all=false`（默认）：按 ids 操作，ids 为空 → 400 VALIDATION_ERROR。
-- `all=true`：忽略 ids，服务端按 (label, q) 过滤条件投影全集 id 后执行（跨页全选，
-  负载留在服务器；label 空/0=全部标签，q 空=全部条目）。
+- `all=true`：忽略 ids，服务端按 (label, q, regex) 过滤条件投影全集 id 后执行（跨页全选，
+  负载留在服务器；label 空/0=全部标签，q 空=全部条目；regex=true 时 q 按正则解释，
+  非法正则 → 400 REGEX_INVALID）。
 - 前端"全选"后若已加载页全选且 downloads.length < total → 批量操作传 `all=true`
   + 当前 activeLabel/searchQuery。
 
@@ -126,6 +128,25 @@ IMPORT 终态：worker 返回后置 COMPLETED，result 为计数；异常（含�
 - 字段：`sortMode: DownloadSort`（默认 `time_desc`）、`pageSize: number`（默认 **50**，与 Android 端一致，可选 50/100/200）。
 - 旧键迁移：`sortAscending: boolean`（从未接线）→ sortMode（false=time_desc、true=time_asc）；`paginated` 忽略并随下次写入清除。
 - `DownloadView` 挂载时读取该偏好作为分页 limit 与 sort 参数。
+
+## A5d. 筛选槽位（Filter Slots）
+
+- **定义**：筛选槽位 = 命名正则预设 `{id, name, pattern}`（id 为稳定字符串标识）；
+  服务端存 **serverConfig KV** `download.filterSlots`（JSON 数组），**随备份导出/还原**。
+- **CRUD 契约**：
+  - `GET /api/v1/download/slots` → 200 `{slots: [{id, name, pattern}]}`（未配置 → 空数组）。
+  - `PUT /api/v1/download/slots`（**整体替换**，无部分更新）→ 200 回显 `{slots}`；
+    校验失败 → 400 `VALIDATION_ERROR`（≤20 个、name 非空 ≤32 字符、pattern 非空 ≤256 字符且可编译）。
+- **三页通用语义**（下载 / 收藏 / 历史）：
+  - 下载：`GET /api/v1/download/list?label&offset&limit&sort&q&regex`；
+  - 收藏：`GET /api/v1/favorite/list?slot&page&q&regex`；
+  - 历史：`GET /api/v1/history/list?page&pageSize&q&regex`；
+  - `q` = title/titleJpn LIKE 子串；`regex=true` 时 `q` 按正则解释（非法 → 400 `REGEX_INVALID`）。
+  - 历史在 `q`/`regex` 非空时走**全量内存**过滤路径（无 DB LIKE 路径）。
+  - 批量端点（start-range/stop-range/delete-range/move）请求体含 `regex` 字段：
+    `all=true` 时按 (label, q, regex) 解析全集（A5c）。
+- **前端互斥交互**：选择槽位 → 清空搜索词；输入搜索词 → 取消槽位选择（两者互斥，不叠加过滤）。
+- **槽位管理页** `/admin/filter-slots`：列表展示 + 新增/编辑/删除（提交为整体替换 PUT）。
 
 ## A6. 前端 API 形态（web-frontend）
 
@@ -181,12 +202,22 @@ export function subscribeJobs(cb: (e: JobWsEnvelope) => void): () => void
 | B2 | `service/EhImportService.kt`、`api/ImportController.kt`、`test/.../EhImportServiceTest.kt` |
 | B3 | `service/BackupService.kt`、`api/BackupController.kt`、`service/ImageCacheService.kt`、`api/ImageProxyController.kt`、`test/.../BackupServiceTest.kt`、`test/.../BackupControllerTest.kt`、`test/.../ImageCacheServiceTest.kt` |
 | B4 | `api/DownloadController.kt`、`dto/DownloadDto.kt`、`repository/DownloadInfoRepository.kt`、`test/.../DownloadControllerTest.kt` |
-| C | `contracts/openapi.yaml`、`contracts/websocket-protocol.md` |
+| C | `contracts/openapi.yaml`、`docs/plan-2026-08-06-job-progress.md` |
 | F1a | `api/jobs.ts`(新)、`api/image.ts`(新)、`api/backup.ts`、`composables/useWebSocket.ts`、`components/jobs/JobProgressPanel.vue`(新)、`components/jobs/__tests__/JobProgressPanel.spec.ts`(新) |
 | F1b | `views/admin/AdminBackup.vue`、`views/admin/AdminServer.vue`、`views/__tests__/AdminBackup.spec.ts`、`views/__tests__/AdminServer.spec.ts` |
 | F2 | `api/download.ts`、`views/DownloadView.vue`、`components/download/DownloadItem.vue`、`views/admin/AdminDownload.vue`、`views/__tests__/DownloadView.spec.ts`、`components/download/__tests__/DownloadItem.spec.ts`、`views/__tests__/AdminDownload.spec.ts` |
 
 跨代理文件只读；需要改动他人文件 → 主代理裁定。Job 核心（JobService/JobStore/JobEvent/JobDto/JobEventHandler/JobController + 测试）由主代理 Wave 0 完成并 commit。
+
+**本轮（筛选槽位）追加归属**（简写；Job 轮既有矩阵保持有效）：
+| 代理 | 名下文件（仅这些可写） |
+|---|---|
+| 主代理(Wave 0) | `docs/plan-2026-08-06-job-progress.md`（冻结契约） |
+| C | `contracts/openapi.yaml`、`docs/plan-2026-08-06-job-progress.md` |
+| B1 | serverConfig KV `download.filterSlots` 存取、`GET/PUT /api/v1/download/slots`（FilterSlotController/Dto、ServerConfigService、测试） |
+| B2 | 三页列表 regex 后端（Download/Favorite/History 各 Controller+Repository+测试）、批量端点 regex 字段（DownloadDto） |
+| F1 | `api/download.ts`、`api/favorite.ts`、`api/history.ts`、槽位管理页 `views/admin/AdminFilterSlots.vue`(新) + 测试 |
+| F2 | `views/DownloadView.vue`、收藏/历史视图：槽位选择与搜索词互斥交互 + 相关测试 |
 
 ## B2. 提交纪律
 
