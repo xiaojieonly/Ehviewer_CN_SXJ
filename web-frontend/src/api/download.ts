@@ -43,11 +43,11 @@ export interface DownloadBatchTarget {
 
 export const downloadApi = {
   /**
-   * Paginated download list. `offset`/`limit`/`sort`/`q` are only sent when
-   * defined (callers without paging keep the legacy behaviour); the server
-   * clamps `limit` into [1, 500], falls back to `time_desc` on unknown sort
-   * values, and filters by `q` (case-insensitive title/titleJpn search,
-   * server-side).
+   * Paginated download list. `offset`/`limit`/`sort`/`q`/`regex` are only
+   * sent when defined; the server clamps `limit` into [1, 500], falls back to
+   * `time_desc` on unknown sort values. `q` is a server-side case-insensitive
+   * title/titleJpn LIKE search; `regex=true` reinterprets `q` as a regular
+   * expression (server-side match + sort, invalid pattern → 400 REGEX_INVALID).
    */
   async list(
     label?: number,
@@ -55,6 +55,7 @@ export const downloadApi = {
     limit?: number,
     sort?: DownloadSort,
     q?: string | null,
+    regex?: boolean,
   ): Promise<DownloadListResponse> {
     const params: Record<string, string> = {}
     if (label !== undefined) params.label = label.toString()
@@ -62,6 +63,7 @@ export const downloadApi = {
     if (limit !== undefined) params.limit = limit.toString()
     if (sort !== undefined) params.sort = sort
     if (q !== undefined && q !== null && q !== '') params.q = q
+    if (regex) params.regex = 'true'
     const { data } = await client.get('/download/list', { params })
     return data
   },

@@ -17,9 +17,14 @@ class DownloadController(private val downloadService: DownloadService) {
         @RequestParam(defaultValue = "0") offset: Int,
         @RequestParam(defaultValue = "100") limit: Int,
         @RequestParam(defaultValue = "time_desc") sort: String,
-        @RequestParam(required = false) q: String?
-    ): ResponseEntity<DownloadListResponse> {
-        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit, sort, q))
+        @RequestParam(required = false) q: String?,
+        @RequestParam(defaultValue = "false") regex: Boolean
+    ): ResponseEntity<*> {
+        return try {
+            ResponseEntity.ok(downloadService.listDownloads(label, offset, limit, sort, q, regex))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @GetMapping("/info/{id}")
@@ -48,7 +53,11 @@ class DownloadController(private val downloadService: DownloadService) {
         if (!request.all && request.ids.isNullOrEmpty()) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
         }
-        return ResponseEntity.ok(downloadService.startDownloads(request.ids, request.all, request.label, request.q))
+        return try {
+            ResponseEntity.ok(downloadService.startDownloads(request.ids, request.all, request.label, request.q, request.regex))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @PostMapping("/stop-range")
@@ -56,7 +65,11 @@ class DownloadController(private val downloadService: DownloadService) {
         if (!request.all && request.ids.isNullOrEmpty()) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
         }
-        return ResponseEntity.ok(downloadService.pauseDownloads(request.ids, request.all, request.label, request.q))
+        return try {
+            ResponseEntity.ok(downloadService.pauseDownloads(request.ids, request.all, request.label, request.q, request.regex))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @PostMapping("/delete-range")
@@ -64,7 +77,11 @@ class DownloadController(private val downloadService: DownloadService) {
         if (!request.all && request.ids.isNullOrEmpty()) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
         }
-        return ResponseEntity.ok(downloadService.deleteDownloads(request.ids, request.all, request.label, request.q))
+        return try {
+            ResponseEntity.ok(downloadService.deleteDownloads(request.ids, request.all, request.label, request.q, request.regex))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @PostMapping("/move")
@@ -72,7 +89,11 @@ class DownloadController(private val downloadService: DownloadService) {
         if (!request.all && request.ids.isNullOrEmpty()) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "ids must not be empty when all=false")
         }
-        return ResponseEntity.ok(downloadService.moveDownloads(request.ids, request.all, request.label, request.q, request.labelId))
+        return try {
+            ResponseEntity.ok(downloadService.moveDownloads(request.ids, request.all, request.label, request.q, request.regex, request.labelId))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @PostMapping("/pause/{id}")

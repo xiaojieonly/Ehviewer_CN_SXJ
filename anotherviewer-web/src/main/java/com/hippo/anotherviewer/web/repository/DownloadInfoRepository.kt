@@ -55,4 +55,16 @@ interface DownloadInfoRepository : JpaRepository<DownloadInfoEntity, Long> {
         @Param("q") q: String?,
         pageable: Pageable
     ): Page<Long>
+
+    /** 正则筛选用的轻量投影（id/title/titleJpn/time，SQL 层仅按 label 过滤，
+        正则匹配与排序在服务端内存完成——SQLite 无 REGEXP）。 */
+    interface TitleProjection {
+        val id: Long
+        val title: String?
+        val titleJpn: String?
+        val time: Long
+    }
+
+    @Query("SELECT d.id AS id, d.title AS title, d.titleJpn AS titleJpn, d.time AS time FROM DownloadInfoEntity d WHERE (:label IS NULL OR d.label = :label)")
+    fun findTitlesByLabel(@Param("label") label: Int?): List<TitleProjection>
 }

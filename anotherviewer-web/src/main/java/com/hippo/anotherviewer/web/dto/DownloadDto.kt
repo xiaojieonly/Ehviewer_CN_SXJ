@@ -61,8 +61,9 @@ data class DownloadLabelRequest(
 
 /**
  * 批量操作请求体（Android 多选模式 Start/Stop/Delete 的 WebUI 对等物）。
- * `all=true` 时忽略 ids，按 (label, q) 过滤条件在服务端解析全集（跨页全选）；
- * label 空/0 → 全部标签，q 空 → 全部条目。
+ * `all=true` 时忽略 ids，按 (label, q[, regex]) 过滤条件在服务端解析全集
+ * （跨页全选）；label 空/0 → 全部标签，q 空 → 全部条目；regex=true 时 q
+ * 按正则解释（服务端内存匹配）。
  */
 data class DownloadRangeRequest(
     @field:Size(max = 500, message = "at most 500 ids per batch")
@@ -71,6 +72,7 @@ data class DownloadRangeRequest(
     val label: Int? = null,
     @field:Size(max = 256, message = "q must be at most 256 characters")
     val q: String? = null,
+    val regex: Boolean = false,
 )
 
 /** 批量移动标签请求体（Android Move；labelId=0 表示移回默认标签）。 */
@@ -81,6 +83,7 @@ data class DownloadMoveRequest(
     val label: Int? = null,
     @field:Size(max = 256, message = "q must be at most 256 characters")
     val q: String? = null,
+    val regex: Boolean = false,
     @field:Min(0, message = "labelId must be non-negative")
     val labelId: Int = 0
 )

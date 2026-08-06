@@ -17,16 +17,27 @@
     </nav>
 
     <!-- Server-side search (Android download_search_dialog replica): 输入即
-         防抖搜索，q 走 /download/list 服务端过滤，负载留在服务器。 -->
+         防抖搜索，q 走 /download/list 服务端过滤，负载留在服务器。「正则」
+         开关把 q 解释为正则表达式（服务端匹配，非法表达式服务端 400 提示）。 -->
     <div class="search-bar">
       <AppIcon name="magnify-dark" size="18px" />
       <input
         v-model="searchQuery"
         class="search-bar__input"
         type="search"
-        placeholder="搜索标题…"
+        :placeholder="regexMode ? '正则表达式匹配标题…' : '搜索标题…'"
         aria-label="搜索下载"
       />
+      <button
+        type="button"
+        class="search-bar__regex"
+        :class="{ 'search-bar__regex--active': regexMode }"
+        aria-label="正则模式"
+        :aria-pressed="regexMode"
+        @click="toggleRegexMode"
+      >
+        正则
+      </button>
       <button
         v-if="searchQuery"
         type="button"

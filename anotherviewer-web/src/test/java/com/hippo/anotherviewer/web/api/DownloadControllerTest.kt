@@ -76,6 +76,14 @@ class DownloadControllerTest {
         return e
     }
 
+    private fun titleProj(id: Long, title: String?, titleJpn: String?, time: Long): DownloadInfoRepository.TitleProjection =
+        object : DownloadInfoRepository.TitleProjection {
+            override val id: Long = id
+            override val title: String? = title
+            override val titleJpn: String? = titleJpn
+            override val time: Long = time
+        }
+
     private fun labelEntity(id: Long, name: String): DownloadLabelEntity {
         val e = DownloadLabelEntity()
         e.id = id
@@ -315,6 +323,42 @@ class DownloadControllerTest {
     }
 
     @Test
+    fun `list forwards regex mode and invalid pattern yields 400`() {
+        `when`(downloadRepository.findTitlesByLabel(any())).thenReturn(listOf(
+            titleProj(1L, "Futanari Story", "フタナリ", 100L),
+            titleProj(2L, "Plain", null, 200L),
+            titleProj(3L, "Futa and More", "futa", 300L),
+        ))
+        `when`(downloadRepository.findAllById(listOf(3L, 1L))).thenReturn(listOf(entity(3, 103), entity(1, 101)))
+
+        mockMvc.perform(get("/api/v1/download/list").param("q", "(?i)^futa").param("regex", "true"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.total").value(2))
+        verify(downloadRepository).findTitlesByLabel(nullable(Int::class.java))
+        verify(downloadRepository, never()).searchDownloads(any(), any(), any(Pageable::class.java))
+
+        // 非法正则 → 400 REGEX_INVALID（service 抛 IllegalArgumentException）。
+        mockMvc.perform(get("/api/v1/download/list").param("q", "(").param("regex", "true"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("REGEX_INVALID"))
+    }
+
+    @Test
+    fun `regex page honours label filter and sort`() {
+        `when`(downloadRepository.findTitlesByLabel(7)).thenReturn(listOf(
+            titleProj(1L, "Alpha", null, 100L),
+            titleProj(2L, "Beta", null, 50L),
+        ))
+        `when`(downloadRepository.findAllById(listOf(1L, 2L))).thenReturn(listOf(entity(1, 101), entity(2, 102)))
+
+        // title_asc 排序 + label=7 + regex 匹配全部。
+        mockMvc.perform(get("/api/v1/download/list").param("q", ".*").param("regex", "true").param("label", "7").param("sort", "title_asc"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.total").value(2))
+        verify(downloadRepository).findTitlesByLabel(7)
+    }
+
+    @Test
     fun `list clamps negative offset to 0`() {
         `when`(downloadRepository.findAll(any(Pageable::class.java)))
             .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 100), 0))
@@ -335,7 +379,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.startDownloads(listOf(1L, 2L), false, null, null)).thenReturn(2)
+        `when`(service.startDownloads(listOf(1L, 2L), false, null, null, false)).thenReturn(2)
 
         mvc.perform(
             post("/api/v1/download/start-range")
@@ -344,7 +388,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(2))
-        verify(service).startDownloads(listOf(1L, 2L), false, null, null)
+        verify(service).startDownloads(listOf(1L, 2L), false, null, null, false)
     }
 
     @Test
@@ -353,7 +397,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.pauseDownloads(listOf(3L), false, null, null)).thenReturn(1)
+        `when`(service.pauseDownloads(listOf(3L), false, null, null, false)).thenReturn(1)
 
         mvc.perform(
             post("/api/v1/download/stop-range")
@@ -362,7 +406,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(1))
-        verify(service).pauseDownloads(listOf(3L), false, null, null)
+        verify(service).pauseDownloads(listOf(3L), false, null, null, false)
     }
 
     @Test
@@ -371,7 +415,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.deleteDownloads(listOf(1L, 2L, 3L), false, null, null)).thenReturn(3)
+        `when`(service.deleteDownloads(listOf(1L, 2L, 3L), false, null, null, false)).thenReturn(3)
 
         mvc.perform(
             post("/api/v1/download/delete-range")
@@ -380,7 +424,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(3))
-        verify(service).deleteDownloads(listOf(1L, 2L, 3L), false, null, null)
+        verify(service).deleteDownloads(listOf(1L, 2L, 3L), false, null, null, false)
     }
 
     @Test
@@ -389,7 +433,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.moveDownloads(listOf(1L, 2L), false, null, null, 7)).thenReturn(2)
+        `when`(service.moveDownloads(listOf(1L, 2L), false, null, null, false, 7)).thenReturn(2)
 
         mvc.perform(
             post("/api/v1/download/move")
@@ -398,7 +442,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(2))
-        verify(service).moveDownloads(listOf(1L, 2L), false, null, null, 7)
+        verify(service).moveDownloads(listOf(1L, 2L), false, null, null, false, 7)
     }
 
     @Test
@@ -407,7 +451,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.moveDownloads(listOf(1L), false, null, null, -1)).thenReturn(0)
+        `when`(service.moveDownloads(listOf(1L), false, null, null, false, -1)).thenReturn(0)
 
         mvc.perform(
             post("/api/v1/download/move")
@@ -424,7 +468,7 @@ class DownloadControllerTest {
         val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
-        `when`(service.startDownloads(null, true, 7, "futa")).thenReturn(42)
+        `when`(service.startDownloads(null, true, 7, "futa", false)).thenReturn(42)
 
         mvc.perform(
             post("/api/v1/download/start-range")
@@ -433,7 +477,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").value(42))
-        verify(service).startDownloads(null, true, 7, "futa")
+        verify(service).startDownloads(null, true, 7, "futa", false)
     }
 
     @Test
@@ -450,7 +494,7 @@ class DownloadControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
-        verify(service, never()).deleteDownloads(anyList(), anyBoolean(), nullable(Int::class.java), nullable(String::class.java))
+        verify(service, never()).deleteDownloads(anyList(), anyBoolean(), nullable(Int::class.java), nullable(String::class.java), anyBoolean())
     }
 
     @Test
