@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@stomp/stompjs": "^7.0.0",
+    "@tanstack/vue-virtual": "^3.13.35",
     "axios": "^1.7.9",
     "pinia": "^2.3.0",
     "sockjs-client": "^1.6.1",
