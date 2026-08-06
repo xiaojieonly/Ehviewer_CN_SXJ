@@ -50,6 +50,7 @@ import {
 import { Client, ReconnectionTimeMode } from '@stomp/stompjs'
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import SockJS from 'sockjs-client/dist/sockjs'
+import type { JobType } from '@/api/jobs'
 
 /* ------------------------------------------------------------------ */
 /* Wire types (contracts/websocket-protocol.md)                        */
@@ -137,6 +138,43 @@ export type ProcessPayload =
  */
 export type ProcessingEvent = WsEnvelope<ProcessPayload>
 
+/** Job WS event type discriminants (plan-2026-08-06 A3). */
+export type JobEventType = 'job.started' | 'job.progress' | 'job.completed' | 'job.failed'
+
+/**
+ * `job.*` payload union (plan-2026-08-06 A3): started carries `{jobId,type,stage,
+ * total}`, progress adds `percent/processed`, completed carries `result`, failed
+ * carries `error` — every field except `jobId`/`type` is therefore optional.
+ */
+export interface JobWsPayload {
+  jobId: string
+  type: JobType
+  stage?: string | null
+  percent?: number
+  processed?: number
+  total?: number
+  error?: string
+  result?: unknown
+}
+
+/**
+ * An enveloped job event as delivered by {@link subscribeJob} /
+ * {@link subscribeJobs}. Discriminate on {@link WsEnvelope.type} via
+ * {@link isJobEventType} (`job.started`, `job.progress`, `job.completed`,
+ * `job.failed`).
+ */
+export type JobWsEnvelope = WsEnvelope<JobWsPayload>
+
+/** Type guard — true when the type string is a `job.*` event (plan A3). */
+export function isJobEventType(type: string): type is JobEventType {
+  return (
+    type === 'job.started' ||
+    type === 'job.progress' ||
+    type === 'job.completed' ||
+    type === 'job.failed'
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
@@ -164,6 +202,8 @@ export const TOPIC_DOWNLOAD_ALL = '/topic/download/all'
 const topicDownloadOne = (gid: number): string => `/topic/download/${gid}`
 /** All processing events topic (contract §6.1 / Appendix B). */
 const TOPIC_PROCESS_ALL = '/topic/process/all'
+/** All job events topic (plan-2026-08-06 A3, mirrors process events). */
+const TOPIC_JOBS_ALL = '/topic/jobs/all'
 
 /* ------------------------------------------------------------------ */
 /* Shared reactive state — single source of truth                      */
@@ -542,6 +582,51 @@ export function subscribeProcessing(
   })
 }
 
+/**
+ * Subscribe to job events for a single job.
+ *
+ * Job events are published to `/topic/jobs/all` (and per-`jobId`); this helper
+ * subscribes to the shared topic and filters client-side to events whose
+ * `payload.jobId === jobId` (mirrors {@link subscribeProcessing}).
+ *
+ * @param jobId - Job ID to filter events for (plan-2026-08-06 A3).
+ * @param callback - Invoked with each matching enveloped job event.
+ * @returns an unsubscribe function.
+ */
+export function subscribeJob(
+  jobId: string,
+  callback: (event: JobWsEnvelope) => void,
+): () => void {
+  return subscribe<JobWsEnvelope>(TOPIC_JOBS_ALL, (event) => {
+    if (
+      event &&
+      typeof event.type === 'string' &&
+      isJobEventType(event.type) &&
+      event.payload?.jobId === jobId
+    ) {
+      callback(event)
+    }
+  })
+}
+
+/**
+ * Subscribe to all job events (unfiltered) on `/topic/jobs/all`.
+ *
+ * @param callback - Invoked with each enveloped job event.
+ * @returns an unsubscribe function.
+ */
+export function subscribeJobs(callback: (event: JobWsEnvelope) => void): () => void {
+  return subscribe<JobWsEnvelope>(TOPIC_JOBS_ALL, (event) => {
+    if (
+      event &&
+      typeof event.type === 'string' &&
+      isJobEventType(event.type)
+    ) {
+      callback(event)
+    }
+  })
+}
+
 /* ------------------------------------------------------------------ */
 /* Component composable                                                */
 /* ------------------------------------------------------------------ */
@@ -579,6 +664,10 @@ export interface UseWebSocketReturn {
     gid: number,
     callback: (event: ProcessingEvent) => void,
   ) => () => void
+  /** Job-scoped subscription (plan-2026-08-06 A3): filters `/topic/jobs/all` by payload.jobId. */
+  subscribeJob: (jobId: string, callback: (event: JobWsEnvelope) => void) => () => void
+  /** All-job-events subscription (plan-2026-08-06 A3), unfiltered. */
+  subscribeJobs: (callback: (event: JobWsEnvelope) => void) => () => void
 }
 
 /**
@@ -664,6 +753,38 @@ export function useWebSocket(): UseWebSocketReturn {
     return () => release(id)
   }
 
+  function scopedSubscribeJob(
+    jobId: string,
+    callback: (event: JobWsEnvelope) => void,
+  ): () => void {
+    const id = track(
+      TOPIC_JOBS_ALL,
+      makeJsonHandler<JobWsEnvelope>(TOPIC_JOBS_ALL, (event) => {
+        if (
+          event &&
+          typeof event.type === 'string' &&
+          isJobEventType(event.type) &&
+          event.payload?.jobId === jobId
+        ) {
+          callback(event)
+        }
+      }),
+    )
+    return () => release(id)
+  }
+
+  function scopedSubscribeJobs(callback: (event: JobWsEnvelope) => void): () => void {
+    const id = track(
+      TOPIC_JOBS_ALL,
+      makeJsonHandler<JobWsEnvelope>(TOPIC_JOBS_ALL, (event) => {
+        if (event && typeof event.type === 'string' && isJobEventType(event.type)) {
+          callback(event)
+        }
+      }),
+    )
+    return () => release(id)
+  }
+
   // Only register the unmount hook inside a real component setup context so the
   // composable can also be exercised in isolation (e.g. unit tests).
   if (getCurrentInstance()) {
@@ -685,5 +806,7 @@ export function useWebSocket(): UseWebSocketReturn {
     subscribeDownload: scopedSubscribeDownload,
     subscribeAll: scopedSubscribeAll,
     subscribeProcessing: scopedSubscribeProcessing,
+    subscribeJob: scopedSubscribeJob,
+    subscribeJobs: scopedSubscribeJobs,
   }
 }
