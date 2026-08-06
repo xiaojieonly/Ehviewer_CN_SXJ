@@ -134,9 +134,8 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import client from '@/api/client'
 import { historyApi } from '@/api/history'
-import type { HistoryItem, HistoryListResponse } from '@/api/history'
+import type { HistoryItem } from '@/api/history'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import {
@@ -267,13 +266,8 @@ function clearSearch(): void {
 
 async function load(): Promise<void> {
   try {
-    // api/history.ts 的 listHistory 不带参数，q/regex 由服务端契约（A5d）
-    // 提供——这里直接用 client 传参，避免改 api 模块签名。
     const filter = currentFilter()
-    const params: Record<string, string> = {}
-    if (filter.q) params.q = filter.q
-    if (filter.regex) params.regex = 'true'
-    const { data } = await client.get<HistoryListResponse>('/history/list', { params })
+    const data = await historyApi.listHistory(filter.q || null, filter.regex || undefined)
     entries.value = data.history.map((item) => ({
       gallery: toGalleryInfo(item),
       time: item.time,

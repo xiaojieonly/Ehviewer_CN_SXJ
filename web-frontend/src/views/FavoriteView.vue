@@ -117,8 +117,8 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import client from '@/api/client'
-import type { FavoriteItem, FavoriteListResponse } from '@/api/favorite'
+import { favoriteApi } from '@/api/favorite'
+import type { FavoriteItem } from '@/api/favorite'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import {
@@ -289,18 +289,14 @@ async function loadPage(page: number, append: boolean): Promise<void> {
   const seq = ++requestSeq
   if (append) loadingMore.value = true
   try {
-    // api/favorite.ts 的 listFavorites 固定拼 slot/page，q/regex 由服务端契约
-    // （A5d）提供——这里直接用 client 传参，避免改 api 模块签名。
     const filter = currentFilter()
-    const params: Record<string, string> = {
-      slot: activeSlot.value.toString(),
-      page: page.toString(),
-    }
-    if (filter.q) params.q = filter.q
-    if (filter.regex) params.regex = 'true'
-    const { data } = await client.get<FavoriteListResponse>('/favorite/list', { params })
+    const response = await favoriteApi.listFavorites(
+      activeSlot.value,
+      page,
+      filter.q || null,
+      filter.regex || undefined,
+    )
     if (seq !== requestSeq) return
-    const response = data
     const mapped = response.favorites.map(toGalleryInfo)
     if (append) {
       const known = new Set(favorites.value.map((gallery) => gallery.gid))

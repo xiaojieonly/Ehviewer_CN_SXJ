@@ -25,8 +25,16 @@ export interface FavoriteListResponse {
 }
 
 export const favoriteApi = {
-  async listFavorites(slot = 0, page = 1): Promise<FavoriteListResponse> {
-    const { data } = await client.get(`/favorite/list?slot=${slot}&page=${page}`)
+  async listFavorites(
+    slot = 0,
+    page = 1,
+    q?: string | null,
+    regex?: boolean,
+  ): Promise<FavoriteListResponse> {
+    const params: Record<string, string> = { slot: String(slot), page: String(page) }
+    if (q !== undefined && q !== null && q !== '') params.q = q
+    if (regex) params.regex = 'true'
+    const { data } = await client.get('/favorite/list', { params })
     return data
   },
 

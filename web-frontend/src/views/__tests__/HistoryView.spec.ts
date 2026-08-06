@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HistoryView from '../HistoryView.vue'
-import client from '@/api/client'
 import { historyApi } from '@/api/history'
 import type { HistoryItem } from '@/api/history'
 import { filterSlotsApi } from '@/api/filterSlots'
@@ -18,10 +17,6 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/api/history', () => ({
   historyApi: { listHistory: vi.fn(), clearHistory: vi.fn() },
-}))
-
-vi.mock('@/api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }))
 
 vi.mock('@/api/filterSlots', () => ({
@@ -97,7 +92,7 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
   })
 
   async function mountHistory(items: HistoryItem[]) {
-    vi.mocked(client.get).mockResolvedValue({ data: { history: items } })
+    vi.mocked(historyApi.listHistory).mockResolvedValue({ history: items, total: items.length })
     wrapper = mount(HistoryView)
     await flushPromises()
     await flushPromises()
@@ -198,7 +193,7 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
 
   it('loads the unfiltered history without q/regex params', async () => {
     await mountHistory([makeHistoryItem({ gid: 1 })])
-    expect(client.get).toHaveBeenCalledWith('/history/list', { params: {} })
+    expect(historyApi.listHistory).toHaveBeenCalledWith(null, undefined)
   })
 
   it('activates a filter slot and requests q=pattern&regex=true', async () => {
@@ -207,16 +202,14 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     expect(wrapper.findAll('.filter-slot-bar__chip')).toHaveLength(3) // 全部 + 2
 
     await clickFilterChip('Artist')
-    expect(client.get).toHaveBeenLastCalledWith('/history/list', {
-      params: { q: 'artist', regex: 'true' },
-    })
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('artist', true)
     // 互斥：选槽位清空搜索词。
     const input = wrapper.find('.search-bar__input').element as HTMLInputElement
     expect(input.value).toBe('')
 
     // 回到「全部」→ 恢复无过滤加载。
     await clickFilterChip('全部')
-    expect(client.get).toHaveBeenLastCalledWith('/history/list', { params: {} })
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined)
   })
 
   it('debounces a typed search to q=word and cancels the active slot', async () => {
@@ -228,14 +221,12 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     await wrapper.find('.search-bar__input').setValue('futa')
     // 防抖 400ms 内不触发请求。
     await vi.advanceTimersByTimeAsync(200)
-    expect(client.get).toHaveBeenCalledTimes(2)
+    expect(historyApi.listHistory).toHaveBeenCalledTimes(2)
     await vi.advanceTimersByTimeAsync(300)
     await flushPromises()
 
     // 输入搜索取消槽位 → LIKE 搜索（无 regex 参数）。
-    expect(client.get).toHaveBeenLastCalledWith('/history/list', {
-      params: { q: 'futa' },
-    })
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined)
     const artistChip = wrapper
       .findAll('.filter-slot-bar__chip')
       .find((c) => c.text() === 'Artist')!
@@ -249,13 +240,11 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     await wrapper.find('.search-bar__input').setValue('futa')
     await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
-    expect(client.get).toHaveBeenLastCalledWith('/history/list', {
-      params: { q: 'futa' },
-    })
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined)
 
     await wrapper.find('.search-bar__clear').trigger('click')
     await flushPromises()
-    expect(client.get).toHaveBeenLastCalledWith('/history/list', { params: {} })
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined)
     vi.useRealTimers()
   })
 })
