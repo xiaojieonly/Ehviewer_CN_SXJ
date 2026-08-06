@@ -332,7 +332,8 @@ function onLoadMore(): void {
 }
 
 function openGallery(gallery: GalleryInfo): void {
-  void router.push(`/gallery/${gallery.gid}`)
+  const query = gallery.token ? { token: gallery.token } : undefined
+  void router.push({ path: `/gallery/${gallery.gid}`, query })
 }
 
 /* ------------------------- empty-state guided CTA ----------------------- */

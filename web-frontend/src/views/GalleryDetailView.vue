@@ -205,7 +205,7 @@
  * Android themes (light / dark / black) work unchanged.
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
 import { commentApi, type CommentItem } from '@/api/comment'
 import { favoriteApi } from '@/api/favorite'
@@ -250,6 +250,10 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined
 
 /* ---------------------------------------------------------- derived --- */
 const galleryId = computed(() => Number(props.gid))
+/** Token from the entry link (?token=): lets the backend fetch the detail
+ *  straight from the site when the gid is not in local history. */
+const route = useRoute()
+const entryToken = computed(() => (typeof route.query.token === 'string' ? route.query.token : undefined))
 
 /**
  * R4-9: the cover `thumb` may point at the unresolvable Gallery Site host
@@ -309,7 +313,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const detail = await galleryApi.getDetail(galleryId.value)
+    const detail = await galleryApi.getDetail(galleryId.value, entryToken.value)
     if (seq !== loadSeq) return
     gallery.value = detail
     isFavorited.value = (detail.favoriteSlot ?? -1) >= 0

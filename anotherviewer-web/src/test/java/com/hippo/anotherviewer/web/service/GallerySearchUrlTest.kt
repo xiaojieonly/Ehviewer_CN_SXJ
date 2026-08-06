@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 
 /**
  * Pins the WebUI search → Gallery Site URL mapping for the extended search
@@ -293,9 +294,16 @@ class GallerySearchUrlTest {
     }
 
     @Test
-    fun `blank keyword never touches the site and uses the local history fallback`() {
+    fun `blank keyword with local history answers from the DB without a site round-trip`() {
         val historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
-        `when`(historyRepository.findHistoryPaged(any())).thenReturn(Page.empty())
+        // Non-empty history: the home page serves browsing history locally.
+        `when`(historyRepository.findHistoryPaged(any())).thenReturn(
+            PageImpl(
+                listOf(com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply { gid = 1L }),
+                org.springframework.data.domain.PageRequest.of(0, 20),
+                1,
+            )
+        )
         val sessionManager = mock(SiteSessionManager::class.java)
         `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
         val service = GalleryService(
@@ -308,8 +316,29 @@ class GallerySearchUrlTest {
 
         val response = service.searchGallery(null, null, 0, 20)
 
-        assertTrue(response.success, "local fallback answers without a site round-trip")
+        assertTrue(response.success)
         org.mockito.Mockito.verify(historyRepository).findHistoryPaged(any())
+    }
+
+    @Test
+    fun `blank keyword with empty history falls back to the site latest list`() {
+        val historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
+        `when`(historyRepository.findHistoryPaged(any())).thenReturn(Page.empty())
+        val sessionManager = mock(SiteSessionManager::class.java)
+        `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
+        val service = GalleryService(
+            historyRepository,
+            mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
+            mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
+            mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
+            sessionManager
+        )
+
+        // 历史为空 → 回退站点最新列表；沙箱内站点不可达 → E2E-6 语义 success=false（证明确实触网回退）。
+        val response = service.searchGallery(null, null, 0, 20)
+
+        assertFalse(response.success, "empty history must trigger the site fallback, which fails offline")
+        assertTrue(response.data.isEmpty())
     }
 
     // ------------------------------------------------------------------

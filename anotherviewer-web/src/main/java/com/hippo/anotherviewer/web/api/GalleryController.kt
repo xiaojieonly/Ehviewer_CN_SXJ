@@ -86,8 +86,11 @@ class GalleryController(private val galleryService: GalleryService) {
     }
 
     @GetMapping("/{gid}")
-    fun getDetail(@PathVariable gid: Long): ResponseEntity<*> {
-        val detail = galleryService.getGalleryDetail(gid)
+    fun getDetail(
+        @PathVariable gid: Long,
+        @RequestParam(required = false) token: String?,
+    ): ResponseEntity<*> {
+        val detail = galleryService.getGalleryDetail(gid, token)
             ?: return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Gallery not found")
         return ResponseEntity.ok(detail)
     }

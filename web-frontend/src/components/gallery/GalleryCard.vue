@@ -439,7 +439,10 @@ async function download(): Promise<void> {
 }
 
 function openDetail(): void {
-  void router.push(`/gallery/${props.gallery.gid}`)
+  const { gid, token } = props.gallery
+  // 带 token 跳转：详情页可从站点直取（本地无历史记录时不再 404）。
+  const query = token ? { token } : undefined
+  void router.push({ path: `/gallery/${gid}`, query })
 }
 
 /**

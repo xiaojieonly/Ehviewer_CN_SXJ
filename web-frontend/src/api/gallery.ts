@@ -150,8 +150,8 @@ export const galleryApi = {
 
   feed,
 
-  async getDetail(gid: number): Promise<GalleryDetail> {
-    const { data } = await client.get(`/gallery/${gid}`)
+  async getDetail(gid: number, token?: string): Promise<GalleryDetail> {
+    const { data } = await client.get(`/gallery/${gid}`, { params: token ? { token } : undefined })
     return data
   },
 

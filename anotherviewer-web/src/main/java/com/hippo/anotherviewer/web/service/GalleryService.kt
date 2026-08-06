@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.client.SiteConfig
 import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.SiteUtils
+import com.hippo.anotherviewer.client.data.GalleryDetail
 import com.hippo.anotherviewer.client.data.GalleryInfo
 import com.hippo.anotherviewer.client.data.ListUrlBuilder
 import com.hippo.anotherviewer.client.data.topList.TopListItem
@@ -77,7 +78,26 @@ class GalleryService(
         disableTagFilter: Boolean = false
     ): GalleryListResponse {
         if (keyword.isNullOrBlank()) {
-            return searchLocalHistory(keyword, category, page, pageSize)
+            // 空 keyword：先给本地历史（浏览回看），历史为空则回退站点最新列表
+            // （Android 首页 = 站点根路径最新画廊，无需登录）。回退失败按 E2E-6 语义 success=false。
+            val local = searchLocalHistory(keyword, category, page, pageSize)
+            if (local.data.isNotEmpty()) return local
+            return try {
+                val url = buildSearchUrl(
+                    "", category, page, sort, pageMin, pageMax, minRating,
+                    searchName, searchTags, searchDesc, searchTorrents,
+                    searchTorrentsOnly, searchLowPowerTags, searchDownvotedTags,
+                    searchExpunged, disableLanguageFilter, disableUploaderFilter,
+                    disableTagFilter
+                )
+                val result = SiteEngine.getGalleryList(null, client, url, ListUrlBuilder.MODE_NORMAL)
+                val items = result.galleryInfoList.map { it.toDto() }
+                val total = if (result.pages > 0) result.pages * 25 else items.size
+                GalleryListResponse(success = true, data = items, total = total)
+            } catch (e: Exception) {
+                logger.warn("Gallery Site latest list failed (empty keyword)", e)
+                GalleryListResponse(success = false, data = emptyList(), total = 0)
+            }
         }
 
         return try {
@@ -259,8 +279,34 @@ class GalleryService(
         )
     }
 
-    fun getGalleryDetail(gid: Long): GalleryDetailDto? {
-        val history = historyRepository.findByGid(gid) ?: return null
+    /**
+     * Gallery detail, resolved in order:
+     *  1. local history row (with site-detail enrichment when page count is missing),
+     *  2. on-site fetch when the gid is not in local history and a [token] is supplied
+     *     (feed / search entries carry it) — the fetched detail is also written back
+     *     to history so the reader and subsequent visits work.
+     * Returns null only when neither source can resolve the gallery.
+     */
+    fun getGalleryDetail(gid: Long, token: String? = null): GalleryDetailDto? {
+        val history = historyRepository.findByGid(gid)
+        if (history != null) {
+            return enrichHistoryDetail(gid, history)
+        }
+        if (token.isNullOrBlank()) return null
+        return try {
+            val detail = SiteEngine.getGalleryDetail(
+                null, client, SiteUrl.getGalleryDetailUrl(gid, token)
+            )
+            addToHistory(gid, token, detail.title, 0)
+            detail.toDetailDto()
+        } catch (e: Exception) {
+            logger.warn("Gallery Site detail fetch failed for gid={}: {}", gid, e.message)
+            null
+        }
+    }
+
+    /** Local history → detail DTO, enriched from the site when the page count is absent. */
+    private fun enrichHistoryDetail(gid: Long, history: HistoryInfoEntity): GalleryDetailDto {
         val tags = galleryTagsRepository.findByGid(gid)
         val dto = GalleryDetailDto(
             gid = history.gid,
@@ -449,5 +495,31 @@ class GalleryService(
         pages = pages,
         favoriteSlot = favoriteSlot,
         favoriteName = favoriteName
+    )
+
+    /** core GalleryDetail（站点直取）→ 详情 DTO。tags 按 GalleryTagGroup 展平。 */
+    private fun GalleryDetail.toDetailDto() = GalleryDetailDto(
+        gid = gid,
+        token = token,
+        galleryUrl = SiteUrl.getGalleryDetailUrl(gid, token),
+        title = title,
+        titleJpn = titleJpn,
+        thumb = thumb,
+        category = category,
+        posted = posted,
+        uploader = uploader,
+        rating = rating,
+        rated = rated,
+        simpleLanguage = simpleLanguage,
+        simpleTags = simpleTags?.map { it.trim() } ?: emptyList(),
+        thumbWidth = thumbWidth,
+        thumbHeight = thumbHeight,
+        pages = pages,
+        favoriteSlot = favoriteSlot,
+        favoriteName = favoriteName,
+        tags = tags.orEmpty().flatMap { group ->
+            (0 until group.size()).map { i -> TagDto(group.groupName, group.getTagAt(i)) }
+        },
+        imageUrl = thumb
     )
 }
