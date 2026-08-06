@@ -50,6 +50,8 @@ tags:
     description: SMB network backup and sync
   - name: Backup
     description: Local backup export/restore (zip of slices + manifest.json)
+  - name: Jobs
+    description: Unified background jobs (admin operations async-ified, plan 2026-08-06)
   - name: Health
     description: Health check and metrics
 
@@ -773,17 +775,34 @@ paths:
     get:
       tags: [Download]
       operationId: listDownloads
-      summary: List download tasks, optionally filtered by label
+      summary: List download tasks, optionally filtered by label (server-side pagination, A5)
       parameters:
         - name: label
           in: query
           required: false
           schema:
             type: integer
-          description: Label ID filter
+          description: Label ID filter (0/absent = all)
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset (default 0)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+          description: Page size (default 100; the server clamps limit to [1, 500])
       responses:
         '200':
-          description: Download list with labels
+          description: Download list with labels and total count
           content:
             application/json:
               schema:
@@ -1221,14 +1240,24 @@ paths:
     post:
       tags: [Image]
       operationId: clearImageCache
-      summary: Clear all cached proxy images
+      summary: Clear all cached proxy images asynchronously (CACHE_CLEAR job)
+      description: |
+        Submits a CACHE_CLEAR background job (202); progress is pushed on
+        /topic/jobs/{jobId} and /topic/jobs/all (A3) and the terminal result is
+        {removed, total}.
       responses:
-        '200':
-          description: Success flag
+        '202':
+          description: Cache-clear job submitted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/JobSubmitResponse'
+        '409':
+          description: 'Another CACHE_CLEAR job is already active (code=CONFLICT)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   /api/v1/image/{galleryId}/{page}:
     get:
@@ -1684,11 +1713,85 @@ paths:
         '401':
           description: Invalid or missing API token
 
+  /api/v1/backup/export/async:
+    post:
+      tags: [Backup]
+      operationId: exportBackupAsync
+      summary: Start an asynchronous backup export job (EXPORT, B3)
+      description: |
+        Asynchronous variant of GET /api/v1/backup/export: the export runs in
+        the background; when the job reaches COMPLETED the zip is fetched with
+        GET /api/v1/backup/export/{jobId}. The synchronous GET
+        /api/v1/backup/export remains for compatibility (A2).
+      parameters:
+        - name: includeDownloads
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include the downloads slice in the backup
+      responses:
+        '202':
+          description: Export job submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobSubmitResponse'
+        '401':
+          description: Invalid or missing API token
+        '409':
+          description: 'Another EXPORT job is already active (code=CONFLICT)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  /api/v1/backup/export/{jobId}:
+    get:
+      tags: [Backup]
+      operationId: downloadExport
+      summary: Download the backup zip produced by an EXPORT job (COMPLETED only)
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID returned by POST /api/v1/backup/export/async
+      responses:
+        '200':
+          description: Backup zip stream (anotherviewer-backup-<stamp>.zip)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Invalid or missing API token
+        '404':
+          description: 'Unknown job (code=EXPORT_NOT_FOUND)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+        '409':
+          description: 'Export job not COMPLETED yet (code=EXPORT_NOT_READY)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
   /api/v1/backup/restore:
     post:
       tags: [Backup]
       operationId: restoreBackup
-      summary: Upload a backup zip and restore (per-slice SHA-256 verified); a server restart is required for the restored data to take effect (R4-2)
+      summary: Upload a backup zip and restore asynchronously (RESTORE job, B3)
+      description: |
+        Submits a RESTORE background job (per-slice SHA-256 verified inside the
+        worker); 202 returns the job handle. On completion the runtime state is
+        set as before (GET /api/v1/backup/state → restorePending=true) and a
+        server restart is required for the restored data to take effect (R4-2).
       requestBody:
         required: true
         content:
@@ -1702,12 +1805,12 @@ paths:
                   format: binary
                   description: Backup zip produced by /backup/export
       responses:
-        '200':
-          description: Restore succeeded (restart to take effect)
+        '202':
+          description: Restore job submitted (completion result mirrors BackupRestoreResponse)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BackupRestoreResponse'
+                $ref: '#/components/schemas/JobSubmitResponse'
         '400':
           description: Restore failed (empty file / missing manifest.json / bad slice checksum / path traversal)
           content:
@@ -1716,6 +1819,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Invalid or missing API token
+        '409':
+          description: 'Another RESTORE job is already active (code=CONFLICT)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   /api/v1/backup/state:
     get:
@@ -1736,12 +1845,17 @@ paths:
     post:
       tags: [Backup]
       operationId: importEhViewer
-      summary: Import an original EhViewer backup db (optional cookies db/JSON) into local user data (B3)
+      summary: Import an original EhViewer backup db (optional cookies db/JSON) into local user data as an IMPORT job (B3)
       description: |
         Table-driven scan of the uploaded sqlite export; known tables are mapped
         per-table, gid conflicts are skipped unless force=true (upsert). Optional
         cookies file accepts an okhttp3-cookie.db or an equivalent JSON array;
         only gallery-site domain cookies are imported.
+
+        Breaking change (B3): the previous synchronous 200 EhImportResponse is
+        replaced by 202 JobSubmitResponse; poll GET /api/v1/jobs/{jobId} (or
+        re-attach via GET /api/v1/jobs/active?type=IMPORT). The per-table counts
+        arrive as the JobDto.result (EhImportResponse shape) on completion.
       requestBody:
         required: true
         content:
@@ -1763,12 +1877,12 @@ paths:
                   default: false
                   description: Upsert on gid conflicts instead of skipping
       responses:
-        '200':
-          description: Import succeeded with per-table counts
+        '202':
+          description: Import job submitted (per-table counts arrive as JobDto.result on completion)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EhImportResponse'
+                $ref: '#/components/schemas/JobSubmitResponse'
         '400':
           description: Import failed (empty file / unreadable db / import error)
           content:
@@ -1777,6 +1891,71 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Invalid or missing API token
+        '409':
+          description: 'Another IMPORT job is already active (code=CONFLICT)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  # ============================================================
+  # Jobs (统一后台任务, plan 2026-08-06)
+  # ============================================================
+  /api/v1/jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      summary: Get the current state of a background job (polling + refresh re-attach)
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID returned by the async submit endpoints
+      responses:
+        '200':
+          description: Job state (PENDING/RUNNING/COMPLETED/FAILED with progress and terminal result)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDto'
+        '401':
+          description: Invalid or missing API token
+        '404':
+          description: 'Unknown job (code=JOB_NOT_FOUND)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  /api/v1/jobs/active:
+    get:
+      tags: [Jobs]
+      operationId: getActiveJob
+      summary: Get the active job of a given type (re-attach after refresh/reconnect)
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/JobType'
+          description: Job type filter
+      responses:
+        '200':
+          description: Active job (PENDING/RUNNING) of the requested type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDto'
+        '401':
+          description: Invalid or missing API token
+        '404':
+          description: 'No active job of the requested type (code=NO_ACTIVE_JOB)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
 
   # ============================================================
   # Archive
@@ -2576,6 +2755,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DownloadLabel'
+        total:
+          type: integer
+          description: Total rows under the current label filter, counted before pagination (A5)
 
     DownloadItem:
       type: object
@@ -3137,6 +3319,106 @@ components:
         skipped:
           type: integer
           description: Gid conflicts skipped (or whole rows rejected)
+
+    # ----------------------------------------------------------
+    # Jobs (统一后台任务, plan 2026-08-06)
+    # ----------------------------------------------------------
+    JobType:
+      type: string
+      enum: [IMPORT, EXPORT, RESTORE, CACHE_CLEAR]
+      description: Background job type (A2)
+
+    JobState:
+      type: string
+      enum: [PENDING, RUNNING, COMPLETED, FAILED]
+      description: Background job lifecycle state (A2)
+
+    JobDto:
+      type: object
+      required: [jobId, type, state]
+      description: Unified background job state (A1 schema)
+      properties:
+        jobId:
+          type: string
+          description: Job identifier (job-xxxxxxxx)
+        type:
+          $ref: '#/components/schemas/JobType'
+        state:
+          $ref: '#/components/schemas/JobState'
+        stage:
+          type: string
+          nullable: true
+          description: Current worker stage label (A4); null before the worker starts
+        percent:
+          type: number
+          format: double
+          description: 'processed/total × 100, computed by the worker (0 when total = 0)'
+        processed:
+          type: integer
+          description: Work units processed so far
+        total:
+          type: integer
+          description: Total work units
+        startedAt:
+          type: integer
+          format: int64
+          nullable: true
+          description: Start timestamp (ms epoch); null before the worker starts
+        completedAt:
+          type: integer
+          format: int64
+          nullable: true
+          description: Completion timestamp (ms epoch); null until COMPLETED/FAILED
+        error:
+          type: string
+          nullable: true
+          description: Error message when state = FAILED
+        result:
+          type: object
+          nullable: true
+          description: >-
+            Terminal result, shaped by type (A1): IMPORT → EhImportResponse;
+            EXPORT → {downloadUrl: "/api/v1/backup/export/{jobId}",
+            filename: "anotherviewer-backup-<stamp>.zip", sizeBytes};
+            RESTORE → {success, message}; CACHE_CLEAR → {removed, total}
+
+    JobSubmitResponse:
+      type: object
+      required: [jobId, state]
+      description: 202 response body of the async job submit endpoints (A2)
+      properties:
+        jobId:
+          type: string
+        state:
+          $ref: '#/components/schemas/JobState'
+
+    ApiErrorEnvelope:
+      type: object
+      description: >-
+        M-6 error envelope used by all /api/v1 errors (A2):
+        {error: {code, message, traceId, status}}. The machine-readable code
+        distinguishes the error — e.g. CONFLICT (409, an active job of the same
+        type already exists), JOB_NOT_FOUND (404), NO_ACTIVE_JOB (404),
+        EXPORT_NOT_FOUND (404), EXPORT_NOT_READY (409).
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, status]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error message
+            traceId:
+              type: string
+              nullable: true
+              description: Request trace identifier (when available)
+            status:
+              type: integer
+              description: HTTP status code
 
     SyncEntityCollection:
       type: object

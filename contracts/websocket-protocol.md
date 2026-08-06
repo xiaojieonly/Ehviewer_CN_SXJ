@@ -1,9 +1,10 @@
 # WebSocket Message Protocol Specification
 
 > **Status**: Frozen (Wave 0 contract)
-> **Version**: 1.0.0
+> **Version**: 1.1.0
 > **Created**: 2026-07-28
-> **Last calibrated**: 2026-08-01 (against `WebSocketConfig.kt`, `WsAuthChannelInterceptor.kt`,
+> **Last calibrated**: 2026-08-06 (v1.1.0: `job.*` event family — plan 2026-08-06); previously
+> 2026-08-01 (against `WebSocketConfig.kt`, `WsAuthChannelInterceptor.kt`,
 > `DownloadProgressHandler.kt`, `ProcessingEventHandler.kt`, `ImageProcessingService.kt`,
 > `ImageProxyController.kt`, `web-frontend/src/composables/useWebSocket.ts`)
 > **Owner**: CA5
@@ -59,6 +60,7 @@ Client                                          Server
   │──── SUBSCRIBE /topic/download/all ──────────▶│  (bare DTO, legacy)
   │──── SUBSCRIBE /topic/process/all ───────────▶│  (envelope)
   │──── SUBSCRIBE /topic/gallery/{gid}/enhanced ▶│  (envelope)
+  │──── SUBSCRIBE /topic/jobs/all ──────────────▶│  (envelope, v1.1)
   │◀─── messages flow ──────────────────────────│
   │                                               │
   │──── heart-beat (newline) ───────────────────▶│
@@ -146,7 +148,9 @@ new Client({
 4. On successful (re)connect, all registered subscriptions are re-established
    automatically via the subscription registry (`resubscribeAll`).
 5. After reconnect, clients SHOULD fetch a state snapshot via REST to catch
-   missed events: `GET /api/v1/download/list`, `GET /api/v1/process/status/{taskId}`.
+   missed events: `GET /api/v1/download/list`, `GET /api/v1/process/status/{taskId}`,
+   and for background jobs `GET /api/v1/jobs/{jobId}` /
+   `GET /api/v1/jobs/active?type=` (v1.1, §3.6).
 6. **Visibility pause**: while the tab is hidden (`document.visibilityState ===
    'hidden'`) the socket is deactivated and reconnection paused; on
    `visibilitychange` back to visible, the connection resumes.
@@ -163,11 +167,12 @@ new Client({
 Server → client messages use **two wire formats** depending on the domain:
 
 - **Envelope** `{type, timestamp, version, payload}` — used on processing topics
-  (§3.2) and the enhanced-image topic (§3.3). Published by `ProcessingEventHandler`.
+  (§3.2), the enhanced-image topic (§3.3), and the job topics (§3.6). Published
+  by `ProcessingEventHandler` / `JobEventHandler`.
 - **Bare DTO** — used on download topics (§3.1). The raw `DownloadProgress` DTO is
   sent directly, **no envelope**, by `DownloadProgressHandler`.
 
-The envelope shape **[IMPLEMENTED]** (processing/enhanced topics):
+The envelope shape **[IMPLEMENTED]** (processing/enhanced/job topics):
 
 ```typescript
 interface WsEnvelope<T = unknown> {
@@ -175,7 +180,7 @@ interface WsEnvelope<T = unknown> {
   type: string
   /** Epoch milliseconds when the event occurred on the server */
   timestamp: number
-  /** Protocol version (semver major.minor) for forward compatibility — server sends "1.0" */
+  /** Protocol version (semver major.minor) for forward compatibility — the server sends "1.0" on process./image. topics and "1.1" on job.* topics (§3.6) */
   version: string
   /** Message payload — shape determined by `type` */
   payload: T
@@ -219,6 +224,7 @@ Message types follow `{domain}.{event}` naming:
 | `download` | Download task lifecycle (planned; see §3.1) |
 | `process` | Image processing pipeline (implemented) |
 | `image` | Individual image events (implemented: `image.enhanced.ready`) |
+| `job` | Unified background jobs (implemented, v1.1: `job.*` on `/topic/jobs/*`, see §3.6) |
 | `sync` | Device synchronization (planned) |
 | `system` | Server health and errors (planned) |
 
@@ -604,6 +610,101 @@ interface SystemErrorPayload {
 
 ---
 
+### 3.6 Background Jobs (统一后台任务) **[IMPLEMENTED]**
+
+All four events are published by `JobEventHandler` on **both**
+`/topic/jobs/{jobId}` and `/topic/jobs/all`, wrapped in the §2 envelope
+(`version: "1.1"`).
+
+- `jobId` format: `job-` + 8 hex chars.
+- `type` is one of `IMPORT | EXPORT | RESTORE | CACHE_CLEAR`.
+- `percent` = `processed / total × 100`, computed on the worker side
+  (0 when `total` = 0).
+- One event per progress point, no server-side throttling (same policy as §3.2).
+- The envelope structure is unchanged from v1.0; existing `process.*` /
+  `download.*` events keep publishing their version-1.0 envelopes (§7.1).
+
+#### `job.started`
+
+Emitted when a background job worker begins executing.
+
+**Topic**: `/topic/jobs/{jobId}` or `/topic/jobs/all`
+
+```typescript
+interface JobStartedPayload {
+  /** Background job identifier (job-xxxxxxxx) */
+  jobId: string
+  /** Job type */
+  type: 'IMPORT' | 'EXPORT' | 'RESTORE' | 'CACHE_CLEAR'
+  /** Current worker stage label (A4) */
+  stage: string
+  /** Total work units; 0 when unknown (percent stays 0) */
+  total: number
+}
+```
+
+#### `job.progress`
+
+Emitted as the worker advances through its stages and counts (A4).
+
+**Topic**: `/topic/jobs/{jobId}` or `/topic/jobs/all`
+
+```typescript
+interface JobProgressPayload {
+  /** Background job identifier */
+  jobId: string
+  /** Job type */
+  type: 'IMPORT' | 'EXPORT' | 'RESTORE' | 'CACHE_CLEAR'
+  /** Current worker stage label */
+  stage: string
+  /** processed / total × 100 (0 when total = 0) */
+  percent: number
+  /** Work units processed so far */
+  processed: number
+  /** Total work units */
+  total: number
+}
+```
+
+#### `job.completed`
+
+Emitted when the job reaches its terminal COMPLETED state.
+
+**Topic**: `/topic/jobs/{jobId}` or `/topic/jobs/all`
+
+```typescript
+interface JobCompletedPayload {
+  /** Background job identifier */
+  jobId: string
+  /** Job type */
+  type: 'IMPORT' | 'EXPORT' | 'RESTORE' | 'CACHE_CLEAR'
+  /** Terminal result, shaped by type (A1) */
+  result: unknown
+}
+```
+
+#### `job.failed`
+
+Emitted when the job fails (worker exception, including transaction rollback).
+
+**Topic**: `/topic/jobs/{jobId}` or `/topic/jobs/all`
+
+```typescript
+interface JobFailedPayload {
+  /** Background job identifier */
+  jobId: string
+  /** Job type */
+  type: 'IMPORT' | 'EXPORT' | 'RESTORE' | 'CACHE_CLEAR'
+  /** Human-readable error description */
+  error: string
+}
+```
+
+**State snapshot / recovery**: after a disconnect or a page refresh, re-attach
+via `GET /api/v1/jobs/{jobId}` or `GET /api/v1/jobs/active?type=` (§5.3).
+
+---
+
 ## 4. Client → Server Messages — [PLANNED]
 
 > **Not implemented**: the current server registers **no** `@MessageMapping`
@@ -730,8 +831,11 @@ WebSocket is not guaranteed delivery. After reconnection:
 2. Client calls `GET /api/v1/process/status/{taskId}` for each known processing
    task (there is no bulk "all tasks" endpoint; `POST /api/v1/process/gallery/{id}`
    starts a job, `POST /api/v1/process/cancel/{taskId}` cancels one).
-3. Client re-subscribes to all active topics (automatic in the frontend manager).
-4. For `image.enhanced.ready` events missed during disconnection, the reader
+3. For background jobs, re-attach with `GET /api/v1/jobs/active?type=` (or
+   `GET /api/v1/jobs/{jobId}` for a known id) to recover the running job's state
+   after missed `job.*` events (v1.1, §3.6).
+4. Client re-subscribes to all active topics (automatic in the frontend manager).
+5. For `image.enhanced.ready` events missed during disconnection, the reader
    SHOULD probe `GET /api/v1/image/{galleryId}/{page}?enhanced=1` when displaying
    a page — 404 means the enhanced file is not ready yet; keep the original.
 
@@ -761,6 +865,9 @@ WebSocket is not guaranteed delivery. After reconnection:
 ├── process/
 │   ├── all                           [IMPLEMENTED]  all processing events (envelope)
 │   └── {taskId}                      [IMPLEMENTED]  per-task events (envelope)
+├── jobs/
+│   ├── all                           [IMPLEMENTED]  all job events (envelope, v1.1)
+│   └── {jobId}                       [IMPLEMENTED]  per-job events (envelope, v1.1)
 ├── gallery/
 │   └── {galleryId}/
 │       └── enhanced                  [IMPLEMENTED]  image.enhanced.ready (envelope)
@@ -784,6 +891,7 @@ The frontend manager registers subscriptions as consumers request them
 | `/topic/download/{gid}` | Single-gallery download progress (bare DTO, legacy) |
 | `/topic/process/all` | Processing events; filtered client-side by `payload.galleryId` (no per-gallery process topic exists) |
 | `/topic/gallery/{galleryId}/enhanced` | Enhanced-page hot-swap events (reader) |
+| `/topic/jobs/all` | Job progress events for admin panels (envelope, v1.1) |
 
 ### 6.3 On-Demand Subscriptions
 
@@ -791,6 +899,7 @@ The frontend manager registers subscriptions as consumers request them
 |--------|-------------------|
 | Reader (gallery view) | `/topic/gallery/{galleryId}/enhanced` |
 | Processing status | `/topic/process/{taskId}` or `/topic/process/all` |
+| Job progress panel (admin backup/server) | `/topic/jobs/{jobId}` and/or `/topic/jobs/all` |
 | Dashboard/downloads | `/topic/download/all` and/or `/topic/download/{gid}` |
 
 (`/topic/sync`, `/topic/system/health` remain planned — see §3.4, §3.5.)
@@ -829,12 +938,17 @@ The protocol follows **semantic versioning** (MAJOR.MINOR.PATCH):
   Backward compatible; old clients ignore unknown types.
 - **PATCH**: Documentation fixes, no wire changes.
 
-Current version: **1.0.0**
+Current version: **1.1.0**
+
+**1.1.0** adds the `job.*` event family (§3.6) on `/topic/jobs/{jobId}` and
+`/topic/jobs/all`; its envelopes carry `version: "1.1"`. New message types are
+announced one MINOR version ahead per semver; the existing `process.*` /
+`download.*` events and their version-1.0 envelopes are **not affected**.
 
 ### 7.2 Version Negotiation
 
-1. The `version` field in every envelope carries the protocol version (server
-   sends `"1.0"`).
+1. The `version` field in every envelope carries the protocol version (the
+   server sends `"1.0"` on process./image. topics and `"1.1"` on job.* topics).
 2. Clients SHOULD ignore messages with a MAJOR version higher than supported.
 3. Clients SHOULD handle unknown `type` values gracefully (log + discard).
 4. New optional fields in payloads MUST NOT break clients that don't read them.
@@ -1034,6 +1148,57 @@ export interface SystemErrorPayload {
   severity: 'warning' | 'error' | 'critical'
 }
 
+// === Jobs ===
+// IMPLEMENTED (v1.1): all four types below are published, enveloped
+// (version "1.1"), on /topic/jobs/{jobId} and /topic/jobs/all.
+
+export type JobType =
+  | 'IMPORT'
+  | 'EXPORT'
+  | 'RESTORE'
+  | 'CACHE_CLEAR'
+
+export interface JobStartedPayload {
+  jobId: string
+  type: JobType
+  stage: string
+  total: number
+}
+
+export interface JobProgressPayload {
+  jobId: string
+  type: JobType
+  stage: string
+  percent: number
+  processed: number
+  total: number
+}
+
+export interface JobCompletedPayload {
+  jobId: string
+  type: JobType
+  result: unknown
+}
+
+export interface JobFailedPayload {
+  jobId: string
+  type: JobType
+  error: string
+}
+
+// Frontend helper (web-frontend/src/composables/useWebSocket.ts, A6):
+// one envelope type covering every job.* payload (fields optional per event).
+export type JobWsEnvelope = WsEnvelope<{
+  jobId: string
+  type: JobType
+  stage?: string | null
+  percent?: number
+  processed?: number
+  total?: number
+  error?: string
+  result?: unknown
+}>
+
 // === Client → Server ===
 // PLANNED — no @MessageMapping handlers exist on the server yet.
 
@@ -1077,6 +1242,10 @@ export interface WsMessageMap {
   'process.completed': ProcessCompletedPayload      // IMPLEMENTED
   'process.failed': ProcessFailedPayload            // IMPLEMENTED
   'image.enhanced.ready': ImageEnhancedReadyPayload // IMPLEMENTED
+  'job.started': JobStartedPayload                  // IMPLEMENTED
+  'job.progress': JobProgressPayload                // IMPLEMENTED
+  'job.completed': JobCompletedPayload              // IMPLEMENTED
+  'job.failed': JobFailedPayload                    // IMPLEMENTED
   'sync.update': SyncUpdatePayload                  // PLANNED
   'sync.conflict': SyncConflictPayload              // PLANNED
   'system.health': SystemHealthPayload              // PLANNED
@@ -1102,6 +1271,8 @@ export type TypedWsEnvelope<T extends WsMessageType> = WsEnvelope<WsMessageMap[T
 | `/topic/download/batch` | `download.batch` | PLANNED |
 | `/topic/process/all` | `process.started`, `process.progress`, `process.completed`, `process.failed` (enveloped) | IMPLEMENTED |
 | `/topic/process/{taskId}` | `process.started`, `process.progress`, `process.completed`, `process.failed` (enveloped) | IMPLEMENTED |
+| `/topic/jobs/all` | `job.started`, `job.progress`, `job.completed`, `job.failed` (enveloped, version "1.1") | IMPLEMENTED |
+| `/topic/jobs/{jobId}` | `job.started`, `job.progress`, `job.completed`, `job.failed` (enveloped, version "1.1") | IMPLEMENTED |
 | `/topic/gallery/{galleryId}/enhanced` | `image.enhanced.ready` (enveloped) | IMPLEMENTED |
 | `/topic/sync` | `sync.update`, `sync.conflict` | PLANNED |
 | `/topic/system/health` | `system.health` | PLANNED |
