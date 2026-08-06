@@ -295,14 +295,14 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await row.trigger('contextmenu')
 
     expect(wrapper.find('.select-bar').exists()).toBe(true)
-    expect(wrapper.find('.select-bar__count').text()).toBe('已选 1 项')
+    expect(wrapper.find('.select-bar__count').text()).toBe('共 250 条 · 已选 1 条')
     expect(row.classes()).toContain('download-item--selected')
     // FAB cluster hidden while selecting (Android choice mode).
     expect(wrapper.find('.fab-layout').exists()).toBe(false)
 
     // Clicking the row body toggles the selection off.
     await row.trigger('click')
-    expect(wrapper.find('.select-bar__count').text()).toBe('已选 0 项')
+    expect(wrapper.find('.select-bar__count').text()).toBe('共 250 条 · 已选 0 条')
   })
 
   it('selects all loaded rows and exits via the close button', async () => {
@@ -315,7 +315,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await wrapper.find('.download-item').trigger('contextmenu')
 
     await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
-    expect(wrapper.find('.select-bar__count').text()).toBe('已全选')
+    expect(wrapper.find('.select-bar__count').text()).toBe('共 250 条 · 已选 50 条')
 
     await wrapper.find('.select-bar__close').trigger('click')
     expect(wrapper.find('.select-bar').exists()).toBe(false)

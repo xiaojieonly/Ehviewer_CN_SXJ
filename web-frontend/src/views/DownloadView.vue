@@ -26,7 +26,7 @@
       @keyup.esc="exitSelectMode"
     >
       <span class="select-bar__count" role="status">
-        {{ selectedIds.size === downloads.length ? '已全选' : `已选 ${selectedIds.size} 项` }}
+        共 {{ total }} 条 · 已选 {{ selectedIds.size }} 条
       </span>
       <div class="select-bar__actions">
         <button type="button" class="select-bar__btn" @click="selectAll">全选</button>
