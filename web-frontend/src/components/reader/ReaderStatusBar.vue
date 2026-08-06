@@ -8,7 +8,7 @@
 
     <span class="reader-status-bar__progress">{{ progressText }}</span>
 
-    <span class="reader-status-bar__battery" role="img" aria-label="Battery">
+    <span class="reader-status-bar__battery" role="img" aria-label="电量">
       <!-- Static placeholder glyph standing in for hippo BatteryView -->
       <svg viewBox="0 0 25 12" aria-hidden="true" focusable="false">
         <rect

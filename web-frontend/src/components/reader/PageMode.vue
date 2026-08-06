@@ -38,8 +38,8 @@
     </Transition>
 
     <div v-if="error" class="page-mode__overlay page-mode__overlay--error" role="alert">
-      <p class="page-mode__error-text">Failed to load page {{ page + 1 }}</p>
-      <button type="button" class="page-mode__retry" @click="retry">Retry</button>
+      <p class="page-mode__error-text">第 {{ page + 1 }} 页加载失败</p>
+      <button type="button" class="page-mode__retry" @click="retry">重试</button>
     </div>
   </div>
 </template>

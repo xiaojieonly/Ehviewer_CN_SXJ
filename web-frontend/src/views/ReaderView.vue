@@ -2,12 +2,12 @@
   <div class="reader-view" :style="readerRootStyle">
     <div v-if="loadState === 'loading'" class="reader-view__center">
       <ProgressSpinner size="large" />
-      <p class="reader-view__hint">Loading gallery…</p>
+      <p class="reader-view__hint">正在加载画廊…</p>
     </div>
 
     <div v-else-if="loadState === 'error'" class="reader-view__center" role="alert">
       <p class="reader-view__hint">{{ errorMessage }}</p>
-      <button type="button" class="reader-view__retry" @click="load">Retry</button>
+      <button type="button" class="reader-view__retry" @click="load">重试</button>
     </div>
 
     <ImageReader

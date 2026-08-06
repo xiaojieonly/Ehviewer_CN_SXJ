@@ -653,7 +653,7 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
     it('details action navigates to the gallery detail route', async () => {
       const wrapper = mountPcCard()
       await wrapper.findAll('.card-quick-actions__btn')[2].trigger('click')
-      expect(pushMock).toHaveBeenCalledWith('/gallery/12345')
+      expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/12345', query: { token: 'abc123' } })
     })
 
     it('quick-action clicks never trigger the card navigation', async () => {
@@ -700,7 +700,7 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
       await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
       contextMenuItems()[0].click() // Details
       await flushPromises()
-      expect(pushMock).toHaveBeenCalledWith('/gallery/12345')
+      expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/12345', query: { token: 'abc123' } })
       expect(document.body.querySelector('.card-context-menu')).toBeNull()
     })
 

@@ -131,7 +131,7 @@ describe('ReaderStatusBar', () => {
       const battery = wrapper.find('.reader-status-bar__battery')
       expect(battery.exists()).toBe(true)
       expect(battery.find('svg').exists()).toBe(true)
-      expect(battery.attributes('aria-label')).toBe('Battery')
+      expect(battery.attributes('aria-label')).toBe('电量')
     })
   })
 })

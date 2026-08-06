@@ -5,17 +5,17 @@
       class="reader-settings"
       role="dialog"
       aria-modal="true"
-      aria-label="Reader settings"
+      aria-label="阅读设置"
     >
       <div class="reader-settings__scrim" @click="emit('close')" />
 
       <div class="reader-settings__panel">
         <header class="reader-settings__header">
-          <h2 class="reader-settings__title">Reader settings</h2>
+          <h2 class="reader-settings__title">阅读设置</h2>
           <button
             type="button"
             class="reader-settings__close"
-            aria-label="Close settings"
+            aria-label="关闭设置"
             @click="emit('close')"
           >
             <!-- Material close -->
@@ -31,7 +31,7 @@
         <!-- Reading direction — Android READING_DIRECTION_LTR/RTL/VERTICAL -->
         <section class="reader-settings__section">
           <h3 class="reader-settings__label" id="reader-settings-direction">
-            Reading direction
+            阅读方向
           </h3>
           <div
             class="reader-settings__segments"
@@ -55,7 +55,7 @@
 
         <!-- Page mode — auto resolves by viewport aspect (responsive §6) -->
         <section class="reader-settings__section">
-          <h3 class="reader-settings__label" id="reader-settings-mode">Page mode</h3>
+          <h3 class="reader-settings__label" id="reader-settings-mode">翻页模式</h3>
           <div
             class="reader-settings__segments"
             role="radiogroup"
@@ -78,13 +78,13 @@
 
         <!-- Zoom — 25% steps in [50%, 300%]; the value resets on tap -->
         <section class="reader-settings__section">
-          <h3 class="reader-settings__label">Zoom</h3>
+          <h3 class="reader-settings__label">缩放</h3>
           <div class="reader-settings__zoom">
             <button
               type="button"
               class="reader-settings__zoom-step"
               :disabled="zoom <= zoomMin + 0.001"
-              aria-label="Zoom out"
+              aria-label="缩小"
               @click="stepZoom(-0.25)"
             >
               −
@@ -92,7 +92,7 @@
             <button
               type="button"
               class="reader-settings__zoom-value"
-              title="Reset to 100%"
+              title="重置为 100%"
               @click="emit('update:zoom', 1)"
             >
               {{ Math.round(zoom * 100) }}%
@@ -101,7 +101,7 @@
               type="button"
               class="reader-settings__zoom-step"
               :disabled="zoom >= zoomMax - 0.001"
-              aria-label="Zoom in"
+              aria-label="放大"
               @click="stepZoom(0.25)"
             >
               +
@@ -111,7 +111,7 @@
 
         <!-- Auto-play — Android auto_transfer: advance on a timer -->
         <section class="reader-settings__section">
-          <h3 class="reader-settings__label">Auto-play</h3>
+          <h3 class="reader-settings__label">自动播放</h3>
           <div class="reader-settings__autoplay">
             <button
               type="button"
@@ -119,7 +119,7 @@
               :aria-checked="autoPlay.enabled"
               class="reader-settings__switch"
               :class="{ 'reader-settings__switch--on': autoPlay.enabled }"
-              aria-label="Toggle auto-play"
+              aria-label="切换自动播放"
               @click="toggleAutoPlay"
             >
               <span class="reader-settings__switch-knob" />
@@ -128,7 +128,7 @@
               class="reader-settings__chips"
               :class="{ 'reader-settings__chips--disabled': !autoPlay.enabled }"
               role="group"
-              aria-label="Auto-play interval"
+              aria-label="自动播放间隔"
             >
               <button
                 v-for="intervalMs in AUTO_PLAY_INTERVALS_MS"
@@ -147,7 +147,7 @@
 
         <!-- Brightness — 0 follows the system; >0 dims via the reader mask -->
         <section class="reader-settings__section">
-          <h3 class="reader-settings__label" id="reader-settings-brightness">Brightness</h3>
+          <h3 class="reader-settings__label" id="reader-settings-brightness">亮度</h3>
           <div class="reader-settings__brightness">
             <input
               type="range"
@@ -161,7 +161,7 @@
               @input="onBrightnessInput"
             />
             <span class="reader-settings__brightness-value">
-              {{ brightness === 0 ? 'System' : `${brightness}%` }}
+              {{ brightness === 0 ? '跟随系统' : `${brightness}%` }}
             </span>
           </div>
         </section>
@@ -214,16 +214,16 @@ const zoomMin = 0.5
 const zoomMax = 3
 
 const directionOptions: ReadonlyArray<{ value: ReadingDirection; label: string }> = [
-  { value: 'ltr', label: 'Left to right' },
-  { value: 'rtl', label: 'Right to left' },
-  { value: 'vertical', label: 'Vertical' },
+  { value: 'ltr', label: '从左到右' },
+  { value: 'rtl', label: '从右到左' },
+  { value: 'vertical', label: '竖向' },
 ]
 
 const modeOptions: ReadonlyArray<{ value: PageModePref; label: string }> = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'single', label: 'Single' },
-  { value: 'dual', label: 'Dual' },
-  { value: 'scroll', label: 'Scroll' },
+  { value: 'auto', label: '自动' },
+  { value: 'single', label: '单页' },
+  { value: 'dual', label: '双页' },
+  { value: 'scroll', label: '滚动' },
 ]
 
 function stepZoom(delta: number) {

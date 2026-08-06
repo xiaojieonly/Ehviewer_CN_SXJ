@@ -3,7 +3,7 @@
     class="seekbar-panel"
     :class="{ 'seekbar-panel--reversed': reversed }"
     role="group"
-    aria-label="Page position"
+    aria-label="页码位置"
   >
     <span class="seekbar-panel__label seekbar-panel__label--left" aria-hidden="true">
       {{ leftText }}
@@ -19,7 +19,7 @@
         :max="sliderMax"
         step="1"
         :value="sliderValue"
-        :aria-label="`Page ${displayPage} of ${totalPages}`"
+        :aria-label="`第 ${displayPage} 页，共 ${totalPages} 页`"
         :aria-valuetext="`${displayPage} / ${totalPages}`"
         :style="{ '--seekbar-fill': `${fillPercent}%` }"
         @pointerdown="onPointerDown"

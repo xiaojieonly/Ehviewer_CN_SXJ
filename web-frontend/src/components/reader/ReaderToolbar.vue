@@ -8,7 +8,7 @@
     <button
       type="button"
       class="reader-toolbar__btn"
-      aria-label="Back to gallery"
+      aria-label="返回画廊"
       :tabindex="visible ? 0 : -1"
       @click="emit('back')"
     >
@@ -31,7 +31,7 @@
     <button
       type="button"
       class="reader-toolbar__btn"
-      aria-label="Reader settings"
+      aria-label="阅读设置"
       :tabindex="visible ? 0 : -1"
       @click="emit('open-settings')"
     >

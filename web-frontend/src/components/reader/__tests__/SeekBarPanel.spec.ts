@@ -208,7 +208,7 @@ describe('SeekBarPanel', () => {
       const wrapper = factory({ currentPage: 3, totalPages: 10 })
       const slider = sliderOf(wrapper)
       expect(slider.attributes('aria-valuetext')).toBe('3 / 10')
-      expect(slider.attributes('aria-label')).toContain('3 of 10')
+      expect(slider.attributes('aria-label')).toContain('第 3 页，共 10 页')
     })
 
     it('is a labelled group', () => {
