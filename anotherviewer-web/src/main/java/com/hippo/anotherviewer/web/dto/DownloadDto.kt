@@ -6,7 +6,9 @@ import jakarta.validation.constraints.Size
 
 data class DownloadListResponse(
     val downloads: List<DownloadItem>,
-    val labels: List<DownloadLabel>
+    val labels: List<DownloadLabel>,
+    /** 当前 label 条件下分页前的总条数。 */
+    val total: Int
 )
 
 data class DownloadItem(

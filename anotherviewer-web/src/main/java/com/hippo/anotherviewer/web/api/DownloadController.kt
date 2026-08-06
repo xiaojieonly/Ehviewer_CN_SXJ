@@ -11,8 +11,12 @@ import org.springframework.web.bind.annotation.*
 class DownloadController(private val downloadService: DownloadService) {
 
     @GetMapping("/list")
-    fun listDownloads(@RequestParam(required = false) label: Int?): ResponseEntity<DownloadListResponse> {
-        return ResponseEntity.ok(downloadService.listDownloads(label))
+    fun listDownloads(
+        @RequestParam(required = false) label: Int?,
+        @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(defaultValue = "100") limit: Int
+    ): ResponseEntity<DownloadListResponse> {
+        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit))
     }
 
     @GetMapping("/info/{id}")

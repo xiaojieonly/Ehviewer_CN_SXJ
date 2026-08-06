@@ -11,6 +11,7 @@ import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.io.File
 import java.util.concurrent.*
@@ -97,17 +98,24 @@ class DownloadService(
 
     // ── query ───────────────────────────────────────────────────
 
-    fun listDownloads(labelId: Int? = null): DownloadListResponse {
-        val downloads = if (labelId != null && labelId != 0) {
-            downloadRepository.findByLabel(labelId)
-        } else {
-            downloadRepository.findAll()
-        }
+    fun listDownloads(labelId: Int? = null, offset: Int = 0, limit: Int = 100): DownloadListResponse {
+        val pageable = PageRequest.of(offset.coerceAtLeast(0), limit.coerceIn(1, 500))
         val labels = labelRepository.findAll()
 
+        if (labelId != null && labelId != 0) {
+            val page = downloadRepository.findByLabel(labelId, pageable)
+            return DownloadListResponse(
+                downloads = page.content.map { it.toItem() },
+                labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
+                total = downloadRepository.countByLabel(labelId).toInt()
+            )
+        }
+
+        val page = downloadRepository.findAll(pageable)
         return DownloadListResponse(
-            downloads = downloads.map { it.toItem() },
-            labels = labels.map { DownloadLabel(it.id, it.label, it.time) }
+            downloads = page.content.map { it.toItem() },
+            labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
+            total = downloadRepository.count().toInt()
         )
     }
 
