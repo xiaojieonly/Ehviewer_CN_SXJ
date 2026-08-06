@@ -38,10 +38,15 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * 原版 EhViewer 备份导入（线 B，B3）。表驱动扫描：以 `PRAGMA table_info` 感知上传
- * sqlite db 实际存在的表与列集，对已知源表逐表映射，缺列落默认值。gid 冲突默认跳过
- * （计 skipped），`force=true` 时 upsert。可选 cookies 段仅收容站点域 cookie 写入
- * [SiteSessionManager.cookieStore]（进程级会话，重启失效）。
+ * 原版 EhViewer 备份导入（线 B，B3，B2 异步化）。表驱动扫描：以 `PRAGMA table_info`
+ * 感知上传 sqlite db 实际存在的表与列集，对已知源表逐表映射，缺列落默认值。gid 冲突
+ * 默认跳过（计 skipped），`force=true` 时 upsert。可选 cookies 段仅收容站点域 cookie
+ * 写入 [SiteSessionManager.cookieStore]（进程级会话，重启失效）。
+ *
+ * 异步化（方案 plan-2026-08-06）：HTTP 线程经 [prepareImport] 只做同步准备（空文件
+ * 校验 + 落临时文件 + 读 cookies 字节——MultipartFile 必须在 HTTP 线程读完），重活
+ * [runImport] 在 JobService 线程池运行，事务绑定在该方法上（事务线程绑定语义）。
+ * 进度上报见附录 A4：total = 源库各表 COUNT(*) 求和，逐行递增 processed。
  */
 @Service
 class EhImportService(
@@ -60,15 +65,51 @@ class EhImportService(
     private val logger = LoggerFactory.getLogger(EhImportService::class.java)
     private val mapper = jacksonObjectMapper()
 
-    @Transactional
-    fun importEhViewer(file: MultipartFile, cookies: MultipartFile?, force: Boolean, username: String): EhImportResponse {
+    /** prep 产物：db 临时文件 + cookies 字节（worker 线程不再触碰 MultipartFile）。 */
+    data class PreparedImport(
+        val dbPath: Path,
+        val cookieBytes: ByteArray?,
+    )
+
+    /** 同步准备（HTTP 线程）：空文件 400 校验、落 db 临时文件、读 cookies 字节。 */
+    fun prepareImport(file: MultipartFile, cookies: MultipartFile?): PreparedImport {
+        if (file.isEmpty) throw IllegalArgumentException("上传的 EhViewer 备份文件为空")
         val dbPath = Files.createTempFile("ehviewer-import-", ".db")
         try {
             file.inputStream.use { input ->
                 Files.newOutputStream(dbPath).use { output -> input.transferTo(output) }
             }
-            val outcome = importDatabase(dbPath, username, force)
-            val cookieResult = cookies?.let { importCookies(it) } ?: EhCookieImportResult()
+        } catch (e: Exception) {
+            runCatching { Files.deleteIfExists(dbPath) }
+            throw e
+        }
+        return PreparedImport(dbPath, cookies?.bytes)
+    }
+
+    /** 同步测试入口：prep + 全量导入（进度 no-op）。生产路径由 [runImport] 承接。 */
+    @Transactional
+    fun importEhViewer(file: MultipartFile, cookies: MultipartFile?, force: Boolean, username: String): EhImportResponse {
+        val prepared = prepareImport(file, cookies)
+        return runImport(prepared.dbPath, prepared.cookieBytes, force, username, NOOP_HANDLE)
+    }
+
+    /**
+     * worker 线程导入（JobService 经 Spring 代理调用，@Transactional 在此生效）。
+     * 进度（附录 A4）：解析备份文件 → 各表阶段（total = 源表 COUNT(*) 求和，缺失表
+     * 不占 total；逐行递增 processed）→ Cookie → 写入数据库。finally 清理 db 临时文件。
+     */
+    @Transactional
+    fun runImport(
+        dbPath: Path,
+        cookieBytes: ByteArray?,
+        force: Boolean,
+        username: String,
+        handle: JobService.JobHandle,
+    ): EhImportResponse {
+        try {
+            val (outcome, progress) = importDatabase(dbPath, username, force, handle)
+            val cookieResult = cookieBytes?.let { importCookies(it, progress) } ?: EhCookieImportResult()
+            handle.stage("写入数据库")
             return EhImportResponse(
                 success = true,
                 imported = outcome.imported,
@@ -80,22 +121,64 @@ class EhImportService(
         }
     }
 
-    private fun importDatabase(dbPath: Path, username: String, force: Boolean): ImportOutcome {
+    private fun importDatabase(
+        dbPath: Path,
+        username: String,
+        force: Boolean,
+        handle: JobService.JobHandle,
+    ): Pair<ImportOutcome, ImportProgress> {
         val outcome = ImportOutcome()
         DriverManager.getConnection("jdbc:sqlite:${dbPath.toAbsolutePath()}").use { conn ->
             val tables = existingTables(conn)
-            tables["DOWNLOAD_LABELS"]?.let { importDownloadLabels(conn, it, username, force, outcome) }
-            tables["DOWNLOADS"]?.let { importDownloads(conn, it, username, force, outcome) }
-            tables["DOWNLOAD_DIRNAME"]?.let { importDownloadDirnames(conn, it, force, outcome) }
-            tables["HISTORY"]?.let { importHistory(conn, it, username, force, outcome) }
-            tables["BOOKMARKS"]?.let { importBookmarks(conn, it, username, force, outcome) }
-            tables["LOCAL_FAVORITES"]?.let { importLocalFavorites(conn, it, username, force, outcome) }
-            tables["FILTER"]?.let { importFilters(conn, it, username, force, outcome) }
-            tables["QUICK_SEARCH"]?.let { importQuickSearches(conn, it, username, force, outcome) }
-            tables["BLACK_LIST"]?.let { importBlackList(conn, it, username, force, outcome) }
-            tables["GALLERY_TAGS"]?.let { importGalleryTags(conn, it, force, outcome) }
+            val total = tableRowCounts(conn, tables).values.sum()
+            val progress = ImportProgress(handle, total)
+            progress.begin("解析备份文件")
+            tables["DOWNLOAD_LABELS"]?.let { importDownloadLabels(conn, it, username, force, outcome, progress, "下载标签") }
+            tables["DOWNLOADS"]?.let { importDownloads(conn, it, username, force, outcome, progress, "下载记录") }
+            tables["DOWNLOAD_DIRNAME"]?.let { importDownloadDirnames(conn, it, force, outcome, progress, "下载目录") }
+            tables["HISTORY"]?.let { importHistory(conn, it, username, force, outcome, progress, "历史") }
+            tables["BOOKMARKS"]?.let { importBookmarks(conn, it, username, force, outcome, progress, "书签") }
+            tables["LOCAL_FAVORITES"]?.let { importLocalFavorites(conn, it, username, force, outcome, progress, "收藏") }
+            tables["FILTER"]?.let { importFilters(conn, it, username, force, outcome, progress, "过滤") }
+            tables["QUICK_SEARCH"]?.let { importQuickSearches(conn, it, username, force, outcome, progress, "快速搜索") }
+            tables["BLACK_LIST"]?.let { importBlackList(conn, it, username, force, outcome, progress, "黑名单") }
+            tables["GALLERY_TAGS"]?.let { importGalleryTags(conn, it, force, outcome, progress, "作品标签") }
+            return outcome to progress
         }
-        return outcome
+    }
+
+    /** 预统计：仅对白名单内且实际存在的源表 COUNT(*)（缺失表不占 total）。 */
+    private fun tableRowCounts(conn: Connection, tables: Map<String, String>): Map<String, Long> {
+        val counts = mutableMapOf<String, Long>()
+        tables.forEach { (key, name) ->
+            if (isImportableTable(key)) {
+                conn.createStatement().use { stmt ->
+                    stmt.executeQuery("SELECT COUNT(*) FROM \"$name\"").use { rs ->
+                        if (rs.next()) counts[key] = rs.getLong(1)
+                    }
+                }
+            }
+        }
+        return counts
+    }
+
+    /** 逐行进度计数：total = 源表 COUNT(*) 求和；processed 全程递增；每行上报一次。 */
+    private class ImportProgress(
+        private val handle: JobService.JobHandle,
+        private val total: Long,
+    ) {
+        var processed: Long = 0L
+            private set
+
+        /** 阶段开始上报（0 行表也上报一次以切换 stage）。 */
+        fun begin(stage: String) {
+            handle.progress(stage, processed, total)
+        }
+
+        fun row(stage: String) {
+            processed++
+            handle.progress(stage, processed, total)
+        }
     }
 
     private fun existingTables(conn: Connection): Map<String, String> {
@@ -145,8 +228,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val label = row.str("label")?.takeIf { it.isNotBlank() } ?: return@forEach
             val existing = downloadLabelRepository.findByLabel(label)
             if (existing != null && !force) return@forEach
@@ -168,8 +255,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val existing = downloadRepository.findByGid(gid)
             if (existing != null) {
@@ -205,8 +296,12 @@ class EhImportService(
         table: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val dirname = row.str("dirname") ?: return@forEach
             val existing = downloadDirnameRepository.findByGid(gid)
@@ -225,8 +320,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val existing = historyRepository.findByGid(gid)
             if (existing != null) {
@@ -258,8 +357,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val existing = bookmarkRepository.findByGid(gid)
             if (existing != null) {
@@ -287,8 +390,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val existing = favoriteRepository.findByGid(gid)
             if (existing != null) {
@@ -315,8 +422,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val type = row.int("mode")
             val text = row.str("text")?.takeIf { it.isNotBlank() } ?: return@forEach
             val existing = filterRepository.findAll().firstOrNull { it.type == type && it.text == text }
@@ -340,8 +451,12 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val name = row.str("name")?.takeIf { it.isNotBlank() } ?: return@forEach
             val existing = quickSearchRepository.findByName(name)
             if (existing != null && !force) return@forEach
@@ -370,8 +485,13 @@ class EhImportService(
         username: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
-        if (loadRows(conn, table).isEmpty()) return
+        progress.begin(stage)
+        val rows = loadRows(conn, table)
+        rows.forEach { progress.row(stage) }
+        if (rows.isEmpty()) return
         val existing = blackListRepository.findByUser(username)
         if (existing != null && !force) return
         if (existing == null) {
@@ -385,8 +505,12 @@ class EhImportService(
         table: String,
         force: Boolean,
         outcome: ImportOutcome,
+        progress: ImportProgress,
+        stage: String,
     ) {
+        progress.begin(stage)
         loadRows(conn, table).forEach { row ->
+            progress.row(stage)
             val gid = row.long("gid")
             val existingTags = galleryTagsRepository.findByGid(gid)
             if (existingTags.isNotEmpty() && !force) return@forEach
@@ -427,12 +551,13 @@ class EhImportService(
 
     // ---- cookies 段 ----
 
-    private fun importCookies(file: MultipartFile): EhCookieImportResult {
-        val bytes = file.bytes
+    private fun importCookies(bytes: ByteArray, progress: ImportProgress): EhCookieImportResult {
+        progress.begin("Cookie")
         val cookies = if (isSqlite(bytes)) readCookieDb(bytes) else parseCookieJson(bytes)
         var siteDomain = 0
         var imported = 0
         cookies.forEach { c ->
+            progress.row("Cookie")
             if (!isSiteDomain(c.domain)) return@forEach
             siteDomain++
             buildOkHttpCookie(c)?.let {
@@ -566,5 +691,11 @@ class EhImportService(
         )
 
         fun isImportableTable(table: String): Boolean = table.uppercase() in IMPORTABLE_TABLE_KEYS
+
+        /** 同步入口（importEhViewer）用的进度 no-op。 */
+        private val NOOP_HANDLE = object : JobService.JobHandle {
+            override fun progress(stage: String, processed: Long, total: Long) = Unit
+            override fun stage(stage: String) = Unit
+        }
     }
 }

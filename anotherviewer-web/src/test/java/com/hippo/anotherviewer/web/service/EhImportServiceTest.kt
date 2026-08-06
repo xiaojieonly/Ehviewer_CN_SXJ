@@ -3,6 +3,9 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.EhCookieImportResult
 import com.hippo.anotherviewer.web.dto.EhImportedCounts
+import com.hippo.anotherviewer.web.dto.EhImportResponse
+import com.hippo.anotherviewer.web.dto.JobState
+import com.hippo.anotherviewer.web.dto.JobType
 import com.hippo.anotherviewer.web.entity.BlackListEntity
 import com.hippo.anotherviewer.web.entity.BookmarkInfoEntity
 import com.hippo.anotherviewer.web.entity.DownloadDirnameEntity
@@ -39,7 +42,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.context.ApplicationEventPublisher
 import java.nio.file.Files
+import java.nio.file.Path
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.concurrent.ConcurrentHashMap
@@ -260,7 +265,11 @@ class EhImportServiceTest {
         }
 
         val response = service.importEhViewer(
-            file(databaseBytes { }),
+            file(databaseBytes { c ->
+                // 空 sqlite 文件为 0 字节（SQLite 惰性写盘），会命中 prep 的空文件校验；
+                // 造一个最小非空库，保证走 cookie 段逻辑。
+                c.createStatement().use { it.execute("CREATE TABLE android_metadata (locale TEXT)") }
+            }),
             cookies = MockMultipartFile("cookies", "cookies.db", "application/octet-stream", cookieDb),
             force = false,
             username = "alice",
@@ -275,7 +284,84 @@ class EhImportServiceTest {
         assertTrue("session" !in names)
     }
 
+    // ==================== 异步 Job worker（B2 异步化） ====================
+
+    @Test
+    fun `async import via JobService completes with correct result and progress totals`() {
+        val jobService = newJobService()
+        val dbPath = writeTempDb(v7SampleDb())
+        lateinit var job: Job
+
+        job = jobService.submit(JobType.IMPORT, {}) { handle ->
+            // worker 自行写终态 result（与 ImportController 异步 worker 同构）。
+            job.result = service.runImport(dbPath, cookieBytes = null, force = false, username = "alice", handle = handle)
+        }
+
+        val done = awaitState(jobService, job, JobState.COMPLETED)
+        val result = done.result as EhImportResponse
+        assertTrue(result.success)
+        assertEquals(
+            EhImportedCounts(
+                downloads = 3, history = 2, filters = 2, quickSearches = 2, labels = 2,
+                bookmarks = 1, favorites = 1, dirnames = 2, blackList = 1, galleryTags = 5,
+            ),
+            result.imported,
+        )
+        assertEquals(EhCookieImportResult(imported = 0, siteDomain = 0), result.cookies)
+        assertEquals(0, result.skipped)
+        assertEquals("写入数据库", done.stage)
+        // total = 源表 COUNT(*) 求和（3+2+1+1+2+2+2+2+1+1 = 17），末段 processed == total。
+        assertEquals(17L, done.total)
+        assertEquals(17L, done.processed)
+        assertEquals(3, fixtures.downloadStore.size)
+        assertEquals(5, fixtures.galleryTagsStore.getValue(1001L).size)
+        assertTrue(!Files.exists(dbPath), "worker finally 应清理 db 临时文件")
+    }
+
+    @Test
+    fun `async import failure fails the job with error and no partial writes`() {
+        val bad = databaseBytes { c ->
+            val s = c.createStatement()
+            s.execute("CREATE TABLE DOWNLOADS (gid INTEGER, token TEXT, title TEXT, category INTEGER, state INTEGER, time INTEGER)")
+            s.execute("INSERT INTO DOWNLOADS VALUES (NULL, 'tok-bad', 'Bad', 4, 1, 1700000000000)")
+            s.execute("INSERT INTO DOWNLOADS VALUES (7001, 'tok7001', 'Good', 4, 1, 1700000001000)")
+            s.close()
+        }
+        fixtures.failOnNullGid = true
+        val jobService = newJobService()
+        val dbPath = writeTempDb(bad)
+
+        val job = jobService.submit(JobType.IMPORT, {}) { handle ->
+            service.runImport(dbPath, cookieBytes = null, force = false, username = "alice", handle = handle)
+        }
+
+        val done = awaitState(jobService, job, JobState.FAILED)
+        assertTrue(done.error!!.contains("gid"))
+        assertNull(done.result)
+        assertTrue(fixtures.downloadStore.isEmpty(), "失败不应留下部分写入")
+    }
+
     // ==================== helpers ====================
+
+    private fun newJobService(): JobService =
+        JobService(InMemoryJobStore(), mock(ApplicationEventPublisher::class.java))
+
+    private fun writeTempDb(bytes: ByteArray): Path {
+        val tmp = Files.createTempFile("ehimport-worker-", ".db")
+        Files.write(tmp, bytes)
+        return tmp
+    }
+
+    /** 轮询等待异步 job 到达终态（默认 5s 超时），与 JobServiceTest 风格一致。 */
+    private fun awaitState(jobService: JobService, job: Job, expected: JobState, timeoutMs: Long = 5000): Job {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            val current = jobService.getJob(job.jobId)!!
+            if (current.state == expected) return current
+            Thread.sleep(10)
+        }
+        throw AssertionError("job ${job.jobId} 未在 ${timeoutMs}ms 内到达 $expected（当前 ${jobService.getJob(job.jobId)?.state}）")
+    }
 
     private fun newSessionManager(): SiteSessionManager {
         val serverConfig = mock(ServerConfigService::class.java)
