@@ -800,6 +800,17 @@ paths:
             maximum: 500
             default: 100
           description: Page size (default 100; the server clamps limit to [1, 500])
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [time_desc, time_asc, title_asc, title_desc]
+            default: time_desc
+          description: >-
+            Sort mode (default `time_desc` = add time newest-first; unknown
+            values fall back to the default). `time_*` sorts by the add-time
+            column, `title_*` sorts by the gallery title.
       responses:
         '200':
           description: Download list with labels and total count

@@ -169,13 +169,26 @@
           <PrefCard>
             <PrefRow
               icon="check-all-dark"
-              title="排序方向"
-              :summary="`${local.sortAscending ? '升序（按添加时间先后）' : '降序（最新在前）'} · 仅本设备生效`"
+              title="排序模式"
+              :summary="`${sortModeLabel} · 仅本设备生效`"
             >
-              <AppSwitch
-                :model-value="local.sortAscending"
-                aria-label="排序方向"
-                @update:model-value="(v) => (local.sortAscending = v)"
+              <AppSelect
+                :model-value="local.sortMode"
+                :options="DOWNLOAD_SORT_OPTIONS"
+                aria-label="排序模式"
+                @update:model-value="(v) => (local.sortMode = v as DownloadSort)"
+              />
+            </PrefRow>
+            <PrefRow
+              icon="reorder"
+              title="每页条数"
+              :summary="`下载列表按页加载（与 Android 端一致）· 仅本设备生效`"
+            >
+              <AppSelect
+                :model-value="local.pageSize"
+                :options="DOWNLOAD_PAGE_SIZES.map((s) => ({ value: s, label: `${s} 条/页` }))"
+                aria-label="每页条数"
+                @update:model-value="(v) => (local.pageSize = Number(v))"
               />
             </PrefRow>
             <PrefRow icon="play-dark" title="自动开始下载" summary="立即恢复排队中的下载 · 仅本设备生效">
@@ -231,11 +244,20 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref, watch, type Ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch, type Ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
-import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
+import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
+import {
+  DOWNLOAD_PAGE_SIZES,
+  DOWNLOAD_SORT_OPTIONS,
+  DOWNLOAD_UI_KEY,
+  DEFAULT_DOWNLOAD_LIST_PREFS,
+  loadDownloadListPrefs,
+  type DownloadListPrefs,
+  type DownloadSort,
+} from '@/utils/downloadListSettings'
 
 /* ----------------------------- server settings ---------------------------- */
 
@@ -347,30 +369,31 @@ function numberField(options: { get: () => number | undefined; set: (value: numb
 
 /* ----------------------------- local settings ----------------------------- */
 
-interface LocalSettings {
+interface LocalSettings extends DownloadListPrefs {
   preloadImages: number
-  sortAscending: boolean
   autoStart: boolean
 }
 
-const LOCAL_SETTINGS_KEY = 'anotherviewer-admin-download-ui'
+const LOCAL_SETTINGS_KEY = DOWNLOAD_UI_KEY
 
 const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
+  ...DEFAULT_DOWNLOAD_LIST_PREFS,
   preloadImages: 2,
-  sortAscending: false,
   autoStart: true,
 }
 
 /** Pick only the known local keys — legacy/unknown entries (e.g. the removed
-    `paginated` switch) are ignored and dropped on the next persist. */
+    `paginated` switch, 旧 `sortAscending` 布尔) are migrated/ignored and
+    dropped on the next persist. */
 function loadLocalSettings(): LocalSettings {
   try {
     const raw = localStorage.getItem(LOCAL_SETTINGS_KEY)
     if (raw) {
       const stored = JSON.parse(raw) as Partial<LocalSettings>
+      const prefs = loadDownloadListPrefs()
       return {
+        ...prefs,
         preloadImages: stored.preloadImages ?? DEFAULT_LOCAL_SETTINGS.preloadImages,
-        sortAscending: stored.sortAscending ?? DEFAULT_LOCAL_SETTINGS.sortAscending,
         autoStart: stored.autoStart ?? DEFAULT_LOCAL_SETTINGS.autoStart,
       }
     }
@@ -381,6 +404,12 @@ function loadLocalSettings(): LocalSettings {
 }
 
 const local = reactive<LocalSettings>(loadLocalSettings())
+
+/** 当前排序模式的展示文案（PrefRow summary 用）。 */
+const sortModeLabel = computed(() => {
+  const option = DOWNLOAD_SORT_OPTIONS.find((o) => o.value === local.sortMode)
+  return option?.label ?? DEFAULT_DOWNLOAD_LIST_PREFS.sortMode
+})
 
 watch(
   local,

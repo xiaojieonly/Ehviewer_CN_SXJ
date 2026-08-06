@@ -136,6 +136,7 @@ import type { DownloadItem, DownloadLabel } from '@/api/download'
 import { useWebSocket } from '@/composables/useWebSocket'
 import type { DownloadProgress } from '@/composables/useWebSocket'
 import type { FabAction } from '@/types/components'
+import { loadDownloadListPrefs } from '@/utils/downloadListSettings'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import DownloadItemCard from '@/components/download/DownloadItem.vue'
@@ -152,8 +153,10 @@ const STATE_FAILED = 4
 
 /* ------------------------------------------------------------- list ----- */
 
-/** Page size for the paginated `/download/list` (server clamps to [1, 500]). */
-const PAGE_SIZE = 100
+/** 列表偏好（设备本地）：每页条数 + 排序模式，与 AdminDownload 同键共享。 */
+const listPrefs = loadDownloadListPrefs()
+const PAGE_SIZE = listPrefs.pageSize
+const SORT_MODE = listPrefs.sortMode
 
 /** Fixed row-height estimate for the virtualizer (single-column list). */
 const ROW_ESTIMATE = 160
@@ -237,7 +240,7 @@ let requestSeq = 0
 async function load(): Promise<void> {
   const seq = ++requestSeq
   try {
-    const result = await downloadApi.list(activeLabel.value ?? undefined, 0, PAGE_SIZE)
+    const result = await downloadApi.list(activeLabel.value ?? undefined, 0, PAGE_SIZE, SORT_MODE)
     if (seq !== requestSeq) return
     downloads.value = result.downloads
     labels.value = result.labels
@@ -266,6 +269,7 @@ async function loadMore(): Promise<void> {
       activeLabel.value ?? undefined,
       downloads.value.length,
       PAGE_SIZE,
+      SORT_MODE,
     )
     if (seq !== requestSeq) return
     downloads.value.push(...result.downloads)

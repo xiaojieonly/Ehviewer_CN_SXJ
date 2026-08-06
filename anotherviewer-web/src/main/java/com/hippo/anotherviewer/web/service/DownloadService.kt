@@ -99,12 +99,13 @@ class DownloadService(
 
     // ── query ───────────────────────────────────────────────────
 
-    fun listDownloads(labelId: Int? = null, offset: Int = 0, limit: Int = 100): DownloadListResponse {
+    fun listDownloads(labelId: Int? = null, offset: Int = 0, limit: Int = 100, sort: String = "time_desc"): DownloadListResponse {
         // A5 契约：offset 为行偏移、limit 为每页条数。PageRequest 以页码为参数，
-        // 换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）；
-        // 显式按主键 id 升序 = 添加先后（最早在前），与分页前 findAll() 顺序一致。
+        // 换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）。
+        // 排序（sort 参数，未知值回落默认 time_desc=添加时间倒序=最新在前）：
+        //   time_desc / time_asc / title_asc / title_desc
         val size = limit.coerceIn(1, 500)
-        val pageable = PageRequest.of(offset.coerceAtLeast(0) / size, size, Sort.by("id"))
+        val pageable = PageRequest.of(offset.coerceAtLeast(0) / size, size, sortOf(sort))
         val labels = labelRepository.findAll()
 
         if (labelId != null && labelId != 0) {
@@ -122,6 +123,14 @@ class DownloadService(
             labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
             total = downloadRepository.count().toInt()
         )
+    }
+
+    /** sort 参数 → Spring Data Sort；未知取值回落默认（time_desc）。 */
+    private fun sortOf(sort: String): Sort = when (sort) {
+        "time_asc" -> Sort.by(Sort.Direction.ASC, "time")
+        "title_asc" -> Sort.by(Sort.Direction.ASC, "title")
+        "title_desc" -> Sort.by(Sort.Direction.DESC, "title")
+        else -> Sort.by(Sort.Direction.DESC, "time")
     }
 
     fun getDownloadInfo(id: Long): DownloadItem? {

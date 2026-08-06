@@ -1,4 +1,5 @@
 import client from './client'
+import type { DownloadSort } from '@/utils/downloadListSettings'
 
 export interface DownloadItem {
   id: number
@@ -33,15 +34,22 @@ export interface DownloadListResponse {
 
 export const downloadApi = {
   /**
-   * Paginated download list. `offset`/`limit` are only sent when defined
-   * (callers without paging keep the legacy behaviour); the server clamps
-   * `limit` into [1, 500].
+   * Paginated download list. `offset`/`limit`/`sort` are only sent when
+   * defined (callers without paging keep the legacy behaviour); the server
+   * clamps `limit` into [1, 500] and falls back to `time_desc` on unknown
+   * sort values.
    */
-  async list(label?: number, offset?: number, limit?: number): Promise<DownloadListResponse> {
+  async list(
+    label?: number,
+    offset?: number,
+    limit?: number,
+    sort?: DownloadSort,
+  ): Promise<DownloadListResponse> {
     const params: Record<string, string> = {}
     if (label !== undefined) params.label = label.toString()
     if (offset !== undefined) params.offset = offset.toString()
     if (limit !== undefined) params.limit = limit.toString()
+    if (sort !== undefined) params.sort = sort
     const { data } = await client.get('/download/list', { params })
     return data
   },

@@ -14,9 +14,10 @@ class DownloadController(private val downloadService: DownloadService) {
     fun listDownloads(
         @RequestParam(required = false) label: Int?,
         @RequestParam(defaultValue = "0") offset: Int,
-        @RequestParam(defaultValue = "100") limit: Int
+        @RequestParam(defaultValue = "100") limit: Int,
+        @RequestParam(defaultValue = "time_desc") sort: String
     ): ResponseEntity<DownloadListResponse> {
-        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit))
+        return ResponseEntity.ok(downloadService.listDownloads(label, offset, limit, sort))
     }
 
     @GetMapping("/info/{id}")

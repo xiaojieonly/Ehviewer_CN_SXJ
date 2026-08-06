@@ -149,25 +149,26 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
   }
 
   it('loads the first page with offset 0 and mounts only the virtual window', async () => {
-    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 100) => ({
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
       downloads: pages(250)(offset, limit),
       labels: [],
       total: 250,
     }))
     await mountView()
 
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 100)
+    // 默认偏好：每页 50 条（与 Android 一致）+ 添加时间倒序（最新在前）。
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 50, 'time_desc')
     expect(wrapper.find('[data-testid="content-state-content"]').exists()).toBe(true)
     const items = wrapper.findAll('.download-list__item')
     // Virtualized: only the rows around the window are mounted — without
-    // virtualization all 100 loaded rows would be in the DOM.
+    // virtualization all 50 loaded rows would be in the DOM.
     expect(items.length).toBeGreaterThan(0)
     expect(items.length).toBeLessThan(50)
     expect(wrapper.text()).toContain('Dl 1')
   })
 
   it('appends pages on scroll-to-bottom until the total is reached', async () => {
-    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 100) => ({
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
       downloads: pages(250)(offset, limit),
       labels: [],
       total: 250,
@@ -175,27 +176,35 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await mountView()
     expect(downloadApi.list).toHaveBeenCalledTimes(1)
 
-    // 100 rows × 160px estimate → last row starts at 99 × 160 = 15840.
+    // 50 rows × 160px estimate → last row starts at 49 × 160 = 7840.
     const el = scroller()
-    await scrollTo(el, 99 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 100)
+    await scrollTo(el, 49 * 160)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 50, 50, 'time_desc')
     expect(downloadApi.list).toHaveBeenCalledTimes(2)
 
-    // Second page lands (200 rows); the tail moved to 199 × 160.
-    await scrollTo(el, 199 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 100)
+    // 逐段下探：每页 50 行 → 100/150/200 行，最后 250 total 封顶不再请求。
+    await scrollTo(el, 99 * 160)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 50, 'time_desc')
     expect(downloadApi.list).toHaveBeenCalledTimes(3)
 
-    // 250 total reached — further scrolling must not request page 4.
+    await scrollTo(el, 149 * 160)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 150, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledTimes(4)
+
+    await scrollTo(el, 199 * 160)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 50, 'time_desc')
+    expect(downloadApi.list).toHaveBeenCalledTimes(5)
+
+    // 250 total reached — further scrolling must not request page 6.
     await scrollTo(el, 249 * 160)
-    expect(downloadApi.list).toHaveBeenCalledTimes(3)
+    expect(downloadApi.list).toHaveBeenCalledTimes(5)
 
     // The DOM stays bounded to the virtual window throughout.
     expect(wrapper.findAll('.download-list__item').length).toBeLessThan(50)
   })
 
   it('resets pagination when switching label tabs', async () => {
-    vi.mocked(downloadApi.list).mockImplementation(async (label, offset = 0, limit = 100) => {
+    vi.mocked(downloadApi.list).mockImplementation(async (label, offset = 0, limit = 50) => {
       if (label === 5) {
         return {
           downloads: pages(160)(offset, limit).map((d) => makeDownload(d.id, { ...d, label: 5 })),
@@ -215,12 +224,11 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await flushPromises()
 
     // Label switch restarts at offset 0 with the label param.
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 100)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 50, 'time_desc')
     expect(wrapper.text()).toContain('Dl 1')
-    // Scrolling to the (160-row) labeled tail loads its remaining page.
-    await scrollTo(scroller(), 99 * 160)
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 100, 100)
-    expect(downloadApi.list).toHaveBeenCalledTimes(3)
+    // Scrolling to the (160-row) labeled tail loads its remaining pages.
+    await scrollTo(scroller(), 49 * 160)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 50, 50, 'time_desc')
   })
 
   it('rewrites external thumbnails through the image proxy in rendered rows', async () => {

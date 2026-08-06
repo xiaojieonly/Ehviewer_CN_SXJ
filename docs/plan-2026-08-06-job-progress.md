@@ -102,10 +102,19 @@ IMPORT 终态：worker 返回后置 COMPLETED，result 为计数；异常（含�
 
 ## A5. 下载列表分页
 
-- `GET /api/v1/download/list?label=&offset=0&limit=100` → `{downloads, labels, total}`
+- `GET /api/v1/download/list?label=&offset=0&limit=100&sort=time_desc` → `{downloads, labels, total}`
 - 默认 offset=0、limit=100；服务端 clamp limit ∈ [1, 500]。
 - 语义：label 空/0 → 全量；否则 findByLabel。total = 当前 label 下的总条数（分页前计数）。
+- `offset` 为**行偏移**：服务端换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）。
+- `sort` 取值：`time_desc`（默认，添加时间倒序=最新在前）/ `time_asc` / `title_asc` / `title_desc`；未知值回落 `time_desc`。
 - `DownloadListResponse` 增加 `total: Int` 字段。
+
+## A5b. 下载列表设备本地偏好（web-frontend）
+
+- 存储键 `anotherviewer-admin-download-ui`（与 AdminDownload 其余本地设置同键）。
+- 字段：`sortMode: DownloadSort`（默认 `time_desc`）、`pageSize: number`（默认 **50**，与 Android 端一致，可选 50/100/200）。
+- 旧键迁移：`sortAscending: boolean`（从未接线）→ sortMode（false=time_desc、true=time_asc）；`paginated` 忽略并随下次写入清除。
+- `DownloadView` 挂载时读取该偏好作为分页 limit 与 sort 参数。
 
 ## A6. 前端 API 形态（web-frontend）
 

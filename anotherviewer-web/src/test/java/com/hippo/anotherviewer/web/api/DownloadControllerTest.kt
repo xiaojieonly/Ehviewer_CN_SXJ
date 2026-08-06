@@ -183,7 +183,7 @@ class DownloadControllerTest {
     }
 
     @Test
-    fun `list converts row offset to page index and sorts by id asc`() {
+    fun `list converts row offset to page index`() {
         // A5 契约：offset 是行偏移。offset=5&limit=20 → pageIndex=0（前 20 行）；
         // offset=100&limit=100 → pageIndex=1（101..200 行）。
         val page = PageImpl(listOf(entity(1, 101)), PageRequest.of(0, 20), 1)
@@ -199,7 +199,6 @@ class DownloadControllerTest {
         verify(downloadRepository).findAll(captureK(captor))
         assertEquals(0, captor.value.pageNumber)
         assertEquals(20, captor.value.pageSize)
-        assertEquals(Sort.Direction.ASC, captor.value.sort.getOrderFor("id")?.direction)
     }
 
     @Test
@@ -217,6 +216,53 @@ class DownloadControllerTest {
         verify(downloadRepository).findAll(captureK(captor))
         assertEquals(1, captor.value.pageNumber)
         assertEquals(100, captor.value.pageSize)
+    }
+
+    @Test
+    fun `list defaults to time_desc sort (newest first)`() {
+        val page = PageImpl(emptyList<DownloadInfoEntity>(), PageRequest.of(0, 100), 0)
+        `when`(downloadRepository.findAll(any(Pageable::class.java))).thenReturn(page)
+        `when`(downloadRepository.count()).thenReturn(0L)
+        `when`(labelRepository.findAll()).thenReturn(emptyList())
+
+        mockMvc.perform(get("/api/v1/download/list"))
+            .andExpect(status().isOk)
+
+        val captor = ArgumentCaptor.forClass(Pageable::class.java)
+        verify(downloadRepository).findAll(captureK(captor))
+        val order = captor.value.sort.getOrderFor("time")
+        assertEquals(Sort.Direction.DESC, order?.direction)
+    }
+
+    @Test
+    fun `list forwards the requested sort mode`() {
+        val page = PageImpl(emptyList<DownloadInfoEntity>(), PageRequest.of(0, 100), 0)
+        `when`(downloadRepository.findAll(any(Pageable::class.java))).thenReturn(page)
+        `when`(downloadRepository.count()).thenReturn(0L)
+        `when`(labelRepository.findAll()).thenReturn(emptyList())
+
+        mockMvc.perform(get("/api/v1/download/list").param("sort", "title_asc"))
+            .andExpect(status().isOk)
+
+        val captor = ArgumentCaptor.forClass(Pageable::class.java)
+        verify(downloadRepository).findAll(captureK(captor))
+        val order = captor.value.sort.getOrderFor("title")
+        assertEquals(Sort.Direction.ASC, order?.direction)
+    }
+
+    @Test
+    fun `list falls back to time_desc for an unknown sort value`() {
+        val page = PageImpl(emptyList<DownloadInfoEntity>(), PageRequest.of(0, 100), 0)
+        `when`(downloadRepository.findAll(any(Pageable::class.java))).thenReturn(page)
+        `when`(downloadRepository.count()).thenReturn(0L)
+        `when`(labelRepository.findAll()).thenReturn(emptyList())
+
+        mockMvc.perform(get("/api/v1/download/list").param("sort", "bogus"))
+            .andExpect(status().isOk)
+
+        val captor = ArgumentCaptor.forClass(Pageable::class.java)
+        verify(downloadRepository).findAll(captureK(captor))
+        assertEquals(Sort.Direction.DESC, captor.value.sort.getOrderFor("time")?.direction)
     }
 
     @Test

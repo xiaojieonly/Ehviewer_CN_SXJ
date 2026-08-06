@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminDownload from '../admin/AdminDownload.vue'
 import { settingsApi, type Settings } from '@/api/settings'
-import { AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
+import { AppSelect, AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
@@ -65,7 +65,8 @@ describe('AdminDownload (下载设置)', () => {
     expect(titles).toContain('最大并发图片数')
     expect(titles).toContain('预加载图片数')
     expect(titles).not.toContain('下载列表分页')
-    expect(titles).toContain('排序方向')
+    expect(titles).toContain('排序模式')
+    expect(titles).toContain('每页条数')
     expect(titles).toContain('自动开始下载')
     expect(titles).toContain('清理冗余文件')
     expect(titles).toContain('清理无效下载')
@@ -75,12 +76,27 @@ describe('AdminDownload (下载设置)', () => {
     expect(w.findAll('.stepper').length).toBe(4)
     expect(w.findAll('.num-field').length).toBe(2)
 
+    // 排序/每页条数用 AppSelect 下拉，自动开始仍为 AppSwitch。
+    const selects = w.findAllComponents(AppSelect)
+    expect(selects.length).toBe(2)
+    expect(selects.map((s) => s.attributes('aria-label'))).toEqual(['排序模式', '每页条数'])
+    expect(selects[0].props('options').length).toBe(4)
+    expect(selects[1].props('options').map((o) => o.value)).toEqual([50, 100, 200])
+
     const switches = w.findAllComponents(AppSwitch)
-    expect(switches.length).toBe(2)
-    expect(switches.map((s) => s.attributes('aria-label'))).toEqual([
-      '排序方向',
-      '自动开始下载',
-    ])
+    expect(switches.length).toBe(1)
+    expect(switches[0].attributes('aria-label')).toBe('自动开始下载')
+  })
+
+  it('migrates the legacy sortAscending boolean into sortMode', async () => {
+    // 旧版 sortAscending=true 表示"最早在前" → 迁移为 time_asc。
+    localStorage.setItem(
+      'anotherviewer-admin-download-ui',
+      JSON.stringify({ sortAscending: true, preloadImages: 3, autoStart: true }),
+    )
+    const w = await mountView()
+    const select = w.findAllComponents(AppSelect)[0]
+    expect(select.props('modelValue')).toBe('time_asc')
   })
 
   it('tolerates legacy localStorage entries with the removed paginated key', async () => {
@@ -90,12 +106,12 @@ describe('AdminDownload (下载设置)', () => {
     )
     const w = await mountView()
     const switches = w.findAllComponents(AppSwitch)
-    expect(switches.length).toBe(2)
+    expect(switches.length).toBe(1)
     // Remaining local fields are still applied; the removed row is gone.
     expect(w.findAllComponents(PrefRow).map((r) => r.props('title'))).not.toContain('下载列表分页')
-    expect(switches.find((s) => s.attributes('aria-label') === '自动开始下载')!.attributes('aria-checked')).toBe('false')
+    expect(switches[0].attributes('aria-checked')).toBe('false')
     // The next persist drops the unknown legacy key.
-    await switches.find((s) => s.attributes('aria-label') === '自动开始下载')!.trigger('click')
+    await switches[0].trigger('click')
     const raw = localStorage.getItem('anotherviewer-admin-download-ui')
     expect(JSON.parse(raw!)).not.toHaveProperty('paginated')
     expect(JSON.parse(raw!).autoStart).toBe(true)
