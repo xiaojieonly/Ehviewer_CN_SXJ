@@ -278,6 +278,8 @@ const emit = defineEmits<PageModeEmits>()
 const ZOOM_MIN = 1
 const ZOOM_MAX = 3
 const DOUBLE_TAP_STEPS = [1, 2, 3]
+/** Auto-retry budget for transient image failures before the error page. */
+const MAX_AUTO_RETRIES = 3
 
 const stageRef = ref<HTMLElement | null>(null)
 const imgRef = ref<HTMLImageElement | null>(null)
@@ -290,6 +292,12 @@ const panX = ref(0)
 const panY = ref(0)
 const gesturing = ref(false)
 const enterClass = ref('')
+/** Exponential-backoff retry state: a transient image failure (429 rate
+ *  limit / 401 session-gated / brief network hiccup) auto-retries with
+ *  growing delay before surfacing the manual-retry error page. */
+const retryDelayMs = ref(0)
+const retryAttempts = ref(0)
+let retryTimer: ReturnType<typeof setTimeout> | undefined
 
 const zoomed = computed(() => props.zoom > 1.001)
 
@@ -353,6 +361,10 @@ watch(
     loaded.value = false
     error.value = false
     hasLoaded.value = false
+    retryAttempts.value = 0
+    retryDelayMs.value = 0
+    if (retryTimer) clearTimeout(retryTimer)
+    retryTimer = undefined
   },
 )
 
@@ -369,12 +381,28 @@ function onImageError() {
     console.debug('[PageMode] enhanced image failed to load, keeping original', props.page)
     return
   }
-  error.value = true
+  // Transient failures (429 rate-limit / 401 session-gated / connectivity)
+  // are retried with exponential backoff; only after the budget is exhausted
+  // does the manual-retry error page appear. This absorbs the reader's
+  // multi-width srcset retry storms without spamming the server.
+  const delay = retryDelayMs.value === 0 ? 1000 : Math.min(retryDelayMs.value * 2, 8000)
+  retryDelayMs.value = delay
+  if (retryAttempts.value >= MAX_AUTO_RETRIES) {
+    error.value = true
+    return
+  }
+  retryAttempts.value += 1
+  retryTimer = setTimeout(() => {
+    retryTick.value += 1
+    retryTimer = undefined
+  }, delay)
 }
 
 function retry() {
   error.value = false
   retryTick.value += 1
+  retryAttempts.value = 0
+  retryDelayMs.value = 0
 }
 
 /* ------------------------------------------------------------------ */
@@ -495,6 +523,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   const el = stageRef.value
+  if (retryTimer) clearTimeout(retryTimer)
   if (!el) return
   el.removeEventListener('touchstart', onTouchStart)
   el.removeEventListener('touchmove', onTouchMove)

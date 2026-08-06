@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
+import com.hippo.anotherviewer.client.exception.SiteException
 import com.hippo.anotherviewer.web.dto.JobSubmitResponse
 import com.hippo.anotherviewer.web.dto.JobType
 import com.hippo.anotherviewer.web.service.InMemoryJobStore
@@ -22,8 +23,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Semaphore
 
 /**
  * Image delivery endpoints.
@@ -48,7 +49,7 @@ class ImageProxyController(
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
 
     companion object {
-        private const val MAX_CONCURRENT_PAGE_FETCHES = 2
+        private const val MAX_CONCURRENT_PAGE_FETCHES = 4
         private const val CACHE_MAX_AGE = "max-age=86400"
         private val IMAGE_MIME_BY_EXT = mapOf(
             "jpg" to MediaType.IMAGE_JPEG_VALUE,
@@ -61,8 +62,15 @@ class ImageProxyController(
 
     private val okHttpClient get() = sessionManager.okHttpClient
 
-    /** Per-gallery concurrency guard so a single reader cannot saturate EH (contract 429). */
-    private val galleryFetchers = ConcurrentHashMap<Long, Semaphore>()
+    /**
+     * In-flight page fetches keyed by (galleryId, page): concurrent requests
+     * for the SAME page share one upstream fetch instead of each tripping the
+     * gallery concurrency limit (a reader's srcset 1x/2x + dual-page mode used
+     * to race 4+ requests against a Semaphore(2) → spurious 429 storms).
+     */
+    private val pageFetchers = ConcurrentHashMap<String, CompletableFuture<ResponseEntity<*>>>()
+    /** Per-gallery concurrency cap so one reader cannot saturate EH. */
+    private val gallerySemaphores = ConcurrentHashMap<Long, java.util.concurrent.Semaphore>()
 
     // ── legacy endpoints (kept intact) ───────────────────────────
 
@@ -168,12 +176,42 @@ class ImageProxyController(
         }
 
         // 2. Cache miss — fetch from Gallery Site via the shared session client.
-        val fetcher = galleryFetchers.computeIfAbsent(galleryId) { Semaphore(MAX_CONCURRENT_PAGE_FETCHES) }
+        //    Concurrent requests for the same (galleryId, page) share ONE upstream
+        //    fetch (srcset 1x/2x + dual-page mode issue several identical requests);
+        //    distinct pages are additionally capped per-gallery so one reader
+        //    cannot saturate EH. A busy page waits for the in-flight fetch instead
+        //    of immediately 429ing (old behavior caused retry storms).
+        val key = "$galleryId:$page"
+        val existing = pageFetchers[key]
+        if (existing != null) {
+            return try {
+                existing.join()
+            } catch (e: Exception) {
+                logger.warn("In-flight page fetch failed for gid={} page={}", galleryId, page, e)
+                notFound(galleryId, page)
+            }
+        }
+        val fetcher = gallerySemaphores.computeIfAbsent(galleryId) { java.util.concurrent.Semaphore(MAX_CONCURRENT_PAGE_FETCHES) }
         if (!fetcher.tryAcquire()) {
+            // Distinct-page concurrency cap reached — degrade to 429; the client
+            // retries with backoff (see PageMode). Never queues unboundedly.
             return rateLimited(galleryId, page)
         }
+        val future = CompletableFuture.supplyAsync {
+            try {
+                fetchAndServe(galleryId, page, range)
+            } finally {
+                fetcher.release()
+            }
+        }
+        val raced = pageFetchers.putIfAbsent(key, future)
+        if (raced != null) {
+            // Another thread registered the same page first — wait on theirs.
+            fetcher.release()
+            return raced.join()
+        }
         try {
-            val response = fetchAndServe(galleryId, page, range)
+            val response = future.join()
             // Reader prefetch: warm the next pages in the background, only when
             // this page was actually served (fire-and-forget, never blocks).
             if (response.statusCode.is2xxSuccessful) {
@@ -181,8 +219,7 @@ class ImageProxyController(
             }
             return response
         } finally {
-            fetcher.release()
-            galleryFetchers.remove(galleryId, fetcher)
+            pageFetchers.remove(key, future)
         }
     }
 
@@ -198,6 +235,11 @@ class ImageProxyController(
             if (e.code == 509) return rateLimited(galleryId, page)
             logger.warn("Failed to resolve page URL for gid={} page={}: {}", galleryId, page, e.message)
             return notFound(galleryId, page)
+        } catch (e: SiteException) {
+            // "Invalid page." is what EH serves when the (anonymous) session
+            // cannot read the page — the gallery needs a signed-in EH session.
+            logger.warn("Page URL rejected by site for gid={} page={} (likely session-gated): {}", galleryId, page, e.message)
+            return sessionRequired(galleryId, page)
         } catch (e: Exception) {
             logger.warn("Failed to resolve page URL for gid={} page={}", galleryId, page, e)
             return notFound(galleryId, page)
@@ -345,6 +387,15 @@ class ImageProxyController(
             HttpStatus.TOO_MANY_REQUESTS,
             "RATE_LIMITED",
             "rate limited: too many concurrent fetches for this gallery"
+        )
+    }
+
+    /** EH gated the page behind a signed-in session ("Invalid page." / similar). */
+    private fun sessionRequired(galleryId: Long, page: Int): ResponseEntity<*> {
+        return errorEnvelope(
+            HttpStatus.UNAUTHORIZED,
+            "SESSION_REQUIRED",
+            "该画廊需要登录 EH 会话才能阅读"
         )
     }
 }
