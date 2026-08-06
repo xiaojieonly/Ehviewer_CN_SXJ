@@ -8,11 +8,16 @@ import { AppSegmented, AppSwitch, AppTextField } from '@/components/form'
 
 vi.mock('@/api/auth', () => ({
   authApi: {
-    ehLogin: vi.fn(),
     ehLogout: vi.fn(),
     ehSession: vi.fn(),
     setEhSite: vi.fn(),
   },
+}))
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: pushMock }),
 }))
 
 vi.mock('@/api/settings', () => ({
@@ -73,7 +78,6 @@ describe('AdminEhSession (EH 会话)', () => {
 
   beforeEach(() => {
     vi.mocked(authApi.ehSession).mockResolvedValue(SIGNED_OUT)
-    vi.mocked(authApi.ehLogin).mockResolvedValue({ success: true, message: 'ok', username: 'u' })
     vi.mocked(authApi.ehLogout).mockResolvedValue({ success: true, message: 'ok' })
     vi.mocked(authApi.setEhSite).mockResolvedValue({ success: true, message: 'ok' })
     vi.mocked(settingsApi.get).mockResolvedValue(settingsWithProxy())
@@ -105,47 +109,34 @@ describe('AdminEhSession (EH 会话)', () => {
     const w = await mountView()
     expect(authApi.ehSession).toHaveBeenCalledTimes(1)
     expect(w.text()).toContain('未登录')
-    expect(w.text()).toContain('登录')
   })
 
-  it('renders the login form with username and password fields when signed out', async () => {
+  it('renders the Android login guide when signed out (no credential form)', async () => {
     const w = await mountView()
+    expect(w.text()).toContain('在 Android 上登录')
+    // 表单登录已移除：不再有 EH 用户名/密码输入框。
     const ehFields = w
       .findAllComponents(AppTextField)
       .filter((f) => (f.props('ariaLabel') ?? '').startsWith('EH'))
-    expect(ehFields.map((f) => f.props('ariaLabel'))).toEqual(['EH 用户名', 'EH 密码'])
-    expect(field('EH 密码').props('type')).toBe('password')
-    expect(w.find('button.eh-session__btn--primary').text()).toBe('登录')
+    expect(ehFields.length).toBe(0)
   })
 
-  it('submits ehLogin with the entered credentials and refreshes on success', async () => {
+  it('navigates to the pairing page from the guide', async () => {
     const w = await mountView()
-    await field('EH 用户名').find('input').setValue('myuser')
-    await field('EH 密码').find('input').setValue('secret')
-    await w.find('button.eh-session__btn--primary').trigger('click')
+    await w.findAll('button').find((b) => b.text() === '配对设备')!.trigger('click')
+    expect(pushMock).toHaveBeenCalledWith('/admin/devices')
+  })
+
+  it('refreshes the session state via the guide button', async () => {
+    vi.mocked(authApi.ehSession)
+      .mockResolvedValueOnce(SIGNED_OUT)
+      .mockResolvedValueOnce(SIGNED_IN)
+    const w = await mountView()
+    await w.findAll('button').find((b) => b.text() === '刷新状态')!.trigger('click')
     await flushPromises()
-    expect(authApi.ehLogin).toHaveBeenCalledWith('myuser', 'secret')
-    // Mount-time fetch + post-login refresh.
+    // Mount-time fetch + manual refresh.
     expect(authApi.ehSession).toHaveBeenCalledTimes(2)
-  })
-
-  it('shows the server message when login fails', async () => {
-    vi.mocked(authApi.ehLogin).mockResolvedValue({ success: false, message: 'Invalid username or password.' })
-    const w = await mountView()
-    await field('EH 用户名').find('input').setValue('myuser')
-    await field('EH 密码').find('input').setValue('bad')
-    await w.find('button.eh-session__btn--primary').trigger('click')
-    await flushPromises()
-    expect(w.find('[role="alert"]').text()).toContain('Invalid username or password.')
-    expect(authApi.ehSession).toHaveBeenCalledTimes(1)
-  })
-
-  it('shows a validation error when credentials are missing', async () => {
-    const w = await mountView()
-    await w.find('button.eh-session__btn--primary').trigger('click')
-    await flushPromises()
-    expect(w.find('[role="alert"]').text()).toContain('请输入用户名和密码')
-    expect(authApi.ehLogin).not.toHaveBeenCalled()
+    expect(w.text()).toContain('已登录')
   })
 
   it('renders cookies and a logout button when signed in', async () => {
@@ -158,11 +149,11 @@ describe('AdminEhSession (EH 会话)', () => {
     expect(w.find('button.eh-session__btn--danger').text()).toBe('登出')
   })
 
-  it('shows the expired badge and renders the login form for an expired session', async () => {
+  it('shows the expired badge and renders the login guide for an expired session', async () => {
     vi.mocked(authApi.ehSession).mockResolvedValue(EXPIRED)
     const w = await mountView()
     expect(w.text()).toContain('已过期')
-    expect(field('EH 用户名').exists()).toBe(true)
+    expect(w.text()).toContain('在 Android 上登录')
   })
 
   it('calls ehLogout and refreshes the session when logging out', async () => {

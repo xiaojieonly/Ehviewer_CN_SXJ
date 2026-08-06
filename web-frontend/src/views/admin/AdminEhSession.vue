@@ -5,7 +5,9 @@
 
     - 站点选择：GET /auth/eh-session 返回 gallerySite（0=e-hentai，1=exhentai），
       切换走 PUT /auth/eh-site {gallerySite}。
-    - 会话状态：POST /auth/eh-login 建立会话、POST /auth/eh-logout 撤销、cookie 列表。
+    - 会话状态：EH 登录在 Android App 内完成（WebView 通过 Cloudflare/CAPTCHA），
+      cookie 经 ehSession 同步实体自动上传；本页 POST /auth/eh-logout 撤销、
+      展示 cookie 列表，并提供「刷新状态」检测同步结果。
     - 出站代理：GET/PUT /api/v1/settings {proxy} 读取/保存，POST /api/v1/proxy/test
       用表单当前值测试连通性。
 
@@ -50,45 +52,37 @@
         </PrefCard>
       </section>
 
-      <!-- ═══ 登录（未登录 / 已过期） ═════════════════════════════════════ -->
+      <!-- ═══ 登录引导（未登录 / 已过期） ═════════════════════════════════ -->
       <section v-if="!session || !session.signedIn || session.expired">
-        <SectionHeader title="登录 E-Hentai" />
+        <SectionHeader title="EH 会话登录" />
         <PrefCard>
-          <PrefRow icon="cookie-brown" title="用户名" summary="E-Hentai 账号用户名">
-            <div class="eh-session__field">
-              <AppTextField
-                v-model="username"
-                :disabled="loggingIn"
-                autocomplete="username"
-                aria-label="EH 用户名"
-              />
-            </div>
-          </PrefRow>
-          <PrefRow icon="sec-primary" title="密码" summary="仅发送到你的 WebUI 服务器用于站点登录">
-            <div class="eh-session__field">
-              <AppTextField
-                v-model="password"
-                type="password"
-                :disabled="loggingIn"
-                autocomplete="current-password"
-                aria-label="EH 密码"
-              />
+          <PrefRow
+            icon="mobile-hand-left"
+            title="在 Android 上登录"
+            summary="EH 登录请在 Android App 中完成，登录成功后会自动同步到本服务器"
+          >
+            <div class="eh-session__guide-actions">
+              <button
+                type="button"
+                class="eh-session__btn eh-session__btn--secondary"
+                @click="goPairDevices"
+              >
+                配对设备
+              </button>
+              <button
+                type="button"
+                class="eh-session__btn eh-session__btn--primary"
+                :disabled="checkingSession"
+                @click="checkSession"
+              >
+                {{ checkingSession ? '检查中…' : '刷新状态' }}
+              </button>
             </div>
           </PrefRow>
         </PrefCard>
-
-        <p v-if="error" class="eh-session__error" role="alert">{{ error }}</p>
-
-        <div class="eh-session__actions">
-          <button
-            type="button"
-            class="eh-session__btn eh-session__btn--primary"
-            :disabled="loggingIn"
-            @click="login"
-          >
-            {{ loggingIn ? '登录中…' : '登录' }}
-          </button>
-        </div>
+        <p class="eh-session__note">
+          提示：EH 登录需在 Android App 中完成（App 内置浏览器可正常通过 Cloudflare 等验证）。若设备尚未配对，请先到「设备与配对」生成配对码；登录后 App 会自动将会话 cookie 同步到本服务器，点击「刷新状态」确认同步结果。
+        </p>
       </section>
 
       <!-- ═══ 已登录：身份 cookie 列表 ═══════════════════════════════════ -->
@@ -290,6 +284,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { authApi, type EhSessionCookie, type EhSessionResponse } from '@/api/auth'
 import { settingsApi, type ProxySettings } from '@/api/settings'
 import client from '@/api/client'
@@ -320,14 +315,13 @@ const PROXY_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'socks5', label: 'SOCKS5' },
 ]
 
+const router = useRouter()
+
 const session = ref<EhSessionResponse | null>(null)
 const gallerySite = ref(0)
 const siteSwitching = ref(false)
-const username = ref('')
-const password = ref('')
-const loggingIn = ref(false)
+const checkingSession = ref(false)
 const loggingOut = ref(false)
-const error = ref('')
 
 const proxyForm = reactive<ProxySettings>({
   enabled: false,
@@ -414,28 +408,27 @@ async function onSiteChange(value: string): Promise<void> {
   }
 }
 
-async function login(): Promise<void> {
-  if (loggingIn.value) return
-  const user = username.value.trim()
-  if (!user || !password.value) {
-    error.value = '请输入用户名和密码'
-    return
-  }
-  error.value = ''
-  loggingIn.value = true
+/** 跳到「设备与配对」页生成配对码。 */
+function goPairDevices(): void {
+  void router.push('/admin/devices')
+}
+
+/** 重新拉取 EH 会话状态，检测 Android 端登录是否已同步到本服务器。 */
+async function checkSession(): Promise<void> {
+  if (checkingSession.value) return
+  checkingSession.value = true
   try {
-    const response = await authApi.ehLogin(user, password.value)
-    if (response.success) {
-      password.value = ''
-      showSnack('EH 会话已建立')
-      await refresh()
-    } else {
-      error.value = response.message || '登录失败'
-    }
-  } catch (thrown) {
-    error.value = messageOf(thrown, '登录失败，请检查服务器')
+    await refresh()
+    const state = session.value
+    showSnack(
+      state && state.signedIn && !state.expired
+        ? 'EH 会话已同步到服务器'
+        : state?.expired
+          ? 'EH 会话已过期，请在 Android 重新登录'
+          : '尚未检测到 EH 会话，请在 Android 完成登录',
+    )
   } finally {
-    loggingIn.value = false
+    checkingSession.value = false
   }
 }
 
@@ -592,10 +585,12 @@ onMounted(() => {
   color: #e5484d;
 }
 
-/* ------------------------------- 输入框 --------------------------------- */
+/* ------------------------------- 引导操作 -------------------------------- */
 
-.eh-session__field {
-  width: 220px;
+.eh-session__guide-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* ------------------------------- cookie 行 ------------------------------ */
@@ -674,17 +669,6 @@ onMounted(() => {
   border: 1px solid color-mix(in srgb, #e5484d 55%, transparent);
   background: transparent;
   color: #e5484d;
-}
-
-/* ------------------------------- 登录错误 -------------------------------- */
-
-.eh-session__error {
-  margin: 12px 4px 0;
-  padding: 10px 14px;
-  border-radius: var(--card-radius);
-  background: color-mix(in srgb, #e5484d 12%, transparent);
-  color: #e5484d;
-  font-size: var(--text-super-small);
 }
 
 /* -------------------------------- 代理 -------------------------------- */

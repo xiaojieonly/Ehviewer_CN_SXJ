@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -17,6 +18,7 @@ import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.SiteUtils
 import com.hippo.anotherviewer.R
 import com.hippo.anotherviewer.ui.scene.SolidScene
+import com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler
 import androidx.appcompat.app.AlertDialog
 import com.hippo.lib.yorozuya.AssertUtils
 import okhttp3.Cookie
@@ -144,6 +146,10 @@ class WebViewSignInScene : SolidScene() {
             }
 
             if (getId && getHash) {
+                // Cookies captured: sync the fresh EH session up to the WebUI
+                // server immediately (fire-and-forget, silent when unpaired).
+                Toast.makeText(context, R.string.webui_syncing_login, Toast.LENGTH_SHORT).show()
+                WebUiAutoSyncScheduler.triggerOnce(context)
                 setResult(RESULT_OK, null)
                 finish()
             }

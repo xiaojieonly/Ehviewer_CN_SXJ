@@ -960,6 +960,12 @@
     <string name="settings_webui_pairing">Pairing…</string>
     <string name="settings_webui_pair_done">Paired, pulling server settings</string>
     <string name="settings_webui_pair_failed">Pairing failed: %s</string>
+    <string name="settings_webui_setup_title">Configure WebUI server</string>
+    <string name="settings_webui_setup_desc">Connect to your WebUI server to sync data</string>
+    <string name="settings_webui_save_and_pair">Save and pair</string>
+    <string name="settings_webui_setup_skip">Skip</string>
+    <string name="settings_webui_setup_saved">Configuration saved. Complete pairing under Settings → Server Sync</string>
+    <string name="webui_syncing_login">Syncing login info…</string>
     <string name="download_choose_location">Download to</string>
     <string name="download_local">This device</string>
     <string name="download_delegate_server">On the server</string>

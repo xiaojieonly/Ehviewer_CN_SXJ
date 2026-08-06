@@ -1183,6 +1183,12 @@
     <string name="settings_webui_pairing">正在配对…</string>
     <string name="settings_webui_pair_done">配对成功，正在拉取服务器配置</string>
     <string name="settings_webui_pair_failed">配对失败：%s</string>
+    <string name="settings_webui_setup_title">配置 WebUI 服务器</string>
+    <string name="settings_webui_setup_desc">连接你的 WebUI 服务器以同步数据</string>
+    <string name="settings_webui_save_and_pair">保存并配对</string>
+    <string name="settings_webui_setup_skip">跳过</string>
+    <string name="settings_webui_setup_saved">配置已保存，请在 设置 → 服务器同步 中完成配对</string>
+    <string name="webui_syncing_login">正在同步登录信息…</string>
     <string name="download_choose_location">下载位置</string>
     <string name="download_local">本机下载</string>
     <string name="download_delegate_server">在服务器上下载</string>

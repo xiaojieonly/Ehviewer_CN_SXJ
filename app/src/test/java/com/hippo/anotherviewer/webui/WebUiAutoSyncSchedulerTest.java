@@ -112,6 +112,19 @@ public class WebUiAutoSyncSchedulerTest {
     }
 
     @Test
+    public void trigger_unpairedToken_skipsSync() {
+        FakeSettings settings = new FakeSettings();
+        settings.config = new WebUiConfig("http", "127.0.0.1", 8080, "user", "");
+        FakeRunner runner = new FakeRunner();
+
+        boolean ran = WebUiAutoSyncScheduler.runTriggerOnce(settings, runner);
+
+        assertFalse("no sync before pairing completes", ran);
+        assertEquals("sync must not run", -1L, runner.capturedSince);
+        assertEquals("watermark untouched", Long.MIN_VALUE, settings.savedWatermark);
+    }
+
+    @Test
     public void trigger_configured_runsSyncAndPersistsWatermark() {
         FakeSettings settings = new FakeSettings();
         settings.config = configured();

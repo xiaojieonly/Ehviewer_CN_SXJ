@@ -96,7 +96,10 @@ import com.hippo.anotherviewer.ui.scene.SelectSiteScene;
 import com.hippo.anotherviewer.ui.scene.sign.SignInScene;
 import com.hippo.anotherviewer.ui.scene.SolidScene;
 import com.hippo.anotherviewer.ui.scene.WarningScene;
+import com.hippo.anotherviewer.ui.scene.WebUiSetupScene;
 import com.hippo.anotherviewer.ui.scene.sign.WebViewSignInScene;
+import com.hippo.anotherviewer.webui.WebUiConfig;
+import com.hippo.anotherviewer.webui.WebUiSettings;
 import com.hippo.anotherviewer.ui.splash.SplashActivity;
 import com.hippo.anotherviewer.widget.SiteDrawerLayout;
 import com.hippo.anotherviewer.widget.LimitsCountView;
@@ -180,6 +183,7 @@ public final class MainActivity extends StageActivity
         registerLaunchMode(CookieSignInScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GetProfileScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(SelectSiteScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
+        registerLaunchMode(WebUiSetupScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(SiteTopListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(QuickSearchScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
@@ -222,6 +226,8 @@ public final class MainActivity extends StageActivity
             return new Announcer(WarningScene.class);
         } else if (Settings.getAskAnalytics()) {
             return new Announcer(AnalyticsScene.class);
+        } else if (needWebUiSetup()) {
+            return new Announcer(WebUiSetupScene.class);
         } else if (SiteUtils.needSignedIn(this)) {
             return new Announcer(SignInScene.class);
         } else if (Settings.getSelectSite()) {
@@ -251,6 +257,11 @@ public final class MainActivity extends StageActivity
                 newArgs.putString(AnalyticsScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
                 newArgs.putBundle(AnalyticsScene.KEY_TARGET_ARGS, announcer.getArgs());
                 return new Announcer(AnalyticsScene.class).setArgs(newArgs);
+            } else if (needWebUiSetup()) {
+                Bundle newArgs = new Bundle();
+                newArgs.putString(WebUiSetupScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
+                newArgs.putBundle(WebUiSetupScene.KEY_TARGET_ARGS, announcer.getArgs());
+                return new Announcer(WebUiSetupScene.class).setArgs(newArgs);
             } else if (SiteUtils.needSignedIn(this)) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(SignInScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
@@ -264,6 +275,18 @@ public final class MainActivity extends StageActivity
             }
         }
         return announcer;
+    }
+
+    /**
+     * The first-launch "configure WebUI server" step is due until the user
+     * explicitly skips it or a server is configured with a pairing token.
+     */
+    private boolean needWebUiSetup() {
+        if (Settings.getBoolean(WebUiSetupScene.KEY_SKIP, false)) {
+            return false;
+        }
+        WebUiConfig config = new WebUiSettings(this).loadConfig();
+        return config == null || TextUtils.isEmpty(config.getToken());
     }
 
     private File saveImageToTempFile(UniFile file) {

@@ -22,6 +22,7 @@ import android.net.Network;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
@@ -159,17 +160,41 @@ public final class WebUiAutoSyncScheduler {
     }
 
     /**
+     * Fire-and-forget immediate sync on the production settings, for callers
+     * that want one cycle right now (e.g. right after an EH login, so the new
+     * session reaches the server without waiting for the next auto-sync leg).
+     * No-ops silently when the server is not configured or not paired yet
+     * (no token); the watermark advances only on success and failures are
+     * swallowed, exactly like the auto-sync legs.
+     */
+    public static void triggerOnce(@NonNull Context context) {
+        final WebUiSettings settings = new WebUiSettings(context.getApplicationContext());
+        if (settings.loadConfig() == null) return;
+        Thread thread = new Thread(() -> {
+            try {
+                runTriggerOnce(wrap(settings), WebUiSyncEngine::sync);
+            } catch (Throwable ignored) {
+                // Fire-and-forget: never surface sync failures.
+            }
+        }, "webui-sync-once");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
      * Synchronous trigger core, extracted for testability (D4). Runs one sync
      * cycle when a server is configured, seeding {@code since} from the stored
      * per-server watermark and persisting the returned server timestamp; a
      * failed sync leaves the watermark untouched so the next trigger retries.
+     * A configured-but-unpaired server (no token yet) also skips the cycle.
      *
      * @return {@code true} if a sync cycle ran successfully, {@code false} if
-     *         skipped (no server configured) or the sync threw.
+     *         skipped (no server configured / not paired) or the sync threw.
      */
     static boolean runTriggerOnce(@NonNull SettingsSource settings, @NonNull SyncRunner runner) {
         WebUiConfig config = settings.loadConfig();
         if (config == null) return false;
+        if (TextUtils.isEmpty(config.getToken())) return false;
         String serverKey = config.baseUrl();
         try {
             WebUiSyncEngine.Result result = runner.run(config, settings.deviceId(), settings.lastSyncTimestamp(serverKey));

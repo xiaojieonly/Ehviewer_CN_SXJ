@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,6 +44,7 @@ import com.hippo.anotherviewer.client.parser.ProfileParser;
 import com.hippo.anotherviewer.ui.MainActivity;
 import com.hippo.anotherviewer.ui.scene.SiteCallback;
 import com.hippo.anotherviewer.ui.scene.SolidScene;
+import com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
@@ -371,6 +373,10 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         }
 
         if (SiteApplication.getSiteCookieStore(context).hasSignedIn()) {
+            // Fresh EH session: sync it up to the WebUI server immediately
+            // (fire-and-forget, silent when no server is paired).
+            Toast.makeText(context, R.string.webui_syncing_login, Toast.LENGTH_SHORT).show();
+            WebUiAutoSyncScheduler.triggerOnce(context);
             getProfile();
         } else {
             mSigningIn = false;

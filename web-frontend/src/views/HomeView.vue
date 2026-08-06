@@ -72,6 +72,12 @@
             登录
           </button>
         </div>
+        <p v-if="ehSessionChecked && !ehSignedIn" class="home__empty-eh-hint">
+          未登录 EH 会话，画廊可能无法阅读
+          <button type="button" class="home__empty-eh-link" @click.stop="goEhSession">
+            前往配置
+          </button>
+        </p>
       </template>
       <!-- Toplist feed: lightweight ranked rows (rank + tag + value).
            Feed mode replaces the virtualized gallery grid entirely. -->
@@ -150,6 +156,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { authApi } from '@/api/auth'
 import { galleryApi, type FeedMode } from '@/api/gallery'
 import { isOfflineError } from '@/api/client'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -346,6 +353,29 @@ function goSearch(): void {
 /** Empty state: guide to login when the user isn't authenticated. */
 function goLogin(): void {
   void router.push('/login')
+}
+
+/* ------------------------- empty-state EH session hint ------------------- */
+
+/** EH session synced from the Android app (expired counts as not signed in). */
+const ehSignedIn = ref(false)
+const ehSessionChecked = ref(false)
+
+/** Empty state: guide to the EH session config when the session isn't synced. */
+function goEhSession(): void {
+  void router.push('/admin/eh')
+}
+
+/** Probe the EH session state once on mount; failures keep the hint visible. */
+async function checkEhSession(): Promise<void> {
+  try {
+    const state = await authApi.ehSession()
+    ehSignedIn.value = state.signedIn && !state.expired
+  } catch {
+    /* 无法确认时保守提示。 */
+  } finally {
+    ehSessionChecked.value = true
+  }
 }
 
 /* ------------------------------ list/grid mode -------------------------- */
@@ -669,6 +699,9 @@ onMounted(() => {
   if (!preferencesStore.prefs && !preferencesStore.loading) {
     void preferencesStore.load()
   }
+  // Probe the EH session once so the empty-state hint can guide users whose
+  // Android-login session hasn't synced yet (or has expired).
+  void checkEhSession()
   void loadPage(0, 'replace')
 })
 

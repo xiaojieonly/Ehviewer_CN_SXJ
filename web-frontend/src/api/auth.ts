@@ -8,13 +8,6 @@ export interface AuthStatusResult extends AuthStatusResponse {
   ehSessionExpired?: boolean
 }
 
-/** POST /auth/eh-login — E-Hentai sign-in (400 carries the same shape with success=false). */
-export interface EhLoginResponse {
-  success: boolean
-  message: string
-  username?: string
-}
-
 /** POST /auth/eh-logout — tear down the stored E-Hentai session. */
 export interface EhLogoutResponse {
   success: boolean
@@ -77,20 +70,6 @@ export const authApi = {
 
   async logout(): Promise<void> {
     await client.post('/auth/logout')
-  },
-
-  /** Sign the server into E-Hentai. 400 comes back as `{success:false, message}`. */
-  async ehLogin(username: string, password: string): Promise<EhLoginResponse> {
-    try {
-      const { data } = await client.post('/auth/eh-login', { username, password })
-      return data
-    } catch (error) {
-      // Bad credentials answer 400 with the same shape — surface the body
-      // so the view can show the exact message instead of throwing.
-      const body = (error as { response?: { data?: EhLoginResponse } }).response?.data
-      if (body) return body
-      throw error
-    }
   },
 
   async ehLogout(): Promise<EhLogoutResponse> {
