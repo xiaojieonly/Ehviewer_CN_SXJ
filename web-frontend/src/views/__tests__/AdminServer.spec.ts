@@ -2,16 +2,50 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminServer from '../admin/AdminServer.vue'
 import { settingsApi, type Settings } from '@/api/settings'
-import client from '@/api/client'
+import { imageApi } from '@/api/image'
+import { jobsApi, type Job, type JobType } from '@/api/jobs'
+import type { JobWsEnvelope } from '@/composables/useWebSocket'
 import { AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
 }))
 
-vi.mock('@/api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+vi.mock('@/api/image', () => ({
+  imageApi: { getCacheStatus: vi.fn(), clearCacheAsync: vi.fn() },
 }))
+
+vi.mock('@/api/jobs', () => ({
+  jobsApi: { getJob: vi.fn(), getActiveJob: vi.fn() },
+}))
+
+// JobProgressPanel 与 F1a 并行开发，用桩隔离避免依赖其实现（plan B3/任务说明）。
+vi.mock('@/components/jobs/JobProgressPanel.vue', () => ({
+  default: { props: ['job', 'title'], template: '<div data-testid="job-panel" />' },
+}))
+
+const ws = vi.hoisted(() => ({
+  subscribeJob: vi.fn((_jobId: string, _cb: unknown) => vi.fn()),
+}))
+vi.mock('@/composables/useWebSocket', () => ({
+  useWebSocket: vi.fn(() => ws),
+}))
+
+/** A1 Job schema 最小构造器。 */
+function job(partial: Partial<Job> & { jobId: string; type: JobType }): Job {
+  return {
+    state: 'RUNNING',
+    stage: null,
+    percent: 0,
+    processed: 0,
+    total: 0,
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    result: null,
+    ...partial,
+  }
+}
 
 function fullSettings(): Settings {
   return {
@@ -37,8 +71,10 @@ describe('AdminServer (服务器)', () => {
   beforeEach(() => {
     vi.mocked(settingsApi.get).mockResolvedValue(fullSettings())
     vi.mocked(settingsApi.update).mockResolvedValue(true)
-    vi.mocked(client.get).mockResolvedValue({ data: { cacheSize: 5 } })
-    vi.mocked(client.post).mockResolvedValue({ data: {} })
+    vi.mocked(imageApi.getCacheStatus).mockResolvedValue({ cacheSize: 5 })
+    vi.mocked(jobsApi.getActiveJob).mockRejectedValue(new Error('404'))
+    vi.mocked(jobsApi.getJob).mockRejectedValue(new Error('404'))
+    ws.subscribeJob.mockClear()
   })
 
   afterEach(() => {
@@ -53,6 +89,11 @@ describe('AdminServer (服务器)', () => {
     })
     await flushPromises()
     return wrapper
+  }
+
+  /** 最近一次 subscribeJob 的 WS 回调（组件经 useWebSocket().subscribeJob(jobId, cb) 注册）。 */
+  function jobCallback(): (event: JobWsEnvelope) => void {
+    return ws.subscribeJob.mock.calls[0]![1] as unknown as (event: JobWsEnvelope) => void
   }
 
   it('renders shared primitives with AppTextField and AppSwitch', async () => {
@@ -107,33 +148,92 @@ describe('AdminServer (服务器)', () => {
   })
 
   it('loads and renders the cache size on mount', async () => {
-    vi.mocked(client.get).mockResolvedValue({ data: { cacheSize: 42 } })
+    vi.mocked(imageApi.getCacheStatus).mockResolvedValue({ cacheSize: 42 })
     const w = await mountView()
-    expect(client.get).toHaveBeenCalledWith('/image/cache/status')
+    expect(imageApi.getCacheStatus).toHaveBeenCalledWith()
     expect(w.text()).toContain('42 张')
   })
 
   it('renders an em dash when the cache status request fails', async () => {
-    vi.mocked(client.get).mockRejectedValue(new Error('offline'))
+    vi.mocked(imageApi.getCacheStatus).mockRejectedValue(new Error('offline'))
     const w = await mountView()
     expect(w.text()).toContain('—')
   })
 
-  it('clears the cache, shows a success snackbar, and refreshes the cache size', async () => {
+  it('submits an async cache clear, shows the progress panel, and refreshes stats on completion', async () => {
+    vi.mocked(imageApi.clearCacheAsync).mockResolvedValue(
+      job({ jobId: 'job-clear-1', type: 'CACHE_CLEAR', state: 'PENDING' }),
+    )
     const w = await mountView()
+
     await w.find('[aria-label="清除缓存"]').trigger('click')
     await flushPromises()
-    expect(client.post).toHaveBeenCalledWith('/image/cache/clear')
+
+    expect(imageApi.clearCacheAsync).toHaveBeenCalledTimes(1)
+    expect(w.find('[data-testid="job-panel"]').exists()).toBe(true)
+
+    // WS 进度事件推进面板。
+    jobCallback()({
+      type: 'job.progress',
+      timestamp: 1,
+      version: '1.1',
+      payload: { jobId: 'job-clear-1', type: 'CACHE_CLEAR', stage: '删除缓存文件', percent: 50, processed: 5, total: 10 },
+    })
+    await flushPromises()
+    expect(w.find('[data-testid="job-panel"]').exists()).toBe(true)
+
+    // WS 完成 → 成功 snack + 刷新缓存统计。
+    jobCallback()({
+      type: 'job.completed',
+      timestamp: 2,
+      version: '1.1',
+      payload: { jobId: 'job-clear-1', type: 'CACHE_CLEAR', result: { removed: 10, total: 10 } },
+    })
+    await flushPromises()
+
+    expect(w.find('[data-testid="job-panel"]').exists()).toBe(false)
     expect(w.text()).toContain('缓存已清除')
-    expect(client.get).toHaveBeenCalledTimes(2)
-    expect(client.get).toHaveBeenCalledWith('/image/cache/status')
+    expect(imageApi.getCacheStatus).toHaveBeenCalledTimes(2)
   })
 
-  it('shows an error snackbar when clearing the cache fails', async () => {
-    vi.mocked(client.post).mockRejectedValue(new Error('boom'))
+  it('shows an error snackbar when the clear job fails', async () => {
+    vi.mocked(imageApi.clearCacheAsync).mockResolvedValue(
+      job({ jobId: 'job-clear-1', type: 'CACHE_CLEAR', state: 'RUNNING' }),
+    )
     const w = await mountView()
+
     await w.find('[aria-label="清除缓存"]').trigger('click')
     await flushPromises()
+
+    jobCallback()({
+      type: 'job.failed',
+      timestamp: 1,
+      version: '1.1',
+      payload: { jobId: 'job-clear-1', type: 'CACHE_CLEAR', error: '磁盘错误' },
+    })
+    await flushPromises()
+
+    expect(w.text()).toContain('清除缓存失败：磁盘错误')
+  })
+
+  it('shows an error snackbar when submitting the clear fails', async () => {
+    vi.mocked(imageApi.clearCacheAsync).mockRejectedValue(new Error('boom'))
+    const w = await mountView()
+
+    await w.find('[aria-label="清除缓存"]').trigger('click')
+    await flushPromises()
+
     expect(w.text()).toContain('无法清除缓存')
+    expect(ws.subscribeJob).not.toHaveBeenCalled()
+  })
+
+  it('re-attaches to a running clear job on mount', async () => {
+    vi.mocked(jobsApi.getActiveJob).mockResolvedValue(
+      job({ jobId: 'job-clear-run', type: 'CACHE_CLEAR', state: 'RUNNING', stage: '删除缓存文件', percent: 30, processed: 3, total: 10 }),
+    )
+    const w = await mountView()
+
+    expect(ws.subscribeJob).toHaveBeenCalledWith('job-clear-run', expect.any(Function))
+    expect(w.find('[data-testid="job-panel"]').exists()).toBe(true)
   })
 })

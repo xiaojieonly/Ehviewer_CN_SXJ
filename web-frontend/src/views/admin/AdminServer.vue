@@ -8,8 +8,9 @@
     - 缓存路径 / 缓存大小 → settingsApi.update({ cache: { ... } })；
     - SMB 备份开关 → settingsApi.update({ smb: { enabled } })，
       开启后展示「前往备份页面」链接（/smb-backup）；
-    - 缓存统计 → GET /api/v1/image/cache/status（缓存条目数）；
-    - 清除缓存 → POST /api/v1/image/cache/clear，请求期间按钮置为加载态。
+    - 缓存统计 → imageApi.getCacheStatus()（缓存条目数）；
+    - 清除缓存 → imageApi.clearCacheAsync()：202 提交 CACHE_CLEAR Job，
+      WS 进度（JobProgressPanel「清缓存」）+ jobsApi 轮询兜底，完成后刷新统计。
 
   缓存路径与缓存大小在编辑完成（change 事件）后保存，失败时回滚本地值。
 -->
@@ -64,6 +65,7 @@
               <span class="server__badge">{{ clearingCache ? '清除中…' : '清除' }}</span>
             </button>
           </PrefRow>
+          <JobProgressPanel v-if="clearingCache" :job="activeJob" title="清缓存" />
         </PrefCard>
       </section>
 
@@ -102,17 +104,21 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
-import client from '@/api/client'
+import { imageApi } from '@/api/image'
+import { jobsApi, type Job, type JobType } from '@/api/jobs'
+import JobProgressPanel from '@/components/jobs/JobProgressPanel.vue'
+import { useWebSocket } from '@/composables/useWebSocket'
+import type { JobWsEnvelope } from '@/composables/useWebSocket'
+import axios from 'axios'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const server = ref<Settings | null>(null)
 const pathDraft = ref('')
 const sizeDraft = ref<number | null>(null)
-const clearingCache = ref(false)
 const cacheSize = ref<number | null>(null)
 
 const snack = ref('')
@@ -124,6 +130,151 @@ function showSnack(message: string): void {
   snackTimer = window.setTimeout(() => {
     snack.value = ''
   }, 2600)
+}
+
+/* ---------------------- Job 进度跟踪器（plan A6） ---------------------- */
+
+const { subscribeJob } = useWebSocket()
+
+/** 当前跟踪的 CACHE_CLEAR 任务（RUNNING 时渲染 JobProgressPanel「清缓存」）。 */
+const activeJob = ref<Job | null>(null)
+let pollTimer: number | undefined
+let jobUnsubscribe: (() => void) | undefined
+
+const clearingCache = computed(() => isJobActive('CACHE_CLEAR'))
+
+/** 该类型任务是否仍在进行（进度面板据此显示，按钮据此禁用）。 */
+function isJobActive(type: JobType): boolean {
+  const job = activeJob.value
+  return job !== null && job.type === type && (job.state === 'PENDING' || job.state === 'RUNNING')
+}
+
+function stopJobTracking(): void {
+  if (pollTimer) {
+    window.clearInterval(pollTimer)
+    pollTimer = undefined
+  }
+  jobUnsubscribe?.()
+  jobUnsubscribe = undefined
+}
+
+/**
+ * 挂跟踪器：WS 订阅 + 1s 轮询兜底（WS 断线时完成/失败可能收不到），
+ * 收到终态（或任务消失）即停；WS 与轮询先到者生效，后到者被 settled 忽略。
+ */
+function trackJob(
+  type: JobType,
+  job: Job,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): void {
+  // 重复提交被服务端 409 后自动挂回同一任务 → 已在跟踪则跳过。
+  if (activeJob.value?.jobId === job.jobId && pollTimer !== undefined) return
+  stopJobTracking()
+  activeJob.value = { ...job, type }
+  let settled = false
+  const settle = (): void => {
+    if (settled) return
+    settled = true
+    stopJobTracking()
+  }
+  const complete = (done: Job): void => {
+    if (settled) return
+    settled = true
+    activeJob.value = done
+    stopJobTracking()
+    onCompleted(done)
+  }
+  const fail = (failed: Job): void => {
+    if (settled) return
+    settled = true
+    activeJob.value = failed
+    stopJobTracking()
+    onFailed(failed)
+  }
+  jobUnsubscribe = subscribeJob(job.jobId, (event: JobWsEnvelope) => {
+    const payload = event.payload
+    if (event.type === 'job.started' || event.type === 'job.progress') {
+      activeJob.value = {
+        ...(activeJob.value ?? job),
+        type,
+        state: 'RUNNING',
+        stage: payload.stage ?? null,
+        percent: payload.percent ?? 0,
+        processed: payload.processed ?? 0,
+        total: payload.total ?? 0,
+      }
+    } else if (event.type === 'job.completed') {
+      complete({
+        ...(activeJob.value ?? job),
+        type,
+        state: 'COMPLETED',
+        result: payload.result ?? null,
+      })
+    } else if (event.type === 'job.failed') {
+      fail({
+        ...(activeJob.value ?? job),
+        type,
+        state: 'FAILED',
+        error: payload.error ?? '任务执行失败',
+      })
+    }
+  })
+  pollTimer = window.setInterval(() => {
+    void jobsApi
+      .getJob(job.jobId)
+      .then((current) => {
+        if (current.state === 'COMPLETED') complete(current)
+        else if (current.state === 'FAILED') fail(current)
+        else activeJob.value = current
+      })
+      .catch(() => settle())
+  }, 1000)
+}
+
+/** 跨刷新恢复：挂活跃 CACHE_CLEAR 任务（plan A6）。 */
+async function recoverJob(
+  type: JobType,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): Promise<void> {
+  try {
+    const active = await jobsApi.getActiveJob(type)
+    trackJob(type, active, onCompleted, onFailed)
+  } catch {
+    // 404：无活跃任务 → 无需恢复。
+  }
+}
+
+/** M-6 错误信封：HTTP 409 或 error.code === 'CONFLICT'。 */
+function isConflict(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false
+  const code = (error.response?.data as { error?: { code?: string } } | undefined)?.error?.code
+  return error.response?.status === 409 || code === 'CONFLICT'
+}
+
+/** 409（已有清缓存任务）→ 自动挂到该任务。 */
+async function attachActiveJob(
+  type: JobType,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): Promise<void> {
+  try {
+    const active = await jobsApi.getActiveJob(type)
+    trackJob(type, active, onCompleted, onFailed)
+  } catch (error) {
+    console.error('[AdminServer] failed to attach to active job', error)
+    showSnack('已有清缓存任务进行中，但无法获取任务详情，请稍后刷新重试')
+  }
+}
+
+function onClearCompleted(): void {
+  showSnack('缓存已清除')
+  void refreshCacheSize()
+}
+
+function onClearFailed(job: Job): void {
+  showSnack(job.error ? `清除缓存失败：${job.error}` : '无法清除缓存')
 }
 
 /* ------------------------------- 缓存设置 -------------------------------- */
@@ -143,8 +294,10 @@ watch(sizeDraft, () => {
 })
 
 onBeforeUnmount(() => {
+  stopJobTracking()
   if (cachePathTimer) window.clearTimeout(cachePathTimer)
   if (cacheSizeTimer) window.clearTimeout(cacheSizeTimer)
+  if (snackTimer) window.clearTimeout(snackTimer)
 })
 
 async function saveCachePath(): Promise<void> {
@@ -184,8 +337,8 @@ async function saveCacheSize(): Promise<void> {
 
 async function refreshCacheSize(): Promise<void> {
   try {
-    const { data } = await client.get<{ cacheSize: number }>('/image/cache/status')
-    cacheSize.value = data.cacheSize
+    const { cacheSize: size } = await imageApi.getCacheStatus()
+    cacheSize.value = size
   } catch (error) {
     cacheSize.value = null
     console.error('[AdminServer] failed to load cache stats', error)
@@ -194,16 +347,17 @@ async function refreshCacheSize(): Promise<void> {
 
 async function clearCache(): Promise<void> {
   if (clearingCache.value) return
-  clearingCache.value = true
   try {
-    await client.post('/image/cache/clear')
-    showSnack('缓存已清除')
-    await refreshCacheSize()
+    const job = await imageApi.clearCacheAsync()
+    trackJob('CACHE_CLEAR', job, onClearCompleted, onClearFailed)
   } catch (error) {
-    console.error('[AdminServer] failed to clear cache', error)
-    showSnack('无法清除缓存')
-  } finally {
-    clearingCache.value = false
+    if (isConflict(error)) {
+      showSnack('已有清缓存任务进行中，已自动挂到该任务')
+      await attachActiveJob('CACHE_CLEAR', onClearCompleted, onClearFailed)
+    } else {
+      console.error('[AdminServer] failed to submit cache clear', error)
+      showSnack('无法清除缓存')
+    }
   }
 }
 
@@ -235,6 +389,7 @@ onMounted(async () => {
     showSnack('无法加载服务器设置')
   }
   void refreshCacheSize()
+  await recoverJob('CACHE_CLEAR', onClearCompleted, onClearFailed)
 })
 </script>
 

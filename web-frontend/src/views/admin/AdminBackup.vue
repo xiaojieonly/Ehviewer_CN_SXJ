@@ -1,12 +1,16 @@
 <!--
   AdminBackup.vue — 管理面板「备份与还原」页（T12）.
 
-  对接 T11 BackupController：
-    - GET  /api/v1/backup/export?includeDownloads=<bool> → zip 流
-      （压缩分片生成耗时，导出期间按钮置 loading 等待下载）；
-    - POST /api/v1/backup/restore → multipart 字段 file → { success, message }；
-    - POST /api/v1/backup/import-ehviewer → multipart file + cookies（可选，B5）
-      → B3 计数契约（imported / cookies / skipped）。
+  对接 T11 BackupController（plan-2026-08-06 A2，大数据操作异步化为 Job）：
+    - POST /api/v1/backup/export/async → 202 Job → WS 进度 → 完成后下载产物
+      （GET /api/v1/backup/export/{jobId}）；
+    - POST /api/v1/backup/restore → 202 Job → 完成后置 restorePending（重启横幅）；
+    - POST /api/v1/backup/import-ehviewer → 202 Job → 完成后展示 B3 计数面板；
+    - GET  /api/v1/backup/state → { restorePending }（R4-2）。
+
+  进度经 STOMP /topic/jobs/{jobId} 订阅 + jobsApi.getJob 1s 轮询兜底（WS 断线），
+  终态/失败后停；提交时把 jobId 写入 localStorage（anotherviewer-last-job-{type}），
+  挂载时按活跃任务 / 最近任务恢复进度面板或终态结果。
 
   还原是破坏性操作（覆盖当前数据库，旧库保留为 .bak，需重启生效）：
   上传前检查文件大小（>50MB 阻止），随后弹确认框，且必须输入确认词
@@ -59,6 +63,7 @@
               <span class="backup__badge">{{ exporting ? '导出中…' : '导出' }}</span>
             </button>
           </PrefRow>
+          <JobProgressPanel v-if="exporting" :job="activeJob" title="导出备份" />
         </PrefCard>
       </section>
 
@@ -106,6 +111,7 @@
               {{ restoring ? '还原中…' : '还原' }}
             </button>
           </PrefRow>
+          <JobProgressPanel v-if="restoring" :job="activeJob" title="还原备份" />
         </PrefCard>
       </section>
 
@@ -161,6 +167,8 @@
             </button>
           </PrefRow>
 
+          <JobProgressPanel v-if="importing" :job="activeJob" title="导入 EhViewer" />
+
           <!-- 导入结果 / 失败信息。 -->
           <Transition name="banner">
             <div v-if="importError || importResult" class="backup__import-result" role="status">
@@ -200,6 +208,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { backupApi, type EhImportResult } from '@/api/backup'
+import { jobsApi, type Job, type JobType } from '@/api/jobs'
+import JobProgressPanel from '@/components/jobs/JobProgressPanel.vue'
+import { useWebSocket } from '@/composables/useWebSocket'
+import type { JobWsEnvelope } from '@/composables/useWebSocket'
 import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /** WebUI 还原面向元数据备份；含下载内容的大备份请手动解包/拷贝 data-dir。 */
@@ -208,18 +220,19 @@ const MAX_RESTORE_BYTES = 50 * 1024 * 1024
 /** R4-2: 重启命令（与仓库根 start.sh/stop.sh 对应），供横幅一键复制。 */
 const RESTART_COMMAND = './stop.sh && ./start.sh'
 
+/** 跨刷新恢复：最近一次任务的 localStorage 键前缀（plan A6）+ 5 分钟窗口。 */
+const LAST_JOB_KEY_PREFIX = 'anotherviewer-last-job-'
+const RECENT_JOB_MS = 5 * 60 * 1000
+
 const includeDownloads = ref(false)
-const exporting = ref(false)
 
 const selectedFile = ref<File | null>(null)
 const confirmWord = ref('')
-const restoring = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 /** B5: EhViewer 备份导入状态。 */
 const dbFile = ref<File | null>(null)
 const cookieFile = ref<File | null>(null)
-const importing = ref(false)
 const importResult = ref<EhImportResult | null>(null)
 const importError = ref('')
 const dbInput = ref<HTMLInputElement | null>(null)
@@ -233,11 +246,220 @@ let restartCopiedTimer: number | undefined
 const snack = ref('')
 let snackTimer: number | undefined
 
+/* ---------------------- Job 进度跟踪器（plan A6） ---------------------- */
+
+const { subscribeJob } = useWebSocket()
+
+/** 当前跟踪的任务（RUNNING 时渲染 JobProgressPanel，终态落各结果面板）。 */
+const activeJob = ref<Job | null>(null)
+let pollTimer: number | undefined
+let jobUnsubscribe: (() => void) | undefined
+
+const exporting = computed(() => isJobActive('EXPORT'))
+const restoring = computed(() => isJobActive('RESTORE'))
+const importing = computed(() => isJobActive('IMPORT'))
+
 const canRestore = computed(
   () => selectedFile.value !== null && confirmWord.value.trim() === 'RESTORE' && !restoring.value,
 )
 
 const canImport = computed(() => dbFile.value !== null && !importing.value)
+
+/** 该类型任务是否仍在进行（进度面板据此显示，按钮据此禁用）。 */
+function isJobActive(type: JobType): boolean {
+  const job = activeJob.value
+  return job !== null && job.type === type && (job.state === 'PENDING' || job.state === 'RUNNING')
+}
+
+function stopJobTracking(): void {
+  if (pollTimer) {
+    window.clearInterval(pollTimer)
+    pollTimer = undefined
+  }
+  jobUnsubscribe?.()
+  jobUnsubscribe = undefined
+}
+
+/**
+ * 挂跟踪器：WS 订阅 + 1s 轮询兜底（WS 断线时完成/失败可能收不到），
+ * 收到终态（或任务消失）即停；WS 与轮询先到者生效，后到者被 settled 忽略。
+ */
+function trackJob(
+  type: JobType,
+  job: Job,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): void {
+  // 重复提交被服务端 409 后自动挂回同一任务 → 已在跟踪则跳过。
+  if (activeJob.value?.jobId === job.jobId && pollTimer !== undefined) return
+  stopJobTracking()
+  activeJob.value = { ...job, type }
+  let settled = false
+  const settle = (): void => {
+    if (settled) return
+    settled = true
+    stopJobTracking()
+  }
+  const complete = (done: Job): void => {
+    if (settled) return
+    settled = true
+    activeJob.value = done
+    stopJobTracking()
+    onCompleted(done)
+  }
+  const fail = (failed: Job): void => {
+    if (settled) return
+    settled = true
+    activeJob.value = failed
+    stopJobTracking()
+    onFailed(failed)
+  }
+  jobUnsubscribe = subscribeJob(job.jobId, (event: JobWsEnvelope) => {
+    const payload = event.payload
+    if (event.type === 'job.started' || event.type === 'job.progress') {
+      activeJob.value = {
+        ...(activeJob.value ?? job),
+        type,
+        state: 'RUNNING',
+        stage: payload.stage ?? null,
+        percent: payload.percent ?? 0,
+        processed: payload.processed ?? 0,
+        total: payload.total ?? 0,
+      }
+    } else if (event.type === 'job.completed') {
+      complete({
+        ...(activeJob.value ?? job),
+        type,
+        state: 'COMPLETED',
+        result: payload.result ?? null,
+      })
+    } else if (event.type === 'job.failed') {
+      fail({
+        ...(activeJob.value ?? job),
+        type,
+        state: 'FAILED',
+        error: payload.error ?? '任务执行失败',
+      })
+    }
+  })
+  pollTimer = window.setInterval(() => {
+    void jobsApi
+      .getJob(job.jobId)
+      .then((current) => {
+        if (current.state === 'COMPLETED') complete(current)
+        else if (current.state === 'FAILED') fail(current)
+        else activeJob.value = current
+      })
+      .catch(() => settle())
+  }, 1000)
+}
+
+function lastJobKey(type: JobType): string {
+  return `${LAST_JOB_KEY_PREFIX}${type.toLowerCase()}`
+}
+
+/** 每次提交时记录 jobId，供刷新后恢复（尽力而为，存储不可用则跳过）。 */
+function writeLastJob(type: JobType, jobId: string): void {
+  try {
+    localStorage.setItem(lastJobKey(type), jobId)
+  } catch (error) {
+    console.error('[AdminBackup] failed to persist last job', error)
+  }
+}
+
+/**
+ * 跨刷新恢复：优先挂活跃任务；否则读最近一次 jobId——终态且在 5 分钟内则
+ * 恢复结果面板，仍在运行则重挂跟踪器（plan A6）。
+ */
+async function recoverJob(
+  type: JobType,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): Promise<void> {
+  try {
+    const active = await jobsApi.getActiveJob(type)
+    trackJob(type, active, onCompleted, onFailed)
+    return
+  } catch {
+    // 404：无活跃任务 → 落 localStorage 恢复。
+  }
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(lastJobKey(type))
+  } catch {
+    return
+  }
+  if (!stored) return
+  let job: Job
+  try {
+    job = await jobsApi.getJob(stored)
+  } catch {
+    return
+  }
+  if (job.state === 'PENDING' || job.state === 'RUNNING') {
+    trackJob(type, job, onCompleted, onFailed)
+    return
+  }
+  if (job.completedAt === null || Date.now() - job.completedAt > RECENT_JOB_MS) return
+  if (job.state === 'COMPLETED') onCompleted(job)
+  else if (job.state === 'FAILED') onFailed(job)
+}
+
+/** 409（已有同类型活跃任务）→ 提示并自动挂到该任务。 */
+async function attachActiveJob(
+  type: JobType,
+  busyLabel: string,
+  onCompleted: (job: Job) => void,
+  onFailed: (job: Job) => void,
+): Promise<void> {
+  try {
+    const active = await jobsApi.getActiveJob(type)
+    writeLastJob(type, active.jobId)
+    trackJob(type, active, onCompleted, onFailed)
+  } catch (error) {
+    console.error('[AdminBackup] failed to attach to active job', error)
+    showSnack(`已有${busyLabel}进行中，但无法获取任务详情，请稍后刷新重试`, 7000)
+  }
+}
+
+/** M-6 错误信封：HTTP 409 或 error.code === 'CONFLICT'。 */
+function isConflict(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false
+  const code = (error.response?.data as { error?: { code?: string } } | undefined)?.error?.code
+  return error.response?.status === 409 || code === 'CONFLICT'
+}
+
+/* -------------------- Job 终态处理器（按类型复用） -------------------- */
+
+function onImportCompleted(job: Job): void {
+  importResult.value = job.result as EhImportResult
+  showSnack('EhViewer 备份导入完成', 4000)
+}
+
+function onImportFailed(job: Job): void {
+  importError.value = job.error || '导入失败，请检查文件后重试'
+}
+
+function onExportCompleted(job: Job): void {
+  void downloadExportJob(job)
+}
+
+function onExportFailed(job: Job): void {
+  showSnack(job.error ? `导出失败：${job.error}` : '导出失败，请稍后重试', 5000)
+}
+
+function onRestoreCompleted(): void {
+  // R4-2: 还原本地成功后立即显示待重启横幅（服务端 state 亦已置 true）。
+  restorePending.value = true
+  selectedFile.value = null
+  confirmWord.value = ''
+  if (fileInput.value) fileInput.value.value = ''
+  showSnack('还原成功，需重启服务器生效', 7000)
+}
+
+function onRestoreFailed(job: Job): void {
+  showSnack(job.error || '还原失败', 7000)
+}
 
 /** B5: imported 计数展示行（zh 标签 + 值）。 */
 const importCountRows = computed(() => {
@@ -276,6 +498,10 @@ onMounted(async () => {
   } catch (error) {
     console.error('[AdminBackup] failed to read backup state', error)
   }
+  // 跨刷新恢复：活跃任务 / 最近 5 分钟内的终态任务。
+  await recoverJob('IMPORT', onImportCompleted, onImportFailed)
+  await recoverJob('EXPORT', onExportCompleted, onExportFailed)
+  await recoverJob('RESTORE', onRestoreCompleted, onRestoreFailed)
 })
 
 async function copyRestartCommand(): Promise<void> {
@@ -296,16 +522,30 @@ async function copyRestartCommand(): Promise<void> {
 
 async function handleExport(): Promise<void> {
   if (exporting.value) return
-  exporting.value = true
   try {
-    const blob = await backupApi.exportBackup(includeDownloads.value)
+    const job = await backupApi.exportBackupAsync(includeDownloads.value)
+    writeLastJob('EXPORT', job.jobId)
+    trackJob('EXPORT', job, onExportCompleted, onExportFailed)
+  } catch (error) {
+    if (isConflict(error)) {
+      showSnack('已有导出进行中，已自动挂到该任务')
+      await attachActiveJob('EXPORT', '导出', onExportCompleted, onExportFailed)
+    } else {
+      console.error('[AdminBackup] failed to submit export', error)
+      showSnack('导出失败，请稍后重试', 5000)
+    }
+  }
+}
+
+/** EXPORT Job 完成后下载产物（GET /backup/export/{jobId}）触发浏览器下载。 */
+async function downloadExportJob(job: Job): Promise<void> {
+  try {
+    const blob = await backupApi.downloadExport(job.jobId)
     triggerDownload(blob)
     showSnack('备份已生成，下载已开始')
   } catch (error) {
-    console.error('[AdminBackup] failed to export backup', error)
-    showSnack('导出失败，请稍后重试', 5000)
-  } finally {
-    exporting.value = false
+    console.error('[AdminBackup] failed to download export', error)
+    showSnack('下载备份失败，请稍后重试', 5000)
   }
 }
 
@@ -343,23 +583,17 @@ async function handleRestore(): Promise<void> {
     return
   }
   if (!window.confirm('将覆盖当前数据库，旧文件保留为 .bak，需要重启生效。确认还原？')) return
-  restoring.value = true
   try {
-    const result = await backupApi.restoreBackup(file)
-    if (result.success) {
-      showSnack(result.message || '还原成功，需重启服务器生效', 7000)
-      // R4-2: 还原本地成功后立即显示待重启横幅（服务端 state 亦已置 true）。
-      restorePending.value = true
-      selectedFile.value = null
-      confirmWord.value = ''
-      if (fileInput.value) fileInput.value.value = ''
-    } else {
-      showSnack(result.message || '还原失败', 7000)
-    }
+    const job = await backupApi.restoreBackup(file)
+    writeLastJob('RESTORE', job.jobId)
+    trackJob('RESTORE', job, onRestoreCompleted, onRestoreFailed)
   } catch (error) {
-    showSnack(errorMessageOf(error), 7000)
-  } finally {
-    restoring.value = false
+    if (isConflict(error)) {
+      showSnack('已有还原进行中，已自动挂到该任务')
+      await attachActiveJob('RESTORE', '还原', onRestoreCompleted, onRestoreFailed)
+    } else {
+      showSnack(errorMessageOf(error), 7000)
+    }
   }
 }
 
@@ -391,18 +625,21 @@ async function handleEhImport(): Promise<void> {
   const file = dbFile.value
   if (!file) return
   if (!window.confirm('将把 EhViewer 备份导入当前账号，gid 冲突默认跳过。确认导入？')) return
-  importing.value = true
   importError.value = ''
   importResult.value = null
   try {
-    const result = await backupApi.importEhViewer(file, cookieFile.value)
-    importResult.value = result
-    showSnack('EhViewer 备份导入完成', 4000)
+    const job = await backupApi.importEhViewer(file, cookieFile.value)
+    writeLastJob('IMPORT', job.jobId)
+    trackJob('IMPORT', job, onImportCompleted, onImportFailed)
   } catch (error) {
-    console.error('[AdminBackup] failed to import EhViewer backup', error)
-    importError.value = ehImportErrorMessageOf(error)
-  } finally {
-    importing.value = false
+    if (isConflict(error)) {
+      // 已有导入进行中 → 自动挂到该任务继续看进度。
+      showSnack('已有导入进行中，已自动挂到该任务')
+      await attachActiveJob('IMPORT', '导入', onImportCompleted, onImportFailed)
+    } else {
+      console.error('[AdminBackup] failed to submit EhViewer import', error)
+      importError.value = ehImportErrorMessageOf(error)
+    }
   }
 }
 
@@ -425,6 +662,7 @@ function formatBytes(bytes: number): string {
 }
 
 onBeforeUnmount(() => {
+  stopJobTracking()
   if (snackTimer) window.clearTimeout(snackTimer)
   if (restartCopiedTimer) window.clearTimeout(restartCopiedTimer)
 })
