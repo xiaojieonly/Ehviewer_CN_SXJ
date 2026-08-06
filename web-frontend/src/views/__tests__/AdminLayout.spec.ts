@@ -5,6 +5,7 @@ import AdminLayout from '../admin/AdminLayout.vue'
 
 const ADMIN_PATHS = [
   '/admin/download',
+  '/admin/filter-slots',
   '/admin/server',
   '/admin/backup',
   '/admin/devices',
@@ -40,7 +41,7 @@ describe('AdminLayout (UX-04)', () => {
     wrapper = mount(AdminLayout, { global: { plugins: [router] } })
     const nav = wrapper.find('.admin-layout__nav')
     expect(nav.exists()).toBe(true)
-    expect(wrapper.findAll('.admin-layout__link')).toHaveLength(9)
+    expect(wrapper.findAll('.admin-layout__link')).toHaveLength(10)
   })
 
   it('marks the tab matching the current route as active', async () => {

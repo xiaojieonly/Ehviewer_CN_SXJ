@@ -60,6 +60,7 @@ export const routes: RouteRecordRaw[] = [
       children: [
         { path: '', redirect: '/admin/download' },
         { path: 'download', name: 'AdminDownload', component: () => import('@/views/admin/AdminDownload.vue') },
+        { path: 'filter-slots', name: 'AdminFilterSlots', component: () => import('@/views/admin/AdminFilterSlots.vue') },
         { path: 'server', name: 'AdminServer', component: () => import('@/views/admin/AdminServer.vue') },
         { path: 'backup', name: 'AdminBackup', component: () => import('@/views/admin/AdminBackup.vue') },
         { path: 'devices', name: 'AdminDevices', component: () => import('@/views/admin/AdminDevices.vue') },
