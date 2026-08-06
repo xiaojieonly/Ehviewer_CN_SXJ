@@ -24,17 +24,37 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
      *    undocumented 4xx; no first-party client sends them (WebUI tabs are
      *    0-9).
      */
-    fun listFavorites(slot: Int, page: Int, pageSize: Int = 20): FavoriteListResponse {
+    fun listFavorites(slot: Int, page: Int, pageSize: Int = 20, q: String? = null, regex: Boolean = false): FavoriteListResponse {
         val startPage = page.coerceAtLeast(1)
         // 墓碑行（deleted=true 的同步删除记录）不列进 REST 列表，对齐 HistoryService：
         // 增量同步需要墓碑行落库（SyncService.mergeFavorite），但 /favorite/list
         // 只呈现存活收藏；total/分页也只按存活行计（R4-17）。
         val all = favoriteRepository.findAllByOrderByTimeDesc().filter { !it.deleted }
-        val filtered = when {
+        val slotFiltered = when {
             slot == 0 -> all.filter { it.favoriteSlot == SLOT_DEFAULT_FOLDER || it.favoriteSlot == 0 }
             slot > 0 -> all.filter { it.favoriteSlot == slot }
             else -> all
         }
+        // 筛选槽位（q 筛选）：q 非空时按 title/titleJpn 匹配——regex=false 为
+        // 大小写不敏感子串（contains(ignoreCase)）；regex=true 时 q 按正则解释
+        // （过滤链末端追加，slot 过滤照旧先行，total/分页只按匹配后行数计）。
+        // 非法正则抛 IllegalArgumentException → 控制器转 400 REGEX_INVALID。
+        val qFilter = q?.takeIf { it.isNotBlank() }
+        val filtered = if (qFilter != null) {
+            val matcher = if (regex) {
+                try {
+                    Regex(qFilter)
+                } catch (e: Exception) {
+                    throw IllegalArgumentException("正则表达式无效: ${e.message}")
+                }
+            } else null
+            slotFiltered.filter { entity ->
+                val t = entity.title ?: ""
+                val tj = entity.titleJpn ?: ""
+                if (matcher != null) matcher.containsMatchIn(t) || matcher.containsMatchIn(tj)
+                else t.contains(qFilter, ignoreCase = true) || tj.contains(qFilter, ignoreCase = true)
+            }
+        } else slotFiltered
         val total = filtered.size
         val totalPages = (total + pageSize - 1) / pageSize
         val paged = filtered.drop((startPage - 1) * pageSize).take(pageSize)

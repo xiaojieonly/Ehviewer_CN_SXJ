@@ -161,4 +161,82 @@ class HistoryServiceTest {
         assertTrue(response.history.isEmpty())
         assertEquals(0, response.total)
     }
+
+    @Test
+    fun `q filter runs in memory without pagination params`() {
+        `when`(historyRepository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(entity(3, 3000, "Futanari Story"), entity(2, 2000, "Plain"), entity(1, 1000, "Futa and More")))
+
+        val response = historyService.listHistory(q = "futa")
+
+        assertEquals(listOf(3L, 1L), response.history.map { it.gid })
+        assertEquals(2, response.total)
+        verify(historyRepository).findAllByOrderByTimeDesc()
+        verify(historyRepository, never()).findHistoryPaged(any(Pageable::class.java))
+    }
+
+    @Test
+    fun `q filter honours memory pagination with match count as total`() {
+        // 仓库按时间倒序返回（最新在前），内存路径保持该顺序。
+        `when`(historyRepository.findAllByOrderByTimeDesc())
+            .thenReturn((5L downTo 1L).map { entity(it, it * 1000) })
+
+        val response = historyService.listHistory(page = 1, pageSize = 2, q = "Title")
+
+        // 0 基页码：drop(2).take(2)，total = 匹配数 5。
+        assertEquals(listOf(3L, 2L), response.history.map { it.gid })
+        assertEquals(5, response.total)
+        verify(historyRepository, never()).findHistoryPaged(any(Pageable::class.java))
+    }
+
+    @Test
+    fun `regex filter matches title or titleJpn`() {
+        `when`(historyRepository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(entity(1, 3000, "Plain", "フタナリ"), entity(2, 2000, "Futanari Story")))
+
+        val response = historyService.listHistory(q = "(?i)^futa", regex = true)
+
+        assertEquals(listOf(2L), response.history.map { it.gid })
+        assertEquals(1, response.total)
+    }
+
+    @Test
+    fun `invalid regex throws IllegalArgumentException`() {
+        `when`(historyRepository.findAllByOrderByTimeDesc()).thenReturn(listOf(entity(1, 1000)))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            historyService.listHistory(q = "(", regex = true)
+        }
+    }
+
+    @Test
+    fun `regex takes precedence over substring when regex is true`() {
+        `when`(historyRepository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(entity(1, 3000, "Title 1"), entity(2, 2000, "Plain")))
+
+        // "T.tle" 作为子串不匹配任何 title；作为正则 T+任意字符+tle 命中 "Title 1"。
+        val response = historyService.listHistory(q = "T.tle", regex = true)
+
+        assertEquals(listOf(1L), response.history.map { it.gid })
+        assertEquals(1, response.total)
+    }
+
+    @Test
+    fun `regex true with blank q returns the full in-memory list`() {
+        `when`(historyRepository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(entity(3, 3000), entity(2, 2000), entity(1, 1000)))
+
+        val response = historyService.listHistory(q = "  ", regex = true)
+
+        assertEquals(listOf(3L, 2L, 1L), response.history.map { it.gid })
+        assertEquals(3, response.total)
+        verify(historyRepository, never()).findHistoryPaged(any(Pageable::class.java))
+    }
+
+    private fun entity(gid: Long, time: Long, title: String, titleJpn: String? = null): HistoryInfoEntity {
+        val e = entity(gid, time)
+        e.title = title
+        e.titleJpn = titleJpn
+        return e
+    }
 }

@@ -5,6 +5,7 @@ import com.hippo.anotherviewer.web.dto.FavoriteListResponse
 import com.hippo.anotherviewer.web.dto.FavoriteRemoveRequest
 import com.hippo.anotherviewer.web.service.FavoriteService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -15,9 +16,15 @@ class FavoriteController(private val favoriteService: FavoriteService) {
     @GetMapping("/list")
     fun listFavorites(
         @RequestParam(defaultValue = "0") slot: Int,
-        @RequestParam(defaultValue = "1") page: Int
-    ): ResponseEntity<FavoriteListResponse> {
-        return ResponseEntity.ok(favoriteService.listFavorites(slot, page))
+        @RequestParam(defaultValue = "1") page: Int,
+        @RequestParam(required = false) q: String?,
+        @RequestParam(defaultValue = "false") regex: Boolean
+    ): ResponseEntity<*> {
+        return try {
+            ResponseEntity.ok(favoriteService.listFavorites(slot, page, q = q, regex = regex))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "REGEX_INVALID", e.message ?: "正则表达式无效")
+        }
     }
 
     @PostMapping("/add")
