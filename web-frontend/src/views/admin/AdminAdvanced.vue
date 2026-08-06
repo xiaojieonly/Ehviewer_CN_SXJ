@@ -167,6 +167,7 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 import { syncApi, type SyncPolicy } from '@/api/sync'
 import { backupApi } from '@/api/backup'
+import { jobsApi, type Job } from '@/api/jobs'
 
 /* ------------------------------ local settings ---------------------------- */
 
@@ -371,13 +372,18 @@ function onImportFile(event: Event): void {
 async function restoreFromBackup(file: File): Promise<void> {
   importing.value = true
   try {
-    const result = await backupApi.restoreBackup(file)
-    if (result.success) {
-      showSnack(result.message || '导入成功，需重启服务器生效', 7000)
+    const job = await backupApi.restoreBackup(file)
+    // restore 已异步化：202 返回 jobId，轮询 GET /jobs/{jobId} 到终态
+    // （任务在服务端坚持跑完，刷新/离开页面不影响；跨刷新恢复由 AdminBackup
+    //  页的 active 查询覆盖，本页只等本次提交的任务）。
+    const done = await waitJobTerminal(job.jobId)
+    if (done.state === 'COMPLETED') {
+      const result = done.result as { message?: string } | null
+      showSnack(result?.message || '导入成功，需重启服务器生效', 7000)
       // R4-2: 导入成功后立即显示待重启横幅（服务端 state 亦已置 true）。
       restorePending.value = true
     } else {
-      showSnack(result.message || '导入失败', 7000)
+      showSnack(done.error || '导入失败', 7000)
     }
   } catch (error) {
     showSnack(importErrorMessageOf(error), 7000)
@@ -386,11 +392,23 @@ async function restoreFromBackup(file: File): Promise<void> {
   }
 }
 
+/** 轮询任务到终态（COMPLETED/FAILED），最多 5 分钟；超时/任务消失抛错。 */
+async function waitJobTerminal(jobId: string, timeoutMs = 5 * 60 * 1000): Promise<Job> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const job = await jobsApi.getJob(jobId)
+    if (job.state === 'COMPLETED' || job.state === 'FAILED') return job
+    await new Promise((resolve) => window.setTimeout(resolve, 1000))
+  }
+  throw new Error('导入超时，请到「备份与还原」页查看任务状态')
+}
+
 function importErrorMessageOf(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string } | undefined
     if (data?.message) return data.message
   }
+  if (error instanceof Error && error.message) return error.message
   return '导入失败，请检查网络后重试'
 }
 

@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminAdvanced from '../admin/AdminAdvanced.vue'
 import { AppSelect, AppSwitch, PrefRow, SectionHeader } from '@/components/form'
 import { backupApi } from '@/api/backup'
+import { jobsApi, type Job } from '@/api/jobs'
 
 vi.mock('@/api/backup', () => ({
   backupApi: {
@@ -12,7 +13,30 @@ vi.mock('@/api/backup', () => ({
   },
 }))
 
+vi.mock('@/api/jobs', () => ({
+  jobsApi: {
+    getJob: vi.fn(),
+  },
+}))
+
 const UI_KEY = 'anotherviewer-admin-advanced-ui'
+
+/** 最小 COMPLETED 还原任务。 */
+function completedRestoreJob(message = '还原成功，重启后生效'): Job {
+  return {
+    jobId: 'job-restore01',
+    type: 'RESTORE',
+    state: 'COMPLETED',
+    stage: null,
+    percent: 100,
+    processed: 1,
+    total: 1,
+    startedAt: 1,
+    completedAt: 2,
+    error: null,
+    result: { success: true, message },
+  }
+}
 
 describe('AdminAdvanced (高级)', () => {
   let wrapper: VueWrapper
@@ -143,10 +167,8 @@ describe('AdminAdvanced (高级)', () => {
 
   it('imports a backup zip and shows the restart banner afterwards', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(backupApi.restoreBackup).mockResolvedValue({
-      success: true,
-      message: '还原成功，重启后生效',
-    })
+    vi.mocked(backupApi.restoreBackup).mockResolvedValue({ jobId: 'job-restore01', state: 'PENDING' } as Job)
+    vi.mocked(jobsApi.getJob).mockResolvedValue(completedRestoreJob())
     wrapper = mount(AdminAdvanced)
     expect(wrapper.find('.advanced__restart-banner').exists()).toBe(false)
 
@@ -158,10 +180,31 @@ describe('AdminAdvanced (高级)', () => {
     await flushPromises()
 
     expect(backupApi.restoreBackup).toHaveBeenCalledTimes(1)
+    expect(jobsApi.getJob).toHaveBeenCalledWith('job-restore01')
     const banner = wrapper.find('.advanced__restart-banner')
     expect(banner.exists()).toBe(true)
     expect(banner.attributes('role')).toBe('alert')
     expect(banner.text()).toContain('还原已完成，重启服务后生效')
+  })
+
+  it('shows a snack when the restore job fails', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.mocked(backupApi.restoreBackup).mockResolvedValue({ jobId: 'job-restore01', state: 'PENDING' } as Job)
+    vi.mocked(jobsApi.getJob).mockResolvedValue({
+      ...completedRestoreJob(),
+      state: 'FAILED',
+      error: '解包失败',
+    })
+    wrapper = mount(AdminAdvanced)
+
+    const file = new File(['zipdata'], 'backup.zip', { type: 'application/zip' })
+    const input = wrapper.find('input[type="file"]')
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(wrapper.find('.advanced__restart-banner').exists()).toBe(false)
+    expect(wrapper.text()).toContain('解包失败')
   })
 
   it('aborts the import when the destructive-op confirm is cancelled', async () => {
