@@ -4,6 +4,7 @@ import { nextTick } from 'vue'
 import DownloadView from '../DownloadView.vue'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem } from '@/api/download'
+import { filterSlotsApi } from '@/api/filterSlots'
 
 vi.mock('@/api/download', () => ({
   downloadApi: {
@@ -23,6 +24,34 @@ vi.mock('@/api/download', () => ({
     move: vi.fn(),
   },
 }))
+
+vi.mock('@/api/filterSlots', () => ({
+  filterSlotsApi: { get: vi.fn(), put: vi.fn() },
+}))
+
+/**
+ * FilterSlotBar stub — F1's component is thin (chips + select emit); the stub
+ * keeps this spec decoupled from its implementation. Clicking a chip emits
+ * `select(id)` exactly like the real one (「全部」= null).
+ */
+vi.mock('@/components/FilterSlotBar.vue', () => ({
+  default: {
+    name: 'FilterSlotBar',
+    props: ['slots', 'activeId'],
+    emits: ['select'],
+    template: `
+      <nav class="filter-slot-bar">
+        <button type="button" class="filter-slot-bar__chip" :class="{ 'filter-slot-bar__chip--active': activeId === null }" @click="$emit('select', null)">全部</button>
+        <button v-for="s in slots" :key="s.id" type="button" class="filter-slot-bar__chip" :class="{ 'filter-slot-bar__chip--active': activeId === s.id }" @click="$emit('select', s.id)">{{ s.name }}</button>
+      </nav>`,
+  },
+}))
+
+/** Named-regex filter slot fixture (A5d contract: {id, name, pattern}). */
+const FILTER_SLOTS = [
+  { id: 's1', name: 'Artist', pattern: 'artist' },
+  { id: 's2', name: 'Doujin', pattern: 'doujin|doujinshi' },
+]
 
 /**
  * WebSocket stub — the view only uses connected/connect/subscribeAll.
@@ -116,6 +145,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
   beforeEach(() => {
     localStorage.clear()
     vi.mocked(downloadApi.list).mockResolvedValue({ downloads: [], labels: [], total: 0 })
+    vi.mocked(filterSlotsApi.get).mockResolvedValue([])
     ws.subscribeAll.mockClear()
     ws.connected.value = false
     stubResizeObserver()
@@ -161,7 +191,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await mountView()
 
     // 默认偏好：每页 50 条（与 Android 一致）+ 添加时间倒序（最新在前）。
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 50, 'time_desc', null, false)
     expect(wrapper.find('[data-testid="content-state-content"]').exists()).toBe(true)
     const items = wrapper.findAll('.download-list__item')
     // Virtualized: only the rows around the window are mounted — without
@@ -183,20 +213,20 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     // 50 rows × 160px estimate → last row starts at 49 × 160 = 7840.
     const el = scroller()
     await scrollTo(el, 49 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 50, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 50, 50, 'time_desc', null, false)
     expect(downloadApi.list).toHaveBeenCalledTimes(2)
 
     // 逐段下探：每页 50 行 → 100/150/200 行，最后 250 total 封顶不再请求。
     await scrollTo(el, 99 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 100, 50, 'time_desc', null, false)
     expect(downloadApi.list).toHaveBeenCalledTimes(3)
 
     await scrollTo(el, 149 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 150, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 150, 50, 'time_desc', null, false)
     expect(downloadApi.list).toHaveBeenCalledTimes(4)
 
     await scrollTo(el, 199 * 160)
-    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 200, 50, 'time_desc', null, false)
     expect(downloadApi.list).toHaveBeenCalledTimes(5)
 
     // 250 total reached — further scrolling must not request page 6.
@@ -228,11 +258,11 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await flushPromises()
 
     // Label switch restarts at offset 0 with the label param.
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 0, 50, 'time_desc', null, false)
     expect(wrapper.text()).toContain('Dl 1')
     // Scrolling to the (160-row) labeled tail loads its remaining pages.
     await scrollTo(scroller(), 49 * 160)
-    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 50, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(5, 50, 50, 'time_desc', null, false)
   })
 
   it('rewrites external thumbnails through the image proxy in rendered rows', async () => {
@@ -426,7 +456,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
       return { downloads: rows, labels: [], total: q ? rows.length : 250 }
     })
     await mountView()
-    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null, false)
 
     const input = wrapper.find('.search-bar__input')
     await input.setValue('futa')
@@ -435,12 +465,12 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     expect(downloadApi.list).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(300)
     await flushPromises()
-    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', 'futa')
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', 'futa', false)
 
     // 清空搜索恢复全量。
     await wrapper.find('.search-bar__clear').trigger('click')
     await flushPromises()
-    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null)
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null, false)
     vi.useRealTimers()
   })
 
@@ -462,7 +492,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
     await flushPromises()
 
-    expect(downloadApi.startRange).toHaveBeenCalledWith({ all: true, label: null, q: null })
+    expect(downloadApi.startRange).toHaveBeenCalledWith({ all: true, label: null })
     expect(document.querySelector('.toast')?.textContent).toContain('Started 40 downloads')
   })
 
@@ -483,7 +513,127 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await flushPromises()
 
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('删除选中的 250 项'))
-    expect(downloadApi.deleteRange).toHaveBeenCalledWith({ all: true, label: null, q: null })
+    expect(downloadApi.deleteRange).toHaveBeenCalledWith({ all: true, label: null })
     confirm.mockRestore()
-})
+  })
+  /* ---------------- filter slots (A5d) — 与搜索互斥 + 批量 regex --------------- */
+
+  /** Click the filter-slot chip with the given name (「全部」= null). */
+  async function clickFilterChip(name: string): Promise<void> {
+    const chip = wrapper
+      .findAll('.filter-slot-bar__chip')
+      .find((c) => c.text() === name)!
+    await chip.trigger('click')
+    await flushPromises()
+    await flushPromises()
+  }
+
+  /** Whether the filter-slot chip with the given name is marked active. */
+  function filterChipActive(name: string): boolean {
+    const chip = wrapper
+      .findAll('.filter-slot-bar__chip')
+      .find((c) => c.text() === name)
+    return !!chip?.classes().includes('filter-slot-bar__chip--active')
+  }
+
+  it('activates a slot and lists with q=pattern&regex=true', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    vi.mocked(filterSlotsApi.get).mockResolvedValue(FILTER_SLOTS)
+    await mountView()
+    expect(wrapper.findAll('.filter-slot-bar__chip')).toHaveLength(3) // 全部 + 2
+
+    await clickFilterChip('Artist')
+    // 槽位激活 → q=pattern + regex=true。
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', 'artist', true)
+    expect(filterChipActive('Artist')).toBe(true)
+    // 互斥：选槽位清空搜索词。
+    const input = wrapper.find('.search-bar__input').element as HTMLInputElement
+    expect(input.value).toBe('')
+
+    // 回到「全部」→ 恢复无过滤加载。
+    await clickFilterChip('全部')
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', null, false)
+    expect(filterChipActive('全部')).toBe(true)
+  })
+
+  it('typing a search cancels the active slot (互斥另一侧)', async () => {
+    vi.useFakeTimers()
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50, _s, q) => ({
+      downloads: q ? pages(250)(offset, limit).filter((d) => (d.title ?? '').includes('Dl 1')) : pages(250)(offset, limit),
+      labels: [],
+      total: q ? 1 : 250,
+    }))
+    vi.mocked(filterSlotsApi.get).mockResolvedValue(FILTER_SLOTS)
+    await mountView()
+
+    await clickFilterChip('Artist')
+    expect(filterChipActive('Artist')).toBe(true)
+
+    const input = wrapper.find('.search-bar__input')
+    await input.setValue('futa')
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    // 输入搜索取消槽位 → 走 LIKE 搜索（regex=false）。
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', 'futa', false)
+    expect(filterChipActive('Artist')).toBe(false)
+    expect(filterChipActive('全部')).toBe(true)
+    vi.useRealTimers()
+  })
+
+  it('batch all-mode target carries regex=true when a slot is active', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: pages(250)(0, 50).slice(0, 50),
+      labels: [],
+      total: 250,
+    }))
+    vi.mocked(filterSlotsApi.get).mockResolvedValue(FILTER_SLOTS)
+    vi.mocked(downloadApi.startRange).mockResolvedValue(10)
+    await mountView()
+
+    await clickFilterChip('Artist')
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
+    await flushPromises()
+
+    expect(downloadApi.startRange).toHaveBeenCalledWith({
+      all: true,
+      label: null,
+      q: 'artist',
+      regex: true,
+    })
+  })
+
+  it('batch all-mode target carries regex=false with a search term', async () => {
+    vi.useFakeTimers()
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: pages(250)(0, 50).slice(0, 50),
+      labels: [],
+      total: 250,
+    }))
+    vi.mocked(downloadApi.startRange).mockResolvedValue(10)
+    await mountView()
+
+    await wrapper.find('.search-bar__input').setValue('futa')
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
+    await flushPromises()
+
+    expect(downloadApi.startRange).toHaveBeenCalledWith({
+      all: true,
+      label: null,
+      q: 'futa',
+      regex: false,
+    })
+    vi.useRealTimers()
+  })
 })

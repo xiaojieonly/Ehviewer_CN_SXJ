@@ -7,6 +7,30 @@
       </span>
     </div>
 
+    <!-- Server-side search + filter slots (A5d): 防抖 q 搜索，与筛选槽位互斥
+         （useFilterSlots——选槽位清搜索、输入搜索取消槽位）。 -->
+    <div class="search-bar">
+      <AppIcon name="magnify-dark" size="18px" />
+      <input
+        v-model="searchQuery"
+        class="search-bar__input"
+        type="search"
+        :placeholder="filterSlot ? `筛选：${filterSlot.name}` : '搜索标题…'"
+        aria-label="搜索历史"
+      />
+      <button
+        v-if="searchQuery"
+        type="button"
+        class="search-bar__clear"
+        aria-label="清除搜索"
+        @click="clearSearch"
+      >
+        <AppIcon name="close-dark" size="16px" />
+      </button>
+    </div>
+
+    <FilterSlotBar :slots="slots" :active-id="activeSlotId" @select="onSlotBarSelect" />
+
     <ContentLayout
       ref="contentRef"
       class="history-view__content"
@@ -100,16 +124,21 @@
  * FabLayout with clear-all (confirmed via dialog) and go-to-top.
  *
  * The history endpoint returns the full list in one shot (no paging), so
- * `load-more` is intentionally not wired.
+ * `load-more` is intentionally not wired. Search (q, debounced) and filter
+ * slots (A5d, q=pattern&regex=true) narrow the list server-side (in-memory
+ * filter over the full set); the two are mutually exclusive.
  *
  * Backend note: `HistoryItem.category` is the stringified `SiteConfig` bit
  * (HistoryService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import client from '@/api/client'
 import { historyApi } from '@/api/history'
-import type { HistoryItem } from '@/api/history'
+import type { HistoryItem, HistoryListResponse } from '@/api/history'
+import { useFilterSlots } from '@/composables/useFilterSlots'
+import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import {
   CATEGORY_BIT_VALUES,
   CATEGORY_LABELS,
@@ -190,10 +219,62 @@ function toGalleryInfo(item: HistoryItem): GalleryInfo {
   }
 }
 
+/* ---------------------------------------- search + filter slots (A5d) ----- */
+
+/** 搜索词：防抖后作为 q 传给 /history/list（服务端过滤）。 */
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+/** 筛选槽位（A5d）：命名正则预设；与搜索框互斥（useFilterSlots 保证）。 */
+const { slots, activeSlotId, activeSlot: filterSlot, selectSlot: selectFilterSlot } =
+  useFilterSlots(searchQuery)
+
+function onSlotBarSelect(id: string | null): void {
+  selectFilterSlot(id)
+  // 槽位点击总是重新加载（清空搜索词不一定触发防抖 watch——搜索词本来就空时）。
+  state.value = 'loading'
+  void load()
+}
+
+/** 当前筛选条件：槽位激活 → (q=pattern, regex=true)；否则 → 搜索词（LIKE）。 */
+function currentFilter(): { q: string | null; regex: boolean } {
+  const slot = filterSlot.value
+  if (slot) return { q: slot.pattern, regex: true }
+  return { q: debouncedQuery.value || null, regex: false }
+}
+
+watch(searchQuery, (next) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (debouncedQuery.value !== next) {
+      debouncedQuery.value = next
+      // 槽位激活时该变更来自 selectFilterSlot 清空搜索词——加载已由
+      // onSlotBarSelect 触发（避免与槽位过滤重复请求）。
+      if (filterSlot.value) return
+      state.value = 'loading'
+      void load()
+    }
+  }, 400)
+})
+
+function clearSearch(): void {
+  searchQuery.value = ''
+  debouncedQuery.value = ''
+  state.value = 'loading'
+  void load()
+}
+
 async function load(): Promise<void> {
   try {
-    const response = await historyApi.listHistory()
-    entries.value = response.history.map((item) => ({
+    // api/history.ts 的 listHistory 不带参数，q/regex 由服务端契约（A5d）
+    // 提供——这里直接用 client 传参，避免改 api 模块签名。
+    const filter = currentFilter()
+    const params: Record<string, string> = {}
+    if (filter.q) params.q = filter.q
+    if (filter.regex) params.regex = 'true'
+    const { data } = await client.get<HistoryListResponse>('/history/list', { params })
+    entries.value = data.history.map((item) => ({
       gallery: toGalleryInfo(item),
       time: item.time,
     }))
@@ -320,6 +401,54 @@ onMounted(() => {
   font-size: var(--text-super-small); /* 12sp */
   color: var(--text-color-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- server-side search ---- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin: var(--spacing) var(--keyline-margin) 8px;
+  padding: 0 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--text-color-secondary);
+}
+
+.search-bar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-small);
+  outline: none;
+}
+
+.search-bar__input::placeholder {
+  color: var(--text-color-secondary);
+}
+
+.search-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+}
+
+.search-bar__clear:hover {
+  background: var(--color-surface-activated);
 }
 
 /* -------------------------------------------------------------- list ---- */

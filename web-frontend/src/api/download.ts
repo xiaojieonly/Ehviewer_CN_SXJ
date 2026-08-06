@@ -33,12 +33,14 @@ export interface DownloadListResponse {
 }
 
 /** 批量操作目标（Android multi-select）：`all=true` 时忽略 ids，按当前
-    (label, q) 过滤条件在服务端解析全集（跨页全选）。 */
+    (label, q) 过滤条件在服务端解析全集（跨页全选）。`regex=true` 时把 `q`
+    解释为正则表达式（槽位筛选的批量目标带该字段）。 */
 export interface DownloadBatchTarget {
   ids?: number[]
   all?: boolean
   label?: number | null
   q?: string | null
+  regex?: boolean
 }
 
 export const downloadApi = {

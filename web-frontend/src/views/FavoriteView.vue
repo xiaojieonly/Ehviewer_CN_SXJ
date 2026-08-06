@@ -7,6 +7,30 @@
       </span>
     </div>
 
+    <!-- Server-side search + filter slots (A5d): 防抖 q 搜索，与筛选槽位互斥
+         （useFilterSlots——选槽位清搜索、输入搜索取消槽位）。 -->
+    <div class="search-bar">
+      <AppIcon name="magnify-dark" size="18px" />
+      <input
+        v-model="searchQuery"
+        class="search-bar__input"
+        type="search"
+        :placeholder="filterSlot ? `筛选：${filterSlot.name}` : '搜索标题…'"
+        aria-label="搜索收藏"
+      />
+      <button
+        v-if="searchQuery"
+        type="button"
+        class="search-bar__clear"
+        aria-label="清除搜索"
+        @click="clearSearch"
+      >
+        <AppIcon name="close-dark" size="16px" />
+      </button>
+    </div>
+
+    <FilterSlotBar :slots="slots" :active-id="activeSlotId" @select="onSlotBarSelect" />
+
     <!-- Favorite folder filter — Android FavoritesScene's folder spinner,
          reimagined as a scrollable chip strip. Names come from
          `prefs.general.favoriteSlotNames` (B-4, `|`-separated), empty slots
@@ -78,7 +102,9 @@
  *
  * The API is slot-scoped (`/favorite/list?slot=N&page=M`), mirroring the
  * Android scene which always shows exactly one folder; each row carries a
- * heart badge with the folder number it belongs to.
+ * heart badge with the folder number it belongs to. Search (q, debounced)
+ * and filter slots (A5d, q=pattern&regex=true) narrow the list server-side;
+ * the two are mutually exclusive.
  *
  * F-UX5 — tab semantics align with the Android FavoritesScene: tab 0 is the
  * DEFAULT FOLDER (server filters `favoriteSlot in (-1, 0)`), tabs 1-9 are
@@ -89,10 +115,12 @@
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { favoriteApi } from '@/api/favorite'
-import type { FavoriteItem } from '@/api/favorite'
+import client from '@/api/client'
+import type { FavoriteItem, FavoriteListResponse } from '@/api/favorite'
+import { useFilterSlots } from '@/composables/useFilterSlots'
+import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import {
   CATEGORY_BIT_VALUES,
   CATEGORY_LABELS,
@@ -204,12 +232,75 @@ function toGalleryInfo(item: FavoriteItem): GalleryInfo {
   }
 }
 
+/* ---------------------------------------- search + filter slots (A5d) ----- */
+
+/** 搜索词：防抖后作为 q 传给 /favorite/list（服务端过滤）。 */
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * 筛选槽位（A5d）：命名正则预设；与搜索框互斥（useFilterSlots 保证）——
+ * 选槽位清空 searchQuery、输入搜索取消槽位。重命名为 filterSlot 以避免与
+ * 收藏夹标签 activeSlot（0-9）冲突。
+ */
+const { slots, activeSlotId, activeSlot: filterSlot, selectSlot: selectFilterSlot } =
+  useFilterSlots(searchQuery)
+
+function onSlotBarSelect(id: string | null): void {
+  selectFilterSlot(id)
+  // 槽位点击总是重新加载（清空搜索词不一定触发防抖 watch——搜索词本来就空时）。
+  favorites.value = []
+  state.value = 'loading'
+  void loadPage(1, false)
+}
+
+/** 当前筛选条件：槽位激活 → (q=pattern, regex=true)；否则 → 搜索词（LIKE）。 */
+function currentFilter(): { q: string | null; regex: boolean } {
+  const slot = filterSlot.value
+  if (slot) return { q: slot.pattern, regex: true }
+  return { q: debouncedQuery.value || null, regex: false }
+}
+
+watch(searchQuery, (next) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (debouncedQuery.value !== next) {
+      debouncedQuery.value = next
+      // 槽位激活时该变更来自 selectFilterSlot 清空搜索词——加载已由
+      // onSlotBarSelect 触发（避免与槽位过滤重复请求）。
+      if (filterSlot.value) return
+      favorites.value = []
+      state.value = 'loading'
+      void loadPage(1, false)
+    }
+  }, 400)
+})
+
+function clearSearch(): void {
+  searchQuery.value = ''
+  debouncedQuery.value = ''
+  favorites.value = []
+  state.value = 'loading'
+  void loadPage(1, false)
+}
+
 async function loadPage(page: number, append: boolean): Promise<void> {
   const seq = ++requestSeq
   if (append) loadingMore.value = true
   try {
-    const response = await favoriteApi.listFavorites(activeSlot.value, page)
+    // api/favorite.ts 的 listFavorites 固定拼 slot/page，q/regex 由服务端契约
+    // （A5d）提供——这里直接用 client 传参，避免改 api 模块签名。
+    const filter = currentFilter()
+    const params: Record<string, string> = {
+      slot: activeSlot.value.toString(),
+      page: page.toString(),
+    }
+    if (filter.q) params.q = filter.q
+    if (filter.regex) params.regex = 'true'
+    const { data } = await client.get<FavoriteListResponse>('/favorite/list', { params })
     if (seq !== requestSeq) return
+    const response = data
     const mapped = response.favorites.map(toGalleryInfo)
     if (append) {
       const known = new Set(favorites.value.map((gallery) => gallery.gid))
@@ -331,6 +422,54 @@ onMounted(() => {
   font-size: var(--text-super-small); /* 12sp */
   color: var(--text-color-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- server-side search ---- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin: var(--spacing) var(--keyline-margin) 8px;
+  padding: 0 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--text-color-secondary);
+}
+
+.search-bar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-small);
+  outline: none;
+}
+
+.search-bar__input::placeholder {
+  color: var(--text-color-secondary);
+}
+
+.search-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+}
+
+.search-bar__clear:hover {
+  background: var(--color-surface-activated);
 }
 
 /* ----------------------------------------------------------- slot bar --- */

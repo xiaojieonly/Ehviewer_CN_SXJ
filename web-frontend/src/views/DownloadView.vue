@@ -17,27 +17,17 @@
     </nav>
 
     <!-- Server-side search (Android download_search_dialog replica): 输入即
-         防抖搜索，q 走 /download/list 服务端过滤，负载留在服务器。「正则」
-         开关把 q 解释为正则表达式（服务端匹配，非法表达式服务端 400 提示）。 -->
+         防抖搜索，q 走 /download/list 服务端过滤，负载留在服务器。与筛选槽位
+         互斥：选槽位清空搜索词、输入搜索取消槽位（useFilterSlots）。 -->
     <div class="search-bar">
       <AppIcon name="magnify-dark" size="18px" />
       <input
         v-model="searchQuery"
         class="search-bar__input"
         type="search"
-        :placeholder="regexMode ? '正则表达式匹配标题…' : '搜索标题…'"
+        :placeholder="activeSlot ? `筛选：${activeSlot.name}` : '搜索标题…'"
         aria-label="搜索下载"
       />
-      <button
-        type="button"
-        class="search-bar__regex"
-        :class="{ 'search-bar__regex--active': regexMode }"
-        aria-label="正则模式"
-        :aria-pressed="regexMode"
-        @click="toggleRegexMode"
-      >
-        正则
-      </button>
       <button
         v-if="searchQuery"
         type="button"
@@ -48,6 +38,10 @@
         <AppIcon name="close-dark" size="16px" />
       </button>
     </div>
+
+    <!-- Filter slot bar (A5d): 命名正则预设；点击槽位 → q=pattern&regex=true，
+         与上方搜索框互斥。 -->
+    <FilterSlotBar :slots="slots" :active-id="activeSlotId" @select="onSlotBarSelect" />
 
     <!-- Multi-select toolbar (Android custom choice mode: 全选/开始/停止/
          删除/移动；长按或右键条目进入) -->
@@ -264,6 +258,8 @@ import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/download'
 import { useWebSocket } from '@/composables/useWebSocket'
 import type { DownloadProgress } from '@/composables/useWebSocket'
+import { useFilterSlots } from '@/composables/useFilterSlots'
+import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import type { FabAction } from '@/types/components'
 import { loadDownloadListPrefs } from '@/utils/downloadListSettings'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
@@ -367,18 +363,39 @@ const virtualizer = useVirtualizer(
 /** Monotonic request guard — stale responses (fast label switches) drop. */
 let requestSeq = 0
 
-/* ---------------------------------- server-side search -------------------- */
+/* ---------------------------------- server-side search + filter slots ----- */
 
 /** 搜索词：防抖后作为 q 传给 /download/list（服务端过滤）。 */
 const searchQuery = ref('')
 const debouncedQuery = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
+/** 筛选槽位（A5d）：命名正则预设；与搜索框互斥（useFilterSlots 保证）——
+ *  选槽位清空 searchQuery、输入搜索取消槽位。 */
+const { slots, activeSlotId, activeSlot, selectSlot } = useFilterSlots(searchQuery)
+
+function onSlotBarSelect(id: string | null): void {
+  selectSlot(id)
+  // 槽位点击总是重新加载（清空搜索词不一定触发防抖 watch——搜索词本来就空时）。
+  state.value = 'loading'
+  void load()
+}
+
+/** 当前筛选条件：槽位激活 → (q=pattern, regex=true)；否则 → 搜索词（LIKE）。 */
+function currentFilter(): { q: string | null; regex: boolean } {
+  const slot = activeSlot.value
+  if (slot) return { q: slot.pattern, regex: true }
+  return { q: debouncedQuery.value || null, regex: false }
+}
+
 watch(searchQuery, (next) => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     if (debouncedQuery.value !== next) {
       debouncedQuery.value = next
+      // 槽位激活时该变更来自 selectSlot 清空搜索词——加载已由 onSlotBarSelect
+      // 触发（也避免与槽位过滤重复请求）。
+      if (activeSlot.value) return
       // 搜索词变化 → 重置分页重新加载（负载在服务端）。
       state.value = 'loading'
       void load()
@@ -396,12 +413,14 @@ function clearSearch(): void {
 async function load(): Promise<void> {
   const seq = ++requestSeq
   try {
+    const filter = currentFilter()
     const result = await downloadApi.list(
       activeLabel.value ?? undefined,
       0,
       PAGE_SIZE,
       SORT_MODE,
-      debouncedQuery.value || null,
+      filter.q,
+      filter.regex,
     )
     if (seq !== requestSeq) return
     downloads.value = result.downloads
@@ -427,12 +446,14 @@ async function loadMore(): Promise<void> {
   const seq = requestSeq
   loadingMore.value = true
   try {
+    const filter = currentFilter()
     const result = await downloadApi.list(
       activeLabel.value ?? undefined,
       downloads.value.length,
       PAGE_SIZE,
       SORT_MODE,
-      debouncedQuery.value || null,
+      filter.q,
+      filter.regex,
     )
     if (seq !== requestSeq) return
     downloads.value.push(...result.downloads)
@@ -585,14 +606,15 @@ const selectAllAcrossPages = computed(
     downloads.value.length < total.value,
 )
 
-/** 批量操作目标：跨页全选传 all + 当前过滤条件（label/q），否则传已选 ids。 */
+/** 批量操作目标：跨页全选传 all + 当前过滤条件（label/q/regex），否则传已选 ids。
+ *  槽位激活 → 正则全集；搜索词 → LIKE 全集；都空 → 仅 label。 */
 function batchTarget(): DownloadBatchTarget {
   if (selectAllAcrossPages.value) {
-    return {
-      all: true,
-      label: activeLabel.value,
-      q: debouncedQuery.value || null,
-    }
+    const slot = activeSlot.value
+    if (slot) return { all: true, label: activeLabel.value, q: slot.pattern, regex: true }
+    const q = debouncedQuery.value
+    if (q) return { all: true, label: activeLabel.value, q, regex: false }
+    return { all: true, label: activeLabel.value }
   }
   return { ids: Array.from(selectedIds.value) }
 }
