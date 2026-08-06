@@ -8,7 +8,7 @@
     <div class="download-item__thumb">
       <img
         v-if="hasThumb"
-        :src="item.thumb ?? undefined"
+        :src="thumbSrc ?? undefined"
         :alt="title"
         loading="lazy"
         @error="onThumbError"
@@ -174,6 +174,17 @@ const thumbFailed = ref(false)
 
 /** A usable thumb source; null/empty renders the placeholder outright. */
 const hasThumb = computed(() => Boolean(props.item.thumb) && !thumbFailed.value)
+
+/**
+ * Rewritten thumbnail URL (plan-2026-08-06 A7): external `http(s)` thumbnails
+ * go through the WebUI image proxy (`/api/v1/image/proxy`), because the site
+ * CSP only allows `img-src 'self'`; local paths pass through unchanged.
+ */
+const thumbSrc = computed<string | null>(() => {
+  const thumb = props.item.thumb
+  if (!thumb) return null
+  return /^https?:\/\//i.test(thumb) ? `/api/v1/image/proxy?url=${encodeURIComponent(thumb)}` : thumb
+})
 
 function onThumbError(): void {
   thumbFailed.value = true

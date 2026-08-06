@@ -79,4 +79,21 @@ describe('DownloadItem (thumbnail handling, E2E-9 / E2E-3)', () => {
     expect(wrapper.find('.download-item__title').text()).toBe('Dl Alpha')
     expect(wrapper.find('.download-item__percent').text()).toBe('100%')
   })
+
+  it('rewrites external http(s) thumbs through the WebUI image proxy (A7)', () => {
+    const thumb = 'https://ehgt.org/t/9001/cover.jpg'
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ thumb }) },
+    })
+    const img = wrapper.find('.download-item__thumb img')
+    expect(img.attributes('src')).toBe(`/api/v1/image/proxy?url=${encodeURIComponent(thumb)}`)
+  })
+
+  it('keeps non-external thumb sources unchanged (A7)', () => {
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ thumb: '/thumbs/9001/cover.jpg' }) },
+    })
+    const img = wrapper.find('.download-item__thumb img')
+    expect(img.attributes('src')).toBe('/thumbs/9001/cover.jpg')
+  })
 })

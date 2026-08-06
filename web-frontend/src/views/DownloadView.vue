@@ -20,22 +20,34 @@
       ref="contentRef"
       class="download-view__content"
       :state="state"
+      :loading-more="loadingMore"
       v-model:refreshing="refreshing"
       empty-text="No downloads"
       error-text="Failed to load downloads"
       @refresh="onRefresh"
       @retry="onRetry"
     >
-      <ul class="download-list">
+      <!-- Virtualized single-column list: only the rows inside the scroller
+           viewport (+ overscan) are mounted; the ul keeps the full total
+           height so the scrollbar, FastScroller and load-more footer
+           geometry stay intact (tanstack virtualizer window mode). -->
+      <ul
+        ref="listHostRef"
+        class="download-list"
+        :style="{ height: `${virtualizer.getTotalSize()}px` }"
+      >
         <li
-          v-for="(item, index) in downloads"
-          :key="item.id"
+          v-for="item in virtualizer.getVirtualItems()"
+          :key="`${item.key}`"
           class="download-list__item"
-          :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
+          :style="{
+            transform: `translateY(${item.start}px)`,
+            animationDelay: `${Math.min(item.index * 24, 240)}ms`,
+          }"
         >
           <DownloadItemCard
-            :item="item"
-            :speed="liveSpeeds[item.gid] ?? 0"
+            :item="downloads[item.index]"
+            :speed="liveSpeeds[downloads[item.index]?.gid ?? -1] ?? 0"
             @start="onStart"
             @pause="onPause"
             @cancel="onCancel"
@@ -118,6 +130,7 @@
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { StompSubscription } from '@stomp/stompjs'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel } from '@/api/download'
 import { useWebSocket } from '@/composables/useWebSocket'
@@ -139,11 +152,21 @@ const STATE_FAILED = 4
 
 /* ------------------------------------------------------------- list ----- */
 
+/** Page size for the paginated `/download/list` (server clamps to [1, 500]). */
+const PAGE_SIZE = 100
+
+/** Fixed row-height estimate for the virtualizer (single-column list). */
+const ROW_ESTIMATE = 160
+
 const downloads = ref<DownloadItem[]>([])
 const labels = ref<DownloadLabel[]>([])
 const activeLabel = ref<number | null>(null)
 const state = ref<ViewState>('loading')
 const refreshing = ref(false)
+/** Total entries under the current label (from the server, page 1). */
+const total = ref(0)
+/** Guard against overlapping load-more requests. */
+const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
 interface LabelTab {
@@ -156,17 +179,71 @@ const tabs = computed<LabelTab[]>(() => [
   ...labels.value.map((label) => ({ id: label.id, name: label.label })),
 ])
 
+/* ------------------------------------------------ virtual scrolling ----- */
+
+const listHostRef = ref<HTMLElement | null>(null)
+
+/**
+ * The scroll container the virtualizer drives: ContentLayout's scroller
+ * (FastScroller's container or the plain scroll div) — the same element the
+ * pull-to-refresh / load-more listeners sit on, detected by walking up from
+ * the list host (mirrors HomeView's approach).
+ */
+const scrollElRef = ref<HTMLElement | null>(null)
+
+function findScroller(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (
+      /(auto|scroll|overlay)/.test(overflowY) ||
+      node.classList.contains('fast-scroller__container') ||
+      node.classList.contains('content-layout__plain-scroll')
+    ) {
+      return node
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
+/** Re-detect the scroller whenever ContentLayout swaps in/out the list view. */
+watch(
+  state,
+  async (s) => {
+    if (s === 'content') {
+      await nextTick()
+      scrollElRef.value = findScroller(listHostRef.value)
+    } else {
+      scrollElRef.value = null
+    }
+  },
+  { immediate: true },
+)
+
+const virtualizer = useVirtualizer(
+  computed(() => ({
+    count: downloads.value.length,
+    getScrollElement: () => scrollElRef.value,
+    estimateSize: () => ROW_ESTIMATE,
+    overscan: 6,
+    getItemKey: (index) => downloads.value[index]?.id ?? index,
+  })),
+)
+
 /** Monotonic request guard — stale responses (fast label switches) drop. */
 let requestSeq = 0
 
 async function load(): Promise<void> {
   const seq = ++requestSeq
   try {
-    const result = await downloadApi.list(activeLabel.value ?? undefined)
+    const result = await downloadApi.list(activeLabel.value ?? undefined, 0, PAGE_SIZE)
     if (seq !== requestSeq) return
     downloads.value = result.downloads
     labels.value = result.labels
+    total.value = result.total
     state.value = result.downloads.length === 0 ? 'empty' : 'content'
+    contentRef.value?.scrollToTop()
   } catch (error) {
     if (seq !== requestSeq) return
     console.error('Failed to load downloads', error)
@@ -177,6 +254,41 @@ async function load(): Promise<void> {
     }
   }
 }
+
+/** Append the next page once the virtual window reaches the loaded tail. */
+async function loadMore(): Promise<void> {
+  if (loadingMore.value) return
+  if (downloads.value.length >= total.value) return
+  const seq = requestSeq
+  loadingMore.value = true
+  try {
+    const result = await downloadApi.list(
+      activeLabel.value ?? undefined,
+      downloads.value.length,
+      PAGE_SIZE,
+    )
+    if (seq !== requestSeq) return
+    downloads.value.push(...result.downloads)
+    total.value = result.total
+  } catch (error) {
+    console.error('Failed to load more downloads', error)
+    // Retryable: the next scroll / virtualizer update re-triggers the load.
+    showToast('Failed to load more downloads')
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+/** Fire when the virtual window's last row reaches the loaded tail. */
+watch(
+  () => virtualizer.value.range?.endIndex ?? -1,
+  () => {
+    const range = virtualizer.value.range
+    if (!range || loadingMore.value) return
+    if (downloads.value.length >= total.value) return
+    if (range.endIndex >= downloads.value.length - 1) void loadMore()
+  },
+)
 
 function selectTab(id: number | null, event: MouseEvent): void {
   if (id === activeLabel.value) return
@@ -238,6 +350,7 @@ async function onDelete(id: number): Promise<void> {
   const index = downloads.value.findIndex((entry) => entry.id === id)
   if (index === -1) return
   const [removed] = downloads.value.splice(index, 1)
+  if (total.value > 0) total.value -= 1
   if (downloads.value.length === 0) state.value = 'empty'
   try {
     await downloadApi.delete(id)
@@ -497,16 +610,23 @@ onUnmounted(() => {
 }
 
 /* -------------------------------------------------------------- list ---- */
+/* Single-column virtualized list: the ul carries the total scroll height and
+   each row is absolutely positioned at its virtual offset (translateY), so
+   only the visible window is ever mounted. Horizontal padding is re-applied
+   per row because absolutely positioned children ignore the ul's padding. */
 .download-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: var(--gallery-list-margin-v) var(--gallery-list-margin-h)
     var(--gallery-padding-bottom-fab);
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--column-width-list-long)), 1fr));
 }
 
 .download-list__item {
+  position: absolute;
+  top: 0;
+  left: var(--gallery-list-margin-h);
+  right: var(--gallery-list-margin-h);
   /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
      when WebKit fails to run the staggered entrance (T-1 regression). */
   opacity: 1;

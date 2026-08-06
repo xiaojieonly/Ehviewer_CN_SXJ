@@ -6,7 +6,7 @@
     - download.maxConcurrentGalleries / maxConcurrentImages
 
   设备本地设置（localStorage `anotherviewer-admin-download-ui`，仅本设备生效）:
-    - 预加载图片数、下载列表分页、排序方向、自动开始下载
+    - 预加载图片数、排序方向、自动开始下载（旧版遗留键如 paginated 读取时忽略）
 
   维护操作（清理冗余文件 / 清理无效下载）: downloadApi 暂未提供对应批量清理
   接口，按钮置为 TODO，等待后端补充。
@@ -167,13 +167,6 @@
         <section>
           <SectionHeader title="列表与行为" />
           <PrefCard>
-            <PrefRow icon="reorder" title="下载列表分页" summary="下载列表按页加载而非一次载入全部 · 仅本设备生效">
-              <AppSwitch
-                :model-value="local.paginated"
-                aria-label="下载列表分页"
-                @update:model-value="(v) => (local.paginated = v)"
-              />
-            </PrefRow>
             <PrefRow
               icon="check-all-dark"
               title="排序方向"
@@ -356,7 +349,6 @@ function numberField(options: { get: () => number | undefined; set: (value: numb
 
 interface LocalSettings {
   preloadImages: number
-  paginated: boolean
   sortAscending: boolean
   autoStart: boolean
 }
@@ -365,16 +357,22 @@ const LOCAL_SETTINGS_KEY = 'anotherviewer-admin-download-ui'
 
 const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
   preloadImages: 2,
-  paginated: true,
   sortAscending: false,
   autoStart: true,
 }
 
+/** Pick only the known local keys — legacy/unknown entries (e.g. the removed
+    `paginated` switch) are ignored and dropped on the next persist. */
 function loadLocalSettings(): LocalSettings {
   try {
     const raw = localStorage.getItem(LOCAL_SETTINGS_KEY)
     if (raw) {
-      return { ...DEFAULT_LOCAL_SETTINGS, ...(JSON.parse(raw) as Partial<LocalSettings>) }
+      const stored = JSON.parse(raw) as Partial<LocalSettings>
+      return {
+        preloadImages: stored.preloadImages ?? DEFAULT_LOCAL_SETTINGS.preloadImages,
+        sortAscending: stored.sortAscending ?? DEFAULT_LOCAL_SETTINGS.sortAscending,
+        autoStart: stored.autoStart ?? DEFAULT_LOCAL_SETTINGS.autoStart,
+      }
     }
   } catch {
     // Corrupt/unavailable storage — fall back to defaults.

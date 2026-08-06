@@ -64,7 +64,7 @@ describe('AdminDownload (下载设置)', () => {
     expect(titles).toContain('最大并发画廊数')
     expect(titles).toContain('最大并发图片数')
     expect(titles).toContain('预加载图片数')
-    expect(titles).toContain('下载列表分页')
+    expect(titles).not.toContain('下载列表分页')
     expect(titles).toContain('排序方向')
     expect(titles).toContain('自动开始下载')
     expect(titles).toContain('清理冗余文件')
@@ -76,12 +76,29 @@ describe('AdminDownload (下载设置)', () => {
     expect(w.findAll('.num-field').length).toBe(2)
 
     const switches = w.findAllComponents(AppSwitch)
-    expect(switches.length).toBe(3)
+    expect(switches.length).toBe(2)
     expect(switches.map((s) => s.attributes('aria-label'))).toEqual([
-      '下载列表分页',
       '排序方向',
       '自动开始下载',
     ])
+  })
+
+  it('tolerates legacy localStorage entries with the removed paginated key', async () => {
+    localStorage.setItem(
+      'anotherviewer-admin-download-ui',
+      JSON.stringify({ paginated: true, preloadImages: 5, autoStart: false }),
+    )
+    const w = await mountView()
+    const switches = w.findAllComponents(AppSwitch)
+    expect(switches.length).toBe(2)
+    // Remaining local fields are still applied; the removed row is gone.
+    expect(w.findAllComponents(PrefRow).map((r) => r.props('title'))).not.toContain('下载列表分页')
+    expect(switches.find((s) => s.attributes('aria-label') === '自动开始下载')!.attributes('aria-checked')).toBe('false')
+    // The next persist drops the unknown legacy key.
+    await switches.find((s) => s.attributes('aria-label') === '自动开始下载')!.trigger('click')
+    const raw = localStorage.getItem('anotherviewer-admin-download-ui')
+    expect(JSON.parse(raw!)).not.toHaveProperty('paginated')
+    expect(JSON.parse(raw!).autoStart).toBe(true)
   })
 
   it('bumps the worker count stepper and persists via debounce', async () => {

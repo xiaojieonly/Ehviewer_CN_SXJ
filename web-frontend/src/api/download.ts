@@ -23,10 +23,25 @@ export interface DownloadLabel {
   time: number
 }
 
+/** Paginated `/download/list` response (plan-2026-08-06 A5). */
+export interface DownloadListResponse {
+  downloads: DownloadItem[]
+  labels: DownloadLabel[]
+  /** Total entries under the current label (counted before paging). */
+  total: number
+}
+
 export const downloadApi = {
-  async list(label?: number): Promise<{ downloads: DownloadItem[]; labels: DownloadLabel[] }> {
+  /**
+   * Paginated download list. `offset`/`limit` are only sent when defined
+   * (callers without paging keep the legacy behaviour); the server clamps
+   * `limit` into [1, 500].
+   */
+  async list(label?: number, offset?: number, limit?: number): Promise<DownloadListResponse> {
     const params: Record<string, string> = {}
     if (label !== undefined) params.label = label.toString()
+    if (offset !== undefined) params.offset = offset.toString()
+    if (limit !== undefined) params.limit = limit.toString()
     const { data } = await client.get('/download/list', { params })
     return data
   },
