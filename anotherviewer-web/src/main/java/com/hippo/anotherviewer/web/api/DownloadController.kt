@@ -41,6 +41,26 @@ class DownloadController(private val downloadService: DownloadService) {
         return ResponseEntity.ok(true)
     }
 
+    @PostMapping("/start-range")
+    fun startRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
+        return ResponseEntity.ok(downloadService.startDownloads(request.ids))
+    }
+
+    @PostMapping("/stop-range")
+    fun stopRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
+        return ResponseEntity.ok(downloadService.pauseDownloads(request.ids))
+    }
+
+    @PostMapping("/delete-range")
+    fun deleteRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<Int> {
+        return ResponseEntity.ok(downloadService.deleteDownloads(request.ids))
+    }
+
+    @PostMapping("/move")
+    fun move(@Valid @RequestBody request: DownloadMoveRequest): ResponseEntity<Int> {
+        return ResponseEntity.ok(downloadService.moveDownloads(request.ids, request.labelId))
+    }
+
     @PostMapping("/pause/{id}")
     fun pauseDownload(@PathVariable id: Long): ResponseEntity<Boolean> {
         return ResponseEntity.ok(downloadService.pauseDownload(id))

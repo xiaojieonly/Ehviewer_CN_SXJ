@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.dto
 
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 
 data class DownloadListResponse(
@@ -56,6 +57,22 @@ data class DownloadLabelRequest(
     @field:NotBlank(message = "label is required")
     @field:Size(max = 64, message = "label must be at most 64 characters")
     val label: String
+)
+
+/** 批量操作请求体（Android 多选模式 Start/Stop/Delete 的 WebUI 对等物）。 */
+data class DownloadRangeRequest(
+    @field:NotEmpty(message = "ids must not be empty")
+    @field:Size(max = 500, message = "at most 500 ids per batch")
+    val ids: List<Long>
+)
+
+/** 批量移动标签请求体（Android Move；labelId=0 表示移回默认标签）。 */
+data class DownloadMoveRequest(
+    @field:NotEmpty(message = "ids must not be empty")
+    @field:Size(max = 500, message = "at most 500 ids per batch")
+    val ids: List<Long>,
+    @field:Min(0, message = "labelId must be non-negative")
+    val labelId: Int = 0
 )
 
 data class DownloadProgress(

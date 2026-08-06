@@ -990,6 +990,83 @@ paths:
               schema:
                 type: boolean
 
+  # Batch operations (Android multi-select Start/Stop/Delete/Move parity)
+  /api/v1/download/start-range:
+    post:
+      tags: [Download]
+      operationId: startRange
+      summary: Start the selected download rows (Android multi-select Start)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadRangeRequest'
+      responses:
+        '200':
+          description: Number of rows actually started
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /api/v1/download/stop-range:
+    post:
+      tags: [Download]
+      operationId: stopRange
+      summary: Pause the selected download rows (Android multi-select Stop)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadRangeRequest'
+      responses:
+        '200':
+          description: Number of rows actually paused
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /api/v1/download/delete-range:
+    post:
+      tags: [Download]
+      operationId: deleteRange
+      summary: Delete the selected download rows including their files (Android multi-select Delete)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadRangeRequest'
+      responses:
+        '200':
+          description: Number of rows actually deleted
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /api/v1/download/move:
+    post:
+      tags: [Download]
+      operationId: moveDownloads
+      summary: Move the selected rows to a label (Android multi-select Move; labelId 0 = default)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadMoveRequest'
+      responses:
+        '200':
+          description: Number of rows actually moved
+          content:
+            application/json:
+              schema:
+                type: integer
+
   # ============================================================
   # Comment
   # ============================================================
@@ -2846,6 +2923,33 @@ components:
       properties:
         label:
           type: string
+
+    DownloadRangeRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          maxItems: 500
+          items:
+            type: integer
+            format: int64
+
+    DownloadMoveRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          maxItems: 500
+          items:
+            type: integer
+            format: int64
+        labelId:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Target label id (0 = move back to the default label)
 
     DownloadProgress:
       type: object

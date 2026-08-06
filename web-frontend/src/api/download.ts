@@ -89,6 +89,28 @@ export const downloadApi = {
     return data
   },
 
+  // ── batch (Android multi-select Start/Stop/Delete/Move) ──────
+
+  async startRange(ids: number[]): Promise<number> {
+    const { data } = await client.post('/download/start-range', { ids })
+    return data
+  },
+
+  async stopRange(ids: number[]): Promise<number> {
+    const { data } = await client.post('/download/stop-range', { ids })
+    return data
+  },
+
+  async deleteRange(ids: number[]): Promise<number> {
+    const { data } = await client.post('/download/delete-range', { ids })
+    return data
+  },
+
+  async move(ids: number[], labelId: number): Promise<number> {
+    const { data } = await client.post('/download/move', { ids, labelId })
+    return data
+  },
+
   async createLabel(label: string): Promise<boolean> {
     const { data } = await client.post('/download/label', { label })
     return data

@@ -328,3 +328,94 @@ class DownloadControllerTest {
         assertEquals(0, captor.value.pageNumber)
     }
 }
+
+    // ── batch (Android multi-select Start/Stop/Delete/Move) ─────
+
+    @Test
+    fun `start-range calls startDownloads and returns the count`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.startDownloads(listOf(1L, 2L))).thenReturn(2)
+
+        mvc.perform(
+            post("/api/v1/download/start-range")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[1,2]}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(2))
+        verify(service).startDownloads(listOf(1L, 2L))
+    }
+
+    @Test
+    fun `stop-range calls pauseDownloads and returns the count`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.pauseDownloads(listOf(3L))).thenReturn(1)
+
+        mvc.perform(
+            post("/api/v1/download/stop-range")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[3]}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(1))
+        verify(service).pauseDownloads(listOf(3L))
+    }
+
+    @Test
+    fun `delete-range calls deleteDownloads and returns the count`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.deleteDownloads(listOf(1L, 2L, 3L))).thenReturn(3)
+
+        mvc.perform(
+            post("/api/v1/download/delete-range")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[1,2,3]}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(3))
+        verify(service).deleteDownloads(listOf(1L, 2L, 3L))
+    }
+
+    @Test
+    fun `move forwards ids and labelId`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.moveDownloads(listOf(1L, 2L), 7)).thenReturn(2)
+
+        mvc.perform(
+            post("/api/v1/download/move")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[1,2],"labelId":7}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(2))
+        verify(service).moveDownloads(listOf(1L, 2L), 7)
+    }
+
+    @Test
+    fun `move rejects unknown label with 400 envelope`() {
+        val service = mock(DownloadService::class.java)
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+            .setControllerAdvice(GlobalExceptionHandler())
+            .build()
+        `when`(service.moveDownloads(listOf(1L), -1)).thenReturn(0)
+
+        mvc.perform(
+            post("/api/v1/download/move")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"ids":[1],"labelId":-1}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }

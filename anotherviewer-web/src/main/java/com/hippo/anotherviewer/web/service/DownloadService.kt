@@ -255,6 +255,40 @@ class DownloadService(
         active.forEach { pauseDownload(it.id) }
     }
 
+    // ── 批量操作（Android 多选模式 Start/Stop/Delete/Move 的 WebUI 对等物）──
+
+    /** 批量开始：返回成功开始的数量。 */
+    fun startDownloads(ids: List<Long>): Int {
+        var started = 0
+        ids.forEach { if (startDownload(it)) started++ }
+        return started
+    }
+
+    /** 批量停止（暂停）：返回成功暂停的数量。 */
+    fun pauseDownloads(ids: List<Long>): Int {
+        var paused = 0
+        ids.forEach { if (pauseDownload(it)) paused++ }
+        return paused
+    }
+
+    /** 批量删除：返回已删除的数量（含下载目录文件）。 */
+    fun deleteDownloads(ids: List<Long>): Int {
+        var removed = 0
+        ids.forEach { if (deleteDownload(it)) removed++ }
+        return removed
+    }
+
+    /** 批量移动标签：labelId=0 表示移回默认标签；返回成功更新的数量。 */
+    fun moveDownloads(ids: List<Long>, labelId: Int): Int {
+        if (labelId != 0 && !labelRepository.existsById(labelId.toLong())) return 0
+        var moved = 0
+        ids.forEach { id ->
+            updateEntity(id) { it.label = labelId }
+            moved++
+        }
+        return moved
+    }
+
     // ── labels ──────────────────────────────────────────────────
 
     fun createLabel(label: String): Boolean {

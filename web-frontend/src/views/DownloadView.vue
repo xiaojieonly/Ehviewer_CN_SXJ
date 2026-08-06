@@ -16,6 +16,63 @@
       </button>
     </nav>
 
+    <!-- Multi-select toolbar (Android custom choice mode: 全选/开始/停止/
+         删除/移动；长按或右键条目进入) -->
+    <div
+      v-if="selectMode"
+      class="select-bar"
+      role="toolbar"
+      aria-label="批量操作"
+      @keyup.esc="exitSelectMode"
+    >
+      <span class="select-bar__count" role="status">
+        {{ selectedIds.size === downloads.length ? '已全选' : `已选 ${selectedIds.size} 项` }}
+      </span>
+      <div class="select-bar__actions">
+        <button type="button" class="select-bar__btn" @click="selectAll">全选</button>
+        <button
+          type="button"
+          class="select-bar__btn"
+          :disabled="selectedStartableIds.length === 0"
+          @click="onBatchStart"
+        >
+          开始
+        </button>
+        <button
+          type="button"
+          class="select-bar__btn"
+          :disabled="selectedStoppableIds.length === 0"
+          @click="onBatchStop"
+        >
+          停止
+        </button>
+        <button
+          type="button"
+          class="select-bar__btn"
+          :disabled="selectedIds.size === 0"
+          @click="onBatchMove"
+        >
+          移动
+        </button>
+        <button
+          type="button"
+          class="select-bar__btn select-bar__btn--danger"
+          :disabled="selectedIds.size === 0"
+          @click="onBatchDelete"
+        >
+          删除
+        </button>
+        <button
+          type="button"
+          class="select-bar__close"
+          aria-label="退出多选"
+          @click="exitSelectMode"
+        >
+          <AppIcon name="close-dark" size="18px" />
+        </button>
+      </div>
+    </div>
+
     <ContentLayout
       ref="contentRef"
       class="download-view__content"
@@ -48,18 +105,24 @@
           <DownloadItemCard
             :item="downloads[item.index]"
             :speed="liveSpeeds[downloads[item.index]?.gid ?? -1] ?? 0"
+            :selectable="selectMode"
+            :selected="selectedIds.has(downloads[item.index].id)"
             @start="onStart"
             @pause="onPause"
             @cancel="onCancel"
             @delete="onDelete"
+            @menu="onItemMenu"
+            @select="onItemSelect"
           />
         </li>
       </ul>
     </ContentLayout>
 
     <!-- FabLayout replica: primary 56dp FAB + mini FABs
-         (scene_download.xml: play / pause / … cluster) -->
+         (scene_download.xml: play / pause / … cluster); hidden in select mode
+         (Android choice mode replaces the FAB cluster with the action bar). -->
     <FabLayout
+      v-if="!selectMode"
       v-model:expanded="fabExpanded"
       primary-icon="plus-dark"
       :actions="fabActions"
@@ -106,6 +169,39 @@
         </div>
       </div>
 
+      <!-- Move-to-label dialog (Android MoveDialogHelper: pick the target
+           label for the selected downloads; "默认标签" = labelId 0). -->
+      <div
+        v-if="showMoveDialog"
+        class="dialog-scrim"
+        @click.self="closeMoveDialog"
+      >
+        <div
+          class="dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="move-label-title"
+          @keyup.esc="closeMoveDialog"
+        >
+          <h3 id="move-label-title" class="dialog__title">Move to label</h3>
+          <ul class="dialog__label-list">
+            <li>
+              <button type="button" class="dialog__label-option" @click="confirmMove(0)">
+                默认标签
+              </button>
+            </li>
+            <li v-for="label in labels" :key="label.id">
+              <button type="button" class="dialog__label-option" @click="confirmMove(label.id)">
+                {{ label.label }}
+              </button>
+            </li>
+          </ul>
+          <div class="dialog__actions">
+            <button type="button" class="dialog__btn" @click="closeMoveDialog">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast (Android Toast equivalent) -->
       <div v-if="toastMessage" class="toast" role="status">{{ toastMessage }}</div>
     </Teleport>
@@ -139,6 +235,7 @@ import type { FabAction } from '@/types/components'
 import { loadDownloadListPrefs } from '@/utils/downloadListSettings'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
+import AppIcon from '@/components/atoms/AppIcon.vue'
 import DownloadItemCard from '@/components/download/DownloadItem.vue'
 
 /** View states matching ContentLayout's internal ViewTransition. */
@@ -363,6 +460,147 @@ async function onDelete(id: number): Promise<void> {
     downloads.value.splice(index, 0, removed)
     state.value = 'content'
     showToast('Delete failed')
+  }
+}
+
+/* ---------------------------------- multi-select (Android choice mode) ------ */
+
+/** 多选模式：长按/右键条目进入（Android onItemLongClick → choice mode）。 */
+const selectMode = ref(false)
+const selectedIds = ref(new Set<number>())
+const showMoveDialog = ref(false)
+const batchBusy = ref(false)
+
+/** 选中项中可"开始"的（idle/failed）。 */
+const selectedStartableIds = computed(() =>
+  downloads.value
+    .filter((d) => selectedIds.value.has(d.id) && (d.state === STATE_NONE || d.state === STATE_FAILED))
+    .map((d) => d.id),
+)
+
+/** 选中项中可"停止"的（wait/downloading）。 */
+const selectedStoppableIds = computed(() =>
+  downloads.value
+    .filter((d) => selectedIds.value.has(d.id) && (d.state === STATE_WAIT || d.state === STATE_DOWNLOAD))
+    .map((d) => d.id),
+)
+
+function onItemMenu(id: number): void {
+  selectMode.value = true
+  toggleSelect(id)
+}
+
+function onItemSelect(id: number): void {
+  if (selectMode.value) toggleSelect(id)
+}
+
+function toggleSelect(id: number): void {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+function selectAll(): void {
+  const all = downloads.value.map((d) => d.id)
+  selectedIds.value = new Set(all)
+}
+
+function exitSelectMode(): void {
+  selectMode.value = false
+  selectedIds.value = new Set()
+  showMoveDialog.value = false
+}
+
+async function onBatchStart(): Promise<void> {
+  const ids = selectedStartableIds.value
+  if (ids.length === 0 || batchBusy.value) return
+  batchBusy.value = true
+  try {
+    const started = await downloadApi.startRange(ids)
+    for (const item of downloads.value) {
+      if (selectedIds.value.has(item.id) && ids.includes(item.id)) item.state = STATE_WAIT
+    }
+    showToast(`Started ${started} downloads`)
+  } catch (error) {
+    console.error('Failed to start downloads', error)
+    showToast('Failed to start downloads')
+  } finally {
+    batchBusy.value = false
+    exitSelectMode()
+  }
+}
+
+async function onBatchStop(): Promise<void> {
+  const ids = selectedStoppableIds.value
+  if (ids.length === 0 || batchBusy.value) return
+  batchBusy.value = true
+  try {
+    const stopped = await downloadApi.stopRange(ids)
+    for (const item of downloads.value) {
+      if (selectedIds.value.has(item.id) && ids.includes(item.id)) item.state = STATE_NONE
+    }
+    showToast(`Stopped ${stopped} downloads`)
+  } catch (error) {
+    console.error('Failed to stop downloads', error)
+    showToast('Failed to stop downloads')
+    await load()
+  } finally {
+    batchBusy.value = false
+    exitSelectMode()
+  }
+}
+
+async function onBatchDelete(): Promise<void> {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0 || batchBusy.value) return
+  // Android DeleteRangeDialogHelper：删除会同时移除下载文件（WebUI 删除语义一致）。
+  if (!window.confirm(`删除选中的 ${ids.length} 项下载？下载文件将一并删除。`)) return
+  batchBusy.value = true
+  try {
+    const removed = await downloadApi.deleteRange(ids)
+    downloads.value = downloads.value.filter((d) => !selectedIds.value.has(d.id))
+    total.value = Math.max(0, total.value - removed)
+    if (downloads.value.length === 0) state.value = 'empty'
+    showToast(`Deleted ${removed} downloads`)
+  } catch (error) {
+    console.error('Failed to delete downloads', error)
+    showToast('Delete failed')
+  } finally {
+    batchBusy.value = false
+    exitSelectMode()
+  }
+}
+
+function onBatchMove(): void {
+  if (selectedIds.value.size === 0) return
+  showMoveDialog.value = true
+}
+
+function closeMoveDialog(): void {
+  showMoveDialog.value = false
+}
+
+async function confirmMove(labelId: number): Promise<void> {
+  const ids = Array.from(selectedIds.value)
+  closeMoveDialog()
+  if (ids.length === 0 || batchBusy.value) return
+  batchBusy.value = true
+  try {
+    const moved = await downloadApi.move(ids, labelId)
+    for (const item of downloads.value) {
+      if (selectedIds.value.has(item.id)) item.label = labelId
+    }
+    showToast(`Moved ${moved} downloads`)
+  } catch (error) {
+    console.error('Failed to move downloads', error)
+    showToast('Failed to move downloads')
+  } finally {
+    batchBusy.value = false
+    exitSelectMode()
   }
 }
 
@@ -613,6 +851,92 @@ onUnmounted(() => {
   outline-offset: -2px;
 }
 
+/* -------------------------------------------------- multi-select bar ---- */
+.select-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px var(--keyline-margin);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
+  animation: select-in 160ms var(--ease-decelerate-quart);
+}
+
+@keyframes select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.select-bar__count {
+  flex: 0 0 auto;
+  font-size: var(--text-super-small);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.select-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.select-bar__actions::-webkit-scrollbar {
+  display: none;
+}
+
+.select-bar__btn {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-super-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-decelerate-quart);
+}
+
+.select-bar__btn:hover:not(:disabled) {
+  background: var(--color-surface-activated);
+}
+
+.select-bar__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.select-bar__btn--danger {
+  border-color: color-mix(in srgb, var(--color-danger, #e5484d) 55%, transparent);
+  color: var(--color-danger, #e5484d);
+}
+
+.select-bar__close {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+}
+
+.select-bar__close:hover {
+  background: var(--color-surface-activated);
+}
+
 /* -------------------------------------------------------------- list ---- */
 /* Single-column virtualized list: the ul carries the total scroll height and
    each row is absolutely positioned at its virtual offset (translateY), so
@@ -718,6 +1042,31 @@ onUnmounted(() => {
   margin: 6px 0 0;
   font-size: var(--text-super-small);
   color: var(--color-red-500);
+}
+
+/* Move-to-label options (Android MoveDialogHelper list replica) */
+.dialog__label-list {
+  list-style: none;
+  margin: 0 0 var(--keyline-margin);
+  padding: 0;
+}
+
+.dialog__label-option {
+  display: block;
+  width: 100%;
+  padding: 10px 8px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dialog__label-option:hover {
+  background: var(--color-surface-activated);
 }
 
 .dialog__actions {

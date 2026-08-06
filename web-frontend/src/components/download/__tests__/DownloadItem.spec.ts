@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DownloadItem from '../DownloadItem.vue'
 import type { DownloadItem as DownloadItemType } from '@/api/download'
@@ -95,5 +95,83 @@ describe('DownloadItem (thumbnail handling, E2E-9 / E2E-3)', () => {
     })
     const img = wrapper.find('.download-item__thumb img')
     expect(img.attributes('src')).toBe('/thumbs/9001/cover.jpg')
+  })
+})
+
+/* ---------------- multi-select (Android choice mode) ---------------- */
+
+describe('DownloadItem (multi-select: contextmenu / long-press / toggle)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('emits menu on right-click and suppresses the native context menu', () => {
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    const article = wrapper.find('.download-item')
+    article.trigger('contextmenu')
+    expect(wrapper.emitted('menu')).toHaveLength(1)
+    expect(wrapper.emitted('menu')![0]).toEqual([1])
+  })
+
+  it('emits menu after a 500ms long-press', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    const article = wrapper.find('.download-item')
+
+    article.trigger('touchstart', { touches: [{ clientX: 10, clientY: 10 }] })
+    vi.advanceTimersByTime(499)
+    expect(wrapper.emitted('menu')).toBeUndefined()
+    vi.advanceTimersByTime(2)
+    expect(wrapper.emitted('menu')).toHaveLength(1)
+    expect(wrapper.emitted('menu')![0]).toEqual([1])
+  })
+
+  it('cancels the long-press on early touch end or big movement', () => {
+    vi.useFakeTimers()
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    const article = wrapper.find('.download-item')
+
+    // Short touch: touchend before 500ms → no menu.
+    article.trigger('touchstart', { touches: [{ clientX: 0, clientY: 0 }] })
+    article.trigger('touchend')
+    vi.advanceTimersByTime(600)
+    expect(wrapper.emitted('menu')).toBeUndefined()
+
+    // Movement >10px while pressing cancels the timer.
+    article.trigger('touchstart', { touches: [{ clientX: 0, clientY: 0 }] })
+    article.trigger('touchmove', { touches: [{ clientX: 30, clientY: 0 }] })
+    vi.advanceTimersByTime(600)
+    expect(wrapper.emitted('menu')).toBeUndefined()
+  })
+
+  it('click on the body toggles selection only in select mode', () => {
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload(), selectable: true, selected: false },
+    })
+
+    wrapper.find('.download-item').trigger('click')
+    expect(wrapper.emitted('select')).toHaveLength(1)
+    expect(wrapper.emitted('select')![0]).toEqual([1])
+
+    // 点按钮不触发 select（closest('button') 守卫），仍走原按钮事件（Stop → cancel）。
+    wrapper.find('button[aria-label="Stop download"]').trigger('click')
+    expect(wrapper.emitted('select')).toHaveLength(1)
+    expect(wrapper.emitted('cancel')).toHaveLength(1)
+  })
+
+  it('does not toggle on body click when not in select mode', () => {
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    wrapper.find('.download-item').trigger('click')
+    expect(wrapper.emitted('select')).toBeUndefined()
+  })
+
+  it('renders the checked indicator and selected style in select mode', () => {
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload(), selectable: true, selected: true },
+    })
+    expect(wrapper.find('.download-item__check').exists()).toBe(true)
+    expect(wrapper.find('.download-item__check--on').exists()).toBe(true)
+    expect(wrapper.find('.download-item').classes()).toContain('download-item--selected')
+    expect(wrapper.find('.download-item').attributes('aria-selected')).toBe('true')
   })
 })

@@ -1,9 +1,29 @@
 <template>
   <article
     class="download-item"
-    :class="`download-item--${stateKey}`"
+    :class="[
+      `download-item--${stateKey}`,
+      { 'download-item--selectable': selectable, 'download-item--selected': selected },
+    ]"
     :aria-label="`${title} — ${stateLabel}`"
+    :aria-selected="selectable ? selected : undefined"
+    @contextmenu="onContextMenu"
+    @touchstart.passive="onTouchStart"
+    @touchmove.passive="onTouchMove"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
+    @click="onBodyClick"
   >
+    <!-- Multi-select indicator (Android checked circle, choice mode only) -->
+    <span
+      v-if="selectable"
+      class="download-item__check"
+      :class="{ 'download-item__check--on': selected }"
+      aria-hidden="true"
+    >
+      <AppIcon v-if="selected" name="check-dark" size="16px" color="var(--color-white)" />
+    </span>
+
     <!-- FixedThumb replica: 80×120dp, CENTER_CROP (item_download.xml) -->
     <div class="download-item__thumb">
       <img
@@ -150,8 +170,13 @@ const props = withDefaults(
     item: DownloadItem
     /** Live transfer rate in pages/second (WebSocket feed). 0 = unknown. */
     speed?: number
+    /** Multi-select mode active (Android custom choice mode) — row is
+        click-to-toggle selectable and shows the checked state. */
+    selectable?: boolean
+    /** Selected in multi-select mode (drives the visual checked state). */
+    selected?: boolean
   }>(),
-  { speed: 0 },
+  { speed: 0, selectable: false, selected: false },
 )
 
 const emit = defineEmits<{
@@ -163,6 +188,11 @@ const emit = defineEmits<{
   (e: 'cancel', id: number): void
   /** Remove the entry from the download list. */
   (e: 'delete', id: number): void
+  /** Right-click / long-press → host enters multi-select mode (Android
+      onItemLongClick) and toggles this row. */
+  (e: 'menu', id: number): void
+  /** Click on the card body while selectable — toggles this row. */
+  (e: 'select', id: number): void
 }>()
 
 const title = computed(() => props.item.title || props.item.titleJpn || 'Untitled')
@@ -192,6 +222,58 @@ function onThumbError(): void {
 
 /** Numeric `SiteConfig` category bit → chip key (undefined renders no chip). */
 const categoryKey = computed(() => CATEGORY_BY_BIT[props.item.category])
+
+/* ---- multi-select (Android custom choice mode) ---- */
+
+let pressTimer: ReturnType<typeof setTimeout> | null = null
+let pressStartX = 0
+let pressStartY = 0
+
+/** Long-press (≥500ms, <10px movement) → host menu (Android onItemLongClick).
+    无条件触发——即使尚未处于多选模式（长按即进入）。 */
+function onTouchStart(event: TouchEvent): void {
+  const touch = event.touches[0]
+  pressStartX = touch.clientX
+  pressStartY = touch.clientY
+  clearPressTimer()
+  pressTimer = setTimeout(() => {
+    pressTimer = null
+    emit('menu', props.item.id)
+  }, 500)
+}
+
+function onTouchMove(event: TouchEvent): void {
+  if (!pressTimer) return
+  const touch = event.touches[0]
+  if (Math.abs(touch.clientX - pressStartX) > 10 || Math.abs(touch.clientY - pressStartY) > 10) {
+    clearPressTimer()
+  }
+}
+
+function onTouchEnd(): void {
+  clearPressTimer()
+}
+
+function clearPressTimer(): void {
+  if (pressTimer) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
+}
+
+/** Right-click → host menu；row 上永不弹出原生菜单（无条件，长按/右键即进入多选）。 */
+function onContextMenu(event: MouseEvent): void {
+  event.preventDefault()
+  emit('menu', props.item.id)
+}
+
+/** Card body click in select mode toggles the row (Android toggleItemChecked);
+    action buttons keep their own handlers (closest('button') guard). */
+function onBodyClick(event: MouseEvent): void {
+  if (!props.selectable) return
+  if ((event.target as HTMLElement).closest('button')) return
+  emit('select', props.item.id)
+}
 
 const isDownloading = computed(() => props.item.state === STATE_DOWNLOAD)
 const isFailed = computed(() => props.item.state === STATE_FAILED)
@@ -280,6 +362,7 @@ const statsText = computed(() => {
 <style scoped>
 /* CardView.Reactive replica: 2dp radius / elevation / margin, theme surface. */
 .download-item {
+  position: relative;
   display: flex;
   align-items: stretch;
   background: var(--color-surface);
@@ -295,6 +378,42 @@ const statsText = computed(() => {
 .download-item:hover {
   box-shadow: 0 var(--card-elevation) calc(var(--card-max-elevation) * 3) var(--shadow-color);
   transform: translateY(-1px);
+}
+
+/* --------------------------------------------- multi-select (choice mode) --- */
+
+.download-item--selectable {
+  cursor: pointer;
+}
+
+.download-item--selectable:hover {
+  transform: none;
+}
+
+.download-item--selected {
+  box-shadow:
+    inset 0 0 0 2px var(--color-primary),
+    0 var(--card-elevation) var(--card-max-elevation) var(--shadow-color);
+}
+
+.download-item__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-divider);
+  background: var(--color-bg);
+}
+
+.download-item__check--on {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 /* ------------------------------------------------------------- thumb --- */

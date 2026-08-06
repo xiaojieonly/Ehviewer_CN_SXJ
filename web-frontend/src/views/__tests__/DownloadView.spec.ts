@@ -17,6 +17,10 @@ vi.mock('@/api/download', () => ({
     delete: vi.fn(),
     createLabel: vi.fn(),
     deleteLabel: vi.fn(),
+    startRange: vi.fn(),
+    stopRange: vi.fn(),
+    deleteRange: vi.fn(),
+    move: vi.fn(),
   },
 }))
 
@@ -276,4 +280,141 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     await mountView()
     expect(wrapper.find('[data-testid="content-state-empty"]').exists()).toBe(true)
   })
+  /* ---------------- multi-select (Android choice mode) ---------------- */
+
+  it('enters multi-select mode on right-click and toggles the row', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    expect(wrapper.find('.select-bar').exists()).toBe(false)
+
+    const row = wrapper.find('.download-item')
+    await row.trigger('contextmenu')
+
+    expect(wrapper.find('.select-bar').exists()).toBe(true)
+    expect(wrapper.find('.select-bar__count').text()).toBe('已选 1 项')
+    expect(row.classes()).toContain('download-item--selected')
+    // FAB cluster hidden while selecting (Android choice mode).
+    expect(wrapper.find('.fab-layout').exists()).toBe(false)
+
+    // Clicking the row body toggles the selection off.
+    await row.trigger('click')
+    expect(wrapper.find('.select-bar__count').text()).toBe('已选 0 项')
+  })
+
+  it('selects all loaded rows and exits via the close button', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    await wrapper.find('.download-item').trigger('contextmenu')
+
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    expect(wrapper.find('.select-bar__count').text()).toBe('已全选')
+
+    await wrapper.find('.select-bar__close').trigger('click')
+    expect(wrapper.find('.select-bar').exists()).toBe(false)
+    expect(wrapper.find('.fab-layout').exists()).toBe(true)
+  })
+
+  it('batch start resumes the selected idle rows', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [
+        makeDownload(1, { state: 0 }),
+        makeDownload(2, { state: 4 }),
+        makeDownload(3, { state: 2 }),
+      ],
+      labels: [],
+      total: 3,
+    }))
+    vi.mocked(downloadApi.startRange).mockResolvedValue(2)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    // Select all three (2 is downloading → not startable).
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '开始')!.trigger('click')
+    await flushPromises()
+
+    expect(downloadApi.startRange).toHaveBeenCalledWith([1, 2])
+    expect(downloadApi.startRange).toHaveBeenCalledTimes(1)
+    // Toast teleports to body — assert on document.
+    expect(document.querySelector('.toast')?.textContent).toContain('Started 2 downloads')
+    // Optimistic state flips; select mode exits.
+    expect(wrapper.find('.select-bar').exists()).toBe(false)
+  })
+
+  it('batch stop pauses the selected active rows', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [
+        makeDownload(1, { state: 1 }),
+        makeDownload(2, { state: 2 }),
+        makeDownload(3, { state: 3 }),
+      ],
+      labels: [],
+      total: 3,
+    }))
+    vi.mocked(downloadApi.stopRange).mockResolvedValue(2)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '全选')!.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '停止')!.trigger('click')
+    await flushPromises()
+
+    expect(downloadApi.stopRange).toHaveBeenCalledWith([1, 2])
+    expect(document.querySelector('.toast')?.textContent).toContain('Stopped 2 downloads')
+  })
+
+  it('batch delete confirms, removes the rows and clamps the total', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [makeDownload(1), makeDownload(2), makeDownload(3)],
+      labels: [],
+      total: 3,
+    }))
+    vi.mocked(downloadApi.deleteRange).mockResolvedValue(2)
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '删除')!.trigger('click')
+    await flushPromises()
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('删除选中的 1 项'))
+    expect(downloadApi.deleteRange).toHaveBeenCalledWith([1])
+    expect(wrapper.find('.select-bar').exists()).toBe(false)
+    confirm.mockRestore()
+  })
+
+  it('move opens the label picker and assigns the target label', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [makeDownload(1), makeDownload(2)],
+      labels: [{ id: 5, label: 'Work', time: 1 }],
+      total: 2,
+    }))
+    vi.mocked(downloadApi.move).mockResolvedValue(1)
+    await mountView()
+
+    await wrapper.find('.download-item').trigger('contextmenu')
+    await wrapper.findAll('.select-bar__btn').find((b) => b.text() === '移动')!.trigger('click')
+    await flushPromises()
+    // Dialog teleports to body.
+    expect(document.querySelector('.dialog__label-list')).not.toBeNull()
+    expect(document.querySelector('.dialog__label-list')?.textContent).toContain('Work')
+
+    const workOption = Array.from(document.querySelectorAll('.dialog__label-option')!)
+      .find((b) => b.textContent === 'Work')!
+    ;(workOption as HTMLElement).click()
+    await flushPromises()
+
+    expect(downloadApi.move).toHaveBeenCalledWith([1], 5)
+    expect(document.querySelector('.dialog__label-list')).toBeNull()
+})
 })
