@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.dto.JobState
 import com.hippo.anotherviewer.web.dto.JobType
+import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -51,6 +52,7 @@ interface JobStore {
 }
 
 /** 内存实现：ConcurrentHashMap，无 TTL——终态任务清理由 JobService 惰性执行。 */
+@Component
 class InMemoryJobStore : JobStore {
     private val jobs = ConcurrentHashMap<String, Job>()
 

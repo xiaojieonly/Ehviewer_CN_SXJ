@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -182,8 +183,10 @@ class DownloadControllerTest {
     }
 
     @Test
-    fun `list forwards offset and limit to the paginated query`() {
-        val page = PageImpl(listOf(entity(1, 101)), PageRequest.of(5, 20), 1)
+    fun `list converts row offset to page index and sorts by id asc`() {
+        // A5 契约：offset 是行偏移。offset=5&limit=20 → pageIndex=0（前 20 行）；
+        // offset=100&limit=100 → pageIndex=1（101..200 行）。
+        val page = PageImpl(listOf(entity(1, 101)), PageRequest.of(0, 20), 1)
         `when`(downloadRepository.findAll(any(Pageable::class.java))).thenReturn(page)
         `when`(downloadRepository.count()).thenReturn(1L)
         `when`(labelRepository.findAll()).thenReturn(emptyList())
@@ -194,8 +197,26 @@ class DownloadControllerTest {
 
         val captor = ArgumentCaptor.forClass(Pageable::class.java)
         verify(downloadRepository).findAll(captureK(captor))
-        assertEquals(5, captor.value.pageNumber)
+        assertEquals(0, captor.value.pageNumber)
         assertEquals(20, captor.value.pageSize)
+        assertEquals(Sort.Direction.ASC, captor.value.sort.getOrderFor("id")?.direction)
+    }
+
+    @Test
+    fun `list maps row offset 100 with limit 100 to page 1`() {
+        val page = PageImpl(listOf(entity(2, 102)), PageRequest.of(1, 100), 500)
+        `when`(downloadRepository.findAll(any(Pageable::class.java))).thenReturn(page)
+        `when`(downloadRepository.count()).thenReturn(500L)
+        `when`(labelRepository.findAll()).thenReturn(emptyList())
+
+        mockMvc.perform(get("/api/v1/download/list").param("offset", "100").param("limit", "100"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.total").value(500))
+
+        val captor = ArgumentCaptor.forClass(Pageable::class.java)
+        verify(downloadRepository).findAll(captureK(captor))
+        assertEquals(1, captor.value.pageNumber)
+        assertEquals(100, captor.value.pageSize)
     }
 
     @Test

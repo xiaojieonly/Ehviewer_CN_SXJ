@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.io.File
 import java.util.concurrent.*
@@ -99,7 +100,11 @@ class DownloadService(
     // ── query ───────────────────────────────────────────────────
 
     fun listDownloads(labelId: Int? = null, offset: Int = 0, limit: Int = 100): DownloadListResponse {
-        val pageable = PageRequest.of(offset.coerceAtLeast(0), limit.coerceIn(1, 500))
+        // A5 契约：offset 为行偏移、limit 为每页条数。PageRequest 以页码为参数，
+        // 换算 pageIndex = offset / limit（前端按 limit 倍数递增，语义精确）；
+        // 显式按主键 id 升序 = 添加先后（最早在前），与分页前 findAll() 顺序一致。
+        val size = limit.coerceIn(1, 500)
+        val pageable = PageRequest.of(offset.coerceAtLeast(0) / size, size, Sort.by("id"))
         val labels = labelRepository.findAll()
 
         if (labelId != null && labelId != 0) {
