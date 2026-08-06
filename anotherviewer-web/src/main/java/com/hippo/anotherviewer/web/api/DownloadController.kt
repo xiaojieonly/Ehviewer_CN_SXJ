@@ -120,4 +120,19 @@ class DownloadController(private val downloadService: DownloadService) {
     fun deleteLabel(@PathVariable id: Long): ResponseEntity<Boolean> {
         return ResponseEntity.ok(downloadService.deleteLabel(id))
     }
+
+    @GetMapping("/slots")
+    fun getFilterSlots(): ResponseEntity<FilterSlotsResponse> {
+        return ResponseEntity.ok(FilterSlotsResponse(downloadService.getFilterSlots()))
+    }
+
+    /** 整体替换筛选槽位；校验失败 → 400 VALIDATION_ERROR。 */
+    @PutMapping("/slots")
+    fun putFilterSlots(@Valid @RequestBody request: FilterSlotsResponse): ResponseEntity<*> {
+        return try {
+            ResponseEntity.ok(FilterSlotsResponse(downloadService.putFilterSlots(request.slots)))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", e.message ?: "Invalid filter slots")
+        }
+    }
 }

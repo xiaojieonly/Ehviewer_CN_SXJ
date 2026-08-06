@@ -96,3 +96,18 @@ data class DownloadProgress(
     val speed: Long,
     val label: Int
 )
+
+/**
+ * 筛选槽位（命名正则预设）：id 由前端生成（如 nanoid/时间戳），服务端仅透传；
+ * 整体存 serverConfig KV `download.filterSlots`（JSON 数组），随备份自动导出。
+ */
+data class FilterSlotDto(
+    val id: String,
+    val name: String,
+    val pattern: String,
+)
+
+/** 筛选槽位集合：GET /api/v1/download/slots 响应与 PUT 请求体共用。 */
+data class FilterSlotsResponse(
+    val slots: List<FilterSlotDto> = emptyList()
+)

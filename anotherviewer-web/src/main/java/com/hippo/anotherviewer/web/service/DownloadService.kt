@@ -9,6 +9,8 @@ import com.hippo.anotherviewer.web.entity.DownloadLabelEntity
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository.TitleProjection
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.context.ApplicationEventPublisher
@@ -19,6 +21,8 @@ import java.io.File
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * Download manager with bounded concurrency:
@@ -45,9 +49,12 @@ class DownloadService(
     private val eventPublisher: ApplicationEventPublisher,
     private val imageCacheService: ImageCacheService,
     private val sessionManager: SiteSessionManager,
-    private val galleryLookup: GalleryLookupService
+    private val galleryLookup: GalleryLookupService,
+    private val serverConfigService: ServerConfigService
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
+
+    private val mapper = jacksonObjectMapper()
 
     /** In-flight download tasks, keyed by download id. */
     private val tasks = ConcurrentHashMap<Long, DownloadTask>()
@@ -397,6 +404,53 @@ class DownloadService(
         return true
     }
 
+    // ── filter slots（筛选槽位：命名正则预设，serverConfig KV 持久化）──
+
+    /**
+     * 读取筛选槽位：JSON 解析容错——未配置或内容损坏一律返回空数组，
+     * 绝不因坏数据让 GET 500。
+     */
+    fun getFilterSlots(): List<FilterSlotDto> {
+        val raw = serverConfigService.get(KEY_FILTER_SLOTS)
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            mapper.readValue(raw, object : TypeReference<List<FilterSlotDto>>() {})
+        } catch (e: Exception) {
+            logger.warn("Corrupt filter slots config ignored: {}", e.message)
+            emptyList()
+        }
+    }
+
+    /**
+     * 整体替换筛选槽位：逐槽位校验 → 序列化为 JSON → set 持久化（随备份导出）→
+     * 返回规范化后的结果（name 去首尾空白）。
+     * @throws IllegalArgumentException 任一校验失败（控制器转 400 VALIDATION_ERROR）
+     */
+    fun putFilterSlots(slots: List<FilterSlotDto>): List<FilterSlotDto> {
+        if (slots.size > MAX_FILTER_SLOTS) {
+            throw IllegalArgumentException("at most 20 filter slots")
+        }
+        slots.forEach { slot ->
+            val name = slot.name.trim()
+            if (name.isEmpty()) throw IllegalArgumentException("slot name must not be blank")
+            if (name.length > MAX_SLOT_NAME_LENGTH) {
+                throw IllegalArgumentException("slot name must be at most 32 characters")
+            }
+            if (slot.pattern.isBlank()) throw IllegalArgumentException("slot pattern must not be blank")
+            if (slot.pattern.length > MAX_SLOT_PATTERN_LENGTH) {
+                throw IllegalArgumentException("slot pattern must be at most 256 characters")
+            }
+            try {
+                Pattern.compile(slot.pattern)
+            } catch (e: PatternSyntaxException) {
+                throw IllegalArgumentException("invalid regex: ${e.message}")
+            }
+        }
+        val normalized = slots.map { it.copy(name = it.name.trim()) }
+        serverConfigService.set(KEY_FILTER_SLOTS, mapper.writeValueAsString(normalized))
+        return normalized
+    }
+
     // ── stats ───────────────────────────────────────────────────
 
     fun getActiveDownloadCount(): Int = tasks.size
@@ -689,5 +743,12 @@ class DownloadService(
     private companion object {
         /** 跨页全选/批量单次解析的全集上限（9000+ 级规模安全；超限取前 N 条）。 */
         const val MAX_BATCH_IDS = 100_000
+
+        /** 筛选槽位持久化键（serverConfig KV，随备份自动导出）。 */
+        const val KEY_FILTER_SLOTS = "download.filterSlots"
+
+        const val MAX_FILTER_SLOTS = 20
+        const val MAX_SLOT_NAME_LENGTH = 32
+        const val MAX_SLOT_PATTERN_LENGTH = 256
     }
 }

@@ -13,7 +13,9 @@ import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
 import com.hippo.anotherviewer.web.service.DownloadService
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
+import com.hippo.anotherviewer.web.service.ServerConfigService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,6 +30,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -37,12 +40,14 @@ class DownloadControllerTest {
 
     private lateinit var downloadRepository: DownloadInfoRepository
     private lateinit var labelRepository: DownloadLabelRepository
+    private lateinit var serverConfigService: ServerConfigService
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
         downloadRepository = mock(DownloadInfoRepository::class.java)
         labelRepository = mock(DownloadLabelRepository::class.java)
+        serverConfigService = mock(ServerConfigService::class.java)
         val config = SiteCoreConfigProperties().apply {
             download.path = File(System.getProperty("java.io.tmpdir"), "av-dl-test-${System.nanoTime()}").absolutePath
         }
@@ -53,7 +58,8 @@ class DownloadControllerTest {
             mock(ApplicationEventPublisher::class.java),
             mock(ImageCacheService::class.java),
             mock(SiteSessionManager::class.java),
-            mock(GalleryLookupService::class.java)
+            mock(GalleryLookupService::class.java),
+            serverConfigService
         )
         mockMvc = MockMvcBuilders.standaloneSetup(DownloadController(downloadService))
             .setControllerAdvice(GlobalExceptionHandler())
@@ -510,5 +516,120 @@ class DownloadControllerTest {
         verify(downloadRepository).searchDownloads(nullable(Int::class.java), eq("futa"), any(Pageable::class.java))
         verify(downloadRepository).countSearchDownloads(nullable(Int::class.java), eq("futa"))
         verify(downloadRepository, never()).findAll(any(Pageable::class.java))
+    }
+
+    // ── filter slots（筛选槽位 CRUD）────────────────────────────
+
+    @Test
+    fun `slots GET returns empty array when never configured`() {
+        `when`(serverConfigService.get(eq("download.filterSlots"), eq(""))).thenReturn("")
+
+        mockMvc.perform(get("/api/v1/download/slots"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slots.length()").value(0))
+    }
+
+    @Test
+    fun `slots GET returns empty array when stored value is corrupt`() {
+        `when`(serverConfigService.get(eq("download.filterSlots"), eq(""))).thenReturn("{broken")
+
+        mockMvc.perform(get("/api/v1/download/slots"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slots.length()").value(0))
+    }
+
+    @Test
+    fun `slots PUT accepts valid slots and persists the JSON`() {
+        // captureK/eq matchers return null at runtime and NPE on Kotlin-class
+        // mocks with non-null params — record the persisted value via doAnswer
+        // with Mockito's anyString() (returns "" at runtime) instead.
+        var persistedJson: String? = null
+        doAnswer { invocation ->
+            persistedJson = invocation.getArgument(1) as String
+            null
+        }.`when`(serverConfigService).set(anyString(), anyString())
+
+        mockMvc.perform(
+            put("/api/v1/download/slots")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slots":[{"id":"a1","name":" Futa ","pattern":"(?i)futa"},{"id":"a2","name":"NTR","pattern":"ntr"}]}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slots.length()").value(2))
+            .andExpect(jsonPath("$.slots[0].id").value("a1"))
+            .andExpect(jsonPath("$.slots[0].name").value("Futa"))
+            .andExpect(jsonPath("$.slots[0].pattern").value("(?i)futa"))
+            .andExpect(jsonPath("$.slots[1].id").value("a2"))
+
+        assertEquals(
+            """[{"id":"a1","name":"Futa","pattern":"(?i)futa"},{"id":"a2","name":"NTR","pattern":"ntr"}]""",
+            persistedJson
+        )
+    }
+
+    @Test
+    fun `slots GET reads back the persisted slots`() {
+        `when`(serverConfigService.get(eq("download.filterSlots"), eq("")))
+            .thenReturn("""[{"id":"a1","name":"Futa","pattern":"(?i)futa"},{"id":"a2","name":"NTR","pattern":"ntr"}]""")
+
+        mockMvc.perform(get("/api/v1/download/slots"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slots.length()").value(2))
+            .andExpect(jsonPath("$.slots[1].name").value("NTR"))
+            .andExpect(jsonPath("$.slots[1].pattern").value("ntr"))
+    }
+
+    @Test
+    fun `slots PUT rejects an invalid regex with 400 envelope`() {
+        mockMvc.perform(
+            put("/api/v1/download/slots")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slots":[{"id":"a1","name":"Bad","pattern":"("}]}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message", containsString("invalid regex")))
+        verify(serverConfigService, never()).set(anyString(), anyString())
+    }
+
+    @Test
+    fun `slots PUT rejects more than 20 slots with 400 envelope`() {
+        val many = (1..21).joinToString(",") { """{"id":"s$it","name":"n$it","pattern":"p$it"}""" }
+        mockMvc.perform(
+            put("/api/v1/download/slots")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slots":[$many]}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message").value("at most 20 filter slots"))
+        verify(serverConfigService, never()).set(anyString(), anyString())
+    }
+
+    @Test
+    fun `slots PUT rejects blank name with 400 envelope`() {
+        mockMvc.perform(
+            put("/api/v1/download/slots")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slots":[{"id":"a1","name":"   ","pattern":"futa"}]}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message").value("slot name must not be blank"))
+        verify(serverConfigService, never()).set(anyString(), anyString())
+    }
+
+    @Test
+    fun `slots PUT rejects pattern longer than 256 characters`() {
+        val longPattern = "a".repeat(257)
+        mockMvc.perform(
+            put("/api/v1/download/slots")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slots":[{"id":"a1","name":"Long","pattern":"$longPattern"}]}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message").value("slot pattern must be at most 256 characters"))
+        verify(serverConfigService, never()).set(anyString(), anyString())
     }
 }
