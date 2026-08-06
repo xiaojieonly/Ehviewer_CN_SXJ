@@ -119,8 +119,15 @@ class BackupService(
      * anotherviewer.db / security.key 旧文件改名 `.bak` 后替换（已存在追加时间戳），
      * config.json 回写 server_config 表，downloads/cache 覆盖合并。异常时回滚
      * 已改名的文件并清理临时目录。
+     *
+     * @param handle 异步 Job 进度句柄（可选）：解包阶段按分片粒度上报
+     *   `progress("还原数据库 i/n", ...)`；同步调用（GET 兼容路径）传 null。
      */
-    fun restore(manifest: BackupManifest, slices: Map<String, Path>): Boolean {
+    fun restore(
+        manifest: BackupManifest,
+        slices: Map<String, Path>,
+        handle: JobService.JobHandle? = null,
+    ): Boolean {
         require(manifest.formatVersion == 1) { "不支持的备份格式版本: ${manifest.formatVersion}" }
         manifest.slices.forEach { slice ->
             val file = slices[slice.name] ?: throw IllegalArgumentException("备份包缺少分片: ${slice.name}")
@@ -133,8 +140,13 @@ class BackupService(
         val staging = Files.createTempDirectory("backup-restore-")
         val renamed = mutableListOf<Pair<Path, Path>>() // bak -> 原位置（回滚用）
         try {
-            manifest.slices.forEach { slice ->
+            manifest.slices.forEachIndexed { i, slice ->
                 extractSlice(slices.getValue(slice.name), staging)
+                handle?.progress(
+                    "还原数据库 ${i + 1}/${manifest.slices.size}",
+                    (i + 1).toLong(),
+                    manifest.slices.size.toLong(),
+                )
             }
             // 先回写配置（旧库仍在线），最后再替换 db 文件本身。
             restoreConfig(staging.resolve("config.json"))

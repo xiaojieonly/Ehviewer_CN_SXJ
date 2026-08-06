@@ -2,6 +2,11 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
+import com.hippo.anotherviewer.web.dto.JobSubmitResponse
+import com.hippo.anotherviewer.web.dto.JobType
+import com.hippo.anotherviewer.web.service.InMemoryJobStore
+import com.hippo.anotherviewer.web.service.Job
+import com.hippo.anotherviewer.web.service.JobService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
@@ -9,6 +14,7 @@ import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,6 +43,7 @@ class ImageProxyController(
     private val galleryLookupService: GalleryLookupService,
     private val sessionManager: SiteSessionManager,
     private val prefetchService: PrefetchService,
+    private val jobService: JobService = JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
 ) {
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
 
@@ -114,9 +121,17 @@ class ImageProxyController(
     }
 
     @PostMapping("/cache/clear")
-    fun clearCache(): ResponseEntity<Map<String, Boolean>> {
-        imageCacheService.clearCache()
-        return ResponseEntity.ok(mapOf("success" to true))
+    fun clearCache(): ResponseEntity<*> {
+        lateinit var job: Job
+        try {
+            job = jobService.submit(JobType.CACHE_CLEAR, {}) { handle ->
+                val outcome = imageCacheService.clearCache(handle)
+                job.result = mapOf("removed" to outcome.removed, "total" to outcome.total)
+            }
+        } catch (e: IllegalStateException) {
+            return errorEnvelope(HttpStatus.CONFLICT, "CONFLICT", e.message ?: "已有清缓存任务进行中")
+        }
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(JobSubmitResponse(job.jobId, job.state))
     }
 
     // ── streamGalleryImage ───────────────────────────────────────

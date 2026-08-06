@@ -12,6 +12,12 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicLong
 
+/** 全量清缓存结果：removed = 实际删除文件数，total = 清前磁盘文件数。 */
+data class CacheClearOutcome(
+    val removed: Long,
+    val total: Long,
+)
+
 /**
  * Two-tier image cache: Caffeine (hot memory) + disk (persistent).
  *
@@ -150,12 +156,28 @@ class ImageCacheService(
 
     // ── whole-cache management (backward-compatible) ───────────
 
-    fun clearCache() {
+    /**
+     * 清空内存 + 磁盘两级缓存，边删边计数。
+     *
+     * @param handle 异步 Job 进度句柄（可选）：先 collectFiles 得 total，
+     *   逐文件删除 processed++ 并上报 `progress("删除缓存文件", ...)`；
+     *   同步调用（无 handle）保持原行为，仅返回计数。
+     */
+    fun clearCache(handle: JobService.JobHandle? = null): CacheClearOutcome {
         memoryCache.invalidateAll()
-        if (cacheDir.isDirectory) {
-            cacheDir.listFiles()?.forEach { it.deleteRecursively() }
+        var removed = 0L
+        val files = if (cacheDir.isDirectory) collectFiles(cacheDir) else emptyList()
+        val total = files.size.toLong()
+        for (file in files) {
+            if (file.delete()) removed++
+            handle?.progress("删除缓存文件", removed, total)
         }
+        // 清理删空后的目录（与旧 deleteRecursively 行为对齐）。
+        cacheDir.listFiles()
+            ?.filter { it.isDirectory && (it.listFiles()?.isEmpty() != false) }
+            ?.forEach { it.delete() }
         diskSizeBytes.set(0)
+        return CacheClearOutcome(removed, total)
     }
 
     fun getCacheSize(): Int = memoryCache.asMap().size

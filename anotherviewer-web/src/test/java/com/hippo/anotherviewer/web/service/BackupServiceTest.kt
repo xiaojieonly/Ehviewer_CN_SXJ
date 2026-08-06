@@ -133,6 +133,26 @@ class BackupServiceTest {
     }
 
     @Test
+    fun `restore reports per-slice progress via job handle`() {
+        val result = service.export(includeDownloads = false)
+        val slices = result.slices.associateBy { it.fileName.toString() }
+
+        val updates = mutableListOf<Pair<String, Long>>()
+        val handle = object : JobService.JobHandle {
+            override fun progress(stage: String, processed: Long, total: Long) { updates += stage to processed }
+            override fun stage(stage: String) = Unit
+        }
+
+        assertTrue(service.restore(result.manifest, slices, handle))
+
+        val expected = result.manifest.slices.size.toLong()
+        assertEquals(expected.toInt(), updates.size)
+        assertTrue(updates.all { it.first.startsWith("还原数据库 ") })
+        assertEquals(expected, updates.last().second) // 末次 processed = 分片数
+        assertEquals(1L, updates.first().second) // 逐片递增
+    }
+
+    @Test
     fun `export without security key still produces core slice`() {
         Files.deleteIfExists(dataDir.resolve("security.key"))
 

@@ -173,6 +173,50 @@ class ImageCacheServiceTest {
         assertEquals(0L, stats.diskCacheSizeBytes)
     }
 
+    @Test
+    fun `clearCache counts removed and total files`() {
+        service.cacheImageByKey(1L, 1, byteArrayOf(1), "jpg")
+        service.cacheImageByKey(1L, 2, byteArrayOf(2), "jpg")
+        service.cacheImageByKey(300L, 1, byteArrayOf(3), "jpg")
+
+        val outcome = service.clearCache()
+
+        assertEquals(3L, outcome.total)
+        assertEquals(3L, outcome.removed)
+        assertEquals(0L, service.getCacheStats().diskCacheSizeBytes)
+    }
+
+    @Test
+    fun `clearCache reports per-file progress via job handle`() {
+        service.cacheImageByKey(1L, 1, byteArrayOf(1), "jpg")
+        service.cacheImageByKey(1L, 2, byteArrayOf(2), "jpg")
+
+        val updates = mutableListOf<Long>()
+        val handle = object : JobService.JobHandle {
+            override fun progress(stage: String, processed: Long, total: Long) {
+                assertEquals("删除缓存文件", stage)
+                assertEquals(2L, total)
+                updates += processed
+            }
+            override fun stage(stage: String) = Unit
+        }
+
+        val outcome = service.clearCache(handle)
+
+        assertEquals(2L, outcome.total)
+        assertEquals(2L, outcome.removed)
+        assertEquals(2, updates.size)
+        assertEquals(listOf(1L, 2L), updates)
+    }
+
+    @Test
+    fun `clearCache with empty cache reports zero counts`() {
+        val outcome = service.clearCache()
+
+        assertEquals(0L, outcome.total)
+        assertEquals(0L, outcome.removed)
+    }
+
     // ── disk eviction ──────────────────────────────────────────
 
     @Test
