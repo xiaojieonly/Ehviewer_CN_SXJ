@@ -29,6 +29,7 @@ import com.hippo.anotherviewer.SiteDB;
 import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.client.SiteTagDatabase;
+import com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler;
 
 public class SiteFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceChangeListener {
@@ -83,6 +84,10 @@ public class SiteFragment extends BasePreferenceFragmentCompat
             return true;
         } else if (Settings.KEY_GALLERY_SITE.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
+            // Push the new gallery site selection to a paired WebUI server
+            // right away (the ehSession entity carries gallerySite); no-ops
+            // silently when unpaired.
+            WebUiAutoSyncScheduler.triggerOnce(getActivity().getApplicationContext());
             return true;
         } else if (Settings.KEY_LIST_MODE.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);

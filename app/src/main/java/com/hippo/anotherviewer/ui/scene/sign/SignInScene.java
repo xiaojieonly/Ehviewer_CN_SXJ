@@ -254,6 +254,9 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         } else if (mSkipSigningIn == v) {
             // Set gallery size SITE_E if skip sign in
             Settings.putGallerySite(SiteUrl.SITE_E);
+            // Parity with the site-switch trigger: the selection rides the
+            // ehSession entity, so push it to a paired server immediately.
+            WebUiAutoSyncScheduler.triggerOnce(activity.getApplicationContext());
             redirectTo();
         }
     }

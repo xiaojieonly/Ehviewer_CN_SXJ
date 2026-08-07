@@ -13,6 +13,7 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.hippo.anotherviewer.SiteApplication
+import com.hippo.anotherviewer.Settings
 import com.hippo.anotherviewer.client.SiteCookieStore
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.SiteUtils
@@ -66,6 +67,12 @@ class WebViewSignInScene : SolidScene() {
             mWebView = WebView(context)
             val webSettings = mWebView!!.settings
             webSettings.javaScriptEnabled = true
+            // Keep the WebView's default Android UA: Cloudflare's Turnstile
+            // challenge rejects a desktop UA on an Android device (the earlier
+            // mismatch made the challenge hang). After a successful login the
+            // actual UA is recorded (Settings.putWebViewUserAgent) so the
+            // app's OkHttp requests can send the exact same UA — cf_clearance
+            // binds to the UA that solved the challenge.
             mWebView!!.webViewClient = LoginWebViewClient()
             mWebView!!.loadUrl(SiteUrl.URL_SIGN_IN)
             mWebView
@@ -130,6 +137,10 @@ class WebViewSignInScene : SolidScene() {
         override fun onPageFinished(view: WebView, url: String) {
             val context: Context =  ehContext ?: return
             val httpUrl = url.toHttpUrlOrNull() ?: return
+
+            // Record the WebView's real UA so SiteRequestBuilder can send the
+            // identical UA for Gallery Site traffic (cf_clearance binding).
+            Settings.putWebViewUserAgent(view.settings.userAgentString)
 
             val cookieString = CookieManager.getInstance().getCookie(SiteUrl.HOST_E)
             val cookies = parseCookies(httpUrl, cookieString)

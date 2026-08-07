@@ -16,13 +16,19 @@
 
 package com.hippo.okhttp;
 
+import android.text.TextUtils;
+
 import com.hippo.anotherviewer.Settings;
 
 import okhttp3.Request;
 
 public class ChromeRequestBuilder extends Request.Builder {
 
-    private static final String CHROME_USER_AGENT =
+    /**
+     * Fallback UA for Gallery Site traffic before the first WebView sign-in
+     * has recorded the device's real UA (see {@link Settings#getWebViewUserAgent}).
+     */
+    public static final String CHROME_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
 
     private static final String CHROME_ACCEPT =
@@ -56,7 +62,10 @@ sec-ch-ua-platform: "Windows"
         // domain fronting
         url(url);
         addHeader("Host", host);
-        addHeader("User-Agent", CHROME_USER_AGENT);
+        // Send the UA the sign-in WebView used (cf_clearance binds to it);
+        // falls back to the desktop Chrome UA when never signed in via WebView.
+        String webViewUa = Settings.getWebViewUserAgent();
+        addHeader("User-Agent", TextUtils.isEmpty(webViewUa) ? CHROME_USER_AGENT : webViewUa);
         addHeader("Accept", CHROME_ACCEPT);
 //        addHeader("Accept-Encoding", CHROME_ACCEPT_ENCODING);
         addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE);

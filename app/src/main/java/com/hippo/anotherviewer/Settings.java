@@ -393,6 +393,22 @@ public class Settings {
         putIntToStr(KEY_GALLERY_SITE, value);
     }
 
+    private static final String KEY_WEBVIEW_USER_AGENT = "webview_user_agent";
+
+    /**
+     * The UA the sign-in WebView used when it solved the Cloudflare challenge;
+     * SiteRequestBuilder sends the identical UA for Gallery Site traffic so
+     * the cf_clearance cookie (bound to UA + IP) is accepted. Empty before
+     * the first WebView sign-in.
+     */
+    public static String getWebViewUserAgent() {
+        return getString(KEY_WEBVIEW_USER_AGENT, "");
+    }
+
+    public static void putWebViewUserAgent(String value) {
+        putString(KEY_WEBVIEW_USER_AGENT, value);
+    }
+
     private static final String KEY_LAUNCH_PAGE = "launch_page";
     private static final int DEFAULT_LAUNCH_PAGE = 0;
 

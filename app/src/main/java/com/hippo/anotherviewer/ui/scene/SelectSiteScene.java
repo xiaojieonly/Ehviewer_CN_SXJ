@@ -27,6 +27,7 @@ import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.client.SiteUrl;
 import com.hippo.anotherviewer.ui.MainActivity;
+import com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler;
 import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SelectSiteScene extends SolidScene implements View.OnClickListener {
@@ -74,12 +75,14 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
                 case R.id.site_e:
                     Settings.putSelectSite(false);
                     Settings.putGallerySite(SiteUrl.SITE_E);
+                    triggerWebUiSync(activity);
                     startSceneForCheckStep(CHECK_STEP_SELECT_SITE, getArguments());
                     finish();
                     break;
                 case R.id.site_ex:
                     Settings.putSelectSite(false);
                     Settings.putGallerySite(SiteUrl.SITE_EX);
+                    triggerWebUiSync(activity);
                     startSceneForCheckStep(CHECK_STEP_SELECT_SITE, getArguments());
                     finish();
                     break;
@@ -88,5 +91,14 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
                     break;
             }
         }
+    }
+
+    /**
+     * First-launch selection happens before pairing, so the sync is almost
+     * always a no-op; kept for parity so any later switch still reaches the
+     * server immediately.
+     */
+    private void triggerWebUiSync(MainActivity activity) {
+        WebUiAutoSyncScheduler.triggerOnce(activity.getApplicationContext());
     }
 }
