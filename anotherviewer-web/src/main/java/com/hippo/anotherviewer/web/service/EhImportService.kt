@@ -30,7 +30,9 @@ import com.hippo.anotherviewer.web.repository.QuickSearchRepository
 import okhttp3.Cookie
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.multipart.MultipartFile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,6 +49,11 @@ import java.sql.DriverManager
  * 校验 + 落临时文件 + 读 cookies 字节——MultipartFile 必须在 HTTP 线程读完），重活
  * [runImport] 在 JobService 线程池运行，事务绑定在该方法上（事务线程绑定语义）。
  * 进度上报见附录 A4：total = 源库各表 COUNT(*) 求和，逐行递增 processed。
+ *
+ * 写锁策略：SQLite 单写者，导入若用一个巨型事务独占写锁，会饿死所有并发写
+ * （保存配置 PUT /preferences、sync push 等，等满 busy_timeout 后 SQLITE_BUSY 500）。
+ * 故 [runImport] 不做整导入大事务，改为按批提交（[IMPORT_BATCH_SIZE] 行/批），
+ * 每批持有写锁仅毫秒级；批内行原子，跨批失败保留已提交批次（重跑幂等，force upsert）。
  */
 @Service
 class EhImportService(
@@ -61,6 +68,7 @@ class EhImportService(
     private val blackListRepository: BlackListRepository,
     private val galleryTagsRepository: GalleryTagsRepository,
     private val sessionManager: SiteSessionManager,
+    private val transactionManager: PlatformTransactionManager? = null,
 ) {
     private val logger = LoggerFactory.getLogger(EhImportService::class.java)
     private val mapper = jacksonObjectMapper()
@@ -86,7 +94,9 @@ class EhImportService(
         return PreparedImport(dbPath, cookies?.bytes)
     }
 
-    /** 同步测试入口：prep + 全量导入（进度 no-op）。生产路径由 [runImport] 承接。 */
+    /** 同步测试入口：prep + 全量导入（进度 no-op）。生产路径由 [runImport] 承接。
+     *  外层事务保留同步原子性：内部 [forEachRow] 的 TransactionTemplate 为 REQUIRED
+     *  传播，加入本事务而非独立提交。 */
     @Transactional
     fun importEhViewer(file: MultipartFile, cookies: MultipartFile?, force: Boolean, username: String): EhImportResponse {
         val prepared = prepareImport(file, cookies)
@@ -94,11 +104,11 @@ class EhImportService(
     }
 
     /**
-     * worker 线程导入（JobService 经 Spring 代理调用，@Transactional 在此生效）。
+     * worker 线程导入（JobService 经 Spring 代理调用）。不做整导入大事务：按批
+     * [forEachRow] 提交（见类注释「写锁策略」），每批一个短事务，写锁毫秒级让出。
      * 进度（附录 A4）：解析备份文件 → 各表阶段（total = 源表 COUNT(*) 求和，缺失表
      * 不占 total；逐行递增 processed）→ Cookie → 写入数据库。finally 清理 db 临时文件。
      */
-    @Transactional
     fun runImport(
         dbPath: Path,
         cookieBytes: ByteArray?,
@@ -232,11 +242,11 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
-            val label = row.str("label")?.takeIf { it.isNotBlank() } ?: return@forEach
+            val label = row.str("label")?.takeIf { it.isNotBlank() } ?: return@forEachRow
             val existing = downloadLabelRepository.findByLabel(label)
-            if (existing != null && !force) return@forEach
+            if (existing != null && !force) return@forEachRow
             val entity = existing ?: DownloadLabelEntity()
             entity.apply {
                 this.label = label
@@ -259,18 +269,18 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
             val existing = downloadRepository.findByGid(gid)
             if (existing != null) {
                 if (existing.username != null && existing.username != username) {
                     outcome.skipped++
-                    return@forEach
+                    return@forEachRow
                 }
                 if (!force) {
                     outcome.skipped++
-                    return@forEach
+                    return@forEachRow
                 }
             }
             val entity = existing ?: DownloadInfoEntity()
@@ -300,12 +310,12 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
-            val dirname = row.str("dirname") ?: return@forEach
+            val dirname = row.str("dirname") ?: return@forEachRow
             val existing = downloadDirnameRepository.findByGid(gid)
-            if (existing != null && !force) return@forEach
+            if (existing != null && !force) return@forEachRow
             val entity = existing ?: DownloadDirnameEntity()
             entity.gid = gid
             entity.dirname = dirname
@@ -324,18 +334,18 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
             val existing = historyRepository.findByGid(gid)
             if (existing != null) {
                 if (existing.username != null && existing.username != username) {
                     outcome.skipped++
-                    return@forEach
+                    return@forEachRow
                 }
                 if (!force) {
                     outcome.skipped++
-                    return@forEach
+                    return@forEachRow
                 }
             }
             val entity = existing ?: HistoryInfoEntity()
@@ -361,15 +371,15 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
             val existing = bookmarkRepository.findByGid(gid)
             if (existing != null) {
                 if (existing.username != null && existing.username != username) {
-                    return@forEach
+                    return@forEachRow
                 }
-                if (!force) return@forEach
+                if (!force) return@forEachRow
             }
             val entity = existing ?: BookmarkInfoEntity()
             entity.apply {
@@ -394,15 +404,15 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
             val existing = favoriteRepository.findByGid(gid)
             if (existing != null) {
                 if (existing.username != null && existing.username != username) {
-                    return@forEach
+                    return@forEachRow
                 }
-                if (!force) return@forEach
+                if (!force) return@forEachRow
             }
             val entity = existing ?: LocalFavoriteInfoEntity()
             entity.apply {
@@ -426,12 +436,12 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val type = row.int("mode")
-            val text = row.str("text")?.takeIf { it.isNotBlank() } ?: return@forEach
+            val text = row.str("text")?.takeIf { it.isNotBlank() } ?: return@forEachRow
             val existing = filterRepository.findAll().firstOrNull { it.type == type && it.text == text }
-            if (existing != null && !force) return@forEach
+            if (existing != null && !force) return@forEachRow
             val entity = existing ?: FilterEntity()
             entity.apply {
                 this.type = type
@@ -455,11 +465,11 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
-            val name = row.str("name")?.takeIf { it.isNotBlank() } ?: return@forEach
+            val name = row.str("name")?.takeIf { it.isNotBlank() } ?: return@forEachRow
             val existing = quickSearchRepository.findByName(name)
-            if (existing != null && !force) return@forEach
+            if (existing != null && !force) return@forEachRow
             val entity = existing ?: QuickSearchEntity()
             entity.apply {
                 this.name = name
@@ -509,11 +519,11 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
-        loadRows(conn, table).forEach { row ->
+        forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val gid = row.long("gid")
             val existingTags = galleryTagsRepository.findByGid(gid)
-            if (existingTags.isNotEmpty() && !force) return@forEach
+            if (existingTags.isNotEmpty() && !force) return@forEachRow
             if (existingTags.isNotEmpty()) {
                 galleryTagsRepository.deleteByGid(gid)
             }
@@ -676,6 +686,24 @@ class EhImportService(
         entity.pages = int("pages")
     }
 
+    /**
+     * 按批遍历行：每 [IMPORT_BATCH_SIZE] 行一个独立短事务（REQUIRED 传播——无外层
+     * 事务时自开自提交，有外层事务时加入外层保持原子）。SQLite 单写者下这是让写锁
+     * 周期性让出的关键：不做整导入大事务（否则并发写等满 busy_timeout 后
+     * SQLITE_BUSY 500）。无事务管理器（单元测试直构，null）时退化为普通循环。
+     */
+    private fun <T> forEachRow(rows: List<T>, block: (T) -> Unit) {
+        val tm = transactionManager
+        if (tm == null) {
+            rows.forEach(block)
+            return
+        }
+        val template = TransactionTemplate(tm)
+        rows.chunked(IMPORT_BATCH_SIZE).forEach { chunk ->
+            template.executeWithoutResult { chunk.forEach(block) }
+        }
+    }
+
     private companion object {
         val SITE_DOMAINS = setOf("e-hentai.org", "exhentai.org", "ehgt.org", "forums.e-hentai.org")
         val GALLERY_TAG_NAMESPACES = listOf(
@@ -689,6 +717,9 @@ class EhImportService(
             "BOOKMARKS", "LOCAL_FAVORITES", "FILTER", "QUICK_SEARCH",
             "BLACK_LIST", "GALLERY_TAGS",
         )
+
+        /** 单批导入行数：每批一个短事务，写锁毫秒级让出（见类注释「写锁策略」）。 */
+        const val IMPORT_BATCH_SIZE = 500
 
         fun isImportableTable(table: String): Boolean = table.uppercase() in IMPORTABLE_TABLE_KEYS
 
