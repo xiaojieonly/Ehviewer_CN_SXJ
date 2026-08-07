@@ -40,6 +40,7 @@ java {
 dependencies {
     implementation(project(":anotherviewer-core"))
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.conscrypt:conscrypt-openjdk-uber:2.6.1")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-websocket")

@@ -14,13 +14,19 @@ import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import jakarta.annotation.PostConstruct
 import okhttp3.Cookie
 import okhttp3.OkHttpClient
+import org.conscrypt.Conscrypt
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.io.File
+import java.security.KeyStore
+import java.security.SecureRandom
+import java.security.Security
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
 
 /**
  * Unified Gallery Site cookie / session manager shared between the web backend and
@@ -67,12 +73,39 @@ class SiteSessionManager(
         .cookieJar(cookieStore)
         .proxySelector(proxyManager.selector())
         .proxyAuthenticator(proxyManager.authenticator())
+        .sslSocketFactory(conscryptSslContext().socketFactory, systemTrustManager())
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
     private val lastValidatedAt = AtomicLong(0L)
+
+    /**
+     * BoringSSL-backed [SSLContext] (Conscrypt) instead of the stock JSSE stack:
+     * Cloudflare fingerprints the TLS ClientHello (JA3) of Gallery Site traffic
+     * and blocks the vanilla Java handshake on the strict exhentai paths, while
+     * BoringSSL-based stacks (curl/urllib and Conscrypt) are admitted. Fall back
+     * to the default context when Conscrypt is unavailable.
+     */
+    private fun conscryptSslContext(): SSLContext {
+        try {
+            Security.addProvider(Conscrypt.newProvider())
+            val context = SSLContext.getInstance("TLS", Conscrypt.newProvider())
+            context.init(null, null, SecureRandom())
+            return context
+        } catch (e: Exception) {
+            logger.warn("Conscrypt unavailable, falling back to default SSLContext", e)
+            return SSLContext.getDefault()
+        }
+    }
+
+    private fun systemTrustManager(): javax.net.ssl.X509TrustManager {
+        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        factory.init(null as KeyStore?)
+        return factory.trustManagers.first() as javax.net.ssl.X509TrustManager
+    }
+
     private val lastState = AtomicReference(SessionState.SIGNED_OUT)
 
     /**
@@ -187,6 +220,7 @@ class SiteSessionManager(
         val entity = ehSessionRepository.findByUsername(EH_SESSION_OWNER) ?: return
         if (entity.deleted) return
         val records = decryptCookies(entity.cookies)
+            .filterNot { isCloudflareClearance(it.name) }
         records.forEach { rec ->
             rec.toOkHttpCookie()?.let { cookieStore.addCookie(it) }
         }
@@ -262,9 +296,21 @@ class SiteSessionManager(
         cookieStore.clear()
         session.cookies.orEmpty()
             .filter { isSiteDomain(it.domain) }
+            // cf_clearance binds to the UA + IP that solved the challenge. On
+            // the server that UA/IP combination never matches (the app's
+            // WebView solved it), and Cloudflare rejects requests carrying an
+            // invalid cf_clearance — worse than not carrying one at all, since
+            // a clean proxy egress (or direct IP) is otherwise admitted.
+            // The server's own browser-fingerprint + egress handles any
+            // challenge-free traffic, so drop the cookie entirely here.
+            .filterNot { isCloudflareClearance(it.name) }
             .mapNotNull { it.toCookieRecord().toOkHttpCookie() }
             .forEach { cookieStore.addCookie(it) }
     }
+
+    /** Whether this persisted cookie record is a Cloudflare clearance cookie. */
+    private fun isCloudflareClearance(name: String): Boolean =
+        name.equals(CF_CLEARANCE_NAME, ignoreCase = true)
 
     private fun writeTombstone() {
         val entity = ehSessionRepository.findByUsername(EH_SESSION_OWNER) ?: EhSessionEntity()
@@ -460,6 +506,9 @@ class SiteSessionManager(
         const val KEY_IPB_MEMBER_ID = "ipb_member_id"
         const val KEY_IPB_PASS_HASH = "ipb_pass_hash"
         const val KEY_IGNEOUS = "igneous"
+
+        /** Cloudflare challenge cookie; bound to the UA+IP that solved it (see materializeCookies). */
+        const val CF_CLEARANCE_NAME = "cf_clearance"
 
         /** ehSession 单例行的固定属主（服务器级共享）；与 provenance 缺省 deviceId 一致。 */
         const val EH_SESSION_OWNER = "server"
