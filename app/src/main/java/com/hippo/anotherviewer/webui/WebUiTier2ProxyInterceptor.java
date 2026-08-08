@@ -16,9 +16,18 @@
 
 package com.hippo.anotherviewer.webui;
 
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 
+import com.hippo.anotherviewer.R;
+import com.hippo.anotherviewer.SiteApplication;
+
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.HttpUrl;
@@ -65,6 +74,9 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
     /** Server proxy considered unreachable until this timestamp (ms since epoch). */
     private final AtomicLong mDegradedUntil = new AtomicLong(0L);
+
+    /** Whether browsing is currently in degraded (direct) mode. */
+    private final AtomicBoolean mDegraded = new AtomicBoolean(false);
 
     public WebUiTier2ProxyInterceptor(@NonNull WebUiSettings settings) {
         this.settings = settings;
@@ -140,6 +152,13 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
                 degrade();
                 return chain.proceed(request);
             }
+            // A successful proxy response means the server is reachable again:
+            // leave degraded mode, tell the user and push local changes that
+            // accumulated while browsing direct (history/reading progress/...).
+            if (mDegraded.compareAndSet(true, false)) {
+                notifyTransition(R.string.webui_proxy_recovered);
+                WebUiAutoSyncScheduler.triggerOnce(SiteApplication.getInstance());
+            }
             return response;
         } catch (IOException e) {
             // Connection-level failure: the server is unreachable. Retry the
@@ -150,9 +169,30 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         }
     }
 
-    /** Marks the server proxy unreachable until the degrade window expires. */
+    /**
+     * Marks the server proxy unreachable until the degrade window expires.
+     * The user is told exactly once per outage (state-flip guarded).
+     */
     private void degrade() {
         mDegradedUntil.set(System.currentTimeMillis() + DEGRADE_WINDOW_MS);
+        if (mDegraded.compareAndSet(false, true)) {
+            notifyTransition(R.string.webui_proxy_degraded);
+        }
+    }
+
+    /** Whether browsing is currently degraded to direct site access. */
+    boolean isDegraded() {
+        return mDegraded.get();
+    }
+
+    /** Shows the transition toast on the main thread (fire-and-forget). */
+    private void notifyTransition(final int resId) {
+        final Context app = SiteApplication.getInstance();
+        if (app == null) {
+            return;
+        }
+        new Handler(Looper.getMainLooper()).post(() ->
+                Toast.makeText(app, app.getString(resId), Toast.LENGTH_SHORT).show());
     }
 
     /**

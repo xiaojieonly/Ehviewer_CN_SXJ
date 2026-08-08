@@ -1189,6 +1189,8 @@
     <string name="settings_webui_setup_skip">跳过</string>
     <string name="settings_webui_setup_saved">配置已保存，请在 设置 → 服务器同步 中完成配对</string>
     <string name="webui_syncing_login">正在同步登录信息…</string>
+    <string name="webui_proxy_degraded">服务器不可用，已切换为直连模式，恢复后自动同步</string>
+    <string name="webui_proxy_recovered">服务器已恢复连接，正在同步…</string>
     <string name="download_choose_location">下载位置</string>
     <string name="download_local">本机下载</string>
     <string name="download_delegate_server">在服务器上下载</string>

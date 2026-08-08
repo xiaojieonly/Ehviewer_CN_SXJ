@@ -966,6 +966,8 @@
     <string name="settings_webui_setup_skip">Skip</string>
     <string name="settings_webui_setup_saved">Configuration saved. Complete pairing under Settings → Server Sync</string>
     <string name="webui_syncing_login">Syncing login info…</string>
+    <string name="webui_proxy_degraded">Server unreachable — switched to direct mode; will re-sync on recovery</string>
+    <string name="webui_proxy_recovered">Server connection restored — syncing…</string>
     <string name="download_choose_location">Download to</string>
     <string name="download_local">This device</string>
     <string name="download_delegate_server">On the server</string>

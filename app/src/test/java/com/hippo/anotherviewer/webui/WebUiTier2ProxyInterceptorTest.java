@@ -18,6 +18,7 @@ package com.hippo.anotherviewer.webui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowToast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -658,5 +660,74 @@ public class WebUiTier2ProxyInterceptorTest {
 
         assertEquals("site-side errors must not trigger the direct fallback",
                 1, chain.proceededAll.size());
+    }
+
+    // ------------------------------------------------------------------
+    // Degrade / recovery state + user notification
+    // ------------------------------------------------------------------
+
+    @Test
+    public void testDegradeShowsToastAndRecoveryResetsState() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        // Outage: proxy attempt fails → degraded.
+        FakeChain failing = new FakeChain(request);
+        failing.failCount = 1;
+        try (Response ignored = interceptor.intercept(failing)) {
+        }
+        assertTrue("must be degraded after an unreachable proxy",
+                interceptor.isDegraded());
+        org.robolectric.shadows.ShadowLooper.idleMainLooper();
+        assertNotNull("degrade toast must be shown",
+                ShadowToast.getTextOfLatestToast());
+
+        // Recovery: expire the degrade window, then a successful proxy
+        // response clears the state and shows the recovery toast.
+        expireDegradeWindow();
+        ShadowToast.reset();
+        FakeChain healthy = new FakeChain(request);
+        try (Response ignored2 = interceptor.intercept(healthy)) {
+        }
+        assertFalse("must leave degraded mode once the proxy answers",
+                interceptor.isDegraded());
+        org.robolectric.shadows.ShadowLooper.idleMainLooper();
+        assertNotNull("recovery toast must be shown",
+                ShadowToast.getTextOfLatestToast());
+    }
+
+    @Test
+    public void testDegradeToastShownOnlyOncePerOutage() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        FakeChain first = new FakeChain(request);
+        first.failCount = 1;
+        try (Response ignored = interceptor.intercept(first)) {
+        }
+        // Second failure inside the window does not re-announce: the window
+        // routes straight to direct, which succeeds.
+        ShadowToast.reset();
+        FakeChain second = new FakeChain(request);
+        try (Response ignored2 = interceptor.intercept(second)) {
+        }
+        assertNull("no second degrade toast for the same outage",
+                ShadowToast.getTextOfLatestToast());
+        assertTrue(interceptor.isDegraded());
+    }
+
+    /** Moves the degraded-until timestamp into the past so the proxy is retried. */
+    private void expireDegradeWindow() {
+        try {
+            java.lang.reflect.Field field =
+                    WebUiTier2ProxyInterceptor.class.getDeclaredField("mDegradedUntil");
+            field.setAccessible(true);
+            ((AtomicLong) field.get(interceptor))
+                    .set(System.currentTimeMillis() - 1_000L);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 }
