@@ -19,6 +19,7 @@ package com.hippo.anotherviewer.webui;
 import androidx.annotation.NonNull;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -42,10 +43,28 @@ import okhttp3.Response;
  * without a configured server, where browsing degrades to direct instead of
  * breaking. The decision is read per request, so a tier or pairing change
  * takes effect immediately without rebuilding the client.
+ *
+ * <p>Server-outage resilience: when the paired server is unreachable (a
+ * connection-level failure) or its transparent proxy returns BAD_GATEWAY
+ * (the server is up but its upstream Gallery Site fetch failed), the request
+ * is retried once against the site directly and browsing stays degraded to
+ * direct for a short window before the proxy is tried again. This keeps a
+ * dead server from stalling every request, and recovers automatically once
+ * the server comes back.
  */
 public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
+    /**
+     * How long to keep browsing direct after the paired server was seen
+     * unreachable, before the proxy is retried. Bounds the blast radius of a
+     * dead server without hammering it with per-request probes.
+     */
+    private static final long DEGRADE_WINDOW_MS = 60_000L;
+
     private final WebUiSettings settings;
+
+    /** Server proxy considered unreachable until this timestamp (ms since epoch). */
+    private final AtomicLong mDegradedUntil = new AtomicLong(0L);
 
     public WebUiTier2ProxyInterceptor(@NonNull WebUiSettings settings) {
         this.settings = settings;
@@ -91,6 +110,13 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
             return chain.proceed(request);
         }
 
+        if (System.currentTimeMillis() < mDegradedUntil.get()) {
+            // The server was recently unreachable: fall straight back to
+            // direct Gallery Site access instead of failing against the
+            // proxy again (recovery retries after the window expires).
+            return chain.proceed(request);
+        }
+
         HttpUrl proxied = proxyUrl(base, request.url());
         Request.Builder builder = request.newBuilder().url(proxied);
         attachBearer(builder, config.getToken());
@@ -104,7 +130,29 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         if (originUrl != null && isGallerySiteHost(originUrl.host())) {
             builder.header("Origin", proxyUrl(base, originUrl).toString());
         }
-        return chain.proceed(builder.build());
+        try {
+            Response response = chain.proceed(builder.build());
+            if (response.code() == HTTP_BAD_GATEWAY) {
+                // The server is up but its upstream site fetch failed
+                // (BAD_GATEWAY envelope from the transparent proxy): direct
+                // access may still succeed where the server's egress cannot.
+                response.close();
+                degrade();
+                return chain.proceed(request);
+            }
+            return response;
+        } catch (IOException e) {
+            // Connection-level failure: the server is unreachable. Retry the
+            // request once against the site directly and stay degraded for
+            // the window; if direct fails too, the exception propagates.
+            degrade();
+            return chain.proceed(request);
+        }
+    }
+
+    /** Marks the server proxy unreachable until the degrade window expires. */
+    private void degrade() {
+        mDegradedUntil.set(System.currentTimeMillis() + DEGRADE_WINDOW_MS);
     }
 
     /**
@@ -118,6 +166,9 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
                 .addQueryParameter("url", siteUrl.toString())
                 .build();
     }
+
+    /** BAD_GATEWAY from the transparent proxy: server up, upstream fetch failed. */
+    private static final int HTTP_BAD_GATEWAY = 502;
 
     /**
      * Visible for testing: attaches the pairing token as a Bearer header so

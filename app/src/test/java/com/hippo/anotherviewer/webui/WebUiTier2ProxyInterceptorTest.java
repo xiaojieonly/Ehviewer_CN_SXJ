@@ -34,6 +34,7 @@ import org.robolectric.annotation.Config;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.Call;
 import okhttp3.Connection;
@@ -75,7 +76,14 @@ public class WebUiTier2ProxyInterceptorTest {
     /** Minimal recording chain: remembers the request it was asked to proceed. */
     private static final class FakeChain implements Interceptor.Chain {
         private final Request original;
-        Request proceeded;
+        private Request proceeded;
+        final List<Request> proceededAll = new ArrayList<>();
+        /** First N proceed() calls throw IOException (simulated server outage). */
+        int failCount;
+        /** HTTP status of the synthesized response. */
+        int responseCode = 200;
+        /** First N proceed() calls answer 502 BAD_GATEWAY, then responseCode. */
+        int badGatewayFirst;
 
         FakeChain(Request original) {
             this.original = original;
@@ -87,13 +95,22 @@ public class WebUiTier2ProxyInterceptorTest {
         }
 
         @Override
-        public Response proceed(Request request) {
+        public Response proceed(Request request) throws java.io.IOException {
+            proceededAll.add(request);
+            if (failCount > 0) {
+                failCount--;
+                throw new java.io.IOException("server unreachable");
+            }
+            int code = badGatewayFirst > 0 ? 502 : responseCode;
+            if (badGatewayFirst > 0) {
+                badGatewayFirst--;
+            }
             proceeded = request;
             return new Response.Builder()
                     .request(request)
                     .protocol(Protocol.HTTP_1_1)
-                    .code(200)
-                    .message("OK")
+                    .code(code)
+                    .message(code == 200 ? "OK" : "Curl")
                     .body(ResponseBody.create(new byte[0], MediaType.get("text/html")))
                     .build();
         }
@@ -502,5 +519,144 @@ public class WebUiTier2ProxyInterceptorTest {
 
         settings.setClientTier(3);
         assertTrue(WebUiTier2ProxyInterceptor.isRoutingActive(settings));
+    }
+
+    // ------------------------------------------------------------------
+    // Server-outage resilience: unreachable proxy falls back to direct
+    // ------------------------------------------------------------------
+
+    private FakeChain fakeChain(Request request) throws Exception {
+        FakeChain chain = new FakeChain(request);
+        try (Response response = interceptor.intercept(chain)) {
+            // Response drained/closed here; assertion reads chain.proceededAll.
+        }
+        return chain;
+    }
+
+    @Test
+    public void testUnreachableServerRetriesOnceDirectly() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+        FakeChain chain = new FakeChain(request);
+        chain.failCount = 1; // first (proxy) attempt throws, second succeeds
+
+        try (Response response = interceptor.intercept(chain)) {
+            assertEquals(200, response.code());
+        }
+
+        assertEquals("proxy attempt then direct retry",
+                2, chain.proceededAll.size());
+        assertEquals("/api/v1/site/proxy", chain.proceededAll.get(0).url().encodedPath());
+        assertEquals("https://e-hentai.org/g/1001/aaa/",
+                chain.proceededAll.get(1).url().toString());
+    }
+
+    @Test
+    public void testDegradeWindowBypassesProxyUntilItExpires() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        // First request: proxy attempt fails (server down) → direct retry.
+        FakeChain first = new FakeChain(request);
+        first.failCount = 1;
+        try (Response ignored = interceptor.intercept(first)) {
+        }
+        assertEquals(2, first.proceededAll.size());
+
+        // Second request inside the degrade window: straight to direct, no
+        // proxy attempt at all.
+        FakeChain second = new FakeChain(request);
+        try (Response response = interceptor.intercept(second)) {
+            assertEquals(200, response.code());
+        }
+        assertEquals("direct only, no proxy attempt during the window",
+                1, second.proceededAll.size());
+        assertEquals("https://e-hentai.org/g/1001/aaa/",
+                second.proceededAll.get(0).url().toString());
+    }
+
+    @Test
+    public void testDegradeWindowExpiresAndRoutesThroughProxyAgain() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        // Trigger a degrade (server down once).
+        FakeChain failing = new FakeChain(request);
+        failing.failCount = 1;
+        try (Response ignored = interceptor.intercept(failing)) {
+        }
+
+        // Expire the window by moving the degraded timestamp into the past.
+        try {
+            java.lang.reflect.Field field =
+                    WebUiTier2ProxyInterceptor.class.getDeclaredField("mDegradedUntil");
+            field.setAccessible(true);
+            ((AtomicLong) field.get(interceptor))
+                    .set(System.currentTimeMillis() - 1_000L);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+
+        // Proxy is retried again: a single proxied request, no direct fallback.
+        FakeChain healthy = new FakeChain(request);
+        try (Response response = interceptor.intercept(healthy)) {
+            assertEquals(200, response.code());
+        }
+        assertEquals(1, healthy.proceededAll.size());
+        assertEquals("/api/v1/site/proxy", healthy.proceededAll.get(0).url().encodedPath());
+    }
+
+    @Test
+    public void testBadGatewayFromProxyFallsBackToDirect() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+        FakeChain chain = new FakeChain(request);
+        chain.badGatewayFirst = 1; // first (proxy) attempt answers 502, direct succeeds
+
+        try (Response response = interceptor.intercept(chain)) {
+            assertEquals("direct retry must win over the 502",
+                    200, response.code());
+        }
+
+        assertEquals(2, chain.proceededAll.size());
+        assertEquals("/api/v1/site/proxy", chain.proceededAll.get(0).url().encodedPath());
+        assertEquals("https://e-hentai.org/g/1001/aaa/",
+                chain.proceededAll.get(1).url().toString());
+    }
+
+    @Test
+    public void testHealthyProxyPassesThroughWithoutFallback() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+        FakeChain chain = new FakeChain(request);
+
+        try (Response response = interceptor.intercept(chain)) {
+            assertEquals(200, response.code());
+        }
+
+        assertEquals("single proxied request, no retry",
+                1, chain.proceededAll.size());
+        assertEquals("/api/v1/site/proxy", chain.proceededAll.get(0).url().encodedPath());
+    }
+
+    @Test
+    public void testHttpErrorsOtherThan502PassThrough() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+        FakeChain chain = new FakeChain(request);
+        chain.responseCode = 404; // EH-side response, transparently passed back
+
+        try (Response response = interceptor.intercept(chain)) {
+            assertEquals(404, response.code());
+        }
+
+        assertEquals("site-side errors must not trigger the direct fallback",
+                1, chain.proceededAll.size());
     }
 }

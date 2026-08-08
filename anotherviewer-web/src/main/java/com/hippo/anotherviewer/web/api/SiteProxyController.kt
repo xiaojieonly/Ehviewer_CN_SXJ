@@ -63,6 +63,7 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
                 "url must point at a Gallery Site host (e-hentai.org, exhentai.org, ehgt.org, lofi.e-hentai.org or their subdomains)"
             )
         }
+        logger.info("site proxy: {} {}", if (body == null) "GET" else "POST", url)
 
         return try {
             // Referer must be slash-terminated: EH strictly validates the
