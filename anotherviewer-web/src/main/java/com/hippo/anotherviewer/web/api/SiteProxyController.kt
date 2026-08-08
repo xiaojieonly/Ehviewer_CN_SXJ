@@ -65,7 +65,10 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
         }
 
         return try {
-            val builder = SiteRequestBuilder(target.toString(), SiteUrl.getReferer(), SiteUrl.getOrigin())
+            // Referer must be slash-terminated: EH strictly validates the
+            // origin shape on thumbnail-origin hosts (s.exhentai.org rejects
+            // the bare SiteUrl.REFERER_* form with 403; see ImageProxyController).
+            val builder = SiteRequestBuilder(target.toString(), SiteUrl.getReferer() + "/", SiteUrl.getOrigin())
             if (body != null && body.isNotEmpty()) {
                 builder.post(
                     body.toRequestBody(
