@@ -28,6 +28,7 @@ import com.hippo.anotherviewer.ui.scene.sign.SignInScene.DISPLAY_NAME
 import com.hippo.anotherviewer.ui.scene.sign.SignInScene.REQUEST_CODE_PROFILE
 import com.hippo.lib.yorozuya.AssertUtils
 import com.hippo.util.AppHelper
+import com.hippo.util.ExceptionUtils
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import okhttp3.FormBody
@@ -45,9 +46,15 @@ class GetProfileScene : SolidScene() {
 
     private var mWebView: WebView? = null
     private var okHttpClient: OkHttpClient? = null
-    
+
+    /** Guards against double finish (onPageFinished fires per navigation). */
+    private var mDone = false
+
     companion object {
         private const val TAG = "GetProfileScene"
+
+        /** Fallback: if the forums page never loads (CF challenge hangs), don't block login. */
+        private const val PROFILE_TIMEOUT_MS = 20_000L
     }
 
     override fun needShowLeftDrawer(): Boolean {
@@ -81,6 +88,13 @@ class GetProfileScene : SolidScene() {
 
             mWebView!!.loadUrl(SiteUrl.URL_FORUMS)
 
+            // Timeout fallback: if the forums page never finishes loading
+            // (e.g. a Cloudflare challenge hangs), complete the profile step
+            // anyway so the login flow is not blocked.
+            mWebView!!.postDelayed({
+                complete(Bundle())
+            }, PROFILE_TIMEOUT_MS)
+
             mWebView
         } catch (t: Throwable) {
             Log.e(TAG, "WebView/CookieManager init failed", t)
@@ -101,15 +115,6 @@ class GetProfileScene : SolidScene() {
     private fun readPageContent() {
         mWebView?.evaluateJavascript(
             "(function() {" +
-//                        "var content = {" +
-//                        "  title: document.title," +
-//                        "  url: window.location.href," +
-//                        "  html: document.documentElement.outerHTML," +
-//                        "  text: document.body.innerText," +
-//                        "  metaDescription: document.querySelector('meta[name=\"description\"]')?.content || ''," +
-//                        "  links: Array.from(document.getElementsByTagName('a')).map(a => ({href: a.href, text: a.textContent}))" +
-//                        "};" +
-//                        "return JSON.stringify(content);" +
                     "return document.documentElement.outerHTML;" +
                     "})();"
         ) { json ->
@@ -118,15 +123,23 @@ class GetProfileScene : SolidScene() {
                 val bundle = Bundle()
                 bundle.putString(DISPLAY_NAME, result.displayName)
                 bundle.putString(AVATAR, result.avatar)
-                setResult(REQUEST_CODE_PROFILE,bundle)
-                finish()
-                print(result)
-                println(json)
-                // 处理内容...
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }catch (_: ParseException){}
+                complete(bundle)
+            } catch (e: Exception) {
+                // 资料页解析失败（CF 挑战页 / 页面结构变化）不应阻塞登录：
+                // 会话 cookie 已生效，空资料即可继续。
+                ExceptionUtils.throwIfFatal(e)
+                Log.w(TAG, "Profile parse failed; completing with empty profile", e)
+                complete(Bundle())
+            }
         }
+    }
+
+    /** Completes the profile step exactly once; a no-op afterwards. */
+    private fun complete(bundle: Bundle) {
+        if (mDone || !isAdded) return
+        mDone = true
+        setResult(REQUEST_CODE_PROFILE, bundle)
+        finish()
     }
 
     private inner class ProfileWebViewClientSNI : RequestInspectorWebViewClient {

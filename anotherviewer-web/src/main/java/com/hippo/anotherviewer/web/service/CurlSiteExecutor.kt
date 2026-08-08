@@ -54,8 +54,10 @@ class CurlSiteExecutor(
         val outFile = File.createTempFile("curl-site", ".bin")
         val metaFile = File.createTempFile("curl-meta", ".txt")
         val headerFile = File.createTempFile("curl-hdr", ".txt")
+        var bodyFile: File? = null
         try {
-            val cmd = buildCommand(request, outFile, headerFile)
+            bodyFile = writeBodyToTemp(request)
+            val cmd = buildCommand(request, outFile, headerFile, bodyFile)
             // curl's -w template writes to stdout; capture it into metaFile.
             val process = ProcessBuilder(cmd)
                 .redirectOutput(metaFile)
@@ -94,10 +96,21 @@ class CurlSiteExecutor(
             outFile.delete()
             metaFile.delete()
             headerFile.delete()
+            bodyFile?.delete()
         }
     }
 
-    private fun buildCommand(request: Request, outFile: File, headerFile: File): List<String> {
+    /** Persists a non-empty request body (EH api.php POSTs JSON) for curl's --data-binary. */
+    private fun writeBodyToTemp(request: Request): File? {
+        val body = request.body ?: return null
+        if (body.contentLength() == 0L) return null
+        val file = File.createTempFile("curl-body", ".bin")
+        file.outputStream().use { os ->
+            CurlBodyWriter.writeBody(body, os)
+        }
+        return file
+    }
+    private fun buildCommand(request: Request, outFile: File, headerFile: File, bodyFile: File?): List<String> {
         val cmd = mutableListOf(
             "curl", "-sS", "--compressed",
             "-o", outFile.absolutePath,
@@ -106,6 +119,10 @@ class CurlSiteExecutor(
             "--max-time", maxTimeoutSec.toString(),
             "-A", request.header("User-Agent") ?: "Mozilla/5.0",
         )
+
+        if (bodyFile != null) {
+            cmd += listOf("--data-binary", "@" + bodyFile.absolutePath)
+        }
 
         val referer = request.header("Referer")
         if (!referer.isNullOrEmpty()) {
@@ -128,7 +145,10 @@ class CurlSiteExecutor(
             if (name.equals("User-Agent", ignoreCase = true) ||
                 name.equals("Referer", ignoreCase = true) ||
                 name.equals("Cookie", ignoreCase = true) ||
-                name.equals("Host", ignoreCase = true)) {
+                name.equals("Host", ignoreCase = true) ||
+                // curl derives these from --data-binary / the body itself.
+                name.equals("Content-Length", ignoreCase = true) ||
+                name.equals("Transfer-Encoding", ignoreCase = true)) {
                 return@forEach
             }
             cmd += listOf("-H", "$name: $value")

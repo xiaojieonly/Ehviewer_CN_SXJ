@@ -4,11 +4,15 @@ import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.web.service.SiteSessionManager
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -35,7 +39,22 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
     private val okHttpClient get() = sessionManager.okHttpClient
 
     @GetMapping("/proxy")
-    fun proxy(@RequestParam url: String): ResponseEntity<*> {
+    fun proxy(@RequestParam url: String): ResponseEntity<*> = proxyRequest(url, null, null)
+
+    /**
+     * POST form of the transparent proxy: the App's EH API calls (api.php,
+     * `{"method":"showpage",...}` JSON) arrive here. The body and content-type
+     * are forwarded verbatim; the site Referer/Origin headers are rebuilt like
+     * the GET path so api.php accepts the request.
+     */
+    @PostMapping("/proxy")
+    fun proxyPost(
+        @RequestParam url: String,
+        @RequestBody(required = false) body: ByteArray?,
+        @org.springframework.web.bind.annotation.RequestHeader(HttpHeaders.CONTENT_TYPE) contentType: String?,
+    ): ResponseEntity<*> = proxyRequest(url, body, contentType)
+
+    private fun proxyRequest(url: String, body: ByteArray?, contentType: String?): ResponseEntity<*> {
         val target = url.toHttpUrlOrNull()
         if (target == null || !isGallerySiteHost(target.host)) {
             return errorEnvelope(
@@ -46,12 +65,19 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
         }
 
         return try {
-            val request = SiteRequestBuilder(target.toString(), SiteUrl.getReferer()).build()
-            okHttpClient.newCall(request).execute().use { response ->
-                val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: DEFAULT_CONTENT_TYPE
+            val builder = SiteRequestBuilder(target.toString(), SiteUrl.getReferer(), SiteUrl.getOrigin())
+            if (body != null && body.isNotEmpty()) {
+                builder.post(
+                    body.toRequestBody(
+                        (contentType ?: "application/json; charset=utf-8").toMediaTypeOrNull()
+                    )
+                )
+            }
+            okHttpClient.newCall(builder.build()).execute().use { response ->
+                val respContentType = response.header(HttpHeaders.CONTENT_TYPE) ?: DEFAULT_CONTENT_TYPE
                 val bytes = response.body?.bytes() ?: ByteArray(0)
                 ResponseEntity.status(response.code)
-                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .header(HttpHeaders.CONTENT_TYPE, respContentType)
                     .body(bytes)
             }
         } catch (e: Exception) {

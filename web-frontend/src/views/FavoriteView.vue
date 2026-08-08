@@ -37,6 +37,17 @@
          on the SiteConfig.DEFAULT_FAV_CAT_NAMES defaults ("Favorites 0" …
          "Favorites 9"). -->
     <nav class="slot-bar" aria-label="Favorite folders">
+      <!-- "All" covers every folder the server knows, including the Android
+           local-favorites slot (-2) which no numbered tab reaches. -->
+      <button
+        type="button"
+        class="slot-bar__chip"
+        :class="{ 'slot-bar__chip--active': activeSlot === -1 }"
+        :aria-current="activeSlot === -1 ? 'true' : undefined"
+        @click="selectSlot(-1, $event)"
+      >
+        {{ 'All' }}
+      </button>
       <button
         v-for="(name, slot) in slotNames"
         :key="slot"
