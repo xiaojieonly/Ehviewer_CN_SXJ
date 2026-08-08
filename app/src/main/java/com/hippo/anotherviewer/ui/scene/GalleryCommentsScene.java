@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -42,6 +43,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -49,8 +51,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -68,6 +68,7 @@ import com.hippo.anotherviewer.client.SiteUrl;
 import com.hippo.anotherviewer.client.data.GalleryComment;
 import com.hippo.anotherviewer.client.data.GalleryCommentList;
 import com.hippo.anotherviewer.client.data.GalleryDetail;
+import com.hippo.anotherviewer.client.parser.GetEditCommentParser;
 import com.hippo.anotherviewer.client.parser.VoteCommentParser;
 import com.hippo.anotherviewer.ui.MainActivity;
 import com.hippo.reveal.ViewAnimationUtils;
@@ -142,8 +143,14 @@ public final class GalleryCommentsScene extends ToolbarScene
 
     private boolean mShowAllComments = false;
     private boolean mRefreshingComments = false;
+    private boolean mGettingEditComment = false;
 
     private int mOriginalSoftInputMode;
+
+    @Nullable
+    private ViewTreeObserver.OnGlobalLayoutListener mKeyboardLayoutListener;
+    private int mVisibleBottomBaseline = 0;
+    private int mLastRootHeight = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -252,7 +259,7 @@ public final class GalleryCommentsScene extends ToolbarScene
         addAboveSnackView(mEditPanel);
         addAboveSnackView(mFabLayout);
 
-        setupEditPanelImeInsets();
+        setupKeyboardListener();
 
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
@@ -270,7 +277,11 @@ public final class GalleryCommentsScene extends ToolbarScene
             mRecyclerView = null;
         }
         if (null != mEditPanel) {
-            ViewCompat.setOnApplyWindowInsetsListener(mEditPanel, null);
+            if (mKeyboardLayoutListener != null) {
+                mEditPanel.getRootView().getViewTreeObserver()
+                        .removeOnGlobalLayoutListener(mKeyboardLayoutListener);
+                mKeyboardLayoutListener = null;
+            }
             removeAboveSnackView(mEditPanel);
             mEditPanel = null;
         }
@@ -293,20 +304,39 @@ public final class GalleryCommentsScene extends ToolbarScene
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
     }
 
-    private void setupEditPanelImeInsets() {
+    private void setupKeyboardListener() {
         if (mEditPanel == null) {
             return;
         }
-        ViewCompat.setOnApplyWindowInsetsListener(mEditPanel, (v, insets) -> {
-            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            if (lp.bottomMargin != imeBottom) {
-                lp.bottomMargin = imeBottom;
-                v.setLayoutParams(lp);
+        final View root = mEditPanel.getRootView();
+        mKeyboardLayoutListener = () -> {
+            if (mEditPanel == null) {
+                return;
             }
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(mEditPanel);
+            int rootHeight = root.getHeight();
+            // 分屏/折叠屏尺寸变化时重置基准
+            if (rootHeight != mLastRootHeight) {
+                mLastRootHeight = rootHeight;
+                mVisibleBottomBaseline = 0;
+            }
+            Rect frame = new Rect();
+            root.getWindowVisibleDisplayFrame(frame);
+            if (frame.bottom > mVisibleBottomBaseline) {
+                mVisibleBottomBaseline = frame.bottom;
+            }
+            int keyboardHeight = mVisibleBottomBaseline - frame.bottom;
+            // 小幅变化（导航栏显隐等）不算键盘
+            if (keyboardHeight < rootHeight * 0.15f) {
+                keyboardHeight = 0;
+            }
+            ViewGroup.MarginLayoutParams lp =
+                    (ViewGroup.MarginLayoutParams) mEditPanel.getLayoutParams();
+            if (lp.bottomMargin != keyboardHeight) {
+                lp.bottomMargin = keyboardHeight;
+                mEditPanel.setLayoutParams(lp);
+            }
+        };
+        root.getViewTreeObserver().addOnGlobalLayoutListener(mKeyboardLayoutListener);
     }
 
     @Override
@@ -347,6 +377,22 @@ public final class GalleryCommentsScene extends ToolbarScene
                 .setArgs(mApiUid, mApiKey, mGid, mToken, id, vote)
                 .setCallback(new VoteCommentListener(context,
                         activity.getStageId(), getTag()));
+        SiteApplication.getSiteClient(context).execute(request);
+    }
+
+    private void getEditComment(long commentId) {
+        Context context = getEHContext();
+        MainActivity activity = getActivity2();
+        if (mGettingEditComment || context == null || activity == null) {
+            return;
+        }
+
+        mGettingEditComment = true;
+        SiteRequest request = new SiteRequest()
+                .setMethod(SiteClient.METHOD_GET_EDIT_COMMENT)
+                .setArgs(mApiUid, mApiKey, mGid, mToken, commentId)
+                .setCallback(new GetEditCommentListener(
+                        context, activity.getStageId(), getTag()));
         SiteApplication.getSiteClient(context).execute(request);
     }
 
@@ -474,10 +520,7 @@ public final class GalleryCommentsScene extends ToolbarScene
                                 showVoteStatusDialog(context, comment.voteState);
                                 break;
                             case R.id.edit_comment:
-                                prepareEditComment(comment.id);
-                                if (!mInAnimation && mEditPanel != null && mEditPanel.getVisibility() != View.VISIBLE) {
-                                    showEditPanel(true);
-                                }
+                                getEditComment(comment.id);
                                 break;
                             case R.id.join_blacklist:
                                 SiteDB.insertBlackList(BlackListUtils.parseBlacklist(comment));
@@ -938,6 +981,23 @@ public final class GalleryCommentsScene extends ToolbarScene
         setResult(SceneFragment.RESULT_OK, re);
     }
 
+    private void onGetEditCommentSuccess(GetEditCommentParser.Result result) {
+        mGettingEditComment = false;
+        prepareEditComment(result.id);
+        if (mEditText != null) {
+            mEditText.setText(result.comment);
+            mEditText.setSelection(mEditText.length());
+        }
+        if (!mInAnimation && mEditPanel != null
+                && mEditPanel.getVisibility() != View.VISIBLE) {
+            showEditPanel(true);
+        }
+    }
+
+    private void onGetEditCommentFinished() {
+        mGettingEditComment = false;
+    }
+
     private static class RefreshCommentListener extends SiteCallback<GalleryCommentsScene, GalleryDetail> {
 
         public RefreshCommentListener(Context context, int stageId, String sceneTag) {
@@ -995,6 +1055,44 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         @Override
         public void onCancel() {
+        }
+
+        @Override
+        public boolean isInstance(SceneFragment scene) {
+            return scene instanceof GalleryCommentsScene;
+        }
+    }
+
+    private static class GetEditCommentListener extends SiteCallback<GalleryCommentsScene, GetEditCommentParser.Result> {
+
+        public GetEditCommentListener(Context context, int stageId, String sceneTag) {
+            super(context, stageId, sceneTag);
+        }
+
+        @Override
+        public void onSuccess(GetEditCommentParser.Result result) {
+            GalleryCommentsScene scene = getScene();
+            if (scene != null) {
+                scene.onGetEditCommentSuccess(result);
+            }
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            GalleryCommentsScene scene = getScene();
+            if (scene != null) {
+                scene.onGetEditCommentFinished();
+            }
+            showTip(getContent().getString(R.string.edit_comment_failed) + "\n"
+                    + ExceptionUtils.getReadableString(e), LENGTH_LONG);
+        }
+
+        @Override
+        public void onCancel() {
+            GalleryCommentsScene scene = getScene();
+            if (scene != null) {
+                scene.onGetEditCommentFinished();
+            }
         }
 
         @Override

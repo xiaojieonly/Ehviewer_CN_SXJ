@@ -56,6 +56,7 @@ import com.hippo.anotherviewer.client.parser.GalleryListParser;
 import com.hippo.anotherviewer.client.parser.GalleryPageApiParser;
 import com.hippo.anotherviewer.client.parser.GalleryPageParser;
 import com.hippo.anotherviewer.client.parser.GalleryTokenApiParser;
+import com.hippo.anotherviewer.client.parser.GetEditCommentParser;
 import com.hippo.anotherviewer.client.parser.MyTagLitParser;
 import com.hippo.anotherviewer.client.parser.ProfileParser;
 import com.hippo.anotherviewer.client.parser.RateGalleryParser;
@@ -500,6 +501,48 @@ public class SiteEngine {
             }
 
             return GalleryDetailParser.parseComments(document);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
+    }
+
+    public static GetEditCommentParser.Result getEditComment(@Nullable SiteClient.Task task,
+                                                             OkHttpClient okHttpClient, long apiUid,
+                                                             String apiKey, long gid, String token,
+                                                             long commentId) throws Throwable {
+        final JSONObject json = new JSONObject();
+        json.put("method", "geteditcomment");
+        json.put("apiuid", apiUid);
+        json.put("apikey", apiKey);
+        json.put("gid", gid);
+        json.put("token", token);
+        json.put("comment_id", commentId);
+        final RequestBody requestBody = RequestBody.create(json.toString(), MEDIA_TYPE_JSON);
+        String url = SiteUrl.getApiUrl();
+        String referer = SiteUrl.getGalleryDetailUrl(gid, token);
+        String origin = SiteUrl.getOrigin();
+        Log.d(TAG, url);
+        Request request = new SiteRequestBuilder(url, referer, origin)
+                .post(requestBody)
+                .build();
+        Call call = okHttpClient.newCall(request);
+
+        if (task != null) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            return GetEditCommentParser.parse(body);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
