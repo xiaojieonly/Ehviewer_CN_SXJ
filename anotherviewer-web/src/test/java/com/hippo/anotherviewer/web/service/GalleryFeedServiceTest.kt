@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
+import java.io.IOException
 
 /**
  * Pins the WebUI feed endpoints (contracts/openapi.yaml GET
@@ -275,10 +276,20 @@ class GalleryFeedServiceTest {
 
     @Test
     fun `unreachable top list site yields success=false and empty data`() {
-        val response = harness().service.topListFeed()
+        // The network is reachable in this environment (curl executor + proxy),
+        // so pin the failure path with a mock instead of relying on external
+        // connectivity: an upstream failure must degrade to success=false.
+        val (service, _) = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenThrow(IOException("unreachable"))
 
-        assertFalse(response.success)
-        assertTrue(response.data.isEmpty())
-        assertEquals(0, response.total)
+            val response = service.topListFeed()
+
+            assertFalse(response.success)
+            assertTrue(response.data.isEmpty())
+            assertEquals(0, response.total)
+        }
     }
 }

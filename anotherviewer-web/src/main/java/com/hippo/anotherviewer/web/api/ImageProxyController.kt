@@ -96,7 +96,10 @@ class ImageProxyController(
         }
 
         return try {
-            val request = SiteRequestBuilder(target.toString(), SiteUrl.getReferer()).build()
+            // EH validates the Referer of thumbnail-origin requests strictly:
+            // an origin without the trailing slash (SiteUrl.REFERER_*) is
+            // rejected with 403 on s.exhentai.org. Send the slash form.
+            val request = SiteRequestBuilder(target.toString(), siteReferer()).build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     return errorEnvelope(
@@ -246,7 +249,7 @@ class ImageProxyController(
         }
 
         return try {
-            val builder = SiteRequestBuilder(imageUrl, SiteUrl.getReferer())
+            val builder = SiteRequestBuilder(imageUrl, siteReferer())
             if (range != null) {
                 builder.header(HttpHeaders.RANGE, range)
             }
@@ -398,4 +401,12 @@ class ImageProxyController(
             "该画廊需要登录 EH 会话才能阅读"
         )
     }
+
+    /**
+     * Gallery Site origin as an HTTP Referer. EH strictly validates Referer
+     * shape on thumbnail-origin hosts (s.exhentai.org): the bare
+     * `https://exhentai.org` from [SiteUrl.getReferer] is rejected with 403,
+     * the slash-terminated origin form is accepted.
+     */
+    private fun siteReferer(): String = SiteUrl.getReferer() + "/"
 }
