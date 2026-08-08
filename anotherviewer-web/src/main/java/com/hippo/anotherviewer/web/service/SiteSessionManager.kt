@@ -14,19 +14,13 @@ import com.hippo.anotherviewer.web.repository.EhSessionRepository
 import jakarta.annotation.PostConstruct
 import okhttp3.Cookie
 import okhttp3.OkHttpClient
-import org.conscrypt.Conscrypt
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.io.File
-import java.security.KeyStore
-import java.security.SecureRandom
-import java.security.Security
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
 
 /**
  * Unified Gallery Site cookie / session manager shared between the web backend and
@@ -69,43 +63,25 @@ class SiteSessionManager(
      * The proxy selector/authenticator are consulted per connection, so the admin
      * proxy settings ([WebProxyManager]) take effect immediately without a rebuild.
      */
-    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .cookieJar(cookieStore)
-        .proxySelector(proxyManager.selector())
-        .proxyAuthenticator(proxyManager.authenticator())
-        .sslSocketFactory(conscryptSslContext().socketFactory, systemTrustManager())
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    val okHttpClient: OkHttpClient = run {
+        OkHttpClient.Builder()
+            .cookieJar(cookieStore)
+            .proxySelector(proxyManager.selector())
+            .proxyAuthenticator(proxyManager.authenticator())
+            // Site traffic runs through the system curl binary: Cloudflare
+            // fingerprints the TLS ClientHello (JA3) and rejects the Java
+            // handshake on the strict exhentai paths, while the system curl
+            // fingerprint is admitted (see CurlSiteExecutor). Application
+            // interceptor: it manages cookies itself, so it must sit before
+            // OkHttp's BridgeInterceptor (which would otherwise override them).
+            .addInterceptor(CurlSiteExecutor(cookieStore, proxy = { proxyManager.activeProxy() }))
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
 
     private val lastValidatedAt = AtomicLong(0L)
-
-    /**
-     * BoringSSL-backed [SSLContext] (Conscrypt) instead of the stock JSSE stack:
-     * Cloudflare fingerprints the TLS ClientHello (JA3) of Gallery Site traffic
-     * and blocks the vanilla Java handshake on the strict exhentai paths, while
-     * BoringSSL-based stacks (curl/urllib and Conscrypt) are admitted. Fall back
-     * to the default context when Conscrypt is unavailable.
-     */
-    private fun conscryptSslContext(): SSLContext {
-        try {
-            Security.addProvider(Conscrypt.newProvider())
-            val context = SSLContext.getInstance("TLS", Conscrypt.newProvider())
-            context.init(null, null, SecureRandom())
-            return context
-        } catch (e: Exception) {
-            logger.warn("Conscrypt unavailable, falling back to default SSLContext", e)
-            return SSLContext.getDefault()
-        }
-    }
-
-    private fun systemTrustManager(): javax.net.ssl.X509TrustManager {
-        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        factory.init(null as KeyStore?)
-        return factory.trustManagers.first() as javax.net.ssl.X509TrustManager
-    }
-
     private val lastState = AtomicReference(SessionState.SIGNED_OUT)
 
     /**
