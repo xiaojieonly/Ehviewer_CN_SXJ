@@ -194,6 +194,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/PairCompleteResponse'
 
+  /api/v1/auth/register-device:
+    post:
+      tags: [Auth]
+      operationId: registerDevice
+      summary: >-
+        Auto-pair a device without a pairing code (LAN single-user mode).
+        Allowed while `security.auto_pairing` is enabled on the server;
+        otherwise rejected with 400 so clients fall back to /pair/complete.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '200':
+          description: Device registered, bearer token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCompleteResponse'
+        '400':
+          description: Auto-pairing disabled or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCompleteResponse'
+        '409':
+          description: Setup key required but not provided
+
   /api/v1/auth/logout:
     post:
       tags: [Auth]
@@ -1128,6 +1159,112 @@ paths:
             application/json:
               schema:
                 type: boolean
+
+  # Android push-of-local-downloads (App uploads downloaded pages to the server)
+  /api/v1/download/upload/{gid}:
+    put:
+      tags: [Download]
+      operationId: uploadInit
+      summary: >-
+        Register or update the download row for an App-pushed gallery and
+        learn which pages the server already has (resume support).
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadUploadInitRequest'
+      responses:
+        '200':
+          description: Metadata accepted; existing page list for resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadUploadInitResponse'
+        '400':
+          description: Invalid payload or gid conflict (non-force)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadUploadInitResponse'
+
+  /api/v1/download/upload/{gid}/page/{page}:
+    post:
+      tags: [Download]
+      operationId: uploadPage
+      summary: >-
+        Upload one page image (1-based page number). Idempotent: an existing
+        non-empty page file is overwritten. Original file extension is
+        preserved; readers probe jpg/jpeg/png/gif/webp.
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Page image (jpg/jpeg/png/gif/webp)
+      responses:
+        '200':
+          description: Page stored
+          content:
+            application/json:
+              schema:
+                type: boolean
+        '400':
+          description: Invalid page number, unsupported extension or upload disabled
+
+  /api/v1/download/upload/{gid}/complete:
+    post:
+      tags: [Download]
+      operationId: uploadComplete
+      summary: Finalize an App-pushed download (set state=FINISHED, totals)
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadUploadCompleteRequest'
+      responses:
+        '200':
+          description: Download finalized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+        '404':
+          description: No upload row for this gid
 
   # Batch operations (Android multi-select Start/Stop/Delete/Move parity)
   /api/v1/download/start-range:
@@ -2607,6 +2744,23 @@ components:
           type: string
           default: android
 
+    RegisterDeviceRequest:
+      type: object
+      required: [deviceId, deviceName]
+      properties:
+        deviceId:
+          type: string
+          description: Stable per-install id (e.g. android-<uuid>)
+        deviceName:
+          type: string
+        platform:
+          type: string
+          default: android
+        setupKey:
+          type: string
+          nullable: true
+          description: Optional static setup key when the server requires one
+
     PairCompleteResponse:
       type: object
       properties:
@@ -3092,6 +3246,71 @@ components:
           type: string
           nullable: true
         label:
+          type: integer
+          default: 0
+
+    DownloadUploadInitRequest:
+      type: object
+      description: >-
+        Metadata for an App-pushed download. Creates the row when missing or
+        updates it when `force` is set; a non-force push over an existing row
+        is rejected so server-side downloads are never clobbered.
+      required: [token]
+      properties:
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        simpleTags:
+          type: string
+          nullable: true
+        pages:
+          type: integer
+        label:
+          type: integer
+          default: 0
+        force:
+          type: boolean
+          default: false
+          description: Overwrite an existing server-side download row for the same gid
+
+    DownloadUploadInitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        existingPages:
+          type: array
+          items:
+            type: integer
+          description: Page numbers already present (1-based), for resume
+
+    DownloadUploadCompleteRequest:
+      type: object
+      description: Page totals reported by the App after the final page upload.
+      required: [total]
+      properties:
+        total:
+          type: integer
+          description: Total page count reported by the App
+        done:
           type: integer
           default: 0
 
