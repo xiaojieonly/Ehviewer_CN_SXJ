@@ -87,6 +87,14 @@ data class PairCompleteRequest(
     val platform: String = "android",
 )
 
+/** POST /api/v1/auth/register-device — auto-pairing without a code (contract §auth). */
+data class RegisterDeviceRequest(
+    @field:NotBlank val deviceId: String,
+    @field:NotBlank val deviceName: String,
+    val platform: String = "android",
+    val setupKey: String? = null,
+)
+
 data class PairCompleteResponse(
     val success: Boolean,
     val message: String = "",

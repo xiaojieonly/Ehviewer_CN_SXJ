@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.PairCompleteRequest
+import com.hippo.anotherviewer.web.dto.RegisterDeviceRequest
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
 import com.hippo.anotherviewer.web.entity.TokenEntity
 import com.hippo.anotherviewer.web.repository.AuthConfigRepository
@@ -9,6 +10,7 @@ import com.hippo.anotherviewer.web.repository.SyncDeviceRepository
 import com.hippo.anotherviewer.web.repository.TokenRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -29,12 +31,17 @@ import java.util.concurrent.ConcurrentHashMap
  *    token that authenticates as the code's owner.
  * 3. The pairing code is single-use: a second attempt fails.
  * 4. Revoking a device invalidates its token.
+ * 5. Auto-pairing (register-device) registers a device without a code, honors
+ *    the auto_pairing toggle and the optional setup key, and stays idempotent
+ *    per deviceId.
  */
 class PairingFlowTest {
 
     private fun newAuthService(
         deviceRepo: SyncDeviceRepository = mockDeviceRepo(),
         requireAuth: Boolean = false,
+        autoPairing: Boolean = true,
+        setupKey: String = "",
     ): SiteAuthService {
         val authRepo = mock(AuthConfigRepository::class.java)
         `when`(authRepo.existsByUsername(anyString())).thenReturn(false)
@@ -45,7 +52,14 @@ class PairingFlowTest {
         )
         val serverConfig = mock(ServerConfigService::class.java)
         `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenAnswer { inv ->
-            inv.getArgument<String>(0) == ServerConfigService.KEY_REQUIRE_AUTH && requireAuth
+            when (inv.getArgument<String>(0)) {
+                ServerConfigService.KEY_REQUIRE_AUTH -> requireAuth
+                ServerConfigService.KEY_AUTO_PAIRING -> autoPairing
+                else -> false
+            }
+        }
+        `when`(serverConfig.get(anyString(), anyString())).thenAnswer { inv ->
+            if (inv.getArgument<String>(0) == ServerConfigService.KEY_SETUP_KEY) setupKey else ""
         }
         `when`(serverConfig.getLong(anyString(), anyLong())).thenReturn(86400L)
         return SiteAuthService(
@@ -239,5 +253,106 @@ class PairingFlowTest {
         assertEquals("android-one", devices[0].deviceId)
         assertEquals("Phone", devices[0].deviceName)
         assertTrue(devices[0].pairedAt > 0)
+    }
+
+    // ---------------------------------------------------------------------
+    // Auto-pairing (register-device)
+    // ---------------------------------------------------------------------
+
+    private fun registerRequest(
+        deviceId: String = "android-auto",
+        deviceName: String = "Auto Phone",
+        platform: String = "android",
+        setupKey: String? = null,
+    ) = RegisterDeviceRequest(deviceId, deviceName, platform, setupKey)
+
+    @Test
+    fun `auto-pairing is on by default and registers a device under the anonymous user`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo)
+
+        assertTrue(authService.isAutoPairingEnabled())
+        val registered = authService.registerDevice("default", registerRequest())
+        assertTrue(registered.success)
+        assertEquals("default", registered.username)
+        assertTrue(registered.token.length >= 32)
+        // The token authenticates as the anonymous single user.
+        assertEquals("default", authService.validateToken(registered.token))
+        // The device row stores only the token hash, never the raw token.
+        val stored = deviceRepo.findByDeviceId("android-auto")!!
+        assertEquals("android-auto", stored.deviceId)
+        assertTrue(stored.token != null && stored.token != registered.token)
+        assertEquals(SiteAuthService.sha256(registered.token), stored.token)
+    }
+
+    @Test
+    fun `auto-pairing disabled rejects registration`() {
+        val authService = newAuthService(autoPairing = false)
+        val result = authService.registerDevice("default", registerRequest())
+        assertFalse(result.success)
+        assertTrue(result.message.contains("disabled"))
+    }
+
+    @Test
+    fun `setup key is required when configured`() {
+        val authService = newAuthService(setupKey = "secret")
+        val result = authService.registerDevice("default", registerRequest(setupKey = null))
+        assertFalse(result.success)
+        assertEquals(SiteAuthService.MSG_SETUP_KEY_REQUIRED, result.message)
+    }
+
+    @Test
+    fun `wrong setup key is rejected`() {
+        val authService = newAuthService(setupKey = "secret")
+        val result = authService.registerDevice("default", registerRequest(setupKey = "wrong"))
+        assertFalse(result.success)
+        assertTrue(result.message.contains("Invalid setup key"))
+    }
+
+    @Test
+    fun `correct setup key registers the device`() {
+        val authService = newAuthService(setupKey = "secret")
+        val result = authService.registerDevice("default", registerRequest(setupKey = "secret"))
+        assertTrue(result.success)
+        assertEquals("default", authService.validateToken(result.token))
+    }
+
+    @Test
+    fun `re-registering the same device refreshes its token idempotently`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo)
+
+        val first = authService.registerDevice("default", registerRequest())
+        assertTrue(first.success)
+        val second = authService.registerDevice("default", registerRequest())
+        assertTrue(second.success)
+
+        // A fresh token replaces the old one; the old token stops working.
+        assertNotEquals(first.token, second.token)
+        assertNull(authService.validateToken(first.token))
+        assertEquals("default", authService.validateToken(second.token))
+        // The device row is upserted in place: still exactly one row.
+        val rows = deviceRepo.findAll()
+        assertEquals(1, rows.size)
+        assertEquals("android-auto", rows[0].deviceId)
+        assertEquals(SiteAuthService.sha256(second.token), rows[0].token)
+    }
+
+    @Test
+    fun `auto-registered device lists and revokes with its token invalidated`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo)
+
+        val registered = authService.registerDevice("default", registerRequest())
+        assertTrue(registered.success)
+
+        val devices = DeviceService(deviceRepo).list()
+        assertEquals(1, devices.size)
+        assertEquals("android-auto", devices[0].deviceId)
+        assertEquals("Auto Phone", devices[0].deviceName)
+
+        authService.revokeDevice("android-auto")
+        assertNull(authService.validateToken(registered.token))
+        assertNull(deviceRepo.findByDeviceId("android-auto"))
     }
 }
