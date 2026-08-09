@@ -35,6 +35,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -102,6 +103,7 @@ import com.hippo.anotherviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.anotherviewer.ui.scene.ToolbarScene;
 import com.hippo.anotherviewer.ui.scene.download.part.DownloadAdapter;
 import com.hippo.anotherviewer.ui.scene.download.part.MyPageChangeListener;
+import com.hippo.anotherviewer.upload.DownloadUploadService;
 import com.hippo.anotherviewer.widget.MyEasyRecyclerView;
 import com.hippo.anotherviewer.widget.SearchBar;
 import com.hippo.lib.yorozuya.AssertUtils;
@@ -914,6 +916,9 @@ public class DownloadsScene extends ToolbarScene
                 return true;
             case R.id.import_local_archive:
                 importLocalArchive();
+                return true;
+            case R.id.push_to_webui:
+                startPushToWebUi();
                 return true;
 //            case R.id.misc:
 //            case R.id.doujinshi:
@@ -1768,6 +1773,21 @@ public class DownloadsScene extends ToolbarScene
             if (context != null) {
                 Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    /** 推送本地已下载漫画到 WebUI 服务器（DownloadUploadService 前台服务）。 */
+    private void startPushToWebUi() {
+        Activity activity = getActivity2();
+        if (activity == null) {
+            return;
+        }
+        Intent intent = new Intent(activity, DownloadUploadService.class);
+        intent.setAction(DownloadUploadService.ACTION_PUSH_ALL);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            activity.startForegroundService(intent);
+        } else {
+            activity.startService(intent);
         }
     }
 
