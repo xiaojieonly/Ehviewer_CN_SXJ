@@ -52,7 +52,6 @@ import com.hippo.anotherviewer.spider.SpiderInfo;
 import com.hippo.anotherviewer.ui.scene.TransitionNameFactory;
 import com.hippo.anotherviewer.ui.scene.download.DownloadsScene;
 import com.hippo.anotherviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.anotherviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.anotherviewer.widget.SimpleRatingView;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
@@ -795,24 +794,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             if (thumb == v) {
                 DownloadInfo currentInfo = list.get(mScene.positionInList(index));
-                if (currentInfo.archiveUri != null && currentInfo.archiveUri.startsWith("content://")) {
-                    // Show info dialog for imported archive
-                    String message = mScene.getString(R.string.imported_archive_info_message) + "\n\n" + currentInfo.archiveUri;
-                    new AlertDialog.Builder(context)
-                            .setTitle(R.string.imported_archive_info_title)
-                            .setMessage(message)
-                            .setPositiveButton(android.R.string.ok, null)
-                            .show();
-                } else {
-                    // Normal behavior for regular downloads
-                    Bundle args = new Bundle();
-                    args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
-                    args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(mCallback.positionInList(index)));
-                    Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-                    announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
-                    mScene.startScene(announcer);
-                }
-
+                mScene.openDownloadedGallery(currentInfo);
             } else if (start == v) {
                 final DownloadInfo info = list.get(mCallback.positionInList(index));
                 Intent intent = new Intent(context, DownloadService.class);

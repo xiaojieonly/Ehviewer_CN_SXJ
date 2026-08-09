@@ -78,12 +78,15 @@ import com.hippo.anotherviewer.AppConfig;
 import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
+import com.hippo.anotherviewer.dao.DownloadInfo;
 import com.hippo.anotherviewer.event.GalleryActivityEvent;
 import com.hippo.anotherviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.anotherviewer.gallery.DirGalleryProvider;
+import com.hippo.anotherviewer.gallery.DownloadGalleryProvider;
 import com.hippo.anotherviewer.gallery.SiteGalleryProvider;
 import com.hippo.anotherviewer.gallery.GalleryProvider2;
 import com.hippo.anotherviewer.gallery.WebUiGalleryProvider;
+import com.hippo.anotherviewer.spider.SpiderDen;
 import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiSettings;
 import com.hippo.anotherviewer.widget.GalleryGuideView;
@@ -282,15 +285,25 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             }
         } else if (ACTION_EH.equals(mAction)) {
             if (mGalleryInfo != null) {
-                // Remote reading (roadmap §2.4): when a WebUI server is
-                // configured and enabled, stream pages from the server instead
-                // of EH. Falls back to the normal provider otherwise.
-                WebUiSettings webUiSettings = new WebUiSettings(this);
-                WebUiConfig webUiConfig = webUiSettings.loadConfig();
-                if (webUiConfig != null && webUiSettings.remoteReadEnabled()) {
-                    mGalleryProvider = new WebUiGalleryProvider(mGalleryInfo, webUiConfig);
-                } else {
-                    mGalleryProvider = new SiteGalleryProvider(this, mGalleryInfo);
+                // Local downloads win over remote reading: read straight from
+                // the download folder when it exists (never create it here).
+                if (mGalleryInfo instanceof DownloadInfo) {
+                    UniFile downloadDir = SpiderDen.getExistingGalleryDownloadDir(mGalleryInfo);
+                    if (downloadDir != null) {
+                        mGalleryProvider = new DownloadGalleryProvider(this, mGalleryInfo, downloadDir);
+                    }
+                }
+                if (mGalleryProvider == null) {
+                    // Remote reading (roadmap §2.4): when a WebUI server is
+                    // configured and enabled, stream pages from the server instead
+                    // of EH. Falls back to the normal provider otherwise.
+                    WebUiSettings webUiSettings = new WebUiSettings(this);
+                    WebUiConfig webUiConfig = webUiSettings.loadConfig();
+                    if (webUiConfig != null && webUiSettings.remoteReadEnabled()) {
+                        mGalleryProvider = new WebUiGalleryProvider(mGalleryInfo, webUiConfig);
+                    } else {
+                        mGalleryProvider = new SiteGalleryProvider(this, mGalleryInfo);
+                    }
                 }
             }
         } else if (Intent.ACTION_VIEW.equals(mAction)) {
