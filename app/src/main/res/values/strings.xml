@@ -705,6 +705,12 @@
     <string name="settings_download_smb_upload_syncing">SMB 上传中...</string>
     <string name="settings_download_smb_upload_sync_done">上传完成: %1$d 成功, %2$d 失败</string>
     <string name="settings_download_smb_upload_scanning">扫描中...</string>
+    <string name="settings_download_push_webui">推送下载到 WebUI</string>
+    <string name="webui_push_service_name">推送下载到 WebUI</string>
+    <string name="webui_push_service_desc">WebUI 下载上传进度</string>
+    <string name="settings_download_webui_push_syncing">正在推送下载到 WebUI…</string>
+    <string name="settings_download_webui_push_done">推送完成：%1$d 成功，%2$d 跳过，%3$d 失败</string>
+    <string name="settings_download_webui_push_not_configured">WebUI 服务器未配置</string>
     <string name="settings_download_smb_backup_sync_failed">同步失败</string>
     <string name="settings_download_smb_backup_not_configured">SMB 备份未配置</string>
     <string name="settings_download_smb_backup_configured">已配置：%s</string>

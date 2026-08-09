@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.exception.SiteException
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.JobSubmitResponse
 import com.hippo.anotherviewer.web.dto.JobType
 import com.hippo.anotherviewer.web.service.InMemoryJobStore
@@ -44,6 +45,7 @@ class ImageProxyController(
     private val galleryLookupService: GalleryLookupService,
     private val sessionManager: SiteSessionManager,
     private val prefetchService: PrefetchService,
+    private val config: SiteCoreConfigProperties = SiteCoreConfigProperties(),
     private val jobService: JobService = JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
 ) {
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
@@ -51,6 +53,8 @@ class ImageProxyController(
     companion object {
         private const val MAX_CONCURRENT_PAGE_FETCHES = 4
         private const val CACHE_MAX_AGE = "max-age=86400"
+        /** App 推送布局（downloads/<gid>/%04d.<ext>）的探测扩展名顺序。 */
+        private val PUSHED_EXTENSIONS = listOf("jpg", "jpeg", "png", "gif", "webp")
         private val IMAGE_MIME_BY_EXT = mapOf(
             "jpg" to MediaType.IMAGE_JPEG_VALUE,
             "jpeg" to MediaType.IMAGE_JPEG_VALUE,
@@ -178,6 +182,14 @@ class ImageProxyController(
             return serveBytes(cached, MediaType.IMAGE_JPEG_VALUE, range)
         }
 
+        // 1.5. App-pushed download fallback: downloads/<gid>/%04d.<ext> (1-based).
+        //      Checked after the cache and before any upstream EH fetch, so
+        //      pushed content is served locally even when EH is unreachable.
+        val pushedFile = findPushedPageFile(galleryId, page)
+        if (pushedFile != null) {
+            return serveFile(pushedFile, range)
+        }
+
         // 2. Cache miss — fetch from Gallery Site via the shared session client.
         //    Concurrent requests for the same (galleryId, page) share ONE upstream
         //    fetch (srcset 1x/2x + dual-page mode issue several identical requests);
@@ -227,6 +239,22 @@ class ImageProxyController(
     }
 
     // ── fetch / serve helpers ────────────────────────────────────
+
+    /**
+     * Probes the App-pushed download layout `downloads/<gid>/%04d.<ext>` for a
+     * 0-based [page] (files are 1-based, hence page+1), trying the supported
+     * extensions in order (jpg/jpeg/png/gif/webp). Returns null when no file
+     * is present so the caller falls through to the upstream EH fetch.
+     */
+    private fun findPushedPageFile(galleryId: Long, page: Int): File? {
+        val dir = File(config.download.path, "$galleryId")
+        if (!dir.isDirectory) return null
+        for (ext in PUSHED_EXTENSIONS) {
+            val file = File(dir, "%04d.$ext".format(page + 1))
+            if (file.isFile && file.length() > 0) return file
+        }
+        return null
+    }
 
     private fun fetchAndServe(galleryId: Long, page: Int, range: String?): ResponseEntity<*> {
         val token = galleryLookupService.findToken(galleryId)

@@ -191,4 +191,9 @@
         android:title="@string/import_local_archive"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/push_to_webui"
+        android:title="@string/settings_download_push_webui"
+        app:showAsAction="never"/>
+
 </menu>
