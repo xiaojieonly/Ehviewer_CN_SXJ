@@ -75,6 +75,7 @@ class SecurityConfig {
                     .requestMatchers("/api/v1/auth/eh-login").permitAll()
                     .requestMatchers("/api/v1/auth/status").permitAll()
                     .requestMatchers("/api/v1/auth/pair/complete").permitAll()
+                    .requestMatchers("/api/v1/auth/register-device").permitAll()
                     .requestMatchers("/api/v1/health", "/api/v1/metrics", "/api/v1/metrics/**").permitAll()
                     // Everything else under /api requires the bearer token (logout
                     // included); the SPA shell, static/PWA assets, SPA deep links

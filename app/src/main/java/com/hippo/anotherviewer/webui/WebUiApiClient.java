@@ -17,6 +17,7 @@
 package com.hippo.anotherviewer.webui;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.ParserConfig;
@@ -122,6 +123,30 @@ public final class WebUiApiClient {
         WebUiSyncModels.PairCompleteResponse response = JSON.parseObject(json, WebUiSyncModels.PairCompleteResponse.class);
         if (response == null) {
             throw new IOException("Empty pair response");
+        }
+        return response;
+    }
+
+    /**
+     * POST /api/v1/auth/register-device — auto-pairs the device without a
+     * pairing code (LAN single-user servers with auto-pairing enabled).
+     * permitAll on the server; no Authorization header is sent. Servers that
+     * predate the endpoint answer 404, and those with auto-pairing disabled
+     * answer 400 — both surface as IOException.
+     */
+    @NonNull
+    public static WebUiSyncModels.PairCompleteResponse registerDevice(@NonNull WebUiConfig config,
+            @NonNull String deviceId, @NonNull String deviceName, @NonNull String platform,
+            @Nullable String setupKey) throws IOException {
+        WebUiSyncModels.RegisterDeviceRequest body = new WebUiSyncModels.RegisterDeviceRequest();
+        body.deviceId = deviceId;
+        body.deviceName = deviceName;
+        body.platform = platform;
+        body.setupKey = setupKey;
+        String json = postJson(config.baseUrl() + "/api/v1/auth/register-device", null, JSON.toJSONString(body));
+        WebUiSyncModels.PairCompleteResponse response = JSON.parseObject(json, WebUiSyncModels.PairCompleteResponse.class);
+        if (response == null) {
+            throw new IOException("Empty register response");
         }
         return response;
     }

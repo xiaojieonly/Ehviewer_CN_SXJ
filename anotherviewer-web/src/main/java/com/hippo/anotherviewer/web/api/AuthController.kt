@@ -126,8 +126,28 @@ class AuthController(
         return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
     }
 
+    /**
+     * Auto-pairing without a code. permitAll (security: [] in the contract);
+     * with auth off the filter stamps the anonymous "default" principal, so
+     * the device registers under that single-user identity.
+     */
+    @PostMapping("/register-device")
+    fun registerDevice(
+        authentication: Authentication?,
+        @Valid @RequestBody request: RegisterDeviceRequest,
+    ): ResponseEntity<PairCompleteResponse> {
+        val response = authService.registerDevice(authentication?.name ?: ANONYMOUS_USERNAME, request)
+        val status = when {
+            response.success -> HttpStatus.OK
+            response.message == SiteAuthService.MSG_SETUP_KEY_REQUIRED -> HttpStatus.CONFLICT
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity.status(status).body(response)
+    }
+
     companion object {
         private const val UNKNOWN_IP = "unknown"
         private const val LOCKED_MESSAGE = "Too many login attempts. Try again later."
+        private const val ANONYMOUS_USERNAME = "default"
     }
 }

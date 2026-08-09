@@ -18,6 +18,9 @@ package com.hippo.anotherviewer.ui.scene;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,8 +32,10 @@ import androidx.annotation.Nullable;
 import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.ui.MainActivity;
+import com.hippo.anotherviewer.webui.WebUiApiClient;
 import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiSettings;
+import com.hippo.anotherviewer.webui.WebUiSyncModels;
 import com.hippo.lib.yorozuya.ViewUtils;
 
 /**
@@ -122,10 +127,32 @@ public final class WebUiSetupScene extends SolidScene implements View.OnClickLis
             return;
         }
 
-        new WebUiSettings(context).saveConfig(
-                new WebUiConfig(WebUiConfig.PROTOCOL_HTTP, hostValue, portNumber, "", ""));
+        final Context ctx = context;
+        final WebUiConfig config = new WebUiConfig(WebUiConfig.PROTOCOL_HTTP, hostValue, portNumber, "", "");
+        new WebUiSettings(context).saveConfig(config);
         Toast.makeText(context, R.string.settings_webui_setup_saved, Toast.LENGTH_LONG).show();
         redirectTo();
+        // Background auto-pair: on servers with auto-pairing enabled this
+        // finishes the connection so no code entry is needed. Failures are
+        // silent (older server 404, or pairing disabled) — the tokenless
+        // config above stays and the user pairs later from Settings.
+        Thread thread = new Thread(() -> {
+            try {
+                WebUiSettings settings = new WebUiSettings(ctx);
+                WebUiSyncModels.PairCompleteResponse paired = WebUiApiClient.registerDevice(
+                        config, settings.deviceId(), android.os.Build.MODEL, "android", null);
+                if (paired.success && !TextUtils.isEmpty(paired.token)) {
+                    settings.saveConfig(new WebUiConfig(WebUiConfig.PROTOCOL_HTTP, hostValue, portNumber,
+                            paired.username, paired.token));
+                    new Handler(Looper.getMainLooper()).post(() ->
+                            Toast.makeText(ctx, R.string.settings_webui_pair_done, Toast.LENGTH_LONG).show());
+                }
+            } catch (Exception ignored) {
+                // Keep the plain saved config; pairing is available in settings.
+            }
+        }, "webui-auto-pair");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void redirectTo() {

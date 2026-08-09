@@ -6,6 +6,8 @@ import com.hippo.anotherviewer.web.dto.ChangePasswordRequest
 import com.hippo.anotherviewer.web.dto.EhSessionCookieDto
 import com.hippo.anotherviewer.web.dto.EhSessionResponse
 import com.hippo.anotherviewer.web.dto.LoginRequest
+import com.hippo.anotherviewer.web.dto.PairCompleteResponse
+import com.hippo.anotherviewer.web.dto.RegisterDeviceRequest
 import com.hippo.anotherviewer.web.entity.AuthConfigEntity
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
 import com.hippo.anotherviewer.web.entity.TokenEntity
@@ -165,6 +167,62 @@ class AuthControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("Malformed request body: required fields are missing or invalid"))
+    }
+
+    // ---------------------------------------------------------------------
+    // Auto-pairing (POST /api/v1/auth/register-device)
+    // ---------------------------------------------------------------------
+
+    private fun registerDeviceMvc(response: PairCompleteResponse): MockMvc {
+        val authService = mock(SiteAuthService::class.java)
+        // Standalone MockMvc has no security filter, so the controller falls
+        // back to the anonymous "default" principal.
+        `when`(authService.registerDevice("default", RegisterDeviceRequest("android-x", "Phone", "android", null)))
+            .thenReturn(response)
+        return MockMvcBuilders.standaloneSetup(AuthController(authService, LoginRateLimiter(5, 60000, false))).build()
+    }
+
+    private fun registerDevicePost(body: String) = post("/api/v1/auth/register-device")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body)
+
+    @Test
+    fun `register-device success returns 200 with the exact contract body`() {
+        val mvc = registerDeviceMvc(PairCompleteResponse(true, "Pairing successful", "tok", "default"))
+        mvc.perform(
+            registerDevicePost("""{"deviceId":"android-x","deviceName":"Phone","platform":"android"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Pairing successful"))
+            .andExpect(jsonPath("$.token").value("tok"))
+            .andExpect(jsonPath("$.username").value("default"))
+    }
+
+    @Test
+    fun `register-device with auto-pairing disabled returns 400`() {
+        val mvc = registerDeviceMvc(PairCompleteResponse(false, "Auto-pairing disabled on this server"))
+        mvc.perform(registerDevicePost("""{"deviceId":"android-x","deviceName":"Phone"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Auto-pairing disabled on this server"))
+    }
+
+    @Test
+    fun `register-device with a missing setup key returns 409`() {
+        val mvc = registerDeviceMvc(PairCompleteResponse(false, "Setup key required"))
+        mvc.perform(registerDevicePost("""{"deviceId":"android-x","deviceName":"Phone"}"""))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Setup key required"))
+    }
+
+    @Test
+    fun `register-device with a blank deviceId is rejected by validation`() {
+        val mvc = registerDeviceMvc(PairCompleteResponse(true, "Pairing successful", "tok", "default"))
+        mvc.perform(registerDevicePost("""{"deviceId":"","deviceName":"Phone"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
     }
 
     // ---------------------------------------------------------------------

@@ -520,6 +520,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                     fragment.getString(R.string.settings_webui_testing), true, false);
 
             executor.execute(() -> {
+                String pairUsername = null;
                 String token = null;
                 Throwable error = null;
                 boolean loginNeeded = true;
@@ -536,6 +537,24 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                     // network failed. Try the login flow either way; the failure
                     // toast covers both cases.
                 }
+                if (!loginNeeded) {
+                    // Auth-off server: auto-pair without a code. Older servers
+                    // lack /register-device (404) and servers with auto-pairing
+                    // disabled answer 400 — both fall back to the tokenless
+                    // config below, and code pairing stays available in settings.
+                    try {
+                        WebUiSettings settings = new WebUiSettings(fragment.getContext());
+                        WebUiSyncModels.PairCompleteResponse paired = WebUiApiClient.registerDevice(
+                                new WebUiConfig(protocol, host, port, "", ""),
+                                settings.deviceId(), android.os.Build.MODEL, "android", null);
+                        if (paired.success && !TextUtils.isEmpty(paired.token)) {
+                            pairUsername = paired.username;
+                            token = paired.token;
+                        }
+                    } catch (Throwable ignored) {
+                        // Fall through: save the anonymous config as before.
+                    }
+                }
                 if (loginNeeded) {
                     try {
                         WebUiConfig probe = new WebUiConfig(protocol, host, port, username, "");
@@ -551,24 +570,31 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                         error = e;
                     }
                 }
+                final String savedPairUsername = pairUsername;
                 final String savedToken = token;
                 final Throwable finalError = error;
-                handler.post(() -> onPostExecute(savedToken, finalError));
+                handler.post(() -> onPostExecute(savedPairUsername, savedToken, finalError));
             });
         }
 
-        private void onPostExecute(String token, Throwable error) {
+        private void onPostExecute(String pairUsername, String token, Throwable error) {
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
             WebUiSyncFragment fragment = fragmentRef.get();
             if (fragment == null || !fragment.isAdded()) return;
             if (error == null) {
-                WebUiConfig config = new WebUiConfig(protocol, host, port, username, token);
+                WebUiConfig config = new WebUiConfig(protocol, host, port,
+                        pairUsername != null ? pairUsername : username, token);
                 new WebUiSettings(fragment.requireContext()).saveConfig(config);
                 dialog.dismiss();
                 fragment.updateConfigureSummary();
                 Toast.makeText(fragment.requireActivity(), R.string.settings_webui_connected, Toast.LENGTH_LONG).show();
+                // Auto-paired devices pick up server preferences right away,
+                // matching the code-pairing flow.
+                if (pairUsername != null) {
+                    fragment.pullPreferences();
+                }
             } else {
                 // Login-specific hint: on an auth-off server the login endpoint
                 // rejects every account, so point the user at pairing instead.

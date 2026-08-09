@@ -71,6 +71,10 @@ class ServerConfigService(
     companion object {
         const val KEY_REQUIRE_AUTH = "security.require_auth"
         const val KEY_SESSION_TIMEOUT = "security.session_timeout"
+        // 免码配对（task/4-auto-pair）：LAN 单用户默认开启；配置 setup key 后
+        // 客户端必须携带该 key 才能自动注册设备。
+        const val KEY_AUTO_PAIRING = "security.auto_pairing"
+        const val KEY_SETUP_KEY = "security.setup_key"
         const val KEY_DOWNLOAD_PATH = "download.path"
         const val KEY_CACHE_PATH = "cache.path"
         const val ENV_REQUIRE_AUTH = "ANOTHERVIEWER_REQUIRE_AUTH"
@@ -92,6 +96,8 @@ class ServerConfigService(
             // opts in via ANOTHERVIEWER_REQUIRE_AUTH or a DB value.
             KEY_REQUIRE_AUTH to "false",
             KEY_SESSION_TIMEOUT to "86400",
+            // LAN 单用户部署：免码配对默认开启；setup key 默认不配置。
+            KEY_AUTO_PAIRING to "true",
             // 策略缺省 = 契约 §7 常量（STRATEGY_DEFAULT / CLIENT_TIER_DEFAULT / AUTO_SYNC_INTERVAL_SEC_DEFAULT）
             KEY_SYNC_CONFLICT_STRATEGY to "device_priority",
             KEY_SYNC_CLIENT_TIER to "1",

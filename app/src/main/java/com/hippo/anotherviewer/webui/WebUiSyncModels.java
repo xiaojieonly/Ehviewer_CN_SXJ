@@ -231,6 +231,14 @@ public final class WebUiSyncModels {
         public String platform;
     }
 
+    /** POST /api/v1/auth/register-device body (auto-pairing, no code). */
+    public static class RegisterDeviceRequest {
+        public String deviceId;
+        public String deviceName;
+        public String platform;
+        public String setupKey;
+    }
+
     public static class PairCompleteResponse {
         public boolean success;
         public String message;

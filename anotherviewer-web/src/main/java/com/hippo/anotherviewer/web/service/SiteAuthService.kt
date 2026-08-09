@@ -10,6 +10,7 @@ import com.hippo.anotherviewer.web.dto.LoginRequest
 import com.hippo.anotherviewer.web.dto.PairCodeResponse
 import com.hippo.anotherviewer.web.dto.PairCompleteRequest
 import com.hippo.anotherviewer.web.dto.PairCompleteResponse
+import com.hippo.anotherviewer.web.dto.RegisterDeviceRequest
 import com.hippo.anotherviewer.web.dto.RegisterRequest
 import com.hippo.anotherviewer.web.entity.AuthConfigEntity
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
@@ -49,6 +50,7 @@ class SiteAuthService(
         const val PAIR_CODE_TTL_SECONDS = 600L
         const val PAIR_CODE_LENGTH = 6
         const val MIN_TOKEN_TTL_SECONDS = 60L
+        const val MSG_SETUP_KEY_REQUIRED = "Setup key required"
         private val PAIR_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
         fun sha256(value: String): String {
@@ -289,17 +291,65 @@ class SiteAuthService(
         if (entry == null || entry.expiresAt < System.currentTimeMillis()) {
             return PairCompleteResponse(false, "Pairing code is invalid or expired")
         }
-        val token = issueToken(entry.username)
-        val device = syncDeviceRepository.findByDeviceId(request.deviceId)
-            ?: SyncDeviceEntity().apply { this.deviceId = request.deviceId }
-        device.deviceName = request.deviceName
-        device.platform = request.platform
+        return registerDeviceToken(entry.username, request.deviceId, request.deviceName, request.platform)
+    }
+
+    /** Whether clients may auto-register devices without a pairing code. */
+    fun isAutoPairingEnabled(): Boolean =
+        serverConfig.getBoolean(ServerConfigService.KEY_AUTO_PAIRING, true)
+
+    /** Static setup key gate for auto-pairing; empty means none is required. */
+    fun getRequiredSetupKey(): String = serverConfig.get(ServerConfigService.KEY_SETUP_KEY)
+
+    /**
+     * Auto-pairs a device without a code (LAN single-user mode). Gated by
+     * [isAutoPairingEnabled]; when a setup key is configured it must be
+     * supplied and match (compared in constant time). The device is bound to
+     * [username] — the anonymous principal ("default") when auth is off.
+     */
+    fun registerDevice(username: String, request: RegisterDeviceRequest): PairCompleteResponse {
+        if (!isAutoPairingEnabled()) {
+            return PairCompleteResponse(false, "Auto-pairing disabled on this server")
+        }
+        val requiredKey = getRequiredSetupKey()
+        if (requiredKey.isNotEmpty()) {
+            val provided = request.setupKey ?: return PairCompleteResponse(false, MSG_SETUP_KEY_REQUIRED)
+            if (!MessageDigest.isEqual(
+                    requiredKey.toByteArray(Charsets.UTF_8),
+                    provided.toByteArray(Charsets.UTF_8)
+                )
+            ) {
+                return PairCompleteResponse(false, "Invalid setup key")
+            }
+        }
+        return registerDeviceToken(username, request.deviceId, request.deviceName, request.platform)
+    }
+
+    /** Shared device-binding tail for both pairing flows (code + auto). */
+    private fun registerDeviceToken(
+        username: String,
+        deviceId: String,
+        deviceName: String,
+        platform: String,
+    ): PairCompleteResponse {
+        val token = issueToken(username)
+        val device = syncDeviceRepository.findByDeviceId(deviceId)
+            ?: SyncDeviceEntity().apply { this.deviceId = deviceId }
+        // Rotate credentials: a re-registering device's previous token is
+        // revoked so a stale token cannot outlive re-registration (same
+        // policy as revokeDevice).
+        device.token?.let { oldHash ->
+            tokenRepository.deleteByTokenHash(oldHash)
+            tokenCache.remove(oldHash)
+        }
+        device.deviceName = deviceName
+        device.platform = platform
         device.pairedAt = System.currentTimeMillis()
         device.lastSeen = device.pairedAt
         device.token = sha256(token)
-        device.username = entry.username
+        device.username = username
         syncDeviceRepository.save(device)
-        return PairCompleteResponse(true, "Pairing successful", token, entry.username)
+        return PairCompleteResponse(true, "Pairing successful", token, username)
     }
 
     /**
