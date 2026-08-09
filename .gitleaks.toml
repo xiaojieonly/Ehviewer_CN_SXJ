@@ -1,0 +1,11 @@
+# Gitleaks 白名单：排除已知的测试夹具/常量误报。
+# 真泄露（anotherviewer-web/data/*.db 的 admin 哈希）已通过 git filter-repo
+# 按路径从全历史剔除，gitleaks 无法命中二进制 SQLite，由路径剔除保证。
+
+[allowlist]
+  description = "已知测试夹具与配置常量（误报）"
+  regexes = [
+    '''token\s*=\s*"?['"]?0123456789abcdef''',
+    '''TOKEN\s*=\s*'0123456789abcdef''',
+    '''KEY_DEFAULT_FAV_SLOT\s*=\s*"default_favorite_2"''',
+  ]
