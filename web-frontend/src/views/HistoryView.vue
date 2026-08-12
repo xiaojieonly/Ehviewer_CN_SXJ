@@ -223,6 +223,8 @@ function toGalleryInfo(item: HistoryItem): GalleryInfo {
 /** 搜索词：防抖后作为 q 传给 /history/list（服务端过滤）。 */
 const searchQuery = ref('')
 const debouncedQuery = ref('')
+/** Monotonic request guard — stale responses (fast search/slot switches) drop. */
+let requestSeq = 0
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 /** 筛选槽位（A5d）：命名正则预设；与搜索框互斥（useFilterSlots 保证）。 */
@@ -265,9 +267,13 @@ function clearSearch(): void {
 }
 
 async function load(): Promise<void> {
+  // 单调递增请求守卫：快速切换搜索词/筛选槽位时丢弃过期响应，
+  // 与 Download/Favorite/Search 视图一致，避免旧响应覆盖新结果。
+  const seq = ++requestSeq
   try {
     const filter = currentFilter()
     const data = await historyApi.listHistory(filter.q || null, filter.regex || undefined)
+    if (seq !== requestSeq) return
     entries.value = data.history.map((item) => ({
       gallery: toGalleryInfo(item),
       time: item.time,
@@ -275,6 +281,7 @@ async function load(): Promise<void> {
     state.value = entries.value.length === 0 ? 'empty' : 'content'
   } catch (error) {
     console.error('Failed to load history', error)
+    if (seq !== requestSeq) return
     if (entries.value.length === 0) state.value = 'error'
   }
 }
