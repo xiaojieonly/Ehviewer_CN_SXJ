@@ -58,7 +58,12 @@ class ProcessingController(
                 state = status.state
             ))
         } catch (e: IllegalStateException) {
-            errorEnvelope(HttpStatus.CONFLICT, "CONFLICT", "Processing is already in progress for this gallery")
+            // 区分「无可用处理器」与真正的冲突：前者是服务端能力缺失（503），
+            // 后者才报 409；错误文案取自服务层，不再硬编码成 "already in progress"。
+            val noProcessor = e.message?.contains("No available processor") == true
+            val status = if (noProcessor) HttpStatus.SERVICE_UNAVAILABLE else HttpStatus.CONFLICT
+            errorEnvelope(status, if (noProcessor) "PROCESSOR_UNAVAILABLE" else "CONFLICT",
+                e.message ?: "Processing request rejected")
         }
     }
 
