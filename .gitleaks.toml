@@ -5,7 +5,9 @@
 [allowlist]
   description = "已知测试夹具与配置常量（误报）"
   regexes = [
-    '''token\s*=\s*"?['"]?0123456789abcdef''',
+    # 必须锚定完整值（收尾引号）：只豁免 16 位 hex 夹具常量本身，
+    # 不得让「以该前缀开头的真实 token」也被白名单覆盖。
+    '''token\s*=\s*"0123456789abcdef"|token\s*=\s*'0123456789abcdef''',
     '''TOKEN\s*=\s*'0123456789abcdef''',
     '''KEY_DEFAULT_FAV_SLOT\s*=\s*"default_favorite_2"''',
   ]
