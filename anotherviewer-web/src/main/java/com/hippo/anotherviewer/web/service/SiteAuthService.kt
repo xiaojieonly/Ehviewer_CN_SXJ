@@ -311,6 +311,13 @@ class SiteAuthService(
         if (!isAutoPairingEnabled()) {
             return PairCompleteResponse(false, "Auto-pairing disabled on this server")
         }
+        // auth-on 时该端点 permitAll，无 token 的匿名请求也会走到这里（identity 为
+        // Spring 的 "anonymousUser"）；若直接签发 token 等于绕过登录门。只有配置了
+        // setup key（作为该场景的共享密钥）才允许继续；未配置 → 拒绝 400，客户端
+        // 按契约（openapi.yaml register-device）回退 /pair/complete。
+        if (isAuthEnabled() && getRequiredSetupKey().isEmpty()) {
+            return PairCompleteResponse(false, "Auto-pairing requires a setup key when auth is enabled")
+        }
         val requiredKey = getRequiredSetupKey()
         if (requiredKey.isNotEmpty()) {
             val provided = request.setupKey ?: return PairCompleteResponse(false, MSG_SETUP_KEY_REQUIRED)

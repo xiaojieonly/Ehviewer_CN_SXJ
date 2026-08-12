@@ -294,6 +294,26 @@ class PairingFlowTest {
     }
 
     @Test
+    fun `auto-pairing is refused when auth is on without a setup key`() {
+        val authService = newAuthService(requireAuth = true)
+        val result = authService.registerDevice("default", registerRequest())
+        assertFalse(result.success)
+        assertTrue(result.message.contains("setup key"))
+    }
+
+    @Test
+    fun `auto-pairing works under auth-on when the setup key matches`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo, requireAuth = true, setupKey = "secret")
+
+        val result = authService.registerDevice("default", registerRequest(setupKey = "secret"))
+
+        assertTrue(result.success)
+        assertEquals("default", authService.validateToken(result.token))
+        assertTrue(deviceRepo.findByDeviceId("android-auto") != null)
+    }
+
+    @Test
     fun `setup key is required when configured`() {
         val authService = newAuthService(setupKey = "secret")
         val result = authService.registerDevice("default", registerRequest(setupKey = null))
