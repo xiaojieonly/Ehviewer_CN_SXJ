@@ -14,7 +14,10 @@
 
 # --- HTTPS (recommended for PWA — Service Worker requires secure context) ---
 anotherviewer.example.com {
-    reverse_proxy localhost:8080
+    reverse_proxy localhost:8080 {
+        # 让服务端看到真实客户端 IP（登录限流按 IP 分桶依赖它）。
+        header_up X-Forwarded-For {remote_host}
+    }
 
     # WebSocket support (STOMP over SockJS)
     @websocket {
@@ -22,7 +25,9 @@ anotherviewer.example.com {
         header Connection *Upgrade*
         header Upgrade websocket
     }
-    reverse_proxy @websocket localhost:8080
+    reverse_proxy @websocket localhost:8080 {
+        header_up X-Forwarded-For {remote_host}
+    }
 
     # Security headers
     header {
@@ -56,14 +61,18 @@ anotherviewer.example.com {
 # Note: PWA features (Service Worker) will NOT work without HTTPS or localhost.
 #
 # :80 {
-#     reverse_proxy localhost:8080
+#     reverse_proxy localhost:8080 {
+#         header_up X-Forwarded-For {remote_host}
+#     }
 #
 #     @websocket {
 #         path /ws/*
 #         header Connection *Upgrade*
 #         header Upgrade websocket
 #     }
-#     reverse_proxy @websocket localhost:8080
+#     reverse_proxy @websocket localhost:8080 {
+#         header_up X-Forwarded-For {remote_host}
+#     }
 #
 #     encode gzip zstd
 # }

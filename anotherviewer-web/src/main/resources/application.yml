@@ -1,5 +1,9 @@
 server:
   port: 8080
+  # 部署在 Caddy 反代之后：信任来自 localhost 的 X-Forwarded-For，让 remoteAddr
+  # 反映真实客户端 IP（登录限流按 IP 分桶依赖它）。直连部署时该策略同样安全：
+  # Tomcat RemoteIpValve 默认只信任内部网段，外部客户端自带的 XFF 不会被采纳。
+  forward-headers-strategy: native
 
 spring:
   datasource:
