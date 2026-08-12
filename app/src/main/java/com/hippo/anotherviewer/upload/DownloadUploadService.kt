@@ -40,6 +40,7 @@ import com.hippo.anotherviewer.webui.WebUiUploadClient
 import com.hippo.anotherviewer.webui.WebUiUploadModels
 import com.hippo.unifile.UniFile
 import java.io.IOException
+import java.util.HashSet
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -47,10 +48,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 前台服务：把本地已下载漫画推送到 WebUI 服务器（task 3 push-of-local-downloads）。
- * 遍历全部 FINISHED 下载（或 gid 子集），逐本：
+ * 遍历全部 FINISHED 下载，逐本：
  *
  * 1. 读 `.anotherviewer`（[SpiderInfo.getSpiderInfo]）拿页数；
- * 2. [WebUiUploadClient.uploadInit]（force=false —— 服务器已存在的 gid 跳过，绝不覆盖）；
+ * 2. [WebUiUploadClient.uploadInit]（force=false；本设备此前推送过的 gid 若中途失败，
+ *    读取 existingPages 后以 force=true 续传，服务器自己的下载仍跳过、绝不覆盖）；
  * 3. 逐页 [SpiderDen.findImageFile] 读取 `%08d.<ext>` 并 [WebUiUploadClient.uploadPage]；
  * 4. [WebUiUploadClient.uploadComplete] 标记服务器行 FINISHED。
  *
@@ -65,6 +67,20 @@ class DownloadUploadService : Service() {
     private var mWakeLock: PowerManager.WakeLock? = null
     @Volatile
     private var mCancelled = false
+
+    private fun isPushed(gid: Long): Boolean {
+        val pushed = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .getStringSet(KEY_PUSHED_GIDS, null) ?: return false
+        return pushed.contains(gid.toString())
+    }
+
+    private fun markPushed(gid: Long) {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val pushed = HashSet(prefs.getStringSet(KEY_PUSHED_GIDS, emptySet<String>()))
+        if (pushed.add(gid.toString())) {
+            prefs.edit().putStringSet(KEY_PUSHED_GIDS, pushed).apply()
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -117,15 +133,14 @@ class DownloadUploadService : Service() {
             mCancelled = false
             startForeground(NOTIFICATION_ID, mBuilder.build())
             acquireWakeLock()
-            val gids = intent?.getLongArrayExtra(EXTRA_GIDS)
-            mExecutor?.execute { doPush(gids) }
+            mExecutor?.execute { doPush() }
         } else {
             stopSelf()
         }
         return START_NOT_STICKY
     }
 
-    private fun doPush(gids: LongArray?) {
+    private fun doPush() {
         val config = WebUiSettings(this).loadConfig()
         if (config == null) {
             Toast.makeText(
@@ -139,7 +154,7 @@ class DownloadUploadService : Service() {
 
         val downloadManager = SiteApplication.getDownloadManager(this)
         val targets = downloadManager.getAllDownloadInfoList().filter {
-            it.state == DownloadInfo.STATE_FINISH && (gids == null || gids.contains(it.gid))
+            it.state == DownloadInfo.STATE_FINISH
         }
         if (targets.isEmpty()) {
             finish(intArrayOf(0, 0, 0))
@@ -188,13 +203,33 @@ class DownloadUploadService : Service() {
         } catch (e: IOException) {
             return 2
         }
-        if (!initResponse.success) {
-            // 服务器已拥有该 gid（非 force 冲突）：跳过，绝不覆盖服务器下载。
-            return 1
+
+        val existingPages: List<Int>
+        when {
+            initResponse.success -> {
+                // 服务器新建该 gid 行：立即标记「本设备已推送」，此后中断可续传。
+                markPushed(info.gid)
+                existingPages = emptyList()
+            }
+            isPushed(info.gid) -> {
+                // 本设备之前的推送中断（服务器行 state=2）：force 续传。服务器保留
+                // 既有页文件，只补传缺失页。
+                val resumed = try {
+                    WebUiUploadClient.uploadInit(config, info.gid, request.apply { force = true })
+                } catch (e: IOException) {
+                    return 2
+                }
+                if (!resumed.success) return 2
+                existingPages = resumed.existingPages ?: emptyList()
+            }
+            else -> {
+                // 服务器已拥有该 gid（本设备未推送过）：跳过，绝不覆盖服务器下载。
+                return 1
+            }
         }
 
         try {
-            for (page in 1..spiderInfo.pages) {
+            for (page in UploadResume.missingPages(spiderInfo.pages, existingPages)) {
                 if (mCancelled) return 2
                 val file = SpiderDen.findImageFile(dir, page - 1)
                 if (file == null || !WebUiUploadClient.uploadPage(config, info.gid, page, file)) {
@@ -271,29 +306,14 @@ class DownloadUploadService : Service() {
         private const val NOTIFICATION_ID = 0x574255
         /** 菜单入口（DownloadsScene）直接以该 action 启动服务。 */
         const val ACTION_PUSH_ALL = "com.hippo.anotherviewer.upload.PUSH_ALL"
-        private const val ACTION_PUSH_GIDS = "com.hippo.anotherviewer.upload.PUSH_GIDS"
         private const val ACTION_CANCEL = "com.hippo.anotherviewer.upload.PUSH_CANCEL"
-        private const val EXTRA_GIDS = "gids"
+        /** 本设备已推送过的 gid 持久化集合（断点续传判定用）。 */
+        private const val PREFS_NAME = "webui_pushed_gids"
+        private const val KEY_PUSHED_GIDS = "pushed_gids"
 
         private val sRunning = AtomicBoolean(false)
 
         fun isRunning(): Boolean = sRunning.get()
-
-        /** 启动推送：gids 为空 → 全部 FINISHED 下载；否则只推指定 gid。 */
-        fun start(context: Context, gids: LongArray?) {
-            val intent = Intent(context, DownloadUploadService::class.java)
-            if (gids != null && gids.isNotEmpty()) {
-                intent.action = ACTION_PUSH_GIDS
-                intent.putExtra(EXTRA_GIDS, gids)
-            } else {
-                intent.action = ACTION_PUSH_ALL
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
-        }
 
         fun cancel(context: Context) {
             val intent = Intent(context, DownloadUploadService::class.java)
