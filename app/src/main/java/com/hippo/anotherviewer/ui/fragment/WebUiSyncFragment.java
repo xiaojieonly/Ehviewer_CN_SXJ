@@ -372,7 +372,18 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     /** Pairs this device via a server-generated pairing code (no password needed). */
     private void showPairDialog() {
         WebUiConfig existing = new WebUiSettings(requireContext()).loadConfig();
+        if (existing != null) {
+            showPairDialog(existing.getProtocol(), existing.getHost(), existing.getPort());
+        } else {
+            showPairDialog(WebUiConfig.PROTOCOL_HTTP, "", WebUiConfig.DEFAULT_PORT);
+        }
+    }
 
+    /**
+     * Prefilled pairing dialog; the auto-pair fallback (ConnectTask) uses it
+     * so the address the user just typed carries over without re-entry.
+     */
+    private void showPairDialog(String presetProtocol, String presetHost, int presetPort) {
         LinearLayout layout = new LinearLayout(requireActivity());
         layout.setOrientation(LinearLayout.VERTICAL);
         int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
@@ -383,15 +394,13 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 android.R.layout.simple_spinner_item, new String[]{"http", "https"});
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         protocol.setAdapter(adapter);
-        if (existing != null && WebUiConfig.PROTOCOL_HTTPS.equals(existing.getProtocol())) {
+        if (WebUiConfig.PROTOCOL_HTTPS.equals(presetProtocol)) {
             protocol.setSelection(1);
         }
         layout.addView(protocol);
 
-        EditText host = addField(layout, R.string.settings_webui_host,
-                existing != null ? existing.getHost() : "");
-        EditText port = addField(layout, R.string.settings_webui_port,
-                existing != null ? String.valueOf(existing.getPort()) : String.valueOf(WebUiConfig.DEFAULT_PORT));
+        EditText host = addField(layout, R.string.settings_webui_host, presetHost);
+        EditText port = addField(layout, R.string.settings_webui_port, String.valueOf(presetPort));
         port.setInputType(InputType.TYPE_CLASS_NUMBER);
         EditText code = addField(layout, R.string.settings_webui_pair_code, "");
         code.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
@@ -485,8 +494,10 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
 
     /**
      * Connects and persists the configuration. Skips login entirely when the
-     * server permits anonymous access (auth-off), saving the config after the
-     * reachability probe alone; otherwise logs in and verifies sync access.
+     * server permits anonymous access (auth-off), auto-pairing via
+     * register-device; otherwise logs in and verifies sync access. When
+     * auto-pairing is rejected (contract: 400/409) the connection is treated
+     * as failed and the user is redirected to the pairing-code dialog.
      */
     private static final class ConnectTask {
         private final WeakReference<WebUiSyncFragment> fragmentRef;
@@ -523,6 +534,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 String pairUsername = null;
                 String token = null;
                 Throwable error = null;
+                boolean pairFallback = false;
                 boolean loginNeeded = true;
                 try {
                     // Anonymous reachability probe: when the server runs with
@@ -538,10 +550,9 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                     // toast covers both cases.
                 }
                 if (!loginNeeded) {
-                    // Auth-off server: auto-pair without a code. Older servers
-                    // lack /register-device (404) and servers with auto-pairing
-                    // disabled answer 400 — both fall back to the tokenless
-                    // config below, and code pairing stays available in settings.
+                    // Auth-off server: auto-pair without a code. setupKey 恒为
+                    // null：App 没有 setup-key 输入入口；配置了 security.setup_key
+                    // 的服务器会以 409 拒绝，走下面的失败回退（配对码对话框）。
                     try {
                         WebUiSettings settings = new WebUiSettings(fragment.getContext());
                         WebUiSyncModels.PairCompleteResponse paired = WebUiApiClient.registerDevice(
@@ -550,9 +561,19 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                         if (paired.success && !TextUtils.isEmpty(paired.token)) {
                             pairUsername = paired.username;
                             token = paired.token;
+                        } else {
+                            // 服务器拒绝自动配对（400 自动配对关闭 / 409 需要
+                            // setup-key）：抛出并进入下面的回退。
+                            throw new java.io.IOException(TextUtils.isEmpty(paired.message)
+                                    ? "Auto-pairing failed" : paired.message);
                         }
-                    } catch (Throwable ignored) {
-                        // Fall through: save the anonymous config as before.
+                    } catch (Throwable e) {
+                        // 自动配对失败（网络不可达，或服务器 400/409/404 拒绝）：
+                        // 不再静默保存无 token 的匿名配置——按契约（openapi.yaml
+                        // register-device）回退到配对码流程，由 onPostExecute 提示
+                        // 并直接拉起配对码对话框。网络不可达与服务器拒绝统一走该回退。
+                        error = e;
+                        pairFallback = true;
                     }
                 }
                 if (loginNeeded) {
@@ -573,11 +594,12 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 final String savedPairUsername = pairUsername;
                 final String savedToken = token;
                 final Throwable finalError = error;
-                handler.post(() -> onPostExecute(savedPairUsername, savedToken, finalError));
+                final boolean fallback = pairFallback;
+                handler.post(() -> onPostExecute(savedPairUsername, savedToken, finalError, fallback));
             });
         }
 
-        private void onPostExecute(String pairUsername, String token, Throwable error) {
+        private void onPostExecute(String pairUsername, String token, Throwable error, boolean pairFallback) {
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
@@ -595,6 +617,18 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 if (pairUsername != null) {
                     fragment.pullPreferences();
                 }
+            } else if (pairFallback) {
+                // 契约回退（openapi.yaml register-device）：自动配对被拒
+                // （400/409/404）或网络不可达时不再落匿名配置——关掉配置对话框，
+                // 提示失败并直接拉起配对码对话框（/pair/complete），让用户立即
+                // 用服务器生成的配对码完成配对；地址沿用刚输入的配置。
+                if (dialog != null) {
+                    try { dialog.dismiss(); } catch (Exception ignored) {}
+                }
+                Toast.makeText(fragment.requireActivity(),
+                        fragment.getString(R.string.settings_webui_pair_failed, messageOf(error)),
+                        Toast.LENGTH_LONG).show();
+                fragment.showPairDialog(protocol, host, port);
             } else {
                 // Login-specific hint: on an auth-off server the login endpoint
                 // rejects every account, so point the user at pairing instead.

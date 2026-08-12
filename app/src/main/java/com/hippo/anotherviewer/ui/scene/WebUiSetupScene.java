@@ -133,9 +133,11 @@ public final class WebUiSetupScene extends SolidScene implements View.OnClickLis
         Toast.makeText(context, R.string.settings_webui_setup_saved, Toast.LENGTH_LONG).show();
         redirectTo();
         // Background auto-pair: on servers with auto-pairing enabled this
-        // finishes the connection so no code entry is needed. Failures are
-        // silent (older server 404, or pairing disabled) — the tokenless
-        // config above stays and the user pairs later from Settings.
+        // finishes the connection so no code entry is needed. setupKey 恒为
+        // null：App 没有 setup-key 输入入口，配置了 security.setup_key 的
+        // 服务器会以 409 拒绝。失败不再静默（老服务器 404、自动配对关闭 400、
+        // 需要 setup-key 409、或网络不可达）——保留上面已保存的连接配置
+        // （地址信息有用），提示用户到 设置 → 服务器同步 用配对码完成配对。
         Thread thread = new Thread(() -> {
             try {
                 WebUiSettings settings = new WebUiSettings(ctx);
@@ -146,9 +148,20 @@ public final class WebUiSetupScene extends SolidScene implements View.OnClickLis
                             paired.username, paired.token));
                     new Handler(Looper.getMainLooper()).post(() ->
                             Toast.makeText(ctx, R.string.settings_webui_pair_done, Toast.LENGTH_LONG).show());
+                } else {
+                    // 服务器拒绝自动配对：不静默，提示用户完成配对。
+                    String detail = TextUtils.isEmpty(paired.message) ? "自动配对被拒绝" : paired.message;
+                    new Handler(Looper.getMainLooper()).post(() ->
+                            Toast.makeText(ctx, ctx.getString(R.string.settings_webui_pair_failed, detail),
+                                    Toast.LENGTH_LONG).show());
                 }
-            } catch (Exception ignored) {
-                // Keep the plain saved config; pairing is available in settings.
+            } catch (Exception e) {
+                // 网络不可达同样不静默：保留已保存配置，提示用户完成配对。
+                String detail = TextUtils.isEmpty(e.getMessage())
+                        ? e.getClass().getSimpleName() : e.getMessage();
+                new Handler(Looper.getMainLooper()).post(() ->
+                        Toast.makeText(ctx, ctx.getString(R.string.settings_webui_pair_failed, detail),
+                                Toast.LENGTH_LONG).show());
             }
         }, "webui-auto-pair");
         thread.setDaemon(true);
