@@ -21,10 +21,15 @@ class NoopProcessor : ImageProcessor {
     override fun isAvailable(): Boolean = true
 
     override suspend fun process(input: Path, options: ProcessingOptions): Path {
+        // 输出格式白名单：outputFormat 会进入输出路径与扩展名，拒绝白名单外的
+        // 值（含路径分隔符/../ 等）既防路径穿越，也防写出无法识别的伪扩展名。
+        val format = options.outputFormat.lowercase()
+        require(format in SUPPORTED_FORMATS) { "unsupported output format: ${options.outputFormat}" }
         // Copy input to output path with the requested format extension
         val outputDir = input.parent ?: Path.of(".")
         val baseName = input.fileName.toString().substringBeforeLast('.')
-        val output = outputDir.resolve("$baseName.${options.outputFormat}")
+        val output = outputDir.resolve("$baseName.$format").normalize()
+        require(output.parent == outputDir.normalize()) { "output path escapes input directory" }
 
         if (input != output) {
             Files.copy(input, output)
@@ -33,4 +38,8 @@ class NoopProcessor : ImageProcessor {
     }
 
     override val capabilities: Set<ProcessingType> = ProcessingType.entries.toSet()
+
+    private companion object {
+        val SUPPORTED_FORMATS = setOf("png", "jpg", "jpeg", "webp")
+    }
 }

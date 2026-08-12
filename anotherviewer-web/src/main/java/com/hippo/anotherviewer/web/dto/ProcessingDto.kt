@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.processing.ProcessingType
 import com.hippo.anotherviewer.web.processing.TaskState
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
@@ -14,6 +15,7 @@ import java.time.Instant
 data class ProcessingRequest(
     val type: ProcessingType = ProcessingType.UPSCALE_2X,
     @field:Size(max = 16, message = "outputFormat must be at most 16 characters")
+    @field:Pattern(regexp = "^(?i)(png|jpe?g|webp)$", message = "outputFormat must be png, jpg, jpeg or webp")
     val outputFormat: String = "png",
     @field:Min(1, message = "quality must be between 1 and 100")
     @field:Max(100, message = "quality must be between 1 and 100")
