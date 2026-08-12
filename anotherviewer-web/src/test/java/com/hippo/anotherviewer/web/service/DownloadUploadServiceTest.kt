@@ -14,7 +14,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
@@ -41,6 +43,10 @@ class DownloadUploadServiceTest {
 
     @BeforeEach
     fun setUp() {
+        setUp(uploadEnabled = true)
+    }
+
+    private fun setUp(uploadEnabled: Boolean) {
         store = ConcurrentHashMap()
         repo = mock(DownloadInfoRepository::class.java).apply {
             `when`(save(any(DownloadInfoEntity::class.java))).thenAnswer { inv ->
@@ -53,7 +59,12 @@ class DownloadUploadServiceTest {
         val config = SiteCoreConfigProperties().apply {
             download.path = tempDir.absolutePath
         }
-        service = DownloadUploadService(repo, config)
+        val serverConfig = mock(ServerConfigService::class.java).apply {
+            `when`(getBoolean(anyString(), anyBoolean())).thenAnswer { inv ->
+                inv.getArgument<String>(0) == ServerConfigService.KEY_UPLOAD_ENABLED && uploadEnabled
+            }
+        }
+        service = DownloadUploadService(repo, config, serverConfig)
     }
 
     private fun downloadDir(gid: Long): File = File(tempDir, "$gid")
@@ -114,6 +125,17 @@ class DownloadUploadServiceTest {
         assertFalse(response.success)
         assertEquals("old", store.getValue(123L).token)
         assertEquals("Old", store.getValue(123L).title)
+    }
+
+    @Test
+    fun `initUpload refuses when upload is disabled`() {
+        setUp(uploadEnabled = false)
+
+        val response = service.initUpload(123L, req(), "alice")
+
+        assertFalse(response.success)
+        assertTrue(response.message.contains("Upload disabled"))
+        assertNull(store[123L])
     }
 
     @Test
@@ -185,6 +207,16 @@ class DownloadUploadServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.storePage(123L, 0, "page.jpg", ByteArray(1))
         }
+    }
+
+    @Test
+    fun `storePage refuses when upload is disabled`() {
+        setUp(uploadEnabled = false)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.storePage(123L, 1, "page.jpg", ByteArray(1))
+        }
+        assertFalse(File(downloadDir(123L), "0001.jpg").exists())
     }
 
     @Test

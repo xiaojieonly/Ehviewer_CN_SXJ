@@ -77,6 +77,8 @@ class ServerConfigService(
         const val KEY_SETUP_KEY = "security.setup_key"
         const val KEY_DOWNLOAD_PATH = "download.path"
         const val KEY_CACHE_PATH = "cache.path"
+        // App 推送下载开关（openapi.yaml 上传端点要求「upload disabled → 400」）。
+        const val KEY_UPLOAD_ENABLED = "download.upload_enabled"
         const val ENV_REQUIRE_AUTH = "ANOTHERVIEWER_REQUIRE_AUTH"
         private const val ENC_PREFIX = "enc:v1:"
 
@@ -98,6 +100,8 @@ class ServerConfigService(
             KEY_SESSION_TIMEOUT to "86400",
             // LAN 单用户部署：免码配对默认开启；setup key 默认不配置。
             KEY_AUTO_PAIRING to "true",
+            // App 推送下载默认开启。
+            KEY_UPLOAD_ENABLED to "true",
             // 策略缺省 = 契约 §7 常量（STRATEGY_DEFAULT / CLIENT_TIER_DEFAULT / AUTO_SYNC_INTERVAL_SEC_DEFAULT）
             KEY_SYNC_CONFLICT_STRATEGY to "device_priority",
             KEY_SYNC_CLIENT_TIER to "1",

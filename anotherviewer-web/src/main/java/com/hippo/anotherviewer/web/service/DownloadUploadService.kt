@@ -26,6 +26,7 @@ import java.util.regex.Pattern
 class DownloadUploadService(
     private val downloadRepository: DownloadInfoRepository,
     private val config: SiteCoreConfigProperties,
+    private val serverConfig: ServerConfigService,
 ) {
     private val logger = LoggerFactory.getLogger(DownloadUploadService::class.java)
 
@@ -37,6 +38,9 @@ class DownloadUploadService(
      * 不写库）；否则 upsert（行字段来自请求，state=2，downloadDir = downloads/<gid>）。
      */
     fun initUpload(gid: Long, request: UploadInitRequest, username: String): UploadInitResponse {
+        if (!isUploadEnabled()) {
+            return UploadInitResponse(success = false, message = "Upload disabled")
+        }
         val existing = downloadRepository.findByGid(gid)
         if (existing != null && !request.force) {
             return UploadInitResponse(
@@ -97,6 +101,9 @@ class DownloadUploadService(
      * @throws IllegalArgumentException page < 1 或扩展名不在白名单（控制器转 400）
      */
     fun storePage(gid: Long, page: Int, filename: String?, bytes: ByteArray) {
+        if (!isUploadEnabled()) {
+            throw IllegalArgumentException("upload disabled")
+        }
         require(page >= 1) { "page must be >= 1" }
         val ext = extensionOf(filename)
             ?: throw IllegalArgumentException("unsupported image extension: ${filename ?: "(none)"}")
@@ -125,6 +132,10 @@ class DownloadUploadService(
         val ext = filename.substring(dot + 1).lowercase()
         return if (ext in SUPPORTED_EXTENSIONS) ext else null
     }
+
+    /** 上传开关（openapi.yaml「upload disabled → 400」）；默认开启。 */
+    private fun isUploadEnabled(): Boolean =
+        serverConfig.getBoolean(ServerConfigService.KEY_UPLOAD_ENABLED, true)
 
     private companion object {
         val SUPPORTED_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "webp")
