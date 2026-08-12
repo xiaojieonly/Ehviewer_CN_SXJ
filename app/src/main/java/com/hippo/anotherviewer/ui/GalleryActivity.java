@@ -87,6 +87,7 @@ import com.hippo.anotherviewer.gallery.SiteGalleryProvider;
 import com.hippo.anotherviewer.gallery.GalleryProvider2;
 import com.hippo.anotherviewer.gallery.WebUiGalleryProvider;
 import com.hippo.anotherviewer.spider.SpiderDen;
+import com.hippo.anotherviewer.spider.SpiderInfo;
 import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiSettings;
 import com.hippo.anotherviewer.widget.GalleryGuideView;
@@ -287,9 +288,13 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             if (mGalleryInfo != null) {
                 // Local downloads win over remote reading: read straight from
                 // the download folder when it exists (never create it here).
+                // 仅当目录存在且 `.anotherviewer` 信息文件有效（SpiderInfo 非 null，
+                // 内部已校验 gid/token）时才用本地下载阅读；旧下载/异常下载目录
+                // 缺失信息文件时 DownloadGalleryProvider 会直接 STATE_ERROR 且不会
+                // 回退，故此时落空继续走下面的远程阅读回退逻辑。
                 if (mGalleryInfo instanceof DownloadInfo) {
                     UniFile downloadDir = SpiderDen.getExistingGalleryDownloadDir(mGalleryInfo);
-                    if (downloadDir != null) {
+                    if (downloadDir != null && SpiderInfo.getSpiderInfo(mGalleryInfo) != null) {
                         mGalleryProvider = new DownloadGalleryProvider(this, mGalleryInfo, downloadDir);
                     }
                 }
