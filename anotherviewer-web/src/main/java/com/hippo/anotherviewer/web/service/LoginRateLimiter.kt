@@ -34,6 +34,7 @@ class LoginRateLimiter(
         var failures: Int = 0
         var lockoutUntil: Long = 0L
         var lockoutCycles: Int = 0
+        var lastAccess: Long = System.currentTimeMillis()
     }
 
     /** 该 (user, ip) 当前是否处于锁定窗口（窗口已过视为未锁定，条目由后续访问或 [cleanup] 清理）。 */
@@ -41,7 +42,8 @@ class LoginRateLimiter(
         if (!enabled) return false
         val state = attempts[key(username, ip)] ?: return false
         synchronized(state) {
-            return state.lockoutUntil > System.currentTimeMillis()
+            state.lastAccess = System.currentTimeMillis()
+            return state.lockoutUntil > state.lastAccess
         }
     }
 
@@ -51,6 +53,7 @@ class LoginRateLimiter(
         val state = attempts.computeIfAbsent(key(username, ip)) { AttemptState() }
         synchronized(state) {
             val now = System.currentTimeMillis()
+            state.lastAccess = now
             if (now < state.lockoutUntil) return // 已在锁定中：被拒绝的请求不再累计计数
             if (state.lockoutUntil != 0L) state.failures = 0 // 锁定窗口已结束，计数重置
             state.failures++
@@ -78,7 +81,13 @@ class LoginRateLimiter(
     fun cleanup() {
         val now = System.currentTimeMillis()
         attempts.entries.removeIf { (_, state) ->
-            synchronized(state) { state.lockoutUntil <= now && state.failures == 0 }
+            synchronized(state) {
+                val lockoutExpired = state.lockoutUntil <= now
+                // 未触发锁定的失败计数条目没有窗口重置时间戳，按空闲时长回收，
+                // 防止攻击者用大量 (user, ip) 组合无限增长内存。
+                val idleExpired = now - state.lastAccess > IDLE_TTL_MS
+                lockoutExpired && (state.failures == 0 || idleExpired)
+            }
         }
     }
 
@@ -86,5 +95,6 @@ class LoginRateLimiter(
 
     companion object {
         private const val MAX_BACKOFF_SHIFT = 3
+        private const val IDLE_TTL_MS = 3_600_000L
     }
 }
