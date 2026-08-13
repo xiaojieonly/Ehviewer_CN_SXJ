@@ -305,7 +305,7 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
                     WebUiSettings webUiSettings = new WebUiSettings(this);
                     WebUiConfig webUiConfig = webUiSettings.loadConfig();
                     if (webUiConfig != null && webUiSettings.remoteReadEnabled()) {
-                        mGalleryProvider = new WebUiGalleryProvider(mGalleryInfo, webUiConfig);
+                        mGalleryProvider = new WebUiGalleryProvider(this, mGalleryInfo, webUiConfig);
                     } else {
                         mGalleryProvider = new SiteGalleryProvider(this, mGalleryInfo);
                     }
