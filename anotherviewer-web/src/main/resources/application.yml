@@ -7,7 +7,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:sqlite:${ANOTHERVIEWER_DATA_DIR:./data}/anotherviewer.db?journal_mode=WAL&busy_timeout=30000
+    # 引用 anotherviewer.data-dir，保证 --data-dir / ANOTHERVIEWER_DATA_DIR 两种
+    # 注入方式下，数据库与 downloads/cache/security.key 落在同一目录（数据不分家）
+    url: jdbc:sqlite:${anotherviewer.data-dir}/anotherviewer.db?journal_mode=WAL&busy_timeout=30000
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect

@@ -55,3 +55,6 @@ web-frontend/coverage/
 web-frontend/e2e/actual/
 web-frontend/e2e/diff/
 web-frontend/e2e/test-results/
+
+# zip 发布包产物
+/dist/
