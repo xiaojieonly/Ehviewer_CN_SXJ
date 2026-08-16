@@ -7,7 +7,6 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.simp.stomp.StompCommand
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor
 import org.springframework.messaging.support.ChannelInterceptor
-import org.springframework.messaging.support.MessageBuilder
 import org.springframework.messaging.support.MessageHeaderAccessor
 import org.springframework.stereotype.Component
 
@@ -28,25 +27,22 @@ class WsAuthChannelInterceptor(
             ?: return message
         when (accessor.command) {
             StompCommand.CONNECT -> {
-                val accepted = if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)) {
-                    true
+                if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)) {
+                    WebSocketConfig.activeConnections.incrementAndGet()
                 } else {
                     val token = accessor.getFirstNativeHeader("login")
                         ?: accessor.getFirstNativeHeader("Authorization")
                             ?.removePrefix("Bearer ")
                             ?.trim()
                         ?: ""
-                    if (authService.validateToken(token) == null) {
-                        val error = StompHeaderAccessor.create(StompCommand.ERROR)
-                        error.message = "Authentication required"
-                        error.setSessionId(accessor.sessionId)
-                        val errorMessage = MessageBuilder.createMessage(ByteArray(0), error.messageHeaders)
-                        channel.send(errorMessage)
-                        return null
-                    }
-                    true
+                    // Throw rather than return null: an inbound-channel interceptor
+                    // returning null makes AbstractMessageChannel.send() return false
+                    // without notifying the STOMP client. Throwing is caught by
+                    // StompSubProtocolHandler, which sends the client an ERROR frame
+                    // and closes the connection with PROTOCOL_ERROR.
+                    require(authService.validateToken(token) != null) { "Authentication required" }
+                    WebSocketConfig.activeConnections.incrementAndGet()
                 }
-                if (accepted) WebSocketConfig.activeConnections.incrementAndGet()
                 return message
             }
             StompCommand.DISCONNECT -> {

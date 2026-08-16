@@ -5,7 +5,7 @@ import com.hippo.anotherviewer.web.service.ServerConfigService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -56,13 +56,13 @@ class WsAuthChannelInterceptorTest {
     }
 
     @Test
-    fun `rejected CONNECT does not increment active connections`() {
+    fun `rejected CONNECT throws and does not increment active connections`() {
         `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("bad-token")).thenReturn(null)
 
-        val result = interceptor.preSend(frame(StompCommand.CONNECT, "login" to "bad-token"), channel)
-
-        assertNull(result)
+        assertThrows(IllegalArgumentException::class.java) {
+            interceptor.preSend(frame(StompCommand.CONNECT, "login" to "bad-token"), channel)
+        }
         assertEquals(0, WebSocketConfig.activeConnections.get())
     }
 
