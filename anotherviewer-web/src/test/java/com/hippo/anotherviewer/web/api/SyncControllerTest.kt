@@ -54,6 +54,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.doAnswer
@@ -451,7 +452,10 @@ class SyncControllerTest {
         assertEquals(1, status.entityCounts.bookmarks)
         assertEquals(1, status.entityCounts.filters)
         assertEquals(1, status.entityCounts.quickSearches)
-        assertEquals(1, status.entityCounts.downloadLabels)
+        // MASTER-2026-08-22 P3：自动补建标签（M-14 resolveLabelId）创建即落
+        // username（不再留 NULL 待收养），故 push 后 status 计数立即含
+        // "Label One" + "DL-Label-A" 两行。
+        assertEquals(2, status.entityCounts.downloadLabels)
 
         // A later push bumps lastSeen.
         val pushedAgain = service.push(pushRequest("android-t3"), "alice")
@@ -666,6 +670,9 @@ class SyncControllerTest {
             entity
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByTypeAndText(anyInt(), anyString())).thenAnswer { inv ->
+            store.values.firstOrNull { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+        }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()

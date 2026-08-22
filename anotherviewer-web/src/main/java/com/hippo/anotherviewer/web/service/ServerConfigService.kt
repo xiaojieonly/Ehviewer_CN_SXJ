@@ -51,6 +51,14 @@ class ServerConfigService(
 
     fun setBoolean(key: String, value: Boolean) = set(key, value.toString())
 
+    /** MASTER-2026-08-22 P2：前缀枚举与删除（sync.prov.* 孤儿键维护用）。 */
+    fun findByKeyStartingWith(prefix: String): List<ServerConfigEntity> =
+        repo.findByKeyStartingWith(prefix)
+
+    fun delete(entity: ServerConfigEntity) {
+        repo.delete(entity)
+    }
+
     /** 启动时将 SiteCoreConfigProperties 的默认值写入 DB（仅首次） */
     @PostConstruct
     fun initDefaults() {

@@ -46,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.clearInvocations
@@ -94,6 +95,7 @@ class SyncServiceTest {
     private lateinit var preferenceRepo: UserPreferenceRepository
     private lateinit var preferenceService: UserPreferenceService
     private lateinit var siteSessionManager: SiteSessionManager
+    private lateinit var serverCfg: com.hippo.anotherviewer.web.service.ServerConfigService
     private lateinit var service: SyncService
 
     @BeforeEach
@@ -109,10 +111,11 @@ class SyncServiceTest {
         preferenceRepo = fakePreferenceRepo()
         preferenceService = UserPreferenceService(preferenceRepo)
         siteSessionManager = mock(SiteSessionManager::class.java)
+        serverCfg = fakeServerConfig()
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
-            fakeServerConfig(),
+            serverCfg,
             mock(EhSessionRepository::class.java),
             siteSessionManager,
         )
@@ -134,6 +137,13 @@ class SyncServiceTest {
         }
         `when`(repo.existsById(anyString())).thenAnswer { inv ->
             store.containsKey(inv.getArgument<String>(0))
+        }
+        // MASTER-2026-08-22 P2：provenance 孤儿键清理所需。
+        `when`(repo.findByKeyStartingWith(anyString())).thenAnswer { inv ->
+            store.values.filter { it.key.startsWith(inv.getArgument<String>(0)) }
+        }
+        `when`(repo.delete(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
+            store.remove(inv.getArgument<ServerConfigEntity>(0).key); null
         }
         return ServerConfigService(repo, EncryptionService(), SiteCoreConfigProperties())
     }
@@ -233,6 +243,9 @@ class SyncServiceTest {
             e
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByTypeAndText(anyInt(), anyString())).thenAnswer { inv ->
+            store.values.firstOrNull { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+        }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
         `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
@@ -1125,4 +1138,38 @@ class SyncServiceTest {
         assertEquals(0, downloadRepo.findByGid(72)!!.label)
         assertNull(service.pull(0, "A", "android-test").entities.downloads.single().label)
     }
+
+    // ── MASTER-2026-08-22 P2/P3 ────────────────────────────────
+
+    @Test
+    fun `pruneOrphanProvenance removes keys whose row no longer exists and keeps live ones (P2)`() {
+        // 建一行真实过滤（含其 provenance）
+        push("A", filters = listOf(flt(mode = 1, text = "p2-live", enabled = true, lastModified = 1_000)))
+        // 孤儿键：无任何行对应
+        serverCfg.set("sync.prov.dl.deadbeef", "ghost-device")
+
+        service.pruneOrphanProvenance()
+
+        assertEquals("", serverCfg.get("sync.prov.dl.deadbeef"))
+        val remaining = serverCfg.findByKeyStartingWith("sync.prov.")
+        assertTrue(remaining.isNotEmpty(), "live provenance keys must survive pruning")
+        assertTrue(remaining.all { it.key != "sync.prov.dl.deadbeef" })
+    }
+
+    @Test
+    fun `adoptNullOwnership short-circuits after full adoption (P3)`() {
+        seedFilter(mode = 7, text = "adopt-me", lastModified = 1_000, username = null)
+
+        service.pull(0L, "A")
+        val scansAfterFirst = scanCount()
+        assertTrue(scansAfterFirst > 0)
+
+        // 标志置位后：第二次 pull 不再做 NULL 全表扫描
+        service.pull(0L, "A")
+        assertEquals(scansAfterFirst, scanCount())
+    }
+
+    private fun scanCount(): Int =
+        org.mockito.Mockito.mockingDetails(filterRepo).invocations
+            .count { it.method.name == "findAllByUsernameIsNull" }
 }

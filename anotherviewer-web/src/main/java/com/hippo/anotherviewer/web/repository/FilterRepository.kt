@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface FilterRepository : JpaRepository<FilterEntity, Long> {
     fun findByText(text: String): FilterEntity?
     fun findByType(type: Int): List<FilterEntity>
+    /** MASTER-2026-08-22 P8：mergeFilter 按 (type,text) 精确查找，替代全表扫描。 */
+    fun findByTypeAndText(type: Int, text: String): FilterEntity?
     fun findByTypeAndEnabled(type: Int, enabled: Boolean): List<FilterEntity>
     fun findAllByUsernameIsNull(): List<FilterEntity>
     fun countByUsername(username: String): Long

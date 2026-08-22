@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.entity.*
 import com.hippo.anotherviewer.web.repository.*
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
@@ -31,6 +32,8 @@ class SyncService(
     private val ehSessionRepository: EhSessionRepository,
     private val siteSessionManager: SiteSessionManager,
 ) {
+
+    private val logger = org.slf4j.LoggerFactory.getLogger(SyncService::class.java)
 
     // ---- SyncPolicy（契约 v2 §8，ADR-0003 D1/D2/D3/D4） ----
 
@@ -198,6 +201,13 @@ class SyncService(
      * minimal lastModified so the very first pull (since = 0) delivers them.
      */
     private fun adoptNullOwnership(username: String) {
+        // MASTER-2026-08-22 P3：迁移完成后短路。NULL 行收养是一次性数据迁移，
+        // 但此前每次 push/pull 都做 7 张表的全表 NULL 扫描，迁移完成后是纯开销。
+        // 标志按 username 记录（多用户场景换人首同步仍会完整扫一遍）；导入/还原
+        // 均显式落 username，不会再生 NULL 行——若手工恢复出 NULL 行，删除
+        // server_config 键 sync.ownership.adopted.<user> 即可重触发。
+        val flagKey = "$KEY_SYNC_OWNERSHIP_ADOPTED.$username"
+        if (serverConfig.getBoolean(flagKey, false)) return
         fun <T : Any> adopt(list: List<T>, setOwner: (T, String) -> Unit, save: (T) -> Unit) {
             list.forEach {
                 setOwner(it, username)
@@ -211,6 +221,18 @@ class SyncService(
         adopt(filterRepository.findAllByUsernameIsNull(), { e, u -> e.username = u; e.lastModified = maxOf(e.lastModified, 1L) }, { filterRepository.save(it) })
         adopt(quickSearchRepository.findAllByUsernameIsNull(), { e, u -> e.username = u; e.lastModified = maxOf(e.lastModified, 1L) }, { quickSearchRepository.save(it) })
         adopt(downloadLabelRepository.findAllByUsernameIsNull(), { e, u -> e.username = u; e.lastModified = maxOf(e.lastModified, 1L) }, { downloadLabelRepository.save(it) })
+        // 复核一遍：全部仓库均无剩余 NULL 行才置位（并发写入理论上可能再生）。
+        val remaining = favoriteRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            historyRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            downloadRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            bookmarkRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            filterRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            quickSearchRepository.findAllByUsernameIsNull().isNotEmpty() ||
+            downloadLabelRepository.findAllByUsernameIsNull().isNotEmpty()
+        if (!remaining) {
+            serverConfig.setBoolean(flagKey, true)
+            logger.info("Legacy null-username rows fully adopted for user '{}'; future scans short-circuited", username)
+        }
     }
 
     /** True when the row is unowned or owned by [username] (never another user's). */
@@ -374,7 +396,7 @@ class SyncService(
             val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
             if (liveWins) {
                 if (!incomingIsTomb) {
-                    applyDownloadFields(existing, incoming)
+                    applyDownloadFields(existing, incoming, username)
                     downloadRepository.save(existing)
                     recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
                     return true
@@ -383,7 +405,7 @@ class SyncService(
             }
             if (incomingIsTomb) {
                 // 优先端删除无条件传播，落 deleted=true 行（§4.1）
-                applyDownloadFields(existing, incoming)
+                applyDownloadFields(existing, incoming, username)
                 downloadRepository.save(existing)
                 recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
                 return true
@@ -394,7 +416,7 @@ class SyncService(
         // 同态（双活或双墓碑）：mutable state fields 按策略仲裁。
         priorityIncomingWins(strategy, existingPlatform, incomingPlatform)?.let { incomingWins ->
             if (incomingWins) {
-                applyDownloadFields(existing, incoming)
+                applyDownloadFields(existing, incoming, username)
                 downloadRepository.save(existing)
                 recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
                 return true
@@ -403,7 +425,7 @@ class SyncService(
         }
         // B（v1 完整语义）或同平台回退：last-write-wins。
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
-            applyDownloadFields(existing, incoming)
+            applyDownloadFields(existing, incoming, username)
             downloadRepository.save(existing)
             recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
             return true
@@ -477,9 +499,8 @@ class SyncService(
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
         val naturalKey = filterKey(incoming.mode, incoming.text)
-        val raw = filterRepository.findAll().firstOrNull {
-            it.type == incoming.mode && it.text == incoming.text
-        }
+        // MASTER-2026-08-22 P8：派生查询替代 findAll 全表扫描 + 内存 firstOrNull。
+        val raw = filterRepository.findByTypeAndText(incoming.mode, incoming.text)
         val existing = ownedBy(raw, username) { it.username }
         if (existing == null) {
             if (raw == null) {
@@ -731,6 +752,41 @@ class SyncService(
         return "${ServerConfigService.KEY_PREFIX_SYNC_PROVENANCE}$tag.$digest"
     }
 
+    /**
+     * MASTER-2026-08-22 P2：provenance 孤儿键每日清理。
+     *
+     * sync.prov.* 键按「行」写入且从不删除——行被物理删除（或历史导入重置）后
+     * 其 provenance 键成为孤儿，server_config 表随同步总量无界增长。此处按
+     * 「存活行（含 tombstone 行，§3.8 平台仲裁仍需）重建期望键集」，删除不在
+     * 集合内的键。与并发 push 的竞态窗口内误删的键会在该行下次推送时重写，
+     * 平台判定短暂回退 "server" 兜底后自愈。
+     */
+    @Scheduled(fixedDelayString = "\${anotherviewer.sync.provenance-prune-interval-ms:86400000}")
+    fun pruneOrphanProvenance() {
+        val expected = HashSet<String>()
+        fun add(username: String?, tag: String, naturalKey: String) {
+            // 未采纳的 legacy NULL 行从未写过 provenance 键；跳过。
+            if (username.isNullOrEmpty()) return
+            expected += provenanceConfigKey(username, tag, naturalKey)
+        }
+        favoriteRepository.findAll().forEach { add(it.username, TAG_FAVORITE, it.gid.toString()) }
+        historyRepository.findAll().forEach { add(it.username, TAG_HISTORY, it.gid.toString()) }
+        downloadRepository.findAll().forEach { add(it.username, TAG_DOWNLOAD, it.gid.toString()) }
+        bookmarkRepository.findAll().forEach { add(it.username, TAG_BOOKMARK, it.gid.toString()) }
+        filterRepository.findAll().forEach { add(it.username, TAG_FILTER, filterKey(it.type, it.text)) }
+        quickSearchRepository.findAll().forEach { add(it.username, TAG_QUICK_SEARCH, it.name) }
+        downloadLabelRepository.findAll().forEach { add(it.username, TAG_DOWNLOAD_LABEL, it.label) }
+
+        var removed = 0
+        serverConfig.findByKeyStartingWith(ServerConfigService.KEY_PREFIX_SYNC_PROVENANCE).forEach { cfg ->
+            if (cfg.key !in expected) {
+                serverConfig.delete(cfg)
+                removed++
+            }
+        }
+        if (removed > 0) logger.info("Pruned {} orphan sync provenance keys", removed)
+    }
+
     private fun filterKey(mode: Int, text: String): String = "$mode|$text"
 
     companion object {
@@ -744,6 +800,9 @@ class SyncService(
 
         /** 无来源记录（v1 旧行/本地建行）的缺省 deviceId；platformOf("server") = web 侧（契约 §1.4）。 */
         const val PROVENANCE_FALLBACK_DEVICE = "server"
+
+        /** MASTER-2026-08-22 P3：NULL 行收养完成标志（按 username 后缀）。 */
+        const val KEY_SYNC_OWNERSHIP_ADOPTED = "sync.ownership.adopted"
 
         // 契约 §7 缺省常量
         const val CLIENT_TIER_DEFAULT = 1
@@ -840,11 +899,11 @@ class SyncService(
     }
 
     private fun SyncDownloadDto.toDownloadEntity(username: String) = DownloadInfoEntity().apply {
-        applyDownloadFields(this, this@toDownloadEntity)
+        applyDownloadFields(this, this@toDownloadEntity, username)
         this.username = username
     }
 
-    private fun applyDownloadFields(entity: DownloadInfoEntity, dto: SyncDownloadDto) {
+    private fun applyDownloadFields(entity: DownloadInfoEntity, dto: SyncDownloadDto, username: String) {
         entity.gid = dto.gid
         entity.token = dto.token ?: ""
         entity.title = dto.title
@@ -872,21 +931,23 @@ class SyncService(
         entity.time = dto.time
         entity.lastModified = dto.lastModified
         entity.deleted = dto.deleted
-        entity.label = resolveLabelId(dto.label, dto.lastModified)
+        entity.label = resolveLabelId(dto.label, dto.lastModified, username)
     }
 
     /**
      * M-14: wire 上的 label 是标签名字符串，落库是 download_label.id（与 DownloadService 的
      * 约定一致，`DownloadAddRequest.label` 也是 id）。映射不到时按 DownloadService.createLabel
-     * 的约定补建标签行（全局标签、不设 username，等 adoptNullOwnership 认领），绝不写 0 丢标签。
+     * 的语义新建。MASTER-2026-08-22 P3：创建即落 username（此前留 NULL 依赖
+     * adoptNullOwnership 认领；短路优化后不再有后续认养扫描，必须当场落属主）。
      */
-    private fun resolveLabelId(labelName: String?, lastModified: Long): Int {
+    private fun resolveLabelId(labelName: String?, lastModified: Long, username: String): Int {
         if (labelName.isNullOrEmpty()) return 0
         downloadLabelRepository.findByLabel(labelName)?.let { return it.id.toInt() }
         val created = downloadLabelRepository.save(DownloadLabelEntity().apply {
             label = labelName
             time = System.currentTimeMillis()
             this.lastModified = lastModified
+            this.username = username
         })
         return created.id.toInt()
     }

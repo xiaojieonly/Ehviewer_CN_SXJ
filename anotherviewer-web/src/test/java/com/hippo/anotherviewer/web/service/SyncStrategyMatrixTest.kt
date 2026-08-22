@@ -45,6 +45,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.doAnswer
@@ -714,6 +715,9 @@ class SyncStrategyMatrixTest {
             val e = inv.getArgument<FilterEntity>(0); store["${e.type}:${e.text}"] = e; e
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByTypeAndText(anyInt(), anyString())).thenAnswer { inv ->
+            store.values.firstOrNull { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+        }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
