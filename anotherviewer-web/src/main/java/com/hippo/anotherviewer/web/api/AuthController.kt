@@ -121,9 +121,24 @@ class AuthController(
         generatePairCode(authentication)
 
     @PostMapping("/pair/complete")
-    fun completePairing(@Valid @RequestBody request: PairCompleteRequest): ResponseEntity<PairCompleteResponse> {
+    fun completePairing(
+        httpRequest: HttpServletRequest,
+        @Valid @RequestBody request: PairCompleteRequest,
+    ): ResponseEntity<PairCompleteResponse> {
+        // MASTER-2026-08-22 S1：配对码是暴力猜解目标（6 位一次性码），与登录同强度
+        // 限流。复用 LoginRateLimiter 的 (key, ip) 分桶——key 用端点伪用户名。
+        val ip = httpRequest.remoteAddr ?: UNKNOWN_IP
+        if (loginRateLimiter.isLocked(PAIR_COMPLETE_KEY, ip)) {
+            return tooManyPairAttempts()
+        }
         val response = authService.completePairing(request)
-        return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
+        return if (response.success) {
+            loginRateLimiter.recordSuccess(PAIR_COMPLETE_KEY, ip)
+            ResponseEntity.ok(response)
+        } else {
+            loginRateLimiter.recordFailure(PAIR_COMPLETE_KEY, ip)
+            ResponseEntity.badRequest().body(response)
+        }
     }
 
     /**
@@ -133,10 +148,23 @@ class AuthController(
      */
     @PostMapping("/register-device")
     fun registerDevice(
+        httpRequest: HttpServletRequest,
         authentication: Authentication?,
         @Valid @RequestBody request: RegisterDeviceRequest,
     ): ResponseEntity<PairCompleteResponse> {
+        // MASTER-2026-08-22 S1：setup key 是共享密钥，同样可被穷举 → 同强度限流
+        // （auth-on 且配置了 setup key 的场景）。任何失败响应都计入失败桶；
+        // 成功配对立即清零。
+        val ip = httpRequest.remoteAddr ?: UNKNOWN_IP
+        if (loginRateLimiter.isLocked(REGISTER_DEVICE_KEY, ip)) {
+            return tooManyPairAttempts()
+        }
         val response = authService.registerDevice(authentication?.name ?: ANONYMOUS_USERNAME, request)
+        if (!response.success) {
+            loginRateLimiter.recordFailure(REGISTER_DEVICE_KEY, ip)
+        } else {
+            loginRateLimiter.recordSuccess(REGISTER_DEVICE_KEY, ip)
+        }
         val status = when {
             response.success -> HttpStatus.OK
             response.message == SiteAuthService.MSG_SETUP_KEY_REQUIRED -> HttpStatus.CONFLICT
@@ -145,9 +173,18 @@ class AuthController(
         return ResponseEntity.status(status).body(response)
     }
 
+    private fun tooManyPairAttempts(): ResponseEntity<PairCompleteResponse> =
+        ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(PairCompleteResponse(false, PAIR_LOCKED_MESSAGE))
+
     companion object {
         private const val UNKNOWN_IP = "unknown"
+        // 登录锁定文案是既有契约行为（api-test/auth-on 断言），不得改动；
+        // 配对端点使用独立文案。
         private const val LOCKED_MESSAGE = "Too many login attempts. Try again later."
+        private const val PAIR_LOCKED_MESSAGE = "Too many pairing attempts. Try again later."
         private const val ANONYMOUS_USERNAME = "default"
+        private const val PAIR_COMPLETE_KEY = "pair-complete"
+        private const val REGISTER_DEVICE_KEY = "register-device"
     }
 }
