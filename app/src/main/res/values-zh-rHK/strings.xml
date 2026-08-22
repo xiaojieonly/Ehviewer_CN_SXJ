@@ -614,6 +614,7 @@
     <string name="settings_read_reading_direction_left_to_right">從左至右</string>
     <string name="settings_read_reading_direction_right_to_Left">從右至左</string>
     <string name="settings_read_reading_direction_top_to_bottom">從上至下</string>
+    <string name="settings_read_reading_direction_one_hand_mode">單手模式</string>
     <string name="settings_read_page_scaling">頁面縮放</string>
     <string name="settings_read_page_scaling_actual_size">實際大小</string>
     <string name="settings_read_page_scaling_fit_to_width">符合寬度</string>
