@@ -560,6 +560,20 @@ public class Settings {
         putIntToStr(KEY_READING_DIRECTION, value);
     }
 
+    private static final String KEY_ONE_HAND_MODE = "one_hand_mode";
+    private static final boolean DEFAULT_ONE_HAND_MODE = false;
+
+    public static boolean getOneHandMode() {
+        // 单手模式仅在“从左至右”排版下有效；若方向被其他入口（如设置页）改走，自动视为关闭，
+        // 避免“单手=true + 方向=RTL/T2B”的脏状态导致左右点击都翻错方向
+        return getBoolean(KEY_ONE_HAND_MODE, DEFAULT_ONE_HAND_MODE)
+                && getReadingDirection() == GalleryView.LAYOUT_LEFT_TO_RIGHT;
+    }
+
+    public static void putOneHandMode(boolean value) {
+        putBoolean(KEY_ONE_HAND_MODE, value);
+    }
+
     private static final String KEY_PAGE_SCALING = "page_scaling";
     private static final int DEFAULT_PAGE_SCALING = GalleryView.SCALE_FIT;
 
