@@ -422,10 +422,12 @@ fi
 
 mkdir -p "$DATA_DIR"
 
-# 解压目录位于 /home 下时关闭 ProtectHome，否则服务无权读取 /home 中的 jar 与数据
+# 解压目录位于 /home、/root 下时放宽 ProtectHome 为 read-only，否则服务无权读取
+# 其中的 jar；数据目录写入仍由 ReadWritePaths 显式白名单放行（比整体关闭更保守）。
+# 与 install.sh 保持同一套判定（两安装器逻辑收敛）。
 case "$APP_HOME" in
-    /home/*) PROTECT_HOME=no ;;
-    *) PROTECT_HOME=yes ;;
+    /home/*|/root/*) PROTECT_HOME=read-only ;;
+    *)               PROTECT_HOME=true ;;
 esac
 
 UNIT_CONTENT=$(cat <<UNITEOF

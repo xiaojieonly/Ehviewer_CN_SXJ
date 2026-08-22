@@ -386,6 +386,14 @@ echo "JAR:      $JAR_FILE"
 echo "数据目录: $DATA_DIR"
 echo "端口:     $PORT"
 
+# 安装目录位于 /home、/root 下时 ProtectHome=true 会连 jar 一起屏蔽，服务无法启动；
+# 放宽为 read-only（保留"家目录不可写"加固），数据目录写入由 ReadWritePaths 显式白名单放行。
+# 与 scripts/package.sh 内嵌安装器保持同一套判定（两安装器逻辑收敛）。
+case "$ROOT_DIR" in
+    /home/*|/root/*) PROTECT_HOME=read-only ;;
+    *)               PROTECT_HOME=true ;;
+esac
+
 UNIT_CONTENT=$(cat <<EOF
 [Unit]
 Description=AnotherViewer Web Server
@@ -406,7 +414,7 @@ SuccessExitStatus=143
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=$PROTECT_HOME
 ReadWritePaths=$DATA_DIR
 
 LimitNOFILE=65536
