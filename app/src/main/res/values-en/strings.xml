@@ -552,6 +552,7 @@
     <string name="settings_read_reading_direction_left_to_right">Left to right</string>
     <string name="settings_read_reading_direction_right_to_Left">Right to left</string>
     <string name="settings_read_reading_direction_top_to_bottom">Top to bottom</string>
+    <string name="settings_read_reading_direction_one_hand_mode">One hand mode</string>
     <string name="settings_read_page_scaling">Page scaling</string>
     <string name="settings_read_page_scaling_actual_size">Actual size</string>
     <string name="settings_read_page_scaling_fit_to_width">Fit to width</string>
