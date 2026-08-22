@@ -525,6 +525,7 @@
     <string name="settings_read_reading_direction_left_to_right">De gauche à droite</string>
     <string name="settings_read_reading_direction_right_to_Left">De droite à gauche</string>
     <string name="settings_read_reading_direction_top_to_bottom">De haut à fond</string>
+    <string name="settings_read_reading_direction_one_hand_mode">Mode une main</string>
     <string name="settings_read_page_scaling">Écaillage de page</string>
     <string name="settings_read_page_scaling_actual_size">Taille actuelle</string>
     <string name="settings_read_page_scaling_fit_to_width">S\'adapter à la largeur</string>
