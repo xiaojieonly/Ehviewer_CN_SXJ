@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.web.service.SiteSessionManager
+import com.hippo.anotherviewer.web.util.bytesBounded
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -33,7 +34,10 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/v1/site")
-class SiteProxyController(private val sessionManager: SiteSessionManager) {
+class SiteProxyController(
+    private val sessionManager: SiteSessionManager,
+    private val config: com.hippo.anotherviewer.web.config.SiteCoreConfigProperties,
+) {
 
     private val logger = LoggerFactory.getLogger(SiteProxyController::class.java)
     private val okHttpClient get() = sessionManager.okHttpClient
@@ -79,7 +83,13 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
             }
             okHttpClient.newCall(builder.build()).execute().use { response ->
                 val respContentType = response.header(HttpHeaders.CONTENT_TYPE) ?: DEFAULT_CONTENT_TYPE
-                val bytes = response.body?.bytes() ?: ByteArray(0)
+                // MASTER-2026-08-22 S2：上游响应有界读取，超限 502（防异常大响应打爆堆）。
+                val bytes = try {
+                    response.body?.bytesBounded(config.proxy.maxResponseBytes) ?: ByteArray(0)
+                } catch (e: com.hippo.anotherviewer.web.util.ResponseTooLargeException) {
+                    logger.warn("Site proxy aborted: upstream body exceeds {} bytes for url={}", e.maxBytes, url)
+                    return errorEnvelope(HttpStatus.BAD_GATEWAY, "UPSTREAM_TOO_LARGE", "Upstream response exceeds size limit")
+                }
                 ResponseEntity.status(response.code)
                     .header(HttpHeaders.CONTENT_TYPE, respContentType)
                     .body(bytes)

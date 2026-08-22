@@ -12,6 +12,13 @@ class SiteCoreConfigProperties {
     var reader: ReaderProperties = ReaderProperties()
     var smb: SmbProperties = SmbProperties()
     var security: SecurityProperties = SecurityProperties()
+    var proxy: ProxyProperties = ProxyProperties()
+
+    /** Proxy/fetch hardening (MASTER-2026-08-22 S2). */
+    class ProxyProperties {
+        /** Hard cap for buffering an upstream proxied response, in bytes. */
+        var maxResponseBytes: Long = 32L * 1024 * 1024
+    }
 
     class DownloadProperties {
         // Paths are bound from application.yml via `${anotherviewer.data-dir}/...`

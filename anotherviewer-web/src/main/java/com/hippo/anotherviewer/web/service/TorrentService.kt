@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.parser.TorrentParser
 import com.hippo.anotherviewer.web.dto.TorrentItem
+import com.hippo.anotherviewer.web.util.bytesBounded
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -20,7 +21,8 @@ import org.springframework.stereotype.Service
 @Service
 class TorrentService(
     private val galleryLookup: GalleryLookupService,
-    private val sessionManager: SiteSessionManager
+    private val sessionManager: SiteSessionManager,
+    private val config: com.hippo.anotherviewer.web.config.SiteCoreConfigProperties,
 ) {
     private val logger = LoggerFactory.getLogger(TorrentService::class.java)
     private val client get() = sessionManager.okHttpClient
@@ -68,7 +70,14 @@ class TorrentService(
         return try {
             val request = okhttp3.Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
-                if (response.isSuccessful) response.body?.bytes() else null
+                if (!response.isSuccessful) return null
+                // MASTER-2026-08-22 S2：有界读取，超限视为失败（null，与既有失败语义一致）。
+                try {
+                    response.body?.bytesBounded(config.proxy.maxResponseBytes)
+                } catch (e: com.hippo.anotherviewer.web.util.ResponseTooLargeException) {
+                    logger.warn("Torrent file exceeds {} bytes, rejected: {}", e.maxBytes, token)
+                    null
+                }
             }
         } catch (e: Exception) {
             logger.warn("Failed to download torrent file from {}", token, e)

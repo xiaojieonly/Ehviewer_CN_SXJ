@@ -73,7 +73,9 @@ class SiteProxyControllerTest {
     @BeforeEach
     fun setUp() {
         sessionManager = mock(SiteSessionManager::class.java)
-        mockMvc = MockMvcBuilders.standaloneSetup(SiteProxyController(sessionManager))
+        mockMvc = MockMvcBuilders.standaloneSetup(
+            SiteProxyController(sessionManager, com.hippo.anotherviewer.web.config.SiteCoreConfigProperties())
+        )
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
     }

@@ -3,11 +3,15 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.argThatK
 import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.eq
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
+import com.hippo.anotherviewer.web.service.InMemoryJobStore
+import com.hippo.anotherviewer.web.service.JobService
 import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
+import org.springframework.context.ApplicationEventPublisher
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -60,6 +64,7 @@ class ImageProxyControllerTest {
     private lateinit var sessionManager: SiteSessionManager
     private lateinit var mockMvc: MockMvc
     private lateinit var site: FakeSite
+    private val config = SiteCoreConfigProperties()
 
     private fun setUpClient(interceptor: FakeSite) {
         `when`(sessionManager.okHttpClient)
@@ -72,8 +77,13 @@ class ImageProxyControllerTest {
         val galleryLookupService = mock(GalleryLookupService::class.java)
         sessionManager = mock(SiteSessionManager::class.java)
         val prefetchService = mock(PrefetchService::class.java)
+        // P10 required 注入：测试显式提供真实 config 与轻量 JobService 替身。
         mockMvc = MockMvcBuilders.standaloneSetup(
-            ImageProxyController(imageCacheService, galleryLookupService, sessionManager, prefetchService)
+            ImageProxyController(
+                imageCacheService, galleryLookupService, sessionManager, prefetchService,
+                config,
+                JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
+            )
         )
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
@@ -122,8 +132,23 @@ class ImageProxyControllerTest {
     }
 
     @Test
-    fun `proxyImage never fetches non-whitelisted urls and keeps the legacy 404`() {
-        val url = "https://evil.example.com/img.jpg"
+    // MASTER-2026-08-22 S2：上游响应超限 → 502 UPSTREAM_TOO_LARGE，不落缓存。
+    fun `proxyImage fetch-on-miss aborts with 502 envelope when upstream exceeds size cap`() {
+        val url = "https://e-hentai.org/t/1002/huge.jpg"
+        config.proxy.maxResponseBytes = 4
+        `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
+        site = FakeSite { canned(it, 200, "image/jpeg", "TOO-LONG-FOR-CAP") }
+        setUpClient(site)
+
+        mockMvc.perform(get("/api/v1/image/proxy").param("url", url))
+            .andExpect(status().isBadGateway)
+            .andExpect(jsonPath("$.error.code").value("UPSTREAM_TOO_LARGE"))
+            .andExpect(jsonPath("$.error.traceId").exists())
+        verify(imageCacheService, never()).cacheImage(eq(url), argThatK<ByteArray> { true })
+    }
+
+    @Test
+    fun `proxyImage never fetches non-whitelisted urls and keeps the legacy 404`() {        val url = "https://evil.example.com/img.jpg"
         `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
         site = FakeSite { canned(it, 200, "image/jpeg", "stolen") }
         setUpClient(site)

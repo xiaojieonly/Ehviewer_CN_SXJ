@@ -6,7 +6,8 @@ import com.hippo.anotherviewer.client.exception.SiteException
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.JobSubmitResponse
 import com.hippo.anotherviewer.web.dto.JobType
-import com.hippo.anotherviewer.web.service.InMemoryJobStore
+import com.hippo.anotherviewer.web.util.ResponseTooLargeException
+import com.hippo.anotherviewer.web.util.bytesBounded
 import com.hippo.anotherviewer.web.service.Job
 import com.hippo.anotherviewer.web.service.JobService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
@@ -16,7 +17,6 @@ import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -45,8 +45,10 @@ class ImageProxyController(
     private val galleryLookupService: GalleryLookupService,
     private val sessionManager: SiteSessionManager,
     private val prefetchService: PrefetchService,
-    private val config: SiteCoreConfigProperties = SiteCoreConfigProperties(),
-    private val jobService: JobService = JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
+    // MASTER-2026-08-22 P10：required 注入——构造器默认参数会绕过 Spring 装配
+    // 静默产生孤儿 JobStore/配置实例，测试需要替身时显式传入。
+    private val config: SiteCoreConfigProperties,
+    private val jobService: JobService,
 ) {
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
 
@@ -113,7 +115,13 @@ class ImageProxyController(
                     )
                 }
                 val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
-                val bytes = response.body?.bytes()
+                // MASTER-2026-08-22 S2：上游响应有界读取，超限 502（防恶意/异常大图打爆堆）。
+                val bytes = try {
+                    response.body?.bytesBounded(config.proxy.maxResponseBytes)
+                } catch (e: ResponseTooLargeException) {
+                    logger.warn("Image proxy fetch-on-miss aborted: upstream body exceeds {} bytes for url={}", e.maxBytes, url)
+                    return errorEnvelope(HttpStatus.BAD_GATEWAY, "UPSTREAM_TOO_LARGE", "Upstream image exceeds size limit")
+                }
                 if (bytes == null || bytes.isEmpty()) {
                     return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "site returned an empty image body")
                 }
@@ -318,7 +326,14 @@ class ImageProxyController(
 
             // Full fetch: materialise once so the page is cached for later
             // (and future Range requests are served from the cache).
-            val bytes = response.body?.bytes()
+            // MASTER-2026-08-22 S2：有界读取，超限 502。
+            val bytes = try {
+                response.body?.bytesBounded(config.proxy.maxResponseBytes)
+            } catch (e: ResponseTooLargeException) {
+                response.close()
+                logger.warn("Page fetch aborted: upstream body exceeds {} bytes for gid={} page={}", e.maxBytes, galleryId, page)
+                return errorEnvelope(HttpStatus.BAD_GATEWAY, "UPSTREAM_TOO_LARGE", "Upstream image exceeds size limit")
+            }
             response.close()
             if (bytes == null || bytes.isEmpty()) {
                 return notFound(galleryId, page)
