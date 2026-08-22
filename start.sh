@@ -124,15 +124,30 @@ mkdir -p ./data ./data/downloads ./data/cache
 PID_FILE="anotherviewer-web.pid"
 LOG_FILE="anotherviewer-web.log"
 
-if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-    echo "服务已在运行 (PID: $(cat "$PID_FILE"))，访问 http://localhost:$PORT"
-    exit 0
+# pid 文件写前清理：仅当记录的进程仍存活才算已在运行，否则视为 stale 移除
+if [ -f "$PID_FILE" ]; then
+    OLD_PID=$(cat "$PID_FILE" 2>/dev/null || true)
+    if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
+        echo "服务已在运行 (PID: $OLD_PID)，访问 http://localhost:$PORT"
+        exit 0
+    fi
+    rm -f "$PID_FILE"
 fi
 
 echo "=== 启动 AnotherViewer Web ==="
 echo "Java: $JAVA_BIN (version $JAVA_VER)"
 echo "JAR:  $JAR_FILE"
 echo "端口: $PORT"
+
+# 日志轮转：>50MB 时备份为 .1/.2/.3，保留最近 3 份
+LOG_MAX_BYTES=$((50 * 1024 * 1024))
+if [ -f "$LOG_FILE" ] && [ "$(wc -c < "$LOG_FILE")" -gt "$LOG_MAX_BYTES" ]; then
+    rm -f "$LOG_FILE.3"
+    if [ -f "$LOG_FILE.2" ]; then mv "$LOG_FILE.2" "$LOG_FILE.3"; fi
+    if [ -f "$LOG_FILE.1" ]; then mv "$LOG_FILE.1" "$LOG_FILE.2"; fi
+    mv "$LOG_FILE" "$LOG_FILE.1"
+    echo "日志超过 50MB，已轮转（保留最近 3 份）"
+fi
 
 nohup "$JAVA_BIN" -jar "$JAR_FILE" \
     --server.port="$PORT" \
@@ -145,7 +160,15 @@ nohup "$JAVA_BIN" -jar "$JAR_FILE" \
 PID=$!
 echo "$PID" > "$PID_FILE"
 
+# 启动探活：进程存活且健康检查通过才算成功。
+# 端口被占用等场景下 java 会即死，必须显式检出并报失败，不能假报成功。
 for _ in $(seq 1 30); do
+    if ! kill -0 "$PID" 2>/dev/null; then
+        echo "错误: 服务进程 (PID: $PID) 启动后即退出，最近日志:"
+        tail -n 20 "$LOG_FILE" 2>/dev/null || true
+        rm -f "$PID_FILE"
+        exit 1
+    fi
     # 200/401/403 说明应答的是本应用；404/000 可能是端口被其他服务占用或尚未启动
     code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/api/v1/auth/status" 2>/dev/null || echo 000)
     case "$code" in
@@ -156,5 +179,7 @@ for _ in $(seq 1 30); do
     sleep 1
 done
 
-echo "服务已后台启动 (PID: $PID)，日志: $LOG_FILE"
-echo "访问 http://localhost:$PORT 确认，或用 ./stop.sh 停止"
+echo "错误: 服务未在 30 秒内就绪 (PID: $PID)，可能端口被其他服务占用或启动缓慢"
+echo "最近日志:"
+tail -n 20 "$LOG_FILE" 2>/dev/null || true
+exit 1
