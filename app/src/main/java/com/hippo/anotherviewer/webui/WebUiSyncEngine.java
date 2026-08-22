@@ -752,9 +752,11 @@ public final class WebUiSyncEngine {
 
     /**
      * Effective push lastModified of a download. B2: DownloadManager stamps
-     * {@code lastModified} on every local state change (and only there —
-     * pulled records are not stamped); pre-v8 rows with an empty column fall
-     * back to the record's {@code time}.
+     * {@code lastModified} on every local state change; pre-v8 rows with an
+     * empty column fall back to the record's {@code time}. A3: rows written
+     * by the apply phase (including a self-push echo) adopt the wire stamp
+     * via {@link #copyDtoToDownload}, so a rewritten row keeps its true
+     * recency instead of degrading to {@code time}.
      */
     private static long downloadLastModified(DownloadInfo info) {
         return info.lastModified > 0 ? info.lastModified : info.time;
@@ -1143,11 +1145,12 @@ public final class WebUiSyncEngine {
             mStore.putDownloadInfo(info);
             locals.put(dto.gid, info);
             snapshotDownloads.add(dto.gid);
-            // The pulled row carries no DownloadManager stamp
-            // (copyDtoToDownload does not copy lastModified), so its
-            // effective push value is its time — ledger it as such so the
-            // next push does not echo the record back.
-            ledger.put(ledgerKey, info.time);
+            // A3: copyDtoToDownload now carries the wire B2 stamp into
+            // info.lastModified, so a self-push echo rewritten in the same
+            // cycle keeps its DownloadManager stamp instead of being wiped to
+            // 0. Ledger at the row's effective push value (= what this device
+            // would send for it), which keeps the no-echo guarantee intact.
+            ledger.put(ledgerKey, downloadLastModified(info));
             result.pulledDownloads++;
         }
     }
@@ -1568,6 +1571,11 @@ public final class WebUiSyncEngine {
         info.total = dto.total;
         info.finished = dto.finished;
         info.downloaded = dto.downloaded;
+        // A3: pass the wire B2 stamp through so applyDownloads (including a
+        // same-cycle self-push echo) never rewrites a local row with a wiped
+        // (0) stamp. A 0 wire value lands as 0 — identical to the previous
+        // behaviour of leaving the fresh row unstamped.
+        info.lastModified = dto.lastModified;
     }
 
     private void copyDtoToQuickSearch(WebUiSyncModels.SyncQuickSearch dto, QuickSearch qs) {

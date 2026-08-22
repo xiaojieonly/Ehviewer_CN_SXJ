@@ -569,6 +569,38 @@ public class WebUiSyncEngineTest {
     }
 
     @Test
+    public void applyDownloads_selfEchoKeepsWireStampAndStaysSilent() throws IOException {
+        // A3: the same-cycle push → pull loop rewrites a device's own download
+        // row from its self-push echo. The rewrite must keep the B2
+        // lastModified stamp (previously wiped to 0) and stay silent next
+        // cycle — the ledger matches the rewritten row's effective value.
+        storeA.putDownloadInfo(download(9, 4000, 9000, DownloadInfo.STATE_WAIT));
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedDownloads);
+
+        // The self-echo rewrote the row: the stamp survives verbatim.
+        assertEquals(9000L, storeA.downloads.get(9L).lastModified);
+
+        // No re-echo: the rewritten row's effective push value (9000) equals
+        // its ledger entry.
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(0, second.pushedDownloads);
+    }
+
+    @Test
+    public void applyDownloads_pulledRowAdoptsWireStamp() throws IOException {
+        // A3: a genuine pull adopts the wire stamp as the local one instead of
+        // leaving 0 (effective value would degrade to time).
+        storeA.putDownloadInfo(download(11, 5000, 7000, DownloadInfo.STATE_NONE));
+        engineA.syncInternal(config, "devA", 0);
+
+        engineB.syncInternal(config, "devB", 0);
+
+        assertEquals(7000L, storeB.downloads.get(11L).lastModified);
+    }
+
+    @Test
     public void incrementalPush_priorityGuardInvalidatesLedgerForResurrection() throws IOException {
         // device_priority: a non-priority (web) tombstone must not remove the
         // android live copy; the surviving copy is re-pushed next cycle and
