@@ -54,10 +54,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
@@ -199,6 +201,21 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
+    @NonNull
+    private LinkedList<DownloadInfo> getOrCreateInfoListForLabel(@Nullable String label) {
+        LinkedList<DownloadInfo> list = getInfoListForLabel(label);
+        if (list != null) {
+            return list;
+        }
+        list = new LinkedList<>();
+        mMap.put(label, list);
+        if (!containLabel(label)) {
+            mLabelList.add(EhDB.addDownloadLabel(label));
+        }
+        mLabelCountMap.put(label, 0L);
+        return list;
+    }
+
     public boolean containLabel(String label) {
         if (label == null) {
             return false;
@@ -215,6 +232,31 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     public boolean containDownloadInfo(long gid) {
         return mAllInfoMap.indexOfKey(gid) >= 0;
+    }
+
+    private static boolean hasArchiveUriReference(Iterable<DownloadInfo> infos, String archiveUri) {
+        if (infos == null || archiveUri == null) {
+            return false;
+        }
+        for (DownloadInfo info : infos) {
+            if (info != null && archiveUri.equals(info.archiveUri)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void releaseArchiveUriPermissionIfUnused(@Nullable String archiveUri) {
+        if (archiveUri == null || !archiveUri.startsWith("content://") ||
+                hasArchiveUriReference(mAllInfoList, archiveUri)) {
+            return;
+        }
+        try {
+            mContext.getContentResolver().releasePersistableUriPermission(
+                    Uri.parse(archiveUri), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Failed to release URI permission for " + archiveUri, e);
+        }
     }
 
     @NonNull
@@ -520,9 +562,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
-    public void addDownload(List<DownloadInfo> downloadInfoList) {
+    @NonNull
+    public List<DownloadInfo> addDownload(List<DownloadInfo> downloadInfoList) {
+        List<DownloadInfo> newInfos = new ArrayList<>(downloadInfoList.size());
+        Set<Long> newGids = new HashSet<>();
+
         for (DownloadInfo info : downloadInfoList) {
-            if (containDownloadInfo(info.gid)) {
+            if (info == null || containDownloadInfo(info.gid) || !newGids.add(info.gid)) {
                 // Contain
                 continue;
             }
@@ -533,31 +579,39 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 info.state = DownloadInfo.STATE_NONE;
             }
 
-            // Add to label download list
-            LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
-            if (null == list) {
-                // Can't find the label in label list
-                list = new LinkedList<>();
-                mMap.put(info.label, list);
-                if (!containLabel(info.label)) {
-                    // Add label to DB and list
-                    mLabelList.add(EhDB.addDownloadLabel(info.label));
-                }
-            }
+            // Ensure the label exists before the database transaction.
+            getOrCreateInfoListForLabel(info.label);
+
+            newInfos.add(info);
+        }
+
+        EhDB.putDownloadInfoList(newInfos);
+
+        Set<String> affectedLabels = new HashSet<>();
+        for (DownloadInfo info : newInfos) {
+            // A database restore may run off the main thread. If a label was removed while
+            // the transaction ran, restore it so the committed row and manager stay aligned.
+            LinkedList<DownloadInfo> list = getOrCreateInfoListForLabel(info.label);
             list.add(info);
-            // Sort
-            Collections.sort(list, DATE_DESC_COMPARATOR);
+            affectedLabels.add(info.label);
 
             // Add to all download list and map
             mAllInfoList.add(info);
             mAllInfoMap.put(info.gid, info);
+        }
 
-            // Save to
-            EhDB.putDownloadInfo(info);
+        for (String label : affectedLabels) {
+            LinkedList<DownloadInfo> list = getInfoListForLabel(label);
+            if (list != null) {
+                Collections.sort(list, DATE_DESC_COMPARATOR);
+                mLabelCountMap.put(label, (long) list.size());
+            }
         }
 
         // Sort all download list
-        Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
+        if (!newInfos.isEmpty()) {
+            Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
+        }
 
         // Notify
         new Handler(Looper.getMainLooper()).post(() -> {
@@ -565,6 +619,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 l.onReload();
             }
         });
+        return newInfos;
     }
 
     public void addDownloadLabel(List<DownloadLabel> downloadLabelList) {
@@ -712,8 +767,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         stopDownloadInternal(gid);
         DownloadInfo info = mAllInfoMap.get(gid);
         if (info != null) {
+            String archiveUri = info.archiveUri;
             // Remove from DB
             EhDB.removeDownloadInfo(info.gid);
+            Settings.removeArchiveReadingProgress(info.gid);
 
             // Remove all list and map
             mAllInfoList.remove(info);
@@ -725,12 +782,15 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 int index = list.indexOf(info);
                 if (index >= 0) {
                     list.remove(info);
+                    mLabelCountMap.put(info.label, (long) list.size());
                     // Update listener
                     for (DownloadInfoListener l : mDownloadInfoListeners) {
                         l.onRemove(info, list, index);
                     }
                 }
             }
+
+            releaseArchiveUriPermissionIfUnused(archiveUri);
 
             // Ensure download
             ensureDownload();
@@ -739,19 +799,35 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     public void deleteRangeDownload(LongList gidList) {
         stopRangeDownloadInternal(gidList);
+        List<DownloadInfo> removedInfos = new ArrayList<>(gidList.size());
+        Set<Long> removedGidSet = new HashSet<>();
 
         for (int i = 0, n = gidList.size(); i < n; i++) {
             long gid = gidList.get(i);
+            if (!removedGidSet.add(gid)) {
+                continue;
+            }
             DownloadInfo info = mAllInfoMap.get(gid);
             if (null == info) {
                 Log.d(TAG, "Can't get download info with gid: " + gid);
                 continue;
             }
+            removedInfos.add(info);
+        }
 
-            // Remove from DB
-            EhDB.removeDownloadInfo(info.gid);
+        // Delete all database rows atomically before changing the in-memory state.
+        EhDB.removeDownloadInfoList(removedInfos);
 
-            // Remove from all info map
+        long[] removedGids = new long[removedInfos.size()];
+        Set<String> removedArchiveUris = new HashSet<>();
+        for (int i = 0; i < removedInfos.size(); i++) {
+            DownloadInfo info = removedInfos.get(i);
+            removedGids[i] = info.gid;
+            if (info.archiveUri != null) {
+                removedArchiveUris.add(info.archiveUri);
+            }
+
+            // Remove from all info list and map
             mAllInfoList.remove(info);
             mAllInfoMap.remove(info.gid);
 
@@ -759,7 +835,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
             if (list != null) {
                 list.remove(info);
+                mLabelCountMap.put(info.label, (long) list.size());
             }
+        }
+        Settings.removeArchiveReadingProgress(removedGids);
+        for (String archiveUri : removedArchiveUris) {
+            releaseArchiveUriPermissionIfUnused(archiveUri);
         }
 
         // Update listener
@@ -773,6 +854,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     @SuppressLint("StaticFieldLeak")
     public void resetAllReadingProgress() {
+        Settings.clearArchiveReadingProgress();
         LinkedList<DownloadInfo> list = new LinkedList<>(mAllInfoList);
 
         new AsyncTask<Void, Void, Void>() {
@@ -918,15 +1000,21 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 continue;
             }
 
-            List<DownloadInfo> srcList = getInfoListForLabel(info.label);
+            String sourceLabel = info.label;
+            List<DownloadInfo> srcList = getInfoListForLabel(sourceLabel);
             if (srcList == null) {
-                Log.e(TAG, "Can't find label with label: " + info.label);
+                Log.e(TAG, "Can't find label with label: " + sourceLabel);
                 continue;
             }
 
-            srcList.remove(info);
+            if (!srcList.remove(info)) {
+                Log.e(TAG, "Can't find download info in label: " + sourceLabel);
+                continue;
+            }
             dstList.add(info);
             info.label = label;
+            mLabelCountMap.put(sourceLabel, (long) srcList.size());
+            mLabelCountMap.put(label, (long) dstList.size());
             Collections.sort(dstList, DATE_DESC_COMPARATOR);
 
             // Save to DB
@@ -945,6 +1033,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         mLabelList.add(EhDB.addDownloadLabel(label));
         mMap.put(label, new LinkedList<>());
+        mLabelCountMap.put(label, 0L);
 
         for (DownloadInfoListener l : mDownloadInfoListeners) {
             l.onUpdateLabels();
@@ -999,6 +1088,8 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
         // Put list back with new label
         mMap.put(to, list);
+        mLabelCountMap.remove(from);
+        mLabelCountMap.put(to, (long) list.size());
 
         // Notify listener
         for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -1023,6 +1114,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
 
         LinkedList<DownloadInfo> list = mMap.remove(label);
+        mLabelCountMap.remove(label);
         if (list == null) {
             return;
         }

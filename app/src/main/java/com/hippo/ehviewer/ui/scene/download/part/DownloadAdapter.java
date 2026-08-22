@@ -203,8 +203,10 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             }
 
             SpiderInfo spiderInfo = mCallback.getSpiderInfoMap().get(info.gid);
-
-            if (spiderInfo != null) {
+            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+                holder.readProgress.setText(spiderInfo == null ? null :
+                        formatArchiveReadingProgress(spiderInfo.startPage, spiderInfo.pages));
+            } else if (spiderInfo != null) {
                 int startPage = spiderInfo.startPage + 1;
                 String readText = startPage + "/" + spiderInfo.pages;
                 holder.readProgress.setText(readText);
@@ -233,6 +235,15 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         } catch (Exception e) {
             Analytics.recordException(e);
         }
+    }
+
+    private static String formatArchiveReadingProgress(int startPage, int pageCount) {
+        int normalizedStartPage = Math.max(startPage, 0);
+        if (pageCount <= 0) {
+            return normalizedStartPage > 0 ? (normalizedStartPage + 1L) + "/?" : null;
+        }
+        int displayPage = Math.min(normalizedStartPage, pageCount - 1) + 1;
+        return displayPage + "/" + pageCount;
     }
 
     @Override

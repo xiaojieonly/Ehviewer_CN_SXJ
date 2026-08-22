@@ -24,6 +24,7 @@ import static com.hippo.util.FileUtils.getFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,6 +37,7 @@ import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Process;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
@@ -59,6 +61,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -105,8 +108,11 @@ import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.lib.yorozuya.collect.LongList;
+import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
+import com.hippo.lib.yorozuya.thread.SerialThreadExecutor;
 import com.hippo.ripple.Ripple;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.DrawableManager;
@@ -123,14 +129,20 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
@@ -139,6 +151,12 @@ public class DownloadsScene extends ToolbarScene
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
+    private static final int MAX_ARCHIVE_IMPORT_COUNT = 50;
+
+    private static final Executor ARCHIVE_IMPORT_EXECUTOR = new SerialThreadExecutor(
+            3000L, new LinkedList<>(),
+            new PriorityThreadFactory("ArchiveImport", Process.THREAD_PRIORITY_BACKGROUND));
+    private static long sLastLocalGalleryId;
 
     public static final String KEY_GID = "gid";
 
@@ -239,7 +257,7 @@ public class DownloadsScene extends ToolbarScene
     @NonNull
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            this::handleSelectedFile
+            this::handleSelectedFiles
     );
 
     @Override
@@ -782,10 +800,10 @@ public class DownloadsScene extends ToolbarScene
                         .setMessage(R.string.reset_reading_progress_message)
                         .setNegativeButton(android.R.string.cancel, null)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                            resetReadingProgressInUi();
                             if (mDownloadManager != null) {
                                 mDownloadManager.resetAllReadingProgress();
                             }
+                            resetReadingProgressInUi();
                         }).show();
                 return true;
             }
@@ -1003,6 +1021,7 @@ public class DownloadsScene extends ToolbarScene
                 }
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setData(archiveUri);
+                intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
             } else {
                 // This is a normal download, use ACTION_EH
                 intent.setAction(GalleryActivity.ACTION_EH);
@@ -1262,8 +1281,19 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onReload() {
+        if (mDownloadManager != null) {
+            Iterator<Long> iterator = mSpiderInfoMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                if (!mDownloadManager.containDownloadInfo(iterator.next())) {
+                    iterator.remove();
+                }
+            }
+        }
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
+        }
+        if (downloadLabelDraw != null && mViewTransition != null) {
+            downloadLabelDraw.updateDownloadLabels();
         }
         updateView();
     }
@@ -1288,11 +1318,15 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        mSpiderInfoMap.remove(info.gid);
         if (mList != list) {
             return;
         }
         if (mAdapter != null) {
             mAdapter.notifyItemRemoved(listIndexInPage(position));
+        }
+        if (downloadLabelDraw != null && mViewTransition != null) {
+            downloadLabelDraw.updateDownloadLabels();
         }
         updateView();
     }
@@ -1556,17 +1590,9 @@ public class DownloadsScene extends ToolbarScene
             if (data != null) {
                 GalleryInfo info = data.getParcelableExtra("info");
 
-                // Check if this is an imported archive - skip SpiderInfo processing
-                boolean isImportedArchive = false;
-                if (info instanceof DownloadInfo downloadInfo) {
-                    isImportedArchive = downloadInfo.archiveUri != null &&
-                            downloadInfo.archiveUri.startsWith("content://");
-                }
-
-                if (!isImportedArchive && info != null) {
-                    // Only process SpiderInfo for regular downloads, not imported archives
+                if (info != null) {
                     mSpiderInfoMap.remove(info.gid);
-                    SpiderInfo spiderInfo = getSpiderInfo(info);
+                    SpiderInfo spiderInfo = getReadingProgressInfo(info);
                     if (spiderInfo != null) {
                         mSpiderInfoMap.put(info.gid, spiderInfo);
                     }
@@ -1606,16 +1632,30 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void queryUnreadSpiderInfo() {
         if (mList == null) {
             return;
         }
         List<DownloadInfo> requestList = new ArrayList<>();
+        boolean hasImportedArchive = false;
         for (int i = 0; i < mList.size(); i++) {
             DownloadInfo info = mList.get(i);
+            if (isImportedArchive(info)) {
+                hasImportedArchive = true;
+                mSpiderInfoMap.remove(info.gid);
+                SpiderInfo spiderInfo = getReadingProgressInfo(info);
+                if (spiderInfo != null) {
+                    mSpiderInfoMap.put(info.gid, spiderInfo);
+                }
+                continue;
+            }
             if (!mSpiderInfoMap.containsKey(info.gid) || mSpiderInfoMap.get(info.gid) == null) {
                 requestList.add(info);
             }
+        }
+        if (hasImportedArchive && mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
         }
         DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList, this::spiderInfoResultCallBack);
         executor.execute();
@@ -1674,6 +1714,7 @@ public class DownloadsScene extends ToolbarScene
                 "application/x-cbz",
                 "application/x-cbr"
         });
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         // CRITICAL: Add flags to enable persistent URI permissions
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -1689,125 +1730,261 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private void handleSelectedFile(ActivityResult result) {
+    private void handleSelectedFiles(ActivityResult result) {
         if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
             return;
         }
 
-        Uri uri = result.getData().getData();
-        if (uri == null) {
+        Intent data = result.getData();
+        List<Uri> selectedUris = collectSelectedUris(data);
+        if (selectedUris.isEmpty()) {
             return;
         }
 
         Context context = getEHContext();
-        if (context == null) {
+        DownloadManager downloadManager = mDownloadManager;
+        if (context == null || downloadManager == null) {
+            return;
+        }
+        if (selectedUris.size() > MAX_ARCHIVE_IMPORT_COUNT) {
+            Toast.makeText(context, context.getString(R.string.import_archive_too_many,
+                    selectedUris.size(), MAX_ARCHIVE_IMPORT_COUNT), Toast.LENGTH_LONG).show();
             return;
         }
 
-        // CRITICAL: Request persistent URI permission IMMEDIATELY when file is selected
-        // This is the key to solving the permission loss issue after app restart
-        try {
-            context.getContentResolver().takePersistableUriPermission(uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            Log.d(TAG, "Successfully obtained persistent URI permission for: " + uri);
-        } catch (SecurityException e) {
-            Log.e(TAG, "Failed to obtain persistent URI permission for: " + uri, e);
+        int takeFlags = data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        if (takeFlags == 0) {
+            takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        }
+
+        List<Uri> permittedUris = new ArrayList<>(selectedUris.size());
+        int permissionFailureCount = 0;
+        for (Uri uri : selectedUris) {
+            try {
+                context.getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                permittedUris.add(uri);
+                Log.d(TAG, "Successfully obtained persistent URI permission for: " + uri);
+            } catch (SecurityException e) {
+                permissionFailureCount++;
+                Log.e(TAG, "Failed to obtain persistent URI permission for: " + uri, e);
+            } catch (Exception e) {
+                permissionFailureCount++;
+                Log.e(TAG, "Unexpected error when obtaining URI permission for: " + uri, e);
+            }
+        }
+
+        if (permittedUris.isEmpty()) {
             Toast.makeText(context, R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
             return;
-        } catch (Exception e) {
-            Log.e(TAG, "Unexpected error when obtaining URI permission for: " + uri, e);
-            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
-            return;
         }
 
-        // Show processing dialog
         Toast.makeText(context, R.string.import_archive_processing, Toast.LENGTH_LONG).show();
 
-        // Process the archive file in background
-        new Thread(() -> processArchiveFile(uri)).start();
+        Context applicationContext = context.getApplicationContext();
+        String targetLabel = mLabel;
+        int selectedCount = selectedUris.size();
+        int finalPermissionFailureCount = permissionFailureCount;
+        WeakReference<DownloadsScene> sceneReference = new WeakReference<>(this);
+        try {
+            ARCHIVE_IMPORT_EXECUTOR.execute(() -> DownloadsScene.processArchiveFiles(applicationContext,
+                    downloadManager, permittedUris, targetLabel, selectedCount,
+                    finalPermissionFailureCount, sceneReference));
+        } catch (RuntimeException e) {
+            for (Uri uri : permittedUris) {
+                downloadManager.releaseArchiveUriPermissionIfUnused(uri.toString());
+            }
+            Log.e(TAG, "Failed to schedule archive import", e);
+            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private void processArchiveFile(Uri uri) {
-        Context context = getEHContext();
-        if (context == null) {
-            return;
+    private static List<Uri> collectSelectedUris(Intent data) {
+        Set<Uri> selectedUris = new LinkedHashSet<>();
+        Uri singleUri = data.getData();
+        if (singleUri != null) {
+            selectedUris.add(singleUri);
         }
+        ClipData clipData = data.getClipData();
+        if (clipData != null) {
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+                Uri uri = clipData.getItemAt(i).getUri();
+                if (uri != null) {
+                    selectedUris.add(uri);
+                }
+            }
+        }
+        return new ArrayList<>(selectedUris);
+    }
 
-        try {
-            // Verify URI accessibility (permission should already be granted)
+    private static void processArchiveFiles(Context context, DownloadManager downloadManager,
+                                            List<Uri> uris, @Nullable String targetLabel,
+                                            int selectedCount, int permissionFailureCount,
+                                            WeakReference<DownloadsScene> sceneReference) {
+        List<PendingArchiveImport> pendingImports = new ArrayList<>(uris.size());
+        int invalidFormatCount = 0;
+        int failedCount = permissionFailureCount;
+
+        for (Uri uri : uris) {
             try (InputStream inputStream = context.getContentResolver().openInputStream(uri)) {
                 if (inputStream == null) {
-                    runOnUiThread(() ->
-                            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
-                    );
-                    return;
+                    failedCount++;
+                    continue;
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Cannot access file even with persistent permission", e);
-                runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
-                );
+                failedCount++;
+                continue;
+            }
+
+            try {
+                String fileName = getFileName(context, uri);
+                if (!isValidArchiveFormat(fileName)) {
+                    invalidFormatCount++;
+                    continue;
+                }
+
+                pendingImports.add(new PendingArchiveImport(uri, fileName));
+            } catch (Exception e) {
+                failedCount++;
+                Log.e(TAG, "Failed to process archive file: " + uri, e);
+            }
+        }
+
+        postArchiveImportResult(context, downloadManager, sceneReference, selectedCount,
+                uris, pendingImports, targetLabel, invalidFormatCount, failedCount);
+    }
+
+    private static Set<String> getImportedArchiveUriSnapshot(DownloadManager downloadManager) {
+        Set<String> snapshot = new HashSet<>();
+        for (DownloadInfo info : downloadManager.getAllDownloadInfoList()) {
+            if (info.archiveUri != null) {
+                snapshot.add(info.archiveUri);
+            }
+        }
+        return snapshot;
+    }
+
+    private static void postArchiveImportResult(Context context,
+                                                DownloadManager downloadManager,
+                                                WeakReference<DownloadsScene> sceneReference,
+                                                int selectedCount,
+                                                List<Uri> permissionUris,
+                                                List<PendingArchiveImport> pendingImports,
+                                                @Nullable String targetLabel,
+                                                int invalidFormatCount, int failedCount) {
+        SimpleHandler.getInstance().post(() -> {
+            int alreadyImportedCount = 0;
+            int committedFailedCount = failedCount;
+            List<DownloadInfo> downloadList = new ArrayList<>(pendingImports.size());
+            Set<String> importedArchiveUris;
+
+            if (targetLabel != null && !downloadManager.containLabel(targetLabel)) {
+                committedFailedCount += pendingImports.size();
+                importedArchiveUris = null;
+                Log.w(TAG, "Archive import target label no longer exists: " + targetLabel);
+            } else {
+                try {
+                    importedArchiveUris = getImportedArchiveUriSnapshot(downloadManager);
+                } catch (RuntimeException e) {
+                    committedFailedCount += pendingImports.size();
+                    importedArchiveUris = null;
+                    Log.e(TAG, "Failed to create imported archive URI snapshot", e);
+                }
+            }
+
+            if (importedArchiveUris != null) {
+                for (PendingArchiveImport pendingImport : pendingImports) {
+                    String archiveUri = pendingImport.uri.toString();
+                    if (!importedArchiveUris.add(archiveUri)) {
+                        alreadyImportedCount++;
+                        continue;
+                    }
+                    try {
+                        downloadList.add(createArchiveDownloadInfo(downloadManager,
+                                pendingImport.uri, pendingImport.fileName, targetLabel));
+                    } catch (RuntimeException e) {
+                        committedFailedCount++;
+                        Log.e(TAG, "Failed to prepare imported archive: " + archiveUri, e);
+                    }
+                }
+
+                if (!downloadList.isEmpty()) {
+                    int preparedCount = downloadList.size();
+                    try {
+                        downloadList = downloadManager.addDownload(downloadList);
+                        committedFailedCount += preparedCount - downloadList.size();
+                    } catch (RuntimeException e) {
+                        committedFailedCount += downloadList.size();
+                        downloadList.clear();
+                        Log.e(TAG, "Failed to commit imported archives", e);
+                    }
+                }
+            }
+
+            for (Uri uri : permissionUris) {
+                downloadManager.releaseArchiveUriPermissionIfUnused(uri.toString());
+            }
+
+            int importedCount = downloadList.size();
+            DownloadsScene scene = sceneReference.get();
+            if (scene == null || !scene.isAdded() || scene.mViewTransition == null ||
+                    scene.mDownloadManager != downloadManager || scene.getView() == null) {
+                return;
+            }
+            MainActivity activity = scene.getActivity2();
+            if (activity == null || !activity.getLifecycle().getCurrentState()
+                    .isAtLeast(Lifecycle.State.STARTED) ||
+                    scene.getStackIndex() != activity.getSceneCount() - 1) {
                 return;
             }
 
-            // Get file name
-            String fileName = getFileName(context, uri);
-            if (fileName == null) {
-                fileName = "imported_archive_" + System.currentTimeMillis();
-            }
+            showArchiveImportResult(context, selectedCount, importedCount,
+                    invalidFormatCount, alreadyImportedCount, committedFailedCount);
+            scene.updateForLabel();
+            scene.updateView();
+        });
+    }
 
-            // Validate file format
-            if (!isValidArchiveFormat(fileName)) {
-                runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_invalid_format, Toast.LENGTH_SHORT).show()
-                );
-                return;
-            }
+    private static final class PendingArchiveImport {
+        private final Uri uri;
+        private final String fileName;
 
-            // Create DownloadInfo for the archive
-            DownloadInfo downloadInfo = createArchiveDownloadInfo(context, uri, fileName);
-            if (downloadInfo == null) {
-                runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
-                );
-                return;
-            }
-
-            // Check if already imported
-            if (mDownloadManager != null && mDownloadManager.containDownloadInfo(downloadInfo.gid)) {
-                runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_already_imported, Toast.LENGTH_SHORT).show()
-                );
-                return;
-            }
-
-            // Add to download manager
-            if (mDownloadManager != null) {
-                List<DownloadInfo> downloadList = new ArrayList<>();
-                downloadList.add(downloadInfo);
-                mDownloadManager.addDownload(downloadList);
-                runOnUiThread(() -> {
-                    Toast.makeText(context, R.string.import_archive_success, Toast.LENGTH_SHORT).show();
-                    updateForLabel();
-                    updateView();
-                });
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to process archive file", e);
-            runOnUiThread(() ->
-                    Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
-            );
+        private PendingArchiveImport(Uri uri, String fileName) {
+            this.uri = uri;
+            this.fileName = fileName;
         }
     }
 
-    private boolean isValidArchiveFormat(String fileName) {
-        if (fileName == null) return false;
-        String lowerName = fileName.toLowerCase();
+    private static boolean isImportedArchive(DownloadInfo info) {
+        return info.archiveUri != null && info.archiveUri.startsWith("content://");
+    }
+
+    private static boolean isValidArchiveFormat(@Nullable String fileName) {
+        if (fileName == null) {
+            return false;
+        }
+        String lowerName = fileName.toLowerCase(Locale.ROOT);
         return lowerName.endsWith(".zip") || lowerName.endsWith(".rar") ||
                 lowerName.endsWith(".cbz") || lowerName.endsWith(".cbr");
     }
 
+    @Nullable
+    private static SpiderInfo getReadingProgressInfo(GalleryInfo info) {
+        if (info instanceof DownloadInfo downloadInfo && isImportedArchive(downloadInfo)) {
+            int startPage = Settings.getArchiveReadingProgress(downloadInfo.gid);
+            int pageCount = Settings.getArchivePageCount(downloadInfo.gid);
+            if (startPage == 0 && pageCount == 0) {
+                return null;
+            }
+            SpiderInfo spiderInfo = new SpiderInfo();
+            spiderInfo.gid = downloadInfo.gid;
+            spiderInfo.token = downloadInfo.token;
+            spiderInfo.startPage = startPage;
+            spiderInfo.pages = pageCount;
+            return spiderInfo;
+        }
+        return getSpiderInfo(info);
+    }
 
     public void runOnUiThread(Runnable runnable) {
         Activity activity = getActivity2();
@@ -1816,33 +1993,61 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private DownloadInfo createArchiveDownloadInfo(Context context, Uri uri, String fileName) {
-        try {
-            DownloadInfo downloadInfo = new DownloadInfo();
-            downloadInfo.gid = System.currentTimeMillis(); // Use timestamp as unique ID
-            downloadInfo.token = "";
-            downloadInfo.title = fileName.replaceAll("\\.[^.]*$", ""); // Remove extension
-            downloadInfo.titleJpn = null;
-            downloadInfo.thumb = null; // No thumbnail for imported archives
-            downloadInfo.category = EhUtils.UNKNOWN; // Keep as UNKNOWN, will be handled in display logic
-            downloadInfo.posted = null;
-            downloadInfo.uploader = "Local Archive";
-            downloadInfo.rating = -1.0f; // Keep default rating to not affect other downloads
-            downloadInfo.state = DownloadInfo.STATE_FINISH;
-            downloadInfo.legacy = 0;
-            downloadInfo.time = System.currentTimeMillis();
-            downloadInfo.label = null;
-            downloadInfo.total = 0; // Will be set by archive provider
-            downloadInfo.finished = 0;
-
-            // Store the URI in the archiveUri field - this is the key identifier
-            downloadInfo.archiveUri = uri.toString();
-
-            return downloadInfo;
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to create DownloadInfo", e);
-            return null;
+    private static void showArchiveImportResult(Context context, int selectedCount,
+                                                int importedCount, int invalidFormatCount,
+                                                int alreadyImportedCount, int failedCount) {
+        if (importedCount == selectedCount) {
+            Toast.makeText(context, R.string.import_archive_success, Toast.LENGTH_SHORT).show();
+        } else if (importedCount == 0) {
+            int message;
+            if (invalidFormatCount == selectedCount) {
+                message = R.string.import_archive_invalid_format;
+            } else if (alreadyImportedCount == selectedCount) {
+                message = R.string.import_archive_already_imported;
+            } else {
+                message = R.string.import_archive_failed;
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        } else {
+            int skippedCount = invalidFormatCount + alreadyImportedCount + failedCount;
+            String message = context.getString(R.string.import_archive_success) + ": " +
+                    importedCount + "/" + selectedCount + "\n" +
+                    context.getString(R.string.import_archive_failed) + ": " +
+                    skippedCount + "/" + selectedCount;
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private static DownloadInfo createArchiveDownloadInfo(DownloadManager downloadManager,
+                                                          Uri uri, String fileName,
+                                                          @Nullable String label) {
+        DownloadInfo downloadInfo = new DownloadInfo();
+        downloadInfo.gid = nextLocalGalleryId(downloadManager);
+        downloadInfo.token = "";
+        downloadInfo.title = fileName.replaceAll("\\.[^.]*$", "");
+        downloadInfo.titleJpn = null;
+        downloadInfo.thumb = null;
+        downloadInfo.category = EhUtils.UNKNOWN;
+        downloadInfo.posted = null;
+        downloadInfo.uploader = "Local Archive";
+        downloadInfo.rating = -1.0f;
+        downloadInfo.state = DownloadInfo.STATE_FINISH;
+        downloadInfo.legacy = 0;
+        downloadInfo.time = System.currentTimeMillis();
+        downloadInfo.label = label;
+        downloadInfo.total = 0;
+        downloadInfo.finished = 0;
+        downloadInfo.archiveUri = uri.toString();
+        return downloadInfo;
+    }
+
+    private static synchronized long nextLocalGalleryId(DownloadManager downloadManager) {
+        long galleryId = Math.max(System.currentTimeMillis(), sLastLocalGalleryId + 1L);
+        while (downloadManager.containDownloadInfo(galleryId)) {
+            galleryId++;
+        }
+        sLastLocalGalleryId = galleryId;
+        return galleryId;
     }
 
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
