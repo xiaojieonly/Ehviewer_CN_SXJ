@@ -244,4 +244,28 @@ class ImageCacheServiceTest {
         service.cacheImageByKey(1L, 1, byteArrayOf(2), "jpg")
         assertEquals(2, service.getCacheSize())
     }
+
+    @Test
+    // MASTER-2026-08-22 P4：内存层按字节上限淘汰——巨图不再无界常驻堆。
+    fun `memory tier evicts oldest entries when byte cap exceeded (P4)`() {
+        val p4config = SiteCoreConfigProperties().apply {
+            download.cachePath = tempDir.resolve("p4").absolutePath
+            download.cacheSizeMb = 8
+            download.cacheMemoryMb = 1 // 1 MB 字节上限
+        }
+        val p4 = ImageCacheService(p4config)
+        p4.init()
+
+        val big = ByteArray(600 * 1024) // 600KB × 3 = 1.8MB > 1MB
+        val urls = listOf("https://example.com/a.jpg", "https://example.com/b.jpg", "https://example.com/c.jpg")
+        urls.forEach { p4.cacheImage(it, big) }
+
+        // 同步排空 Caffeine 维护队列；随后以缓存真实状态（asMap().size）为准——
+        // memorySizeBytes 由异步 removalListener 维护，短暂滞后不作断言依据。
+        p4.drainMaintenance()
+
+        val liveEntries = p4.getCacheStats().memoryCacheEntries
+        assertTrue(liveEntries * 600 * 1024 <= 1024 * 1024,
+            "live entries ($liveEntries) must satisfy the byte cap; got ${p4.getMemorySizeBytes()} (lagging counter)")
+    }
 }

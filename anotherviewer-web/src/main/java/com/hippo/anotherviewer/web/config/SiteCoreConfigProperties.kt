@@ -25,6 +25,8 @@ class SiteCoreConfigProperties {
         var path: String = ""
         var cachePath: String = ""
         var cacheSizeMb: Long = 10240
+        /** MASTER-2026-08-22 P4：图片内存缓存字节上限（MB）。 */
+        var cacheMemoryMb: Long = 64
         var workerCount: Int = 3
         var downloadDelay: Int = 0
         var downloadTimeout: Long = 60000

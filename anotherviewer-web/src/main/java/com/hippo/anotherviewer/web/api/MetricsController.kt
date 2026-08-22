@@ -124,7 +124,9 @@ class MetricsController(
         val uptimeMs = ManagementFactory.getRuntimeMXBean().uptime
         val cacheStats = imageCacheService.getCacheStats()
 
-        val memoryMaxBytes = cacheStats.memoryCacheMaxEntries.toLong() * 1024 * 1024 // rough estimate
+        // MASTER-2026-08-22 P5：真实内存上限（配置字节值），替换 entries×1MB 粗估。
+        val memoryMaxBytes = imageCacheService.maxMemoryBytes
+        val memoryUsedBytes = imageCacheService.getMemorySizeBytes()
         val diskMaxBytes = cacheStats.diskCacheMaxBytes
 
         val activeDownloads = downloadService.getActiveDownloads()
@@ -138,9 +140,10 @@ class MetricsController(
             ),
             cache = DashboardCache(
                 memoryEntries = cacheStats.memoryCacheEntries,
-                memoryUsedBytes = imageCacheService.getMemorySizeBytes(),
+                memoryUsedBytes = memoryUsedBytes,
                 memoryMaxBytes = memoryMaxBytes,
-                memoryUsagePercent = 0.0,
+                // P5：真实使用率（此前硬编码 0.0）。
+                memoryUsagePercent = percentOf(memoryUsedBytes, memoryMaxBytes),
                 diskUsedBytes = cacheStats.diskCacheSizeBytes,
                 diskMaxBytes = diskMaxBytes,
                 diskUsagePercent = percentOf(cacheStats.diskCacheSizeBytes, diskMaxBytes),
@@ -165,7 +168,9 @@ class MetricsController(
             processing = DashboardProcessing(
                 queueSize = processingService.getQueueSize(),
                 completedTotal = processingService.getCompletedTaskCount(),
-                processorAvailable = processingService.getActiveTasks().isNotEmpty()
+                // MASTER-2026-08-22 P5：契约 §4.3 语义——「非占位处理器已连接」，
+                // 与是否有活跃任务无关（此前误用 activeTasks.isNotEmpty()）。
+                processorAvailable = processingService.nonNoopProcessorAvailable()
             ),
             websocket = DashboardWebSocket(
                 activeConnections = WebSocketConfig.activeConnections.get()

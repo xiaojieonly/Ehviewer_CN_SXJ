@@ -313,6 +313,19 @@ class ImageProcessingService(
         return processors.firstOrNull { it.isAvailable() && type in it.capabilities }
     }
 
+    /**
+     * MASTER-2026-08-22 P5：processorAvailable 的真实语义（observability.md §4.3
+     * "Whether a non-noop processor is connected"）——与「是否有活跃任务」无关。
+     * 当前仅有 NoopProcessor 占位，恒 false；接入真实处理器（waifu2x 等）后自动为 true。
+     */
+    fun nonNoopProcessorAvailable(): Boolean = availableNonNoopProcessor() != null
+
+    /** 当前可用的非占位处理器 id；无则 null。 */
+    fun availableNonNoopProcessorId(): String? = availableNonNoopProcessor()?.id
+
+    private fun availableNonNoopProcessor(): ImageProcessor? =
+        processors.firstOrNull { it.id != NoopProcessor.PROCESSOR_ID && it.isAvailable() }
+
     private fun resolveInputImage(galleryId: Long, page: Int): Path? {
         // Look for cached original image in standard cache locations
         val cacheDir = Path.of(config.download.cachePath, galleryId.toString())

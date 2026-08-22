@@ -36,16 +36,26 @@ class ImageCacheService(
 
     companion object {
         private const val DEFAULT_MAX_MEMORY_ENTRIES = 200L
+        /** 默认内存层字节上限（64MB）；可经 anotherviewer.download.cache-memory-mb 调整。 */
+        private const val DEFAULT_MAX_MEMORY_MB = 64L
         private const val URL_DIR = "_url"
     }
 
     private val maxMemoryEntries: Long get() = DEFAULT_MAX_MEMORY_ENTRIES
+
+    /** MASTER-2026-08-22 P4：内存层字节上限（真实配置值，Metrics 与淘汰共用）。 */
+    val maxMemoryBytes: Long get() = config.download.cacheMemoryMb * 1024L * 1024L
     private val maxDiskBytes: Long get() = config.download.cacheSizeMb * 1024L * 1024L
     private val cacheDir: File get() = File(config.download.cachePath)
 
-    /** Hot memory tier — Caffeine with stats recording for hit/miss tracking. */
+    /** Hot memory tier — Caffeine with stats recording for hit/miss tracking.
+     *
+     * MASTER-2026-08-22 P4：按字节加权淘汰（此前仅按条目数 200 淘汰，单张巨图
+     * 常驻堆、memorySizeBytes 只统计不设限）。注意 Caffeine 不允许 maximumSize
+     * 与 maximumWeight 并存，字节上限即唯一硬界。 */
     private val memoryCache: Cache<String, ByteArray> = Caffeine.newBuilder()
-        .maximumSize(maxMemoryEntries)
+        .maximumWeight(maxMemoryBytes)
+        .weigher { _: String, value: ByteArray -> value.size.coerceAtLeast(1) }
         .recordStats()
         .removalListener<String, ByteArray> { _, value: ByteArray?, _: RemovalCause ->
             if (value != null) memorySizeBytes.addAndGet(-value.size.toLong())
@@ -206,6 +216,15 @@ class ImageCacheService(
     // ── memory helpers ─────────────────────────────────────────
 
     private fun getFromMemory(key: String): ByteArray? = memoryCache.getIfPresent(key)
+
+    /**
+     * MASTER-2026-08-22 P4：同步排空 Caffeine 待处理维护队列（按权重淘汰、
+     * removal listener 回调均为惰性执行）。测试与需要精确 memorySizeBytes 的
+     * 路径在读取前调用。
+     */
+    internal fun drainMaintenance() {
+        memoryCache.cleanUp()
+    }
 
     private fun promoteToMemory(key: String, data: ByteArray) {
         putToMemory(key, data)

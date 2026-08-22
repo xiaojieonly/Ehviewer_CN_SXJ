@@ -16,7 +16,7 @@ import java.nio.file.Path
 @Component
 class NoopProcessor : ImageProcessor {
 
-    override val id: String = "noop"
+    override val id: String = PROCESSOR_ID
 
     override fun isAvailable(): Boolean = true
 
@@ -39,7 +39,8 @@ class NoopProcessor : ImageProcessor {
 
     override val capabilities: Set<ProcessingType> = ProcessingType.entries.toSet()
 
-    private companion object {
+    companion object {
+        const val PROCESSOR_ID = "noop"
         val SUPPORTED_FORMATS = setOf("png", "jpg", "jpeg", "webp")
     }
 }
