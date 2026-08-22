@@ -44,6 +44,28 @@ class HealthController(
         private const val GALLERY_CHECK_INTERVAL_MS = 60_000L
         private const val DISK_MIN_FREE_BYTES = 100L * 1024 * 1024 // 100 MB
 
+        /**
+         * Status aggregation per observability.md §2.3 (rev. 1.1).
+         *
+         * `galleryApi` is informational-only: E-Hentai reachability does not
+         * affect the server's core business, so a galleryApi DOWN is excluded
+         * from aggregation (overall stays UP instead of degrading to
+         * DEGRADED). Other optional components (e.g. a future `waifu2x`
+         * probe) remain aggregating and do trigger DEGRADED when DOWN.
+         */
+        internal fun computeOverallStatus(components: Map<String, HealthComponent>): String {
+            val requiredUp = components["database"]?.status == "UP" &&
+                components["diskCache"]?.status == "UP"
+            val aggregatingOptionalDown = components.entries.any { (name, component) ->
+                name != "galleryApi" && component.status == "DOWN"
+            }
+            return when {
+                !requiredUp -> "DOWN"
+                aggregatingOptionalDown -> "DEGRADED"
+                else -> "UP"
+            }
+        }
+
         // Loaded from /version.properties, which the generateVersionProperties
         // Gradle task writes from the webVersion project property
         // (gradle.properties: webVersion=1.1.0, override via -PwebVersion=),
@@ -73,16 +95,8 @@ class HealthController(
         // Gallery Site API check (optional)
         components["galleryApi"] = checkGalleryApi()
 
-        // Determine overall status
-        val requiredUp = components["database"]?.status == "UP" &&
-            components["diskCache"]?.status == "UP"
-        val optionalDown = components.values.any { it.status == "DOWN" }
-
-        val overallStatus = when {
-            !requiredUp -> "DOWN"
-            optionalDown -> "DEGRADED"
-            else -> "UP"
-        }
+        // Determine overall status (see computeOverallStatus).
+        val overallStatus = computeOverallStatus(components)
 
         val uptimeMs = ManagementFactory.getRuntimeMXBean().uptime
         val response = HealthResponse(

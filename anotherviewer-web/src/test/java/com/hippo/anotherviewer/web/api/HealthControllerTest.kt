@@ -163,4 +163,57 @@ class HealthControllerTest {
 
         assertEquals(mapOf("reason" to "connection refused"), body.components["database"]?.details)
     }
+
+    // --- computeOverallStatus: observability.md §2.3 rev.1.1 semantics ---
+
+    private fun component(status: String) = com.hippo.anotherviewer.web.dto.HealthComponent(
+        status = status,
+        details = emptyMap()
+    )
+
+    @Test
+    fun `galleryApi down is informational only and does not degrade overall status`() {
+        val components = mapOf(
+            "database" to component("UP"),
+            "diskCache" to component("UP"),
+            "galleryApi" to component("DOWN")
+        )
+
+        assertEquals("UP", HealthController.computeOverallStatus(components))
+    }
+
+    @Test
+    fun `aggregating optional component down degrades overall status`() {
+        val components = mapOf(
+            "database" to component("UP"),
+            "diskCache" to component("UP"),
+            "waifu2x" to component("DOWN")
+        )
+
+        assertEquals("DEGRADED", HealthController.computeOverallStatus(components))
+    }
+
+    @Test
+    fun `required component down means DOWN regardless of optional components`() {
+        val components = mapOf(
+            "database" to component("DOWN"),
+            "diskCache" to component("UP"),
+            "galleryApi" to component("UP")
+        )
+
+        assertEquals("DOWN", HealthController.computeOverallStatus(components))
+
+        val allDown = components + ("diskCache" to component("DOWN"))
+        assertEquals("DOWN", HealthController.computeOverallStatus(allDown))
+    }
+
+    @Test
+    fun `all required up with no optional probes reports UP`() {
+        val components = mapOf(
+            "database" to component("UP"),
+            "diskCache" to component("UP")
+        )
+
+        assertEquals("UP", HealthController.computeOverallStatus(components))
+    }
 }
