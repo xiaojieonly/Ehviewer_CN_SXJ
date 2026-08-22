@@ -164,6 +164,18 @@
         <!-- ④ Comments (`gallery_detail_comments.xml`) -->
         <section class="detail-comments" aria-label="Gallery comments">
           <p v-if="commentsStatus" class="detail-comments__status">{{ commentsStatus }}</p>
+          <!-- F6: 加载失败不再伪装「No comments」——错误占位 + 重试入口。 -->
+          <div v-if="commentsError" class="detail-comments__failed" role="alert">
+            <span class="detail-comments__failed-text">评论加载失败</span>
+            <button
+              type="button"
+              class="detail-comments__retry"
+              data-testid="comments-retry"
+              @click="reloadComments"
+            >
+              重试
+            </button>
+          </div>
           <CommentList
             :comments="comments"
             :loading="commentsLoading"
@@ -236,6 +248,8 @@ let loadSeq = 0
 
 const comments = ref<CommentItem[]>([])
 const commentsLoading = ref(false)
+/** F6: 评论加载失败——占位提示替代「No comments」，提供重试入口。 */
+const commentsError = ref(false)
 const posting = ref(false)
 const votingId = ref<number | null>(null)
 
@@ -291,7 +305,7 @@ const tagGroups = computed<TagGroup[]>(() => {
 
 /** Android `comments_text` status line ("No comments" / count). */
 const commentsStatus = computed(() => {
-  if (commentsLoading.value) return ''
+  if (commentsLoading.value || commentsError.value) return ''
   const n = comments.value.length
   return n === 0 ? 'No comments' : `${n} comment${n === 1 ? '' : 's'}`
 })
@@ -335,6 +349,7 @@ async function load() {
 async function loadComments(fromDetail?: CommentItem[] | null) {
   const seq = loadSeq
   commentsLoading.value = true
+  commentsError.value = false
   try {
     if (fromDetail && fromDetail.length > 0) {
       if (seq !== loadSeq) return
@@ -346,9 +361,15 @@ async function loadComments(fromDetail?: CommentItem[] | null) {
     comments.value = res.comments ?? []
   } catch (e) {
     console.error('Failed to load comments', e)
+    if (seq === loadSeq) commentsError.value = true
   } finally {
     if (seq === loadSeq) commentsLoading.value = false
   }
+}
+
+/** F6: 评论加载失败后的重试（重新走完整数据源链路）。 */
+function reloadComments() {
+  void loadComments()
 }
 
 /* ----------------------------------------------------------- actions --- */
@@ -926,6 +947,37 @@ onBeforeUnmount(() => {
   text-align: center;
   font-size: clamp(13px, var(--text-small), 16px);
   color: var(--color-accent-text, var(--text-color-theme-accent));
+}
+
+/* F6: comment load failure — inline placeholder + retry (ContentLayout's
+   error-state pattern scaled to a section). */
+.detail-comments__failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing);
+  margin-bottom: var(--spacing);
+}
+
+.detail-comments__failed-text {
+  font-size: clamp(13px, var(--text-small), 16px);
+  color: var(--text-color-secondary);
+}
+
+.detail-comments__retry {
+  padding: 6px 18px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: background 150ms linear;
+}
+
+.detail-comments__retry:active {
+  background: var(--color-primary-dark);
 }
 
 /* ------------------------------------------------------- toast --- */

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { mount, flushPromises, DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HistoryView from '../HistoryView.vue'
 import { historyApi } from '@/api/history'
@@ -283,6 +283,51 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
 
     expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('正则无效')
+    expect(document.querySelector('.toast')).toBeNull()
+  })
+
+  /* ---------------- F6 清历史失败不再静默 --------------- */
+
+  it('closes the dialog and shows an error toast when clearing fails (F6)', async () => {
+    vi.mocked(historyApi.clearHistory).mockRejectedValue(new Error('boom'))
+    await mountHistory([makeHistoryItem({ gid: 1 })])
+
+    // FAB「Clear history」→ 确认对话框打开。
+    await wrapper
+      .findAll('.fab--mini')
+      .find((b) => b.attributes('aria-label') === 'Clear history')!
+      .trigger('click')
+    await flushPromises()
+    const scrim = document.querySelector('.dialog-scrim')
+    expect(scrim).not.toBeNull()
+
+    // 点击 Clear → 失败：对话框关闭（对齐成功路径）+ 错误 toast。
+    const clearBtn = new DOMWrapper(scrim!.querySelector<HTMLButtonElement>('.dialog__btn--danger')!)
+    await clearBtn.trigger('click')
+    await flushPromises()
+
+    expect(document.querySelector('.dialog-scrim')).toBeNull()
+    expect(document.querySelector('.toast')?.textContent).toContain('清除历史失败')
+    // 列表数据保持原样（未误清）。
+    expect(wrapper.text()).toContain('Sample Gallery')
+  })
+
+  it('clears the list and closes the dialog when clearing succeeds (F6 对照)', async () => {
+    await mountHistory([makeHistoryItem({ gid: 1 })])
+    await wrapper
+      .findAll('.fab--mini')
+      .find((b) => b.attributes('aria-label') === 'Clear history')!
+      .trigger('click')
+    await flushPromises()
+
+    const clearBtn = new DOMWrapper(
+      document.querySelector('.dialog-scrim')!.querySelector<HTMLButtonElement>('.dialog__btn--danger')!,
+    )
+    await clearBtn.trigger('click')
+    await flushPromises()
+
+    expect(document.querySelector('.dialog-scrim')).toBeNull()
+    expect(wrapper.find('[data-testid="content-state-empty"]').exists()).toBe(true)
     expect(document.querySelector('.toast')).toBeNull()
   })
 })

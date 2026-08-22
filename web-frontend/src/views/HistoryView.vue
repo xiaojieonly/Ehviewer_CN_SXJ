@@ -393,6 +393,9 @@ async function confirmClear(): Promise<void> {
     showClearDialog.value = false
   } catch (error) {
     console.error('Failed to clear history', error)
+    // F6: 失败不再静默——关对话框（对齐成功路径）+ 错误 toast 说明结果。
+    showClearDialog.value = false
+    showToast('清除历史失败，请稍后重试')
   } finally {
     clearing.value = false
   }
