@@ -122,6 +122,20 @@ function appendFilterParams(params: URLSearchParams, filters: SearchFilters): vo
   if (filters.disableTagFilter) params.set('disableTagFilter', 'true')
 }
 
+/**
+ * Request body of `POST /gallery/history/{gid}` (contracts/openapi.yaml
+ * `addToHistory`, backend `AddHistoryRequest`). `token` is required
+ * (`@NotBlank`, ≤64 chars); `title` is optional (≤256) and stored on the
+ * history row; the backend's `mode` column defaults to 0 and is not exposed
+ * to the web reader.
+ */
+export interface AddHistoryPayload {
+  /** Gallery site token (from the detail response). */
+  token: string
+  /** Optional display title persisted with the history entry. */
+  title?: string
+}
+
 export const galleryApi = {
   /**
    * Search galleries. Wave-1 1a additive (task A5): the optional `filters`
@@ -152,6 +166,17 @@ export const galleryApi = {
 
   async getDetail(gid: number, token?: string): Promise<GalleryDetail> {
     const { data } = await client.get(`/gallery/${gid}`, { params: token ? { token } : undefined })
+    return data
+  },
+
+  /**
+   * Record a gallery visit — `POST /api/v1/gallery/history/{gid}`
+   * (contracts/openapi.yaml `addToHistory`). The server upserts the history
+   * row and refreshes its timestamp. F1: lets web reading land in the
+   * History page and round-trip back to the app via sync.
+   */
+  async addHistory(gid: number, payload: AddHistoryPayload): Promise<{ success: boolean }> {
+    const { data } = await client.post(`/gallery/history/${gid}`, payload)
     return data
   },
 
