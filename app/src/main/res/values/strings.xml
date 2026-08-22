@@ -1171,7 +1171,7 @@
     <string name="settings_webui_tier_1">Tier-1 同步+流式（默认）</string>
     <string name="settings_webui_tier_2">Tier-2 浏览代理（经服务器）</string>
     <string name="settings_webui_tier_3">Tier-3 下载托管（押后）</string>
-    <string name="settings_webui_tier_3_deferred_note">Tier-3 下载托管押后至独立波；当前按 Tier-2 浏览代理生效</string>
+    <string name="settings_webui_tier_3_deferred_note">Tier-3 下载托管押后至独立波；当前按 Tier-2 浏览代理生效；画廊详情页已有手动委托下载入口可用</string>
     <string name="settings_webui_auto_sync_interval">自动同步间隔（秒）</string>
     <string name="settings_webui_auto_sync_interval_summary">进入已配对网络后的周期同步间隔；0=仅网络变化时同步</string>
     <string name="settings_webui_sync_preferences">同步配置</string>
