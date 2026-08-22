@@ -251,6 +251,13 @@
         <item>@string/settings_read_reading_direction_top_to_bottom</item>
     </string-array>
 
+    <string-array name="reading_direction_entries_gallery">
+        <item>@string/settings_read_reading_direction_left_to_right</item>
+        <item>@string/settings_read_reading_direction_right_to_Left</item>
+        <item>@string/settings_read_reading_direction_top_to_bottom</item>
+        <item>@string/settings_read_reading_direction_one_hand_mode</item>
+    </string-array>
+
     <string-array name="reading_direction_entry_values" translatable="false">
         <item>0</item>
         <item>1</item>
