@@ -3,7 +3,7 @@
     <div class="history-view__heading">
       <h1 class="history-view__title">History</h1>
       <span v-if="state === 'content'" class="history-view__count">
-        {{ entries.length }} galleries
+        {{ countLabel }}
       </span>
     </div>
 
@@ -35,9 +35,11 @@
       ref="contentRef"
       class="history-view__content"
       :state="state"
+      :loading-more="loadingMore"
       v-model:refreshing="refreshing"
       empty-text="No history"
       :error-text="errorText"
+      @load-more="loadMore"
       @refresh="onRefresh"
       @retry="onRetry"
     >
@@ -126,10 +128,12 @@
  * (`item_history.xml` shows the same horizontal card layout), plus a
  * FabLayout with clear-all (confirmed via dialog) and go-to-top.
  *
- * The history endpoint returns the full list in one shot (no paging), so
- * `load-more` is intentionally not wired. Search (q, debounced) and filter
- * slots (A5d, q=pattern&regex=true) narrow the list server-side (in-memory
- * filter over the full set); the two are mutually exclusive.
+ * Server-side pagination (W2-DL F3): the list loads `HISTORY_PAGE_SIZE`
+ * rows per request and appends the next page on scroll-to-bottom, aligned
+ * with DownloadView's load-more/append pattern — large histories no longer
+ * render in one shot. Search (q, debounced) and filter slots (A5d,
+ * q=pattern&regex=true) narrow the list server-side; both paths honor the
+ * page/pageSize params and reset to page 0 on filter changes.
  *
  * Backend note: `HistoryItem.category` is the stringified `SiteConfig` bit
  * (HistoryService maps `entity.category.toString()`), so rows are converted
@@ -183,6 +187,9 @@ function categoryBit(raw: number | string): number {
 
 const router = useRouter()
 
+/** 服务端分页每页条数（W2-DL F3；服务端钳制 1..200，50 与后端默认一致）。 */
+const HISTORY_PAGE_SIZE = 50
+
 /** A history row: the gallery card payload + the last-viewed epoch (ms). */
 interface HistoryEntry {
   gallery: GalleryInfo
@@ -190,11 +197,22 @@ interface HistoryEntry {
 }
 
 const entries = ref<HistoryEntry[]>([])
+/** 过滤后全集条数（服务端返回，分页前计数）——判断是否还有下一页。 */
+const total = ref(0)
 const state = ref<ViewState>('loading')
 const refreshing = ref(false)
+/** Guard against overlapping load-more requests. */
+const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
 const errorText = ref('Failed to load history')
+
+/** 标题计数：分页加载中显示 已加载/总数。 */
+const countLabel = computed(() =>
+  total.value > entries.value.length
+    ? `${entries.value.length} / ${total.value} galleries`
+    : `${entries.value.length} galleries`,
+)
 
 /**
  * F4: extracts the business error code from the API error envelope
@@ -282,18 +300,20 @@ function clearSearch(): void {
   void load()
 }
 
+/** 首屏/筛选变更加载：从 page=0 重置分页（W2-DL F3）。 */
 async function load(): Promise<void> {
   // 单调递增请求守卫：快速切换搜索词/筛选槽位时丢弃过期响应，
   // 与 Download/Favorite/Search 视图一致，避免旧响应覆盖新结果。
   const seq = ++requestSeq
   try {
     const filter = currentFilter()
-    const data = await historyApi.listHistory(filter.q || null, filter.regex || undefined)
+    const data = await historyApi.listHistory(filter.q || null, filter.regex || undefined, 0, HISTORY_PAGE_SIZE)
     if (seq !== requestSeq) return
     entries.value = data.history.map((item) => ({
       gallery: toGalleryInfo(item),
       time: item.time,
     }))
+    total.value = data.total
     state.value = entries.value.length === 0 ? 'empty' : 'content'
   } catch (error) {
     console.error('Failed to load history', error)
@@ -307,6 +327,34 @@ async function load(): Promise<void> {
       errorText.value = 'Failed to load history'
     }
     if (entries.value.length === 0) state.value = 'error'
+  }
+}
+
+/**
+ * 追加下一页（对齐 DownloadView 的 load-more 模式）：滚到底部时由
+ * ContentLayout 触发；已加载条数达到 total 后不再请求。
+ */
+async function loadMore(): Promise<void> {
+  if (loadingMore.value || refreshing.value || state.value !== 'content') return
+  if (entries.value.length >= total.value) return
+  const seq = requestSeq
+  loadingMore.value = true
+  try {
+    const filter = currentFilter()
+    const nextPage = Math.floor(entries.value.length / HISTORY_PAGE_SIZE)
+    const data = await historyApi.listHistory(filter.q || null, filter.regex || undefined, nextPage, HISTORY_PAGE_SIZE)
+    if (seq !== requestSeq) return
+    entries.value.push(
+      ...data.history.map((item) => ({ gallery: toGalleryInfo(item), time: item.time })),
+    )
+    total.value = data.total
+  } catch (error) {
+    console.error('Failed to load more history', error)
+    // 可重试：下次滚动会再次触发追加。
+    showToast('Failed to load more history')
+  } finally {
+    // 无条件复位（F5 对照）：失败也不能永久卡死加载更多。
+    loadingMore.value = false
   }
 }
 
