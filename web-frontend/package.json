@@ -2,6 +2,9 @@
   "name": "anotherviewer-web-frontend",
   "version": "1.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",

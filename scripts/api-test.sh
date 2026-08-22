@@ -1,9 +1,20 @@
 #!/bin/bash
 # WebUI API 综合测试 — auth-off 与 auth-on 两阶段
 # 用法: bash api-test.sh <base_url> <phase_name> <data_dir>
+#   phase_name: "auth-off" | "auth-on"
+#   data_dir:   保留参数（当前未使用；为将来按 data-dir 定制断言预留）
+# 环境变量:
+#   AUTHREQ             期望的 authRequired 值（"false"/"true"），须与被测实例一致
+#   AV_EXPECTED_VERSION 覆盖期望版本号；缺省从仓库 gradle.properties 的 webVersion 推导
+#   AV_TMP_DIR          备份产物目录（默认 /tmp/av-api-test，自动创建）
 set -u
 BASE="$1"; PHASE="$2"; DATA="$3"
 PASS=0; FAIL=0; FAILED_NAMES=()
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EXPECTED_VERSION="${AV_EXPECTED_VERSION:-$(sed -n 's/^webVersion=//p' "$SCRIPT_DIR/../gradle.properties" 2>/dev/null | head -1)}"
+TMP_DIR="${AV_TMP_DIR:-/tmp/av-api-test}"
+mkdir -p "$TMP_DIR"
 
 ck() { # ck <name> <expected_http> <curl_args...>
   local name="$1" expect="$2"; shift 2
@@ -40,8 +51,10 @@ section() { echo ""; echo "== [$PHASE] $1 =="; }
 section "基础"
 ck "health 200" 200 "$BASE/api/v1/health"
 H=$(curl -s -m 15 "$BASE/api/v1/health")
-jcheck "health version=1.1.0" "$H" "version" "1.1.0"
-jcheck "health degraded (galleryApi down expected)" "$H" "status" "DEGRADED"
+jcheck "health version=$EXPECTED_VERSION" "$H" "version" "$EXPECTED_VERSION"
+# observability.md §2.3 rev.1.1: galleryApi 为 informational-only，不参与聚合，
+# 故 database+diskCache UP 时整体恒为 UP（galleryApi 自身 DOWN/UP 均不改变结论）。
+jcheck "health status UP (galleryApi informational)" "$H" "status" "UP"
 ck "metrics 200" 200 "$BASE/api/v1/metrics"
 ck "auth/status 200" 200 "$BASE/api/v1/auth/status"
 S=$(curl -s -m 15 "$BASE/api/v1/auth/status")
@@ -190,10 +203,20 @@ S1=$(curl -s -m 15 "$BASE/api/v1/settings")
 jcheck "workerCount=7 持久化" "$S1" "download.workerCount" "7"
 
 section "备份导出 (M-12 无关 / T-3 日志)"
-ck "GET /backup/export 200" 200 "$BASE/api/v1/backup/export" -o /tmp/av-api-test/backup.zip
-BZ=$(file /tmp/av-api-test/backup.zip 2>/dev/null | grep -o "Zip archive")
+ck "GET /backup/export 200" 200 "$BASE/api/v1/backup/export" -o "$TMP_DIR/backup.zip"
+BZ=$(file "$TMP_DIR/backup.zip" 2>/dev/null | grep -o "Zip archive")
 contains "backup zip 合法" "$BZ" "Zip archive"
-python3 -c "import zipfile; z=zipfile.ZipFile('/tmp/av-api-test/backup.zip'); n=z.namelist(); assert 'manifest.json' in n and any(s.startswith('slice-') for s in n), n; import json; m=json.loads(z.read('manifest.json')); s=m['slices'][0]; assert m['appVersion']=='1.1.0' and s['sha256'] and s['sizeBytes']>0, m" && { PASS=$((PASS+1)); echo "  ✓ backup manifest 结构/appVersion=1.1.0/slices[0].sha256"; } || { FAIL=$((FAIL+1)); echo "  ✗ backup manifest 校验失败"; }
+EXPECTED_VERSION="$EXPECTED_VERSION" AV_TMP_DIR="$TMP_DIR" python3 -c "
+import os, zipfile, json
+tmp = os.environ['AV_TMP_DIR']; ver = os.environ['EXPECTED_VERSION']
+z = zipfile.ZipFile(os.path.join(tmp, 'backup.zip'))
+n = z.namelist()
+assert 'manifest.json' in n and any(s.startswith('slice-') for s in n), n
+m = json.loads(z.read('manifest.json'))
+s = m['slices'][0]
+assert m['appVersion'] == ver and s['sha256'] and s['sizeBytes'] > 0, m
+print('manifest ok: appVersion=' + m['appVersion'])
+" && { PASS=$((PASS+1)); echo "  ✓ backup manifest 结构/appVersion=$EXPECTED_VERSION/slices[0].sha256"; } || { FAIL=$((FAIL+1)); echo "  ✗ backup manifest 校验失败"; }
 
 section "代理测试"
 PT=$(curl -s -m 20 -X POST "$BASE/api/v1/proxy/test" -H 'content-type: application/json' -d '{"url":"https://e-hentai.org/"}')
@@ -220,7 +243,7 @@ if [ "$PHASE" = "auth-on" ]; then
   NEWTOKEN=$(jq_get "$PC" "token")
   [ "$NEWTOKEN" != "__MISSING__" ] && [ "$NEWTOKEN" != "" ] && { PASS=$((PASS+1)); echo "  ✓ pair/complete 换 token"; } || { FAIL=$((FAIL+1)); echo "  ✗ pair/complete: $PC"; }
   ck "配对 token 可用" 200 "$BASE/api/v1/sync/status" -H "Authorization: Bearer $NEWTOKEN"
-  ck "backup/export 带 token 200 (T-3)" 200 "$BASE/api/v1/backup/export" -o /tmp/av-api-test/backup2.zip -H "Authorization: Bearer $NEWTOKEN"
+  ck "backup/export 带 token 200 (T-3)" 200 "$BASE/api/v1/backup/export" -o "$TMP_DIR/backup2.zip" -H "Authorization: Bearer $NEWTOKEN"
 fi
 
 echo ""
