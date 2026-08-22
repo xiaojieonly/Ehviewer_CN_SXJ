@@ -3,6 +3,9 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ReaderView from '../ReaderView.vue'
 import { galleryApi } from '@/api/gallery'
+import { usePreferencesStore } from '@/stores/preferences'
+import { DEFAULT_PREFERENCES, DEFAULT_READER_PREFERENCES } from '@/api/preferences'
+import { spreadIndexOf, firstPageOfSpread } from '@/components/reader/PageMode.vue'
 
 const { pushMock, replaceMock, routeParams } = vi.hoisted(() => ({
   pushMock: vi.fn(),
@@ -19,9 +22,9 @@ vi.mock('@/api/gallery', () => ({
   galleryApi: { getDetail: vi.fn(), addHistory: vi.fn() },
 }))
 
-vi.mock('@/composables/useKeyboardNav', () => ({
-  useKeyboardNav: () => {},
-}))
+// NOTE (T-F2): useKeyboardNav is intentionally NOT mocked here — the keyboard
+// suites below dispatch real `keydown` events against the composable's
+// window listener. The WebSocket-backed useEnhancedImage stays mocked.
 
 vi.mock('@/composables/useEnhancedImage', () => ({
   useEnhancedImage: () => ({ enhancedUrls: {}, connect: vi.fn() }),
@@ -30,14 +33,21 @@ vi.mock('@/composables/useEnhancedImage', () => ({
 /**
  * ImageReader stub — F1's spec is about the writeback wiring, not the reader
  * chrome. Page flips are driven by emitting `update:current-page`, the same
- * contract the real chrome uses.
+ * contract the real chrome uses. T-F2 adds pass-through rendering of the
+ * auto-play state as data-attributes (text content unchanged) so the autoplay
+ * suite can observe start/stop without a DOM fork.
  */
 vi.mock('@/components/reader/ImageReader.vue', () => ({
   default: {
     name: 'ImageReader',
-    props: ['gid', 'title', 'totalPages', 'currentPage'],
+    props: ['gid', 'title', 'totalPages', 'currentPage', 'autoPlay', 'autoPlayProgress'],
     emits: ['update:current-page'],
-    template: '<div class="image-reader-stub">{{ currentPage }}</div>',
+    methods: {
+      // ReaderView calls readerRef.toggleChrome() on Space/Esc.
+      toggleChrome() {},
+    },
+    template:
+      '<div class="image-reader-stub" :data-enabled="autoPlay && autoPlay.enabled ? \'on\' : \'off\'" :data-progress="String(autoPlayProgress ?? 0)" :data-total="String(totalPages ?? 0)">{{ currentPage }}</div>',
   },
 }))
 
@@ -205,5 +215,378 @@ describe('ReaderView F1 — history writeback (POST /gallery/history/{gid})', ()
     // The reader stays up — no error state swapped in for a history outage.
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
     expect(wrapper.find('.image-reader-stub').exists()).toBe(true)
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * T-F2 additions — keyboard navigation / dual-page spread / auto-play.
+ * The real useKeyboardNav composable is active (not mocked): key events are
+ * dispatched against window and observed through the ImageReader stub.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+const READER_SETTINGS_KEY = 'anotherviewer-web.reader-settings'
+
+/** Emit an arbitrary event from the reader chrome stub. */
+function emitReader(w: VueWrapper, event: string, ...args: unknown[]): void {
+  const reader = w.findComponent({ name: 'ImageReader' })
+  ;(reader.vm as unknown as { $emit: (e: string, ...a: unknown[]) => void }).$emit(
+    event,
+    ...args,
+  )
+}
+
+function pressKey(key: string): void {
+  window.dispatchEvent(new KeyboardEvent('keydown', { key }))
+}
+
+function setReaderSettings(settings: Record<string, unknown>): void {
+  localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify(settings))
+}
+
+function prefsWithReader(patch: Partial<typeof DEFAULT_READER_PREFERENCES>): void {
+  const store = usePreferencesStore()
+  store.prefs = {
+    general: { ...DEFAULT_PREFERENCES.general },
+    reader: { ...DEFAULT_READER_PREFERENCES, ...patch },
+    privacy: { ...DEFAULT_PREFERENCES.privacy },
+  }
+}
+
+describe('ReaderView (T-F2) — keyboard navigation', () => {
+  let wrapper: VueWrapper | undefined
+
+  async function mountReady(): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.removeItem(READER_SETTINGS_KEY)
+    vi.restoreAllMocks()
+  })
+
+  it('turns pages with ←/→ and clamps at both ends', async () => {
+    // Pin single mode so every step is exactly ±1 page.
+    setReaderSettings({ direction: 'ltr', pageMode: 'single', brightness: 0 })
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+    expect(stub().text()).toBe('0')
+
+    pressKey('ArrowRight')
+    await flushPromises()
+    expect(stub().text()).toBe('1')
+
+    pressKey('ArrowLeft')
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+
+    // Already on the first page — no wrap-around.
+    pressKey('ArrowLeft')
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+
+    pressKey('End')
+    await flushPromises()
+    expect(stub().text()).toBe('49')
+
+    // Last page: → and End are no-ops, ← still steps back.
+    pressKey('ArrowRight')
+    pressKey('End')
+    await flushPromises()
+    expect(stub().text()).toBe('49')
+    pressKey('ArrowLeft')
+    await flushPromises()
+    expect(stub().text()).toBe('48')
+
+    pressKey('Home')
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+  })
+
+  it("accepts vim-style a/d aliases for ←/→", async () => {
+    wrapper = await mountReady()
+    pressKey('d')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('1')
+
+    pressKey('a')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('0')
+  })
+
+  it('mirrors ←/→ under RTL direction', async () => {
+    setReaderSettings({ direction: 'rtl', pageMode: 'single', brightness: 0 })
+    wrapper = await mountReady()
+
+    emitReader(wrapper, 'update:current-page', 5)
+    await flushPromises()
+
+    pressKey('ArrowRight') // RTL: right arrow goes back
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('4')
+
+    pressKey('ArrowLeft') // RTL: left arrow advances
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('5')
+  })
+
+  it('disables arrow/space paging when keyboardPaging preference is off', async () => {
+    prefsWithReader({ keyboardPaging: false })
+    wrapper = await mountReady()
+
+    pressKey('ArrowRight')
+    pressKey('d')
+    pressKey(' ')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('0')
+
+    // Non-paging keys stay live regardless of the preference.
+    pressKey('End')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('49')
+  })
+
+  it('pages with Space while keyboardPaging is on', async () => {
+    wrapper = await mountReady()
+
+    pressKey(' ')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('1')
+  })
+})
+
+describe('ReaderView (T-F2) — dual-page spread index calculation', () => {
+  let wrapper: VueWrapper | undefined
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.removeItem(READER_SETTINGS_KEY)
+  })
+
+  it('pairs pages cover-alone then (2,3), (4,5)… in spread indices', () => {
+    // Page 0 (cover) alone; 1-based pairs (2,3) → spreads of two.
+    expect(spreadIndexOf(0)).toBe(0)
+    expect(spreadIndexOf(1)).toBe(1)
+    expect(spreadIndexOf(2)).toBe(1)
+    expect(spreadIndexOf(3)).toBe(2)
+    expect(spreadIndexOf(4)).toBe(2)
+    expect(spreadIndexOf(49)).toBe(25)
+
+    expect(firstPageOfSpread(0)).toBe(0)
+    expect(firstPageOfSpread(1)).toBe(1)
+    expect(firstPageOfSpread(2)).toBe(3)
+    expect(firstPageOfSpread(25)).toBe(49)
+  })
+
+  it('steps whole spreads in dual mode: cover alone, then paired jumps', async () => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    setReaderSettings({ direction: 'ltr', pageMode: 'dual', brightness: 0 })
+
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    wrapper = mounted
+
+    const page = () => wrapper!.find('.image-reader-stub').text()
+    expect(page()).toBe('0')
+
+    emitReader(wrapper, 'next')
+    await flushPromises()
+    expect(page()).toBe('1') // cover → start of spread 1
+
+    emitReader(wrapper, 'next')
+    await flushPromises()
+    expect(page()).toBe('3') // spread 1 → spread 2
+
+    emitReader(wrapper, 'prev')
+    await flushPromises()
+    expect(page()).toBe('1')
+
+    emitReader(wrapper, 'prev')
+    await flushPromises()
+    expect(page()).toBe('0') // back to the lone cover
+
+    emitReader(wrapper, 'prev')
+    await flushPromises()
+    expect(page()).toBe('0') // clamped before the cover
+
+    // From mid-spread the previous step lands on the START of the prior spread.
+    emitReader(wrapper, 'update:current-page', 4)
+    await flushPromises()
+    emitReader(wrapper, 'prev')
+    await flushPromises()
+    expect(page()).toBe('1')
+
+    wrapper.unmount()
+    wrapper = undefined
+  })
+
+  it('refuses to step past the final partial spread in dual mode', async () => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    setReaderSettings({ direction: 'ltr', pageMode: 'dual', brightness: 0 })
+
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    wrapper = mounted
+
+    emitReader(wrapper, 'update:current-page', 49) // last page = lone tail spread
+    await flushPromises()
+
+    emitReader(wrapper, 'next')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('49')
+
+    wrapper.unmount()
+    wrapper = undefined
+  })
+})
+
+describe('ReaderView (T-F2) — auto-play timer', () => {
+  let wrapper: VueWrapper | undefined
+
+  async function mountReady(): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    delete (document as unknown as Record<string, unknown>).hidden
+    localStorage.removeItem(READER_SETTINGS_KEY)
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  it('advances one page per interval and drives the progress bar', async () => {
+    vi.useFakeTimers()
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 2000 })
+    await flushPromises()
+    expect(stub().attributes('data-enabled')).toBe('on')
+
+    vi.advanceTimersByTime(1000)
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+    expect(stub().attributes('data-progress')).toBe('0.5')
+
+    // Cycle completes at t=2000 (progress peaks at 1), the next tick wraps it.
+    vi.advanceTimersByTime(1100)
+    await flushPromises()
+    expect(stub().text()).toBe('1')
+    expect(stub().attributes('data-progress')).toBe('0.05')
+  })
+
+  it('pauses ticking while the tab is hidden', async () => {
+    vi.useFakeTimers()
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 2000 })
+    await flushPromises()
+
+    vi.advanceTimersByTime(10_000)
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+    expect(stub().attributes('data-progress')).toBe('0')
+  })
+
+  it('stops advancing after being disabled (timer torn down)', async () => {
+    vi.useFakeTimers()
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 2000 })
+    await flushPromises()
+    vi.advanceTimersByTime(1000)
+    await flushPromises()
+
+    emitReader(wrapper, 'update:auto-play', { enabled: false, intervalMs: 2000 })
+    await flushPromises()
+    expect(stub().attributes('data-enabled')).toBe('off')
+    // Disabling resets the progress bar immediately.
+    expect(stub().attributes('data-progress')).toBe('0')
+
+    vi.advanceTimersByTime(10_000)
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+  })
+
+  it('restarts cleanly when the interval changes mid-run', async () => {
+    vi.useFakeTimers()
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 2000 })
+    await flushPromises()
+    vi.advanceTimersByTime(1500)
+    await flushPromises()
+
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 8000 })
+    await flushPromises()
+    // Elapsed time discarded on restart — old cycle never fires.
+    expect(stub().attributes('data-progress')).toBe('0')
+
+    vi.advanceTimersByTime(7900)
+    await flushPromises()
+    expect(stub().text()).toBe('0')
+    expect(stub().attributes('data-progress')).toBe('0.9875')
+
+    vi.advanceTimersByTime(200)
+    await flushPromises()
+    expect(stub().text()).toBe('1')
+  })
+  it('switches itself off at the end of the gallery', async () => {
+    vi.useFakeTimers()
+    wrapper = await mountReady()
+    const stub = () => wrapper!.find('.image-reader-stub')
+
+    emitReader(wrapper, 'update:current-page', 49)
+    await flushPromises()
+    emitReader(wrapper, 'update:auto-play', { enabled: true, intervalMs: 2000 })
+    await flushPromises()
+
+    vi.advanceTimersByTime(2100)
+    await flushPromises()
+
+    // nextPage() returned false → enabled flipped off, page unchanged.
+    expect(stub().text()).toBe('49')
+    expect(stub().attributes('data-enabled')).toBe('off')
+    expect(stub().attributes('data-progress')).toBe('0')
   })
 })
