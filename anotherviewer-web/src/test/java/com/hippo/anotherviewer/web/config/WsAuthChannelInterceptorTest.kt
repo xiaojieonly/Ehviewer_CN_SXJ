@@ -45,14 +45,16 @@ class WsAuthChannelInterceptorTest {
     }
 
     @Test
-    fun `accepted CONNECT increments active connections`() {
+    // MASTER-2026-08-22 S4：计数迁至 session 生命周期事件——preSend 不再增减，
+    // 计数由 onSessionConnected/onSessionDisconnected 负责（见 SessionCountTest）。
+    fun `accepted CONNECT does not count by itself anymore`() {
         `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("valid-token")).thenReturn("user")
 
         val result = interceptor.preSend(frame(StompCommand.CONNECT, "login" to "valid-token"), channel)
 
         assertNotNull(result)
-        assertEquals(1, WebSocketConfig.activeConnections.get())
+        assertEquals(0, WebSocketConfig.activeConnections.get())
     }
 
     @Test
@@ -67,27 +69,24 @@ class WsAuthChannelInterceptorTest {
     }
 
     @Test
-    fun `CONNECT with auth disabled increments active connections`() {
+    fun `CONNECT with auth disabled does not count by itself anymore`() {
         `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(false)
 
         val result = interceptor.preSend(frame(StompCommand.CONNECT), channel)
 
         assertNotNull(result)
-        assertEquals(1, WebSocketConfig.activeConnections.get())
+        assertEquals(0, WebSocketConfig.activeConnections.get())
     }
 
     @Test
-    fun `DISCONNECT decrements active connections`() {
+    fun `DISCONNECT frame no longer decrements - counting is event driven`() {
         `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("valid-token")).thenReturn("user")
 
         interceptor.preSend(frame(StompCommand.CONNECT, "login" to "valid-token"), channel)
-        interceptor.preSend(frame(StompCommand.CONNECT, "login" to "valid-token"), channel)
-        assertEquals(2, WebSocketConfig.activeConnections.get())
-
         interceptor.preSend(frame(StompCommand.DISCONNECT), channel)
 
-        assertEquals(1, WebSocketConfig.activeConnections.get())
+        assertEquals(0, WebSocketConfig.activeConnections.get())
     }
 
     @Test

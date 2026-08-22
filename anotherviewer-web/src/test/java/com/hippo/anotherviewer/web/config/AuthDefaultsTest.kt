@@ -81,7 +81,8 @@ class AuthDefaultsTest {
 
         verify(serverConfig).getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)
         assertNotNull(result)
-        assertEquals(1, WebSocketConfig.activeConnections.get())
+        // MASTER-2026-08-22 S4：计数已迁至 session 生命周期事件，preSend 不再增减。
+        assertEquals(0, WebSocketConfig.activeConnections.get())
     }
 
     @Test
