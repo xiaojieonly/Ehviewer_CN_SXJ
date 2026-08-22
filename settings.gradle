@@ -6,6 +6,11 @@ pluginManagement {
     }
 
 }
+plugins {
+    // MASTER-2026-08-22：JVM 工具链自动供给——:app 单测钉 JDK 21（Robolectric
+    // 4.13 在 JDK 26 下 conscrypt native 加载失败），任意机器可复现跑门。
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

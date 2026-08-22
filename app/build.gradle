@@ -209,3 +209,23 @@ configurations.configureEach {
         exclude group: 'com.github.seven332', module: 'okhttp'
     }
 }
+
+// MASTER-2026-08-22：单测运行时类路径排除设备版 conscrypt-android。
+// 它与 robolectric 带来的 conscrypt-openjdk-uber 并存时被沙箱优先解析，
+// 其 NativeCryptoJni 走 System.loadLibrary("conscrypt_jni")（仅设备有该
+// so）→ Robolectric 全量 UnsatisfiedLinkError。uber 版含桌面原生库且同样
+// 提供org.conscrypt.Conscrypt（SiteApplication 的编译引用不受影响）。
+configurations.matching { it.name.contains('UnitTest') && it.name.endsWith('RuntimeClasspath') }.configureEach {
+    exclude group: 'org.conscrypt', module: 'conscrypt-android'
+}
+
+// MASTER-2026-08-22：:app 单测 JVM 钉 JDK 21。
+// Robolectric 4.13 沙箱在 JDK 26 下触发 android-all 变体的 org.conscrypt
+// 静态初始化 System.loadLibrary("conscrypt_jni")，桌面环境无该 native →
+// UnsatisfiedLinkError 全量红（153/196）。JDK 21 与生产 target 一致且为
+// Robolectric 4.13 支持上限；foojay resolver（settings.gradle）自动供给。
+tasks.withType(Test).configureEach {
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+}
