@@ -202,7 +202,8 @@ find_jar() {
     local jar
 
     # Find the bootJar artifact (anotherviewer-web-<version>.jar, not -plain.jar)
-    jar=$(find "${jar_dir}" -maxdepth 1 -name 'anotherviewer-web-*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1)
+    # Pick the newest by mtime — libs/ may hold several versions after rebuilds
+    jar=$(ls -t "${jar_dir}"/anotherviewer-web-*.jar 2>/dev/null | grep -v -- '-plain\.jar$' | head -1 || true)
 
     if [[ -z "$jar" ]]; then
         error "No JAR found in ${jar_dir}. Run without --skip-build first."

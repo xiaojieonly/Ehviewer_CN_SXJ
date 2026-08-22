@@ -327,7 +327,8 @@ ensure_java
 # ---------------------------------------------------------------------------
 # 4. JAR：缺失则默认自动构建
 # ---------------------------------------------------------------------------
-JAR_FILE=$(find anotherviewer-web/build/libs -name "anotherviewer-web-*.jar" ! -name "*-plain.jar" 2>/dev/null | head -1 || true)
+# 多次构建后 libs 下可能残留多版本产物，取 mtime 最新的一个（find|head 顺序不定）
+JAR_FILE=$(ls -t anotherviewer-web/build/libs/anotherviewer-web-*.jar 2>/dev/null | grep -v -- '-plain\.jar$' | head -1 || true)
 
 if [ -z "$JAR_FILE" ]; then
     if [ "$AUTO_BUILD" = 1 ]; then
@@ -336,7 +337,7 @@ if [ -z "$JAR_FILE" ]; then
             y|Y) ./build.sh ;;
             *) echo "已中止: 没有可运行的 JAR"; exit 1 ;;
         esac
-        JAR_FILE=$(find anotherviewer-web/build/libs -name "anotherviewer-web-*.jar" ! -name "*-plain.jar" 2>/dev/null | head -1 || true)
+        JAR_FILE=$(ls -t anotherviewer-web/build/libs/anotherviewer-web-*.jar 2>/dev/null | grep -v -- '-plain\.jar$' | head -1 || true)
     fi
     if [ -z "$JAR_FILE" ]; then
         echo "错误: 未找到 JAR 文件，请先运行 ./build.sh"

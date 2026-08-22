@@ -110,8 +110,9 @@ fi
 
 # ---------------------------------------------------------------------------
 # 查找可执行 JAR（排除 -plain.jar）
+# 多次构建后 libs 下可能残留多版本产物，取 mtime 最新的一个（find|head 顺序不定）
 # ---------------------------------------------------------------------------
-JAR_FILE=$(find anotherviewer-web/build/libs -name "anotherviewer-web-*.jar" ! -name "*-plain.jar" 2>/dev/null | head -1)
+JAR_FILE=$(ls -t anotherviewer-web/build/libs/anotherviewer-web-*.jar 2>/dev/null | grep -v -- '-plain\.jar$' | head -1 || true)
 
 if [ -z "$JAR_FILE" ]; then
     echo "错误: 未找到 JAR 文件，请先运行 ./build.sh"

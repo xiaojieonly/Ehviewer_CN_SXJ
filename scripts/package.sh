@@ -63,10 +63,10 @@ while [ $# -gt 0 ]; do
 done
 
 # ---------------------------------------------------------------------------
-# 版本推导：-v 参数 → gradle.properties → build.gradle.kts → jar 文件名
+# 版本推导：-v 参数 → gradle.properties(webVersion) → build.gradle.kts → jar 文件名
 # ---------------------------------------------------------------------------
 if [ -z "$VERSION" ]; then
-    VERSION=$(grep -E '^version[[:space:]]*=' "$REPO_ROOT/gradle.properties" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '[:space:]' || true)
+    VERSION=$(grep -E '^webVersion[[:space:]]*=' "$REPO_ROOT/gradle.properties" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '[:space:]' || true)
 fi
 if [ -z "$VERSION" ]; then
     VERSION=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$REPO_ROOT/anotherviewer-web/build.gradle.kts" 2>/dev/null | head -1 || true)
@@ -76,7 +76,8 @@ fi
 # JAR 查找
 # ---------------------------------------------------------------------------
 if [ -z "$JAR_PATH" ]; then
-    JAR_PATH=$(find "$REPO_ROOT/anotherviewer-web/build/libs" -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1 || true)
+    # 多次构建后 libs 下可能残留多版本产物，取 mtime 最新的一个（find|head 顺序不定）
+    JAR_PATH=$(ls -t "$REPO_ROOT/anotherviewer-web/build/libs/"anotherviewer-web-*.jar 2>/dev/null | grep -v -- '-plain\.jar$' | head -1 || true)
 fi
 if [ -z "$JAR_PATH" ] || [ ! -f "$JAR_PATH" ]; then
     echo "错误: 未找到可执行 jar，请先构建: ./gradlew --configure-on-demand :anotherviewer-web:bootJar" >&2
@@ -103,6 +104,9 @@ cp "$JAR_PATH" "$STAGE/lib/app.jar"
 cat > "$STAGE/bin/start.sh" <<'EOF'
 #!/bin/bash
 # start.sh - 启动 AnotherViewer Web（zip 发布包版）
+#
+# 用法: bin/start.sh [--port <端口>] [--data-dir <路径>]
+#   端口默认 8080；数据目录默认 = 解压目录 data/
 
 set -e
 
@@ -111,10 +115,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
 JAR_FILE="$APP_HOME/lib/app.jar"
 DATA_DIR="$APP_HOME/data"
+PORT=8080
 PID_FILE="$APP_HOME/anotherviewer-web.pid"
 LOG_FILE="$APP_HOME/anotherviewer-web.log"
 
-# --data-dir <路径> 透传 java（缺省 = 解压目录 data/）
+# --data-dir / --port 透传 java（数据目录缺省 = 解压目录 data/）
 while [ $# -gt 0 ]; do
     case "$1" in
         --data-dir)
@@ -125,8 +130,16 @@ while [ $# -gt 0 ]; do
             DATA_DIR="${1#*=}"
             shift
             ;;
+        --port)
+            PORT="$2"
+            shift 2
+            ;;
+        --port=*)
+            PORT="${1#*=}"
+            shift
+            ;;
         *)
-            echo "错误: 未知参数 $1（仅支持 --data-dir <路径>）" >&2
+            echo "错误: 未知参数 $1（仅支持 --port <端口> 与 --data-dir <路径>）" >&2
             exit 1
             ;;
     esac
@@ -204,7 +217,7 @@ fi
 mkdir -p "$DATA_DIR"
 
 if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-    echo "服务已在运行 (PID: $(cat "$PID_FILE"))，访问 http://localhost:8080"
+    echo "服务已在运行 (PID: $(cat "$PID_FILE"))，访问 http://localhost:$PORT"
     exit 0
 fi
 
@@ -212,23 +225,28 @@ echo "=== 启动 AnotherViewer Web ==="
 echo "Java:    $JAVA_BIN (version $JAVA_VER)"
 echo "JAR:     $JAR_FILE"
 echo "data-dir: $DATA_DIR"
-echo "端口:    8080"
+echo "端口:    $PORT"
 
-# --data-dir 是无前缀的"语义参数"，Spring 命令行需完整键名
-nohup "$JAVA_BIN" -jar "$JAR_FILE" --anotherviewer.data-dir="$DATA_DIR" > "$LOG_FILE" 2>&1 &
+# --anotherviewer.data-dir 是完整 Spring 配置键；端口经 --server.port 传入
+nohup "$JAVA_BIN" -jar "$JAR_FILE" \
+    --server.port="$PORT" \
+    --anotherviewer.data-dir="$DATA_DIR" > "$LOG_FILE" 2>&1 &
 PID=$!
 echo "$PID" > "$PID_FILE"
 
 for _ in $(seq 1 30); do
-    if curl -s -o /dev/null http://localhost:8080/api/v1/auth/status; then
-        echo "服务已就绪: http://localhost:8080 (PID: $PID)"
-        exit 0
-    fi
+    code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/api/v1/auth/status" 2>/dev/null || echo 000)
+    # 200/401/403 说明应答的是本应用；404 可能是端口被其他服务占用
+    case "$code" in
+        200|401|403)
+            echo "服务已就绪: http://localhost:$PORT (PID: $PID)"
+            exit 0 ;;
+    esac
     sleep 1
 done
 
 echo "服务已后台启动 (PID: $PID)，日志: $LOG_FILE"
-echo "访问 http://localhost:8080 确认，或用 bin/stop.sh 停止"
+echo "访问 http://localhost:$PORT 确认，或用 bin/stop.sh 停止"
 EOF
 
 cat > "$STAGE/bin/stop.sh" <<'EOF'
@@ -499,7 +517,8 @@ AnotherViewer Web $VERSION ($OS/$ARCH)
    - Linux (Debian/Ubuntu):  sudo apt install openjdk-21-jre
    - Linux (Fedora/RHEL):    sudo dnf install java-21-openjdk
    - macOS:                  brew install openjdk@21
-3. 启动：bin/start.sh；停止：bin/stop.sh
+3. 启动：bin/start.sh（默认端口 8080，可用 bin/start.sh --port 9090 更换）
+   停止：bin/stop.sh
 4. 访问 http://localhost:8080（首次使用请在 WebUI 完成配对）
 
 目录结构
