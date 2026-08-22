@@ -252,4 +252,15 @@ class DownloadUploadServiceTest {
         assertFalse(service.completeUpload(123L, UploadCompleteRequest(total = 20, done = 20)))
         assertNull(store[123L])
     }
+
+    @Test
+    // MASTER-2026-08-22 S3：upload_enabled 关闭时 finalize 被拒绝（与 storePage 同语义）。
+    fun `completeUpload refuses when upload is disabled`() {
+        setUp(uploadEnabled = false)
+
+        org.junit.jupiter.api.assertThrows<UploadDisabledException> {
+            service.completeUpload(123L, UploadCompleteRequest(total = 20, done = 20))
+        }
+        assertNull(store[123L])
+    }
 }

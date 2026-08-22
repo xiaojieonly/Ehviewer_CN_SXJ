@@ -5,6 +5,7 @@ import com.hippo.anotherviewer.web.config.ApiErrorEnvelope
 import com.hippo.anotherviewer.web.dto.UploadCompleteRequest
 import com.hippo.anotherviewer.web.dto.UploadInitRequest
 import com.hippo.anotherviewer.web.service.DownloadUploadService
+import com.hippo.anotherviewer.web.service.UploadDisabledException
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -70,11 +71,18 @@ class DownloadUploadController(private val uploadService: DownloadUploadService)
         @PathVariable gid: Long,
         @Valid @RequestBody request: UploadCompleteRequest,
     ): ResponseEntity<*> {
-        return if (uploadService.completeUpload(gid, request)) {
-            // 契约 200 响应 schema 为 ApiErrorEnvelope：以 code=OK 的 envelope 形状回执。
-            ResponseEntity.ok(ApiErrorEnvelope(ApiError("OK", "download finalized", "", HttpStatus.OK.value())))
-        } else {
-            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "No upload row for gid=$gid")
+        return try {
+            if (uploadService.completeUpload(gid, request)) {
+                // 契约 200 响应 schema 为 ApiErrorEnvelope：以 code=OK 的 envelope 形状回执。
+                ResponseEntity.ok(ApiErrorEnvelope(ApiError("OK", "download finalized", "", HttpStatus.OK.value())))
+            } else {
+                errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "No upload row for gid=$gid")
+            }
+        } catch (e: UploadDisabledException) {
+            // MASTER-2026-08-22 S3：开关关闭 → 403（操作被服务端策略禁止，
+            // 而非请求本身非法），与 storePage 的 400 VALIDATION_ERROR 区分。
+            logger.warn("Upload finalize rejected for gid={}: {}", gid, e.message)
+            errorEnvelope(HttpStatus.FORBIDDEN, "UPLOAD_DISABLED", "Download upload is disabled on this server")
         }
     }
 }

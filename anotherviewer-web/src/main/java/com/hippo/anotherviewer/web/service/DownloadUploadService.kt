@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service
 import java.io.File
 import java.util.regex.Pattern
 
+/** MASTER-2026-08-22 S3：upload_enabled 关闭时由 [DownloadUploadService] 抛出。 */
+class UploadDisabledException(message: String) : IllegalArgumentException(message)
+
 /**
  * App 推送本地下载（push-of-local-downloads）：App 把已下载漫画的元数据与逐页
  * 图片推送到服务器，落盘布局与服务器下载器一致——
@@ -113,8 +116,14 @@ class DownloadUploadService(
         target.writeBytes(bytes)
     }
 
-    /** 收尾：行存在即更新 state=3 + total/done；不存在返回 false（控制器转 404）。 */
+    /** 收尾：行存在即更新 state=3 + total/done；不存在返回 false（控制器转 404）。
+     *  MASTER-2026-08-22 S3：受 download.upload_enabled 门控——关闭时抛
+     *  [UploadDisabledException]（控制器转 403），与 storePage 同语义，
+     *  不允许绕过开关 finalize 存量行。 */
     fun completeUpload(gid: Long, request: UploadCompleteRequest): Boolean {
+        if (!isUploadEnabled()) {
+            throw UploadDisabledException("upload disabled")
+        }
         val entity = downloadRepository.findByGid(gid) ?: return false
         entity.state = 3
         entity.total = request.total
