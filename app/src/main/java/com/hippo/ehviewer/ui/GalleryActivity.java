@@ -374,6 +374,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
+        mGalleryView.setOneHandMode(Settings.getOneHandMode());
         mGalleryProvider.setListener(mGalleryAdapter);
         mGalleryProvider.setGLRoot(mGLRootView);
 
@@ -1177,7 +1178,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mScreenLightness = mView.findViewById(R.id.screen_lightness);
 
             mScreenRotation.setSelection(Settings.getScreenRotation());
-            mReadingDirection.setSelection(Settings.getReadingDirection());
+            // 菜单阅读方向下拉框含第4项“单手模式”：单手开启时选中第3项，否则按实际排版方向
+            mReadingDirection.setSelection(Settings.getOneHandMode()
+                    ? 3 : Settings.getReadingDirection());
             mScaleMode.setSelection(Settings.getPageScaling());
             mStartPosition.setSelection(Settings.getStartPosition());
             mStartTransferTime.setProgress(Settings.getStartTransferTime());
@@ -1224,7 +1227,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
 
             int screenRotation = mScreenRotation.getSelectedItemPosition();
-            int layoutMode = GalleryView.sanitizeLayoutMode(mReadingDirection.getSelectedItemPosition());
+            int readingDirectionPos = mReadingDirection.getSelectedItemPosition();
+            // 下拉框第4项（position 3）为“单手模式”：锁定为从左至右排版并开启翻页翻转
+            boolean oneHandMode = readingDirectionPos == 3;
+            int layoutMode = oneHandMode
+                    ? GalleryView.LAYOUT_LEFT_TO_RIGHT
+                    : GalleryView.sanitizeLayoutMode(readingDirectionPos);
             int scaleMode = GalleryView.sanitizeScaleMode(mScaleMode.getSelectedItemPosition());
             int startPosition = GalleryView.sanitizeStartPosition(mStartPosition.getSelectedItemPosition());
             boolean keepScreenOn = mKeepScreenOn.isChecked();
@@ -1244,6 +1252,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
             Settings.putScreenRotation(screenRotation);
             Settings.putReadingDirection(layoutMode);
+            Settings.putOneHandMode(oneHandMode);
             Settings.putPageScaling(scaleMode);
             Settings.putStartPosition(startPosition);
             Settings.putStartTransferTime(transferTime);
@@ -1281,6 +1290,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
             setRequestedOrientation(orientation);
             mGalleryView.setLayoutMode(layoutMode);
+            mGalleryView.setOneHandMode(oneHandMode);
             mGalleryView.setScaleMode(scaleMode);
             mGalleryView.setStartPosition(startPosition);
             if (keepScreenOn) {
