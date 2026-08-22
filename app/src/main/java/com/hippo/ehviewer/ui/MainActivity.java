@@ -58,6 +58,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -403,6 +406,15 @@ public final class MainActivity extends StageActivity
         updateProfile();
         mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
         TextView mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
+
+        if (mNavView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mNavView, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                headerLayout.setPadding(headerLayout.getPaddingLeft(), systemBars.top, headerLayout.getPaddingRight(), headerLayout.getPaddingBottom());
+                mNavView.setPadding(mNavView.getPaddingLeft(), mNavView.getPaddingTop(), mNavView.getPaddingRight(), systemBars.bottom);
+                return insets;
+            });
+        }
 
         limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 

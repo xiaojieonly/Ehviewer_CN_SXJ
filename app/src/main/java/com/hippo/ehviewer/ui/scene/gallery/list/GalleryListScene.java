@@ -54,6 +54,9 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -681,18 +684,10 @@ public final class GalleryListScene extends BaseScene
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
-        mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(),
-                mRecyclerView.getPaddingTop() + statusBarHeight,
-                mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
-//        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB + statusBarHeight,
-                fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
-
-        refreshLayout.setHeaderTranslationY(paddingTopSB + statusBarHeight);
 
         mLeftDrawable = new DrawerArrowDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
         mRightDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
@@ -703,14 +698,7 @@ public final class GalleryListScene extends BaseScene
         setSearchBarHint(context, mSearchBar);
         setSearchBarSuggestionProvider(mSearchBar);
 
-        // Offset the floating search bar below the transparent status bar.
-        ViewGroup.MarginLayoutParams searchBarLp = (ViewGroup.MarginLayoutParams) mSearchBar.getLayoutParams();
-        searchBarLp.topMargin += statusBarHeight;
-        mSearchBar.setLayoutParams(searchBarLp);
-
         mSearchLayout.setHelper(this);
-        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB + statusBarHeight,
-                mSearchLayout.getPaddingRight(), mSearchLayout.getPaddingBottom() + paddingBottomFab);
 
         mFabLayout.setAutoCancel(true);
         mFabLayout.setExpanded(false);
@@ -718,6 +706,45 @@ public final class GalleryListScene extends BaseScene
         mFabLayout.setOnClickFabListener(this);
         mFabLayout.setOnExpandListener(this);
         addAboveSnackView(mFabLayout);
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int topInset = systemBars.top;
+            int bottomInset = systemBars.bottom;
+
+            ViewGroup.MarginLayoutParams searchBarLp = (ViewGroup.MarginLayoutParams) mSearchBar.getLayoutParams();
+            searchBarLp.topMargin = resources.getDimensionPixelOffset(R.dimen.gallery_search_bar_margin_v) + topInset;
+            mSearchBar.setLayoutParams(searchBarLp);
+
+            mRecyclerView.setPadding(
+                    mRecyclerView.getPaddingLeft(),
+                    paddingTopSB + topInset,
+                    mRecyclerView.getPaddingRight(),
+                    bottomInset
+            );
+
+            fastScroller.setPadding(
+                    fastScroller.getPaddingLeft(),
+                    paddingTopSB + topInset,
+                    fastScroller.getPaddingRight(),
+                    bottomInset
+            );
+
+            refreshLayout.setHeaderTranslationY(paddingTopSB + topInset);
+
+            mSearchLayout.setPadding(
+                    mSearchLayout.getPaddingLeft(),
+                    paddingTopSB + topInset,
+                    mSearchLayout.getPaddingRight(),
+                    paddingBottomFab + bottomInset
+            );
+
+            ViewGroup.MarginLayoutParams fabLp = (ViewGroup.MarginLayoutParams) mFabLayout.getLayoutParams();
+            fabLp.bottomMargin = bottomInset;
+            mFabLayout.setLayoutParams(fabLp);
+
+            return insets;
+        });
 
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
@@ -1286,8 +1313,14 @@ public final class GalleryListScene extends BaseScene
         args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
         args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, gi);
         Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-        View thumb;
-        if (null != view && null != (thumb = view.findViewById(R.id.thumb))) {
+        View thumb = null;
+        if (null != view) {
+            thumb = view.findViewById(R.id.thumb_new);
+            if (thumb == null) {
+                thumb = view.findViewById(R.id.thumb);
+            }
+        }
+        if (null != thumb) {
             announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
         }
         startScene(announcer);

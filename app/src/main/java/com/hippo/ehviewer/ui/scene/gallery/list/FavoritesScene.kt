@@ -41,6 +41,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -290,22 +293,10 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         )
         mRecyclerView!!.setDrawSelectorOnTop(true)
         mRecyclerView!!.setClipToPadding(false)
-        mRecyclerView!!.setPadding(
-            mRecyclerView!!.getPaddingLeft(),
-            mRecyclerView!!.getPaddingTop() + statusBarHeight,
-            mRecyclerView!!.getPaddingRight(), mRecyclerView!!.getPaddingBottom()
-        )
         mRecyclerView!!.setOnItemClickListener(this)
         mRecyclerView!!.setOnItemLongClickListener(this)
         mRecyclerView!!.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM)
         mRecyclerView!!.setCustomCheckedListener(this)
-
-        fastScroller.setPadding(
-            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB + statusBarHeight,
-            fastScroller.getPaddingRight(), fastScroller.getPaddingBottom()
-        )
-
-        refreshLayout.setHeaderTranslationY((paddingTopSB + statusBarHeight).toFloat())
 
         mLeftDrawable = DrawerArrowDrawable(
             context,
@@ -321,10 +312,6 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mSearchBar!!.setHelper(this)
         mSearchBar!!.setAllowEmptySearch(false)
         updateSearchBar()
-        // Offset the floating search bar below the transparent status bar.
-        val searchBarLp = mSearchBar!!.layoutParams as ViewGroup.MarginLayoutParams
-        searchBarLp.topMargin += statusBarHeight
-        mSearchBar!!.layoutParams = searchBarLp
         mSearchBarMover = SearchBarMover(this, mSearchBar, mRecyclerView)
 
         mActionFabDrawable =
@@ -336,6 +323,38 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mFabLayout!!.setOnClickFabListener(this)
         mFabLayout!!.setOnExpandListener(this)
         addAboveSnackView(mFabLayout)
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val topInset = systemBars.top
+            val bottomInset = systemBars.bottom
+
+            val searchBarLp = mSearchBar!!.layoutParams as ViewGroup.MarginLayoutParams
+            searchBarLp.topMargin = resources.getDimensionPixelOffset(R.dimen.gallery_search_bar_margin_v) + topInset
+            mSearchBar!!.layoutParams = searchBarLp
+
+            mRecyclerView!!.setPadding(
+                mRecyclerView!!.paddingLeft,
+                paddingTopSB + topInset,
+                mRecyclerView!!.paddingRight,
+                bottomInset
+            )
+
+            fastScroller.setPadding(
+                fastScroller.paddingLeft,
+                paddingTopSB + topInset,
+                fastScroller.paddingRight,
+                bottomInset
+            )
+
+            refreshLayout.setHeaderTranslationY((paddingTopSB + topInset).toFloat())
+
+            val fabLp = mFabLayout!!.layoutParams as ViewGroup.MarginLayoutParams
+            fabLp.bottomMargin = bottomInset
+            mFabLayout!!.layoutParams = fabLp
+
+            insets
+        }
 
         // Restore search mode
         if (mSearchMode) {
@@ -614,8 +633,8 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
                 )
                 args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, gi)
                 val announcer = Announcer(GalleryDetailScene::class.java).setArgs(args)
-                val thumb: View?
-                if (null != (view.findViewById<View?>(R.id.thumb).also { thumb = it })) {
+                val thumb = view.findViewById<View?>(R.id.thumb_new) ?: view.findViewById<View?>(R.id.thumb)
+                if (thumb != null) {
                     announcer.setTranHelper(EnterGalleryDetailTransaction(thumb))
                 }
                 startScene(announcer)

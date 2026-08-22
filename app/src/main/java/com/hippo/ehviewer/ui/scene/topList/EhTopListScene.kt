@@ -10,6 +10,9 @@ import android.widget.AdapterView
 import android.widget.FrameLayout
 import android.widget.Spinner
 import androidx.annotation.IntDef
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.hippo.ehviewer.EhApplication
@@ -74,29 +77,10 @@ class EhTopListScene : BaseScene() {
     ): View {
         val view = inflater.inflate(R.layout.scene_gallery_top_list, container, false)
 
-        // The scene draws under the transparent status bar. Make the teal selector bar fill the
-        // status bar region (status bar = bar color, consistent with toolbars on other screens):
-        // dock it full-width to the very top, pad its content below the bar, then push the list
-        // down so it clears the now-taller bar.
         val res = view.resources
-        var statusBarHeight = 0
-        val sbhId = res.getIdentifier("status_bar_height", "dimen", "android")
-        if (sbhId > 0) statusBarHeight = res.getDimensionPixelSize(sbhId)
-
         val spinner = view.findViewById<Spinner>(R.id.top_list_spinner)
         spinner.setSelection(0)
         spinner.onItemSelectedListener = TopListKindSelectedListener()
-        if (statusBarHeight > 0) {
-            val sideInset = res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
-            (spinner.layoutParams as ViewGroup.MarginLayoutParams).let { lp ->
-                lp.leftMargin = 0
-                lp.topMargin = 0
-                lp.rightMargin = 0
-                lp.height = res.getDimensionPixelOffset(R.dimen.top_list_spinner_height) + statusBarHeight
-                spinner.layoutParams = lp
-            }
-            spinner.setPadding(sideInset, statusBarHeight + spinner.paddingTop, sideInset, spinner.paddingBottom)
-        }
 
         val frameLayout = view.findViewById<FrameLayout>(R.id.page_detail_view)
         val transitionView = view.findViewById<View>(R.id.data_loading_view)
@@ -104,14 +88,39 @@ class EhTopListScene : BaseScene() {
 
         recyclerView = view.findViewById(R.id.top_list_recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(ehContext)
-        if (statusBarHeight > 0) {
+        recyclerView?.clipToPadding = false
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val topInset = systemBars.top
+            val bottomInset = systemBars.bottom
+
+            val sideInset = res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
+            (spinner.layoutParams as ViewGroup.MarginLayoutParams).let { lp ->
+                lp.leftMargin = 0
+                lp.topMargin = 0
+                lp.rightMargin = 0
+                lp.height = res.getDimensionPixelOffset(R.dimen.top_list_spinner_height) + topInset
+                spinner.layoutParams = lp
+            }
+            spinner.setPadding(sideInset, topInset, sideInset, spinner.paddingBottom)
+
             (recyclerView?.parent as? View)?.let { scroll ->
                 (scroll.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
                     lp.topMargin = res.getDimensionPixelOffset(R.dimen.top_list_scrollview_margin_top) +
-                            statusBarHeight - res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
+                            topInset - res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
                     scroll.layoutParams = lp
                 }
             }
+
+            recyclerView?.setPadding(
+                recyclerView?.paddingLeft ?: 0,
+                recyclerView?.paddingTop ?: 0,
+                recyclerView?.paddingRight ?: 0,
+                bottomInset
+            )
+
+            insets
         }
 
         if (!hasFirstRefresh) {

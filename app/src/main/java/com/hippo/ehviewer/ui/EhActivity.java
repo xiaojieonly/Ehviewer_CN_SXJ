@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.hippo.content.ContextLocalWrapper;
 import com.hippo.ehviewer.Analytics;
@@ -47,12 +48,7 @@ public abstract class EhActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().getDecorView().setSystemUiVisibility(
-                    getWindow().getDecorView().getSystemUiVisibility()
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            );
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
             getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
             getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         }
@@ -62,6 +58,15 @@ public abstract class EhActivity extends AppCompatActivity {
                 visibility |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
             } else {
                 visibility &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(visibility);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int visibility = getWindow().getDecorView().getSystemUiVisibility();
+            if (Settings.getTheme() == Settings.THEME_LIGHT) {
+                visibility |= android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            } else {
+                visibility &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             }
             getWindow().getDecorView().setSystemUiVisibility(visibility);
         }
