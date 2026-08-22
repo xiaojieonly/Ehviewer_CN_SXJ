@@ -154,6 +154,21 @@ public class WebUiUploadClientHttpTest {
     }
 
     @Test
+    public void initNonJsonErrorPageThrowsIOExceptionNotRuntime() throws Exception {
+        // 反代/错误页返回 HTML（如 502 页）：必须包装为 IOException（pushOne 只捕
+        // IOException），RuntimeException 逃逸会击穿 executor 线程令前台服务崩溃。
+        respond(502, "<html><body>502 Bad Gateway</body></html>");
+        try {
+            WebUiUploadClient.uploadInit(config, 43L, new WebUiUploadModels.UploadInitRequest());
+            fail("非 JSON body 必须包装为 IOException");
+        } catch (IOException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Malformed init response"));
+            assertTrue(e.getMessage(), e.getMessage().contains("502"));
+        }
+        capture();
+    }
+
+    @Test
     public void initEmptyBodyThrowsIOExceptionWithStatus() throws Exception {
         respond(200, "");
         try {

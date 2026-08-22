@@ -90,7 +90,15 @@ public final class WebUiUploadClient {
         try (Response response = client().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             String text = body != null ? body.string() : "";
-            WebUiUploadModels.InitResponse parsed = JSON.parseObject(text, WebUiUploadModels.InitResponse.class);
+            WebUiUploadModels.InitResponse parsed;
+            try {
+                parsed = JSON.parseObject(text, WebUiUploadModels.InitResponse.class);
+            } catch (RuntimeException e) {
+                // 反代/错误页返回非 JSON（如 HTML 502）：包装成 IOException，
+                // 调用方（pushOne）只捕 IOException——否则 RuntimeException 逃逸
+                // executor 线程导致前台服务崩溃。
+                throw new IOException("Malformed init response (HTTP " + response.code() + "): " + e.getMessage(), e);
+            }
             if (parsed == null) {
                 throw new IOException("HTTP " + response.code() + " " + response.message());
             }
