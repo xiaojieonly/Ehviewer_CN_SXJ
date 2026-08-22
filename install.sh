@@ -20,7 +20,7 @@
 #   --port PORT          服务端口（默认 8080）
 #   --data-dir DIR       数据目录（默认：<仓库根>/data）
 #   --no-build           JAR 缺失时不自动构建
-#   --firewall           在 firewalld 中放开服务端口
+#   --firewall           在 firewalld/ufw 中放开服务端口
 #   --no-firewall        不改动防火墙
 #   --yes                非交互模式：所有提问直接取默认值与命令行参数
 #   --uninstall          移除 systemd 服务（不删除数据目录）
@@ -463,7 +463,7 @@ if [ "$READY" = 0 ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 8. 防火墙
+# 8. 防火墙（firewalld 优先，其次 ufw；均未运行则跳过）
 # ---------------------------------------------------------------------------
 if systemctl is-active --quiet firewalld; then
     if [ -z "$FIREWALL" ]; then
@@ -476,6 +476,19 @@ if systemctl is-active --quiet firewalld; then
         else
             sudo firewall-cmd --permanent --add-port="$PORT/tcp" > /dev/null
             sudo firewall-cmd --reload > /dev/null
+            echo "防火墙已放开 $PORT/tcp"
+        fi
+    fi
+elif command -v ufw >/dev/null 2>&1 && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
+    if [ -z "$FIREWALL" ]; then
+        ans=$(ask "检测到 ufw 运行中，放开 $PORT/tcp 允许局域网访问？(y/n)" "y")
+        case "$ans" in y|Y) FIREWALL=1 ;; *) FIREWALL=0 ;; esac
+    fi
+    if [ "$FIREWALL" = 1 ]; then
+        if sudo ufw status 2>/dev/null | grep -q "$PORT/tcp"; then
+            echo "防火墙端口 $PORT/tcp 已开放"
+        else
+            sudo ufw allow "$PORT/tcp" > /dev/null
             echo "防火墙已放开 $PORT/tcp"
         fi
     fi

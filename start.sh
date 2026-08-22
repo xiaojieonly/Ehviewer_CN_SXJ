@@ -119,8 +119,9 @@ if [ -z "$JAR_FILE" ]; then
     exit 1
 fi
 
-# SQLite 不会自动创建父目录（Docker 部署由 ENTRYPOINT 负责，裸机部署在此创建）
-mkdir -p ./data ./data/downloads ./data/cache
+# SQLite 不会自动创建父目录（Docker 部署由 ENTRYPOINT 负责，裸机部署在此创建）；
+# backups/ 为备份产物落点，一并预建
+mkdir -p ./data ./data/downloads ./data/cache ./data/backups
 
 PID_FILE="anotherviewer-web.pid"
 LOG_FILE="anotherviewer-web.log"
