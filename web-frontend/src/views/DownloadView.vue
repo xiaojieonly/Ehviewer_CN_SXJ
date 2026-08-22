@@ -107,7 +107,7 @@
       :loading-more="loadingMore"
       v-model:refreshing="refreshing"
       empty-text="No downloads"
-      error-text="Failed to load downloads"
+      :error-text="errorText"
       @refresh="onRefresh"
       @retry="onRetry"
     >
@@ -252,7 +252,6 @@
  * 3 finish · 4 failed (anotherviewer-web mirrors the Android constants).
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import type { StompSubscription } from '@stomp/stompjs'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/download'
@@ -297,6 +296,19 @@ const total = ref(0)
 /** Guard against overlapping load-more requests. */
 const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
+/** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
+const errorText = ref('Failed to load downloads')
+
+/**
+ * F4: extracts the business error code from the API error envelope
+ * (`{error:{code,message,traceId,status}}` carried by axios as
+ * `error.response.data`); null for any other failure shape.
+ */
+function errorCodeOf(error: unknown): string | null {
+  const code = (error as { response?: { data?: { error?: { code?: unknown } } } } | undefined)
+    ?.response?.data?.error?.code
+  return typeof code === 'string' ? code : null
+}
 
 interface LabelTab {
   id: number | null
@@ -431,9 +443,17 @@ async function load(): Promise<void> {
   } catch (error) {
     if (seq !== requestSeq) return
     console.error('Failed to load downloads', error)
+    // F4: invalid regex in q → 400 REGEX_INVALID; name the cause instead of
+    // the generic "failed to load" tip (dedicated toast + error-state copy).
+    if (errorCodeOf(error) === 'REGEX_INVALID') {
+      errorText.value = '正则无效，请检查搜索/筛选的正则表达式'
+      showToast('正则无效，请检查筛选表达式')
+    } else {
+      errorText.value = 'Failed to load downloads'
+    }
     if (downloads.value.length === 0) {
       state.value = 'error'
-    } else {
+    } else if (errorCodeOf(error) !== 'REGEX_INVALID') {
       showToast('Failed to refresh downloads')
     }
   }
@@ -833,7 +853,9 @@ const liveSpeeds = ref<Record<number, number>>({})
 /** gid → last progress sample, used to derive speed from deltas. */
 const speedSamples = new Map<number, { done: number; time: number }>()
 
-let progressSubscription: StompSubscription | null = null
+/** True once the all-downloads subscription is registered (survives
+ *  reconnects via the composable's registry — no handle to keep). */
+let progressSubscribed = false
 
 function handleProgress(progress: DownloadProgress): void {
   const item = downloads.value.find((entry) => entry.gid === progress.gid)
@@ -864,8 +886,8 @@ function handleProgress(progress: DownloadProgress): void {
 watch(
   connected,
   (up) => {
-    if (up && !progressSubscription) {
-      progressSubscription = subscribeAll(handleProgress) ?? null
+    if (up && !progressSubscribed) {
+      progressSubscribed = !!subscribeAll(handleProgress)
     }
   },
   { immediate: true },

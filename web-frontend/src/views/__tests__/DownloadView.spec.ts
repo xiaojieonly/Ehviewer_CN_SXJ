@@ -636,4 +636,38 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     })
     vi.useRealTimers()
   })
+
+  /* ---------------- F4 REGEX_INVALID 错误识别 --------------- */
+
+  /** API 错误信封（{error:{code,message,traceId,status}}）的 axios 形状。 */
+  function apiError(code: string): {
+    response: { status: number; data: { error: { code: string; message: string; traceId: string; status: number } } }
+  } {
+    return {
+      response: {
+        status: 400,
+        data: { error: { code, message: '正则表达式无效', traceId: '0123456789abcdef', status: 400 } },
+      },
+    }
+  }
+
+  it('names REGEX_INVALID when the list load fails on an invalid regex (F4)', async () => {
+    vi.mocked(downloadApi.list).mockRejectedValue(apiError('REGEX_INVALID'))
+    await mountView()
+
+    // 首屏失败（无内容）→ 错误态 + 专属文案（不再是泛化的 Failed to load）。
+    expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('正则无效')
+    // Toast teleports to body — assert on document.
+    expect(document.querySelector('.toast')?.textContent).toContain('正则无效')
+  })
+
+  it('keeps the generic error tip for non-REGEX failures (F4)', async () => {
+    vi.mocked(downloadApi.list).mockRejectedValue(new Error('boom'))
+    await mountView()
+
+    expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('正则无效')
+    expect(document.querySelector('.toast')).toBeNull()
+  })
 })

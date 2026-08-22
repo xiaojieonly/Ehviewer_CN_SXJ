@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { mount, flushPromises, DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HistoryView from '../HistoryView.vue'
 import { historyApi } from '@/api/history'
@@ -246,5 +246,88 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     await flushPromises()
     expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined)
     vi.useRealTimers()
+  })
+
+  /* ---------------- F4 REGEX_INVALID 错误识别 --------------- */
+
+  /** API 错误信封（{error:{code,message,traceId,status}}）的 axios 形状。 */
+  function apiError(code: string): {
+    response: { status: number; data: { error: { code: string; message: string; traceId: string; status: number } } }
+  } {
+    return {
+      response: {
+        status: 400,
+        data: { error: { code, message: '正则表达式无效', traceId: '0123456789abcdef', status: 400 } },
+      },
+    }
+  }
+
+  it('names REGEX_INVALID when the server rejects the filter pattern (F4)', async () => {
+    vi.mocked(historyApi.listHistory).mockRejectedValue(apiError('REGEX_INVALID'))
+    wrapper = mount(HistoryView)
+    await flushPromises()
+    await flushPromises()
+
+    // 首屏失败（无内容）→ 错误态 + 专属文案（不再是泛化的 Failed to load）。
+    expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('正则无效')
+    // Toast teleports to body — assert on document.
+    expect(document.querySelector('.toast')?.textContent).toContain('正则无效')
+  })
+
+  it('keeps the generic error tip for non-REGEX failures (F4)', async () => {
+    vi.mocked(historyApi.listHistory).mockRejectedValue(new Error('boom'))
+    wrapper = mount(HistoryView)
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('正则无效')
+    expect(document.querySelector('.toast')).toBeNull()
+  })
+
+  /* ---------------- F6 清历史失败不再静默 --------------- */
+
+  it('closes the dialog and shows an error toast when clearing fails (F6)', async () => {
+    vi.mocked(historyApi.clearHistory).mockRejectedValue(new Error('boom'))
+    await mountHistory([makeHistoryItem({ gid: 1 })])
+
+    // FAB「Clear history」→ 确认对话框打开。
+    await wrapper
+      .findAll('.fab--mini')
+      .find((b) => b.attributes('aria-label') === 'Clear history')!
+      .trigger('click')
+    await flushPromises()
+    const scrim = document.querySelector('.dialog-scrim')
+    expect(scrim).not.toBeNull()
+
+    // 点击 Clear → 失败：对话框关闭（对齐成功路径）+ 错误 toast。
+    const clearBtn = new DOMWrapper(scrim!.querySelector<HTMLButtonElement>('.dialog__btn--danger')!)
+    await clearBtn.trigger('click')
+    await flushPromises()
+
+    expect(document.querySelector('.dialog-scrim')).toBeNull()
+    expect(document.querySelector('.toast')?.textContent).toContain('清除历史失败')
+    // 列表数据保持原样（未误清）。
+    expect(wrapper.text()).toContain('Sample Gallery')
+  })
+
+  it('clears the list and closes the dialog when clearing succeeds (F6 对照)', async () => {
+    await mountHistory([makeHistoryItem({ gid: 1 })])
+    await wrapper
+      .findAll('.fab--mini')
+      .find((b) => b.attributes('aria-label') === 'Clear history')!
+      .trigger('click')
+    await flushPromises()
+
+    const clearBtn = new DOMWrapper(
+      document.querySelector('.dialog-scrim')!.querySelector<HTMLButtonElement>('.dialog__btn--danger')!,
+    )
+    await clearBtn.trigger('click')
+    await flushPromises()
+
+    expect(document.querySelector('.dialog-scrim')).toBeNull()
+    expect(wrapper.find('[data-testid="content-state-empty"]').exists()).toBe(true)
+    expect(document.querySelector('.toast')).toBeNull()
   })
 })

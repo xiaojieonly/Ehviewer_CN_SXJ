@@ -152,7 +152,7 @@
                   :disabled="proxyLoading"
                   aria-label="代理服务器地址"
                   @update:model-value="(v) => (proxyForm.host = v)"
-                  @keydown.enter="testProxy"
+                  @keydown.enter="testProxyConnection"
                 />
               </div>
               <div class="proxy-fields__port">
@@ -196,7 +196,7 @@
             type="button"
             class="eh-session__btn eh-session__btn--secondary"
             :disabled="proxyTesting || proxyLoading"
-            @click="testProxy"
+            @click="testProxyConnection"
           >
             {{ proxyTesting ? '测试中…' : '测试连接' }}
           </button>
@@ -287,7 +287,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi, type EhSessionCookie, type EhSessionResponse } from '@/api/auth'
 import { settingsApi, type ProxySettings } from '@/api/settings'
-import client from '@/api/client'
+import { testProxy, type ProxyTestResult } from '@/api/proxy'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import {
   AppSegmented,
@@ -298,12 +298,6 @@ import {
   PrefRow,
   SectionHeader,
 } from '@/components/form'
-
-interface ProxyTestResult {
-  success: boolean
-  latencyMs: number
-  error: string
-}
 
 const SITE_OPTIONS = [
   { value: '0', label: 'e-hentai（无需登录）' },
@@ -502,11 +496,10 @@ async function saveProxy(): Promise<void> {
   }
 }
 
-async function testProxy(): Promise<void> {
+async function testProxyConnection(): Promise<void> {
   proxyTesting.value = true
   try {
-    const { data } = await client.post('/proxy/test', { ...proxyForm })
-    proxyTestResult.value = data
+    proxyTestResult.value = await testProxy({ ...proxyForm })
   } catch (e) {
     proxyTestResult.value = { success: false, latencyMs: 0, error: messageOf(e, '未知错误') }
   } finally {

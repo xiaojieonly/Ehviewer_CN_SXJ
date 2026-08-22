@@ -5,7 +5,7 @@
  * shared by every consumer through reference counting, so mounting/unmounting
  * views never tears down a connection another view still needs.
  *
- * Contract: `contracts/websocket-protocol.md` (FROZEN, v1.0.0).
+ * Contract: `contracts/websocket-protocol.md` (FROZEN, v1.1.0).
  *
  * Highlights:
  * - **Singleton + refcount**: one `Client` for the whole app; `connect()` /
@@ -30,7 +30,7 @@
  * - **Auto re-subscribe**: every subscription is recorded in a registry and
  *   re-established automatically after a reconnect (contract §1.5 step 4).
  * - **Reactive state**: {@link connectionState} / {@link lastError} are shared
- *   refs — the single source of truth re-exposed by `stores/ws.ts`.
+ *   refs — the single source of truth consumed directly by views/composables.
  *
  * Backward compatibility: the legacy bare-DTO helpers {@link subscribeDownload}
  * and {@link subscribeAll} (topics `/topic/download/{gid}` and
@@ -38,6 +38,9 @@
  * thin adapters over the same subscription engine and still return the live
  * `StompSubscription` so existing callers (e.g. `DownloadView.vue`) keep
  * type-checking unchanged.
+ *
+ * {@link subscribeProcessing} / {@link subscribeJob} / {@link subscribeJobs}
+ * are reserved for future processing UI (image-processing pipeline hook).
  */
 import {
   ref,
@@ -677,7 +680,7 @@ export interface UseWebSocketReturn {
  * the returned helpers is tracked and automatically torn down when the host
  * component unmounts, and the connection reference is released. Subscriptions
  * created via the bare module-level functions are NOT auto-cleaned and must be
- * unsubscribed manually (used by `stores/ws.ts`).
+ * unsubscribed manually.
  *
  * @example
  * ```vue

@@ -68,7 +68,7 @@
       v-model:refreshing="refreshing"
       :loading-more="loadingMore"
       empty-text="No favorites"
-      error-text="Failed to load favorites"
+      :error-text="errorText"
       @refresh="onRefresh"
       @retry="onRetry"
       @load-more="onLoadMore"
@@ -99,6 +99,11 @@
       :actions="fabActions"
       @click-secondary="onFabAction"
     />
+
+    <Teleport to="body">
+      <!-- Toast (Android Toast equivalent, F4) -->
+      <div v-if="toastMessage" class="toast" role="status">{{ toastMessage }}</div>
+    </Teleport>
   </div>
 </template>
 
@@ -126,7 +131,7 @@
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { favoriteApi } from '@/api/favorite'
 import type { FavoriteItem } from '@/api/favorite'
@@ -200,6 +205,19 @@ const state = ref<ViewState>('loading')
 const refreshing = ref(false)
 const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
+/** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
+const errorText = ref('Failed to load favorites')
+
+/**
+ * F4: extracts the business error code from the API error envelope
+ * (`{error:{code,message,traceId,status}}` carried by axios as
+ * `error.response.data`); null for any other failure shape.
+ */
+function errorCodeOf(error: unknown): string | null {
+  const code = (error as { response?: { data?: { error?: { code?: unknown } } } } | undefined)
+    ?.response?.data?.error?.code
+  return typeof code === 'string' ? code : null
+}
 
 /** Monotonic request guard — stale responses (slot switches / refresh) drop. */
 let requestSeq = 0
@@ -321,9 +339,19 @@ async function loadPage(page: number, append: boolean): Promise<void> {
   } catch (error) {
     if (seq !== requestSeq) return
     console.error('Failed to load favorites', error)
+    // F4: invalid regex in q → 400 REGEX_INVALID; name the cause instead of
+    // the generic "failed to load" tip (dedicated toast + error-state copy).
+    if (errorCodeOf(error) === 'REGEX_INVALID') {
+      errorText.value = '正则无效，请检查搜索/筛选的正则表达式'
+      showToast('正则无效，请检查筛选表达式')
+    } else {
+      errorText.value = 'Failed to load favorites'
+    }
     if (!append && favorites.value.length === 0) state.value = 'error'
   } finally {
-    if (seq === requestSeq && append) loadingMore.value = false
+    // F5: 无条件复位——append 被后续 replace 作废（seq 过期）时也必须松开
+    // loadingMore，否则页脚 spinner 永久卡死（对照 DownloadView.loadMore）。
+    if (append) loadingMore.value = false
   }
 }
 
@@ -378,6 +406,23 @@ function onFabAction(action: FabAction): void {
     contentRef.value?.scrollToTop()
   }
 }
+
+/* -------------------------------------------------------------- toast --- */
+
+const toastMessage = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+function showToast(message: string): void {
+  toastMessage.value = message
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+  }, 2400)
+}
+
+onUnmounted(() => {
+  clearTimeout(toastTimer)
+})
 
 onMounted(() => {
   // Folder names (B-4) come from preferences. GalleryList loads them when it
@@ -540,6 +585,40 @@ onMounted(() => {
 /* -------------------------------------------------------------- list ---- */
 /* Row layout, entrance animation and stagger live in GalleryList (B-1);
    only the favorites-specific slot badge is styled here. */
+
+/* ------------------------------------------------------------- toast ---- */
+.toast {
+  position: fixed;
+  left: 50%;
+  /* The FAB cluster is offset by --safe-area-bottom (FabLayout) — carry the
+     same inset so the toast keeps its distance above the FABs / home
+     indicator on cutout devices. */
+  bottom: calc(96px + var(--safe-area-bottom));
+  transform: translateX(-50%);
+  z-index: 300;
+  padding: 10px 20px;
+  background: var(--grey-850);
+  color: var(--grey-100);
+  border-radius: var(--card-radius);
+  font-size: var(--text-small);
+  box-shadow: 0 3px 10px var(--shadow-color);
+  opacity: 1;
+  animation: toast-in 220ms var(--ease-decelerate-quint);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
 
 /* Favorite slot indicator — heart + folder number, accent background. */
 .slot-badge {
