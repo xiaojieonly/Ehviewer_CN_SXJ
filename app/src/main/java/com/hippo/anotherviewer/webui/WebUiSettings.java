@@ -50,12 +50,14 @@ public final class WebUiSettings {
 
     private static final MediaType JSON_MEDIA = MediaType.get("application/json; charset=utf-8");
 
+    private final Context appContext;
     private final SharedPreferences preferences;
     private final WebUiCredentialStore credentialStore;
 
     public WebUiSettings(Context context) {
+        this.appContext = context.getApplicationContext();
         this.preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        this.credentialStore = new WebUiCredentialStore(context);
+        this.credentialStore = new WebUiCredentialStore(appContext);
     }
 
     /**
@@ -94,11 +96,15 @@ public final class WebUiSettings {
     }
 
     public void clearConfig() {
-        String deviceId = preferences.getString(KEY_DEVICE_ID, "");
         WebUiConfig config = loadConfig();
-        // The full clear wipes the per-server scoped high-water marks and key
-        // sets along with the connection, so a fresh config starts from a full
-        // sync rather than a stale incremental one.
+        String deviceId = preferences.getString(KEY_DEVICE_ID, "");
+        // The full clear wipes the connection and this file's per-server
+        // scoped high-water marks. The engine's sync bookkeeping — snapshot /
+        // pending key sets and the B9 push ledgers — lives in a separate prefs
+        // file ({@link SiteDbWebUiSyncStore#PREFS}), so it is wiped separately
+        // below by baseUrl prefix. Together both files reset, so a fresh
+        // config starts from a clean full sync rather than a stale incremental
+        // one.
         preferences.edit().clear().apply();
         if (!TextUtils.isEmpty(deviceId)) {
             // Keep a stable device identity across reconfiguration so the server
@@ -106,6 +112,7 @@ public final class WebUiSettings {
             preferences.edit().putString(KEY_DEVICE_ID, deviceId).apply();
         }
         if (config != null) {
+            SiteDbWebUiSyncStore.clearServerState(appContext, config.baseUrl());
             revokeServerToken(config);
         }
     }

@@ -40,7 +40,15 @@ import java.util.Set;
  */
 public class SiteDbWebUiSyncStore implements WebUiSyncStore {
 
-    private static final String PREFS = "webui_sync_state";
+    /**
+     * SharedPreferences file holding the per-server sync bookkeeping (the
+     * snapshot/pending key sets and B9 push ledgers), keyed as
+     * {@code serverKey + suffix} with every suffix starting with {@code "."}.
+     * Lives apart from the connection prefs ({@code webui_settings}), so
+     * clearing the connection alone cannot reach it — see
+     * {@link #clearServerState}.
+     */
+    public static final String PREFS = "webui_sync_state";
 
     @Override
     public List<GalleryInfo> getAllLocalFavorites() {
@@ -235,6 +243,41 @@ public class SiteDbWebUiSyncStore implements WebUiSyncStore {
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    /**
+     * Removes every sync-bookkeeping entry scoped to {@code serverKey} from
+     * the {@link #PREFS} file — the snapshot/pending key sets and push ledgers
+     * the engine persists under {@code serverKey + "." + suffix} keys. Called
+     * from {@link WebUiSettings#clearConfig()} so a logout/re-pairing also
+     * clears this cross-file shard; without it the stale snapshot and ledger
+     * survive reconfiguration and the next sync against the same URL resumes
+     * incrementally from stale state instead of a clean full sync. The
+     * {@code "."}-suffixed prefix keeps the wipe exact: one baseUrl that is a
+     * strict string prefix of another (e.g. {@code http://h:80} vs
+     * {@code http://h:8080}) never collides, because every shard key carries
+     * the dot separator.
+     */
+    public static void clearServerState(android.content.Context context, String serverKey) {
+        android.content.SharedPreferences sp =
+                context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
+        String prefix = serverKey + ".";
+        java.util.List<String> doomed = new java.util.ArrayList<>();
+        for (String key : sp.getAll().keySet()) {
+            if (key.startsWith(prefix)) {
+                doomed.add(key);
+            }
+        }
+        if (doomed.isEmpty()) {
+            return;
+        }
+        android.content.SharedPreferences.Editor editor = sp.edit();
+        for (String key : doomed) {
+            editor.remove(key);
+        }
+        // commit() not apply(): clearConfig runs once per logout, and callers /
+        // tests read the surviving shards immediately afterwards.
+        editor.commit();
     }
 
     /** Static helpers for the comma-separated key-set persistence. */

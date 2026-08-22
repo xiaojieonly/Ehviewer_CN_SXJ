@@ -101,6 +101,44 @@ public class WebUiSettingsTest {
     }
 
     @Test
+    public void testClearConfigWipesSyncStateShardsOnlyForClearedServer() {
+        // A1: the engine's snapshot/pending/ledger bookkeeping lives in the
+        // separate webui_sync_state file under "<baseUrl>.<suffix>" keys.
+        // clearConfig must wipe exactly the cleared server's shard and leave
+        // every other key (other servers, unprefixed entries) untouched.
+        android.content.SharedPreferences syncState = RuntimeEnvironment.application
+                .getSharedPreferences("webui_sync_state", Context.MODE_PRIVATE);
+        syncState.edit()
+                .putString(serverA.baseUrl() + ".snapshot.downloads", "4")
+                .putString(serverA.baseUrl() + ".pending.favorites", "1")
+                .putString(serverA.baseUrl() + ".ledger.downloads", "{\"4\":9000}")
+                .putString(serverB.baseUrl() + ".snapshot.downloads", "5")
+                .putString("unrelated-key", "keep")
+                .commit();
+        try {
+            settings.saveConfig(serverA);
+
+            settings.clearConfig();
+
+            assertEquals(0, countKeysWithPrefix(syncState, serverA.baseUrl() + "."));
+            assertEquals("5", syncState.getString(serverB.baseUrl() + ".snapshot.downloads", null));
+            assertEquals("keep", syncState.getString("unrelated-key", null));
+        } finally {
+            syncState.edit().clear().commit();
+        }
+    }
+
+    private static int countKeysWithPrefix(android.content.SharedPreferences prefs, String prefix) {
+        int count = 0;
+        for (String key : prefs.getAll().keySet()) {
+            if (key.startsWith(prefix)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Test
     public void testPolicyDefaultsAndRoundTrip() {
         assertEquals("device_priority", settings.conflictStrategy());
         assertEquals(1, settings.clientTier());
