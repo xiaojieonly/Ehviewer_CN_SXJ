@@ -349,7 +349,9 @@ async function loadPage(page: number, append: boolean): Promise<void> {
     }
     if (!append && favorites.value.length === 0) state.value = 'error'
   } finally {
-    if (seq === requestSeq && append) loadingMore.value = false
+    // F5: 无条件复位——append 被后续 replace 作废（seq 过期）时也必须松开
+    // loadingMore，否则页脚 spinner 永久卡死（对照 DownloadView.loadMore）。
+    if (append) loadingMore.value = false
   }
 }
 

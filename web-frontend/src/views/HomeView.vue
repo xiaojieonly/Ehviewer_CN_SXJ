@@ -307,7 +307,9 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
       contentState.value = 'error'
     }
   } finally {
-    if (seq === requestSeq && mode === 'append') loadingMore.value = false
+    // F5: 无条件复位——append 被后续 replace 作废（seq 过期）时也必须松开
+    // loadingMore，否则页脚 spinner 永久卡死（对照 DownloadView.loadMore）。
+    if (mode === 'append') loadingMore.value = false
   }
 }
 

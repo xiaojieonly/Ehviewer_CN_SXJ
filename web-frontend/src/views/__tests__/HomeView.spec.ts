@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { reactive } from 'vue'
 import HomeView from '../HomeView.vue'
+import SearchBar from '@/components/search/SearchBar.vue'
 import { galleryApi } from '@/api/gallery'
 import { preferencesApi } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -264,6 +265,39 @@ describe('HomeView (首页)', () => {
     reactive(routeMock).query = { feed: 'toplist' }
     await flushPromises()
     expect(galleryApi.feed).toHaveBeenLastCalledWith('toplist', 0, 25)
+  })
+
+  it('resets loadingMore when an in-flight append is superseded by a new search (F5)', async () => {
+    // Page 0 resolves; the page-1 append hangs until the test releases it.
+    let releaseAppend: (value: GalleryListResponse) => void = () => {}
+    vi.mocked(galleryApi.search).mockImplementation(
+      (_kw?: string, _category?: number, page?: number): Promise<GalleryListResponse> => {
+        if ((page ?? 0) === 0) {
+          return Promise.resolve({ success: true, data: [gallery()], total: 50 })
+        }
+        return new Promise<GalleryListResponse>((resolve) => {
+          releaseAppend = resolve
+        })
+      },
+    )
+    wrapper = mount(HomeView)
+    await flushPromises()
+    expect(wrapper.find('[data-testid="content-state-content"]').exists()).toBe(true)
+
+    // 滚动近底 → 触发 append（第 2 页，挂起中）。
+    const scroller = wrapper.find('.fast-scroller__container').element as HTMLElement
+    scroller.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="content-loading-more"]').exists()).toBe(true)
+
+    // 飞行中的 append 被新的搜索（replace，seq 作废旧请求）取代。
+    wrapper.findComponent(SearchBar).vm.$emit('search', 'new-keyword')
+    await flushPromises()
+
+    // 释放被作废的 append——loadingMore 必须复位（页脚 spinner 消失）。
+    releaseAppend({ success: true, data: [], total: 0 })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="content-loading-more"]').exists()).toBe(false)
   })
 })
 
