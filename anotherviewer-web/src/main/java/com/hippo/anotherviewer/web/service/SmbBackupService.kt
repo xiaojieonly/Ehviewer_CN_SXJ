@@ -148,6 +148,15 @@ class SmbBackupService(
     }
 
     private fun executeSync(configEntity: SmbConfigEntity, aggressive: Boolean, generation: Int) {
+        // MASTER-2026-08-22 P6：终态进度保留真实计数（此前 completed/failed 一律清零）；
+        // speed 以「每秒同步条目数」计（此前恒 0，DTO 注释同步更正）。
+        var lastTotal = 0
+        var lastSynced = 0
+        val startMs = System.currentTimeMillis()
+        fun filesPerSec(): Long {
+            val elapsed = System.currentTimeMillis() - startMs
+            return if (elapsed > 0) lastSynced * 1000 / elapsed else 0L
+        }
         try {
             val client = SMBClient()
             client.use { c ->
@@ -191,10 +200,12 @@ class SmbBackupService(
                             totalFiles = files.size,
                             syncedFiles = synced,
                             currentFile = file.name,
-                            speed = 0
+                            speed = filesPerSec()
                         )
                         currentProgress.set(progress)
-                        eventPublisher.publishEvent(progress)
+                        // P6：publishEvent(SmbSyncProgress) 无任何 @EventListener 消费者
+                        // （死事件），且新增 WS topic 需契约变更——进度消费路径就是
+                        // GET /smb/progress 轮询，故仅更新轮询快照，不再发事件。
 
                         val remotePath = buildString {
                             configEntity.path?.let { append(it.trimEnd('/')).append('/') }
@@ -235,6 +246,9 @@ class SmbBackupService(
 
                         synced++
                     }
+                    // P6：终态计数在作用域内先落（completed 块访问不到 files）。
+                    lastTotal = files.size
+                    lastSynced = synced
                 }
 
                 share.close()
@@ -244,24 +258,22 @@ class SmbBackupService(
 
             val completed = SmbSyncProgress(
                 state = "completed",
-                totalFiles = 0,
-                syncedFiles = 0,
+                totalFiles = lastTotal,
+                syncedFiles = lastSynced,
                 currentFile = "",
                 speed = 0
             )
             currentProgress.set(completed)
-            eventPublisher.publishEvent(completed)
         } catch (e: Exception) {
             logger.error("SMB sync failed", e)
             val failed = SmbSyncProgress(
                 state = "failed",
-                totalFiles = 0,
-                syncedFiles = 0,
+                totalFiles = lastTotal,
+                syncedFiles = lastSynced,
                 currentFile = e.message ?: "未知错误",
                 speed = 0
             )
             currentProgress.set(failed)
-            eventPublisher.publishEvent(failed)
         }
     }
 

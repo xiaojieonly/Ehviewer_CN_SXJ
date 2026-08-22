@@ -62,6 +62,7 @@ data class SmbSyncProgress(
     val totalFiles: Int,
     val syncedFiles: Int,
     val currentFile: String,
+    /** 每秒同步条目数（syncing 态实时计算；终态为 0）。MASTER-2026-08-22 P6 前恒 0。 */
     val speed: Long
 )
 

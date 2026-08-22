@@ -436,11 +436,15 @@ class EhImportService(
         stage: String,
     ) {
         progress.begin(stage)
+        // MASTER-2026-08-22 P8：预加载 (type,text)→实体 索引，逐行查找从
+        // O(n×m)（每行 findAll 全表扫描）降为 O(n+m)。
+        val existingByKey = filterRepository.findAll()
+            .associateBy { it.type to it.text }
         forEachRow(loadRows(conn, table)) { row ->
             progress.row(stage)
             val type = row.int("mode")
             val text = row.str("text")?.takeIf { it.isNotBlank() } ?: return@forEachRow
-            val existing = filterRepository.findAll().firstOrNull { it.type == type && it.text == text }
+            val existing = existingByKey[type to text]
             if (existing != null && !force) return@forEachRow
             val entity = existing ?: FilterEntity()
             entity.apply {
@@ -498,16 +502,23 @@ class EhImportService(
         progress: ImportProgress,
         stage: String,
     ) {
+        // MASTER-2026-08-22 P7：如实化——EH v7 的 BLACK_LIST 源表逐行携带条目内容，
+        // 但本服务端 BlackListEntity 仅 user 一列（黑名单执行在 EH 账号设置侧，
+        // 本地只落「用户启用黑名单」标志行），故计数反映的是标志行（≤1）而非
+        // 源表条目数；且仅在真正新建行时计数，force 重复导入不再虚增。
         progress.begin(stage)
         val rows = loadRows(conn, table)
         rows.forEach { progress.row(stage) }
         if (rows.isEmpty()) return
         val existing = blackListRepository.findByUser(username)
         if (existing != null && !force) return
-        if (existing == null) {
+        val created = existing == null
+        if (created) {
             blackListRepository.save(BlackListEntity().apply { this.user = username })
         }
-        outcome.imported = outcome.imported.copy(blackList = outcome.imported.blackList + 1)
+        if (created) {
+            outcome.imported = outcome.imported.copy(blackList = outcome.imported.blackList + 1)
+        }
     }
 
     private fun importGalleryTags(

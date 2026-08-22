@@ -130,7 +130,7 @@ class PrefetchService(
                 response.close()
             }
         } catch (e: Exception) {
-            null
+            logger.debug("Prefetch fetch failed for {}: {}", url, e.message)
             null
         }
     }
