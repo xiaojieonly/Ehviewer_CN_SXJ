@@ -138,11 +138,15 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-WorkingDirectory=/opt/anotherviewer-web
-ExecStart=/usr/bin/java -jar anotherviewer-web/build/libs/anotherviewer-web-*.jar
+User=anotherviewer
+WorkingDirectory=/opt/anotherviewer
+# JAR 用绝对路径，不能用通配符（systemd 不展开 glob）
+ExecStart=/usr/bin/java -jar /opt/anotherviewer/anotherviewer-web.jar --server.port=8080
+# 数据目录唯一入口：db/security.key/downloads/cache/backups 均由其派生
+Environment=ANOTHERVIEWER_DATA_DIR=/opt/anotherviewer/data
 Restart=always
 RestartSec=10
+ReadWritePaths=/opt/anotherviewer/data
 
 [Install]
 WantedBy=multi-user.target
@@ -200,9 +204,9 @@ rm data/anotherviewer.db
 ### 权限问题
 
 ```bash
-# 确保目录权限正确
-chmod -R 755 data cache downloads
-chown -R www-data:www-data data cache downloads
+# 确保数据目录权限正确（用户与 systemd unit 的 User= 一致）
+chown -R anotherviewer:anotherviewer /opt/anotherviewer/data
+chmod -R u+rwX /opt/anotherviewer/data
 ```
 
 ## 备份 / 还原 / 迁移

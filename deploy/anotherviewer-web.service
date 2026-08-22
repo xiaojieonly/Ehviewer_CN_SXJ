@@ -21,18 +21,19 @@ Type=simple
 User=anotherviewer
 Group=anotherviewer
 
-# JAR location — adjust to your deployment path
+# JAR 位置——按实际部署路径调整（绝对路径，不用通配符）
 ExecStart=/usr/bin/java \
     -Xms256m -Xmx1024m \
     -XX:+UseG1GC \
     -jar /opt/anotherviewer/anotherviewer-web.jar \
-    --server.port=8080 \
-    --anotherviewer.download.path=/opt/anotherviewer/data/downloads \
-    --anotherviewer.download.cache-path=/opt/anotherviewer/data/cache \
-    --anotherviewer.security.encryption-key-path=/opt/anotherviewer/data/security.key
+    --server.port=8080
 
 WorkingDirectory=/opt/anotherviewer
-Environment=ANOTHERVIEWER_DATA_DIR=/opt/anotherviewer/data/db
+
+# data-dir 固定派生不变量：anotherviewer.db / security.key / downloads/ / cache/ /
+# backups/ 全部由该目录派生，无需（也不应）再单独传 download.path、cache-path、
+# encryption-key-path 等键（旧的 data/db 嵌套语义已废弃，见 docs/deployment.md）。
+Environment=ANOTHERVIEWER_DATA_DIR=/opt/anotherviewer/data
 Environment=JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
 # Restart policy

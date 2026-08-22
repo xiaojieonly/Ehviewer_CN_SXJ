@@ -43,8 +43,8 @@ docker compose up -d
 # 创建服务用户
 sudo useradd -r -s /bin/false -d /opt/anotherviewer anotherviewer
 
-# 部署文件
-sudo mkdir -p /opt/anotherviewer/data/{db,downloads,cache,enhanced}
+# 部署文件（data-dir 固定结构：db/security.key 落在 data/ 根，子目录仅 downloads/cache/backups）
+sudo mkdir -p /opt/anotherviewer/data/{downloads,cache,backups}
 sudo cp anotherviewer-web/build/libs/anotherviewer-web-*.jar /opt/anotherviewer/anotherviewer-web.jar
 sudo chown -R anotherviewer:anotherviewer /opt/anotherviewer
 
@@ -72,11 +72,11 @@ PWA（Service Worker、离线阅读）**要求安全上下文**：
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `server.port` | 8080 | HTTP 端口 |
-| `anotherviewer.download.path` | ./data/downloads | 下载存储路径 |
-| `anotherviewer.download.cache-path` | ./data/cache | 图片缓存路径 |
-| `anotherviewer.security.encryption-key-path` | ./data/security.key | 加密密钥文件 |
+| `anotherviewer.download.path` | `<data-dir>/downloads` | 下载存储路径（默认由 data-dir 派生） |
+| `anotherviewer.download.cache-path` | `<data-dir>/cache` | 图片缓存路径（默认由 data-dir 派生） |
+| `anotherviewer.security.encryption-key-path` | `<data-dir>/security.key` | 加密密钥文件（默认由 data-dir 派生） |
 | `anotherviewer.processing.concurrency` | 1 | 图片处理并发数 |
-| `ANOTHERVIEWER_DATA_DIR` | ./data/db | SQLite 数据库目录 |
+| `ANOTHERVIEWER_DATA_DIR` | `./data` | 权威数据目录：db / security.key / downloads/ / cache/ / backups/ 均由它派生 |
 
 ## 5. 监控
 
@@ -87,7 +87,8 @@ PWA（Service Worker、离线阅读）**要求安全上下文**：
 
 ## 6. 备份
 
-需要备份的数据：
-- `/opt/anotherviewer/data/db/` — SQLite 数据库（收藏、历史、设置）
-- `/opt/anotherviewer/data/downloads/` — 下载的画廊
+需要备份的数据（均在 data-dir 下，结构固定、与路径无关）：
+- `/opt/anotherviewer/data/anotherviewer.db` — SQLite 数据库（收藏、历史、设置）
 - `/opt/anotherviewer/data/security.key` — 加密密钥（丢失则已存密码不可恢复）
+- `/opt/anotherviewer/data/downloads/` — 下载的画廊
+- `/opt/anotherviewer/data/backups/` — 备份产物落点
