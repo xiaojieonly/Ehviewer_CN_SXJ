@@ -136,4 +136,54 @@ export const downloadApi = {
     const { data } = await client.delete(`/download/label/${id}`)
     return data
   },
+
+  // ── maintenance（W2-DL F2：dry-run 预览 + 执行两段式）────────
+
+  /** 只读扫描：冗余文件 + 无效下载的当前清单。 */
+  async previewMaintenance(): Promise<MaintenancePreviewResponse> {
+    const { data } = await client.get('/download/maintenance/preview')
+    return data
+  },
+
+  /**
+   * 执行清理。服务端执行前会重新扫描，只删当前仍命中的条目；
+   * 返回实际删除计数与释放字节数。
+   */
+  async cleanMaintenance(kind: MaintenanceKind): Promise<MaintenanceCleanResponse> {
+    const { data } = await client.post('/download/maintenance/clean', { kind })
+    return data
+  },
+}
+
+/** 冗余文件条目：downloads 根目录下无任何下载行引用的条目（path 相对根目录）。 */
+export interface MaintenanceFileIssue {
+  path: string
+  sizeBytes: number
+}
+
+/** 无效下载原因：content_dir_missing=内容目录缺失；no_usable_page_files=无任何 >0 字节页面。 */
+export type MaintenanceReason = 'content_dir_missing' | 'no_usable_page_files'
+
+/** 无效下载条目：行存在但本地内容缺失/损坏（仅终态 FINISHED 行入选）。 */
+export interface MaintenanceDownloadIssue {
+  id: number
+  gid: number
+  title: string | null
+  reason: MaintenanceReason
+}
+
+/** GET /download/maintenance/preview 响应。 */
+export interface MaintenancePreviewResponse {
+  redundantFiles: MaintenanceFileIssue[]
+  invalidDownloads: MaintenanceDownloadIssue[]
+}
+
+export type MaintenanceKind = 'REDUNDANT_FILES' | 'INVALID_DOWNLOADS'
+
+/** POST /download/maintenance/clean 响应。 */
+export interface MaintenanceCleanResponse {
+  kind: MaintenanceKind
+  removedFiles: number
+  removedDownloads: number
+  freedBytes: number
 }

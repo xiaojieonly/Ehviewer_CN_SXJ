@@ -1,0 +1,185 @@
+package com.hippo.anotherviewer.web.service
+
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.dto.MaintenanceKind
+import com.hippo.anotherviewer.web.entity.DownloadInfoEntity
+import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
+import java.io.File
+
+class DownloadMaintenanceServiceTest {
+
+    @TempDir
+    lateinit var tempDir: File
+
+    private lateinit var repository: DownloadInfoRepository
+    private lateinit var service: DownloadMaintenanceService
+    private lateinit var root: File
+
+    @BeforeEach
+    fun setUp() {
+        root = File(tempDir, "downloads").apply { mkdirs() }
+        val config = SiteCoreConfigProperties().apply { download.path = root.absolutePath }
+        repository = mock(DownloadInfoRepository::class.java)
+        service = DownloadMaintenanceService(repository, config)
+    }
+
+    // ── fixtures ────────────────────────────────────────────────
+
+    /** 有内容目录的 FINISHED 行（默认 `<root>/<gid>` 目录 + 两个非空页面）。 */
+    private fun finishedRow(id: Long, gid: Long, dir: File? = null): DownloadInfoEntity =
+        DownloadInfoEntity().apply {
+            this.id = id
+            this.gid = gid
+            this.token = "t$gid"
+            this.title = "Title $gid"
+            state = 3
+            total = 2
+            done = 2
+            downloadDir = dir?.absolutePath
+        }
+
+    private fun withContent(dir: File, pages: Int = 2, zeroByte: Boolean = false): File =
+        dir.apply {
+            mkdirs()
+            repeat(pages) { i ->
+                val f = File(this, "%04d.jpg".format(i + 1))
+                f.writeBytes(if (zeroByte) ByteArray(0) else byteArrayOf(1, 2, 3))
+            }
+        }
+
+    // ── 冗余文件判定 ────────────────────────────────────────────
+
+    @Test
+    fun `unreferenced directory under the root is flagged redundant`() {
+        `when`(repository.findAll()).thenReturn(emptyList())
+        withContent(File(root, "999"))
+
+        val preview = service.preview()
+
+        assertEquals(listOf("999"), preview.redundantFiles.map { it.path })
+        assertTrue(preview.redundantFiles.single().sizeBytes > 0)
+        assertTrue(preview.invalidDownloads.isEmpty())
+    }
+
+    @Test
+    fun `directory referenced by gid or downloadDir is kept while stray files are redundant`() {
+        val rows = listOf(
+            finishedRow(1, 100),                                  // default dir <root>/100
+            finishedRow(2, 200, dir = File(root, "elsewhere-200")) // custom downloadDir
+        )
+        `when`(repository.findAll()).thenReturn(rows)
+        withContent(File(root, "100"))
+        withContent(File(root, "777"))      // unreferenced → redundant
+        File(root, "stray.tmp").writeBytes(ByteArray(5)) // loose file → always redundant
+
+        val preview = service.preview()
+
+        assertEquals(listOf("777", "stray.tmp"), preview.redundantFiles.map { it.path })
+    }
+
+    // ── 无效下载判定 ────────────────────────────────────────────
+
+    @Test
+    fun `finished row without content dir is invalid as content_dir_missing`() {
+        `when`(repository.findAll()).thenReturn(listOf(finishedRow(1, 300)))
+
+        val preview = service.preview()
+
+        val issue = preview.invalidDownloads.single()
+        assertEquals(1, issue.id)
+        assertEquals("content_dir_missing", issue.reason)
+    }
+
+    @Test
+    fun `finished row whose pages are all zero-byte is invalid as no_usable_page_files`() {
+        `when`(repository.findAll()).thenReturn(listOf(finishedRow(1, 400)))
+        withContent(File(root, "400"), zeroByte = true)
+
+        assertEquals("no_usable_page_files", service.preview().invalidDownloads.single().reason)
+    }
+
+    @Test
+    fun `active and failed rows and healthy finished rows are never invalid`() {
+        val paused = finishedRow(1, 500).apply { state = 0 }
+        val downloading = finishedRow(2, 501).apply { state = 2 }
+        val failed = finishedRow(3, 502).apply { state = 4 } // content missing but retryable
+        `when`(repository.findAll()).thenReturn(listOf(paused, downloading, failed))
+
+        assertTrue(service.preview().invalidDownloads.isEmpty())
+    }
+
+    // ── 执行清理（第二段） ──────────────────────────────────────
+
+    @Test
+    fun `clean REDUNDANT_FILES deletes only currently unreferenced entries and reports freed bytes`() {
+        val rows = listOf(finishedRow(1, 100))
+        withContent(File(root, "100"))
+        val junk = withContent(File(root, "888"))
+        `when`(repository.findAll()).thenReturn(rows)
+
+        val result = service.clean(MaintenanceKind.REDUNDANT_FILES)
+
+        assertEquals(MaintenanceKind.REDUNDANT_FILES, result.kind)
+        assertEquals(1, result.removedFiles)
+        assertFalse(junk.exists())
+        assertTrue(result.freedBytes >= 6)
+        assertTrue(File(root, "100").isDirectory)
+    }
+
+    @Test
+    fun `clean INVALID_DOWNLOADS removes row plus its leftover dir`() {
+        val dir = withContent(File(root, "600"), zeroByte = true)
+        `when`(repository.findAll()).thenReturn(listOf(finishedRow(9, 600)))
+
+        val result = service.clean(MaintenanceKind.INVALID_DOWNLOADS)
+
+        assertEquals(1, result.removedDownloads)
+        org.mockito.Mockito.verify(repository).deleteById(9L)
+        assertFalse(dir.exists())
+        assertTrue(result.freedBytes == 0L) // 全是 0 字节文件，释放字节数为 0
+    }
+
+    @Test
+    fun `clean INVALID_DOWNLOADS never deletes a directory outside the downloads root`() {
+        val outsideRoot = withContent(File(tempDir, "outside"), zeroByte = true)
+        `when`(repository.findAll()).thenReturn(listOf(finishedRow(7, 700, dir = outsideRoot)))
+
+        val result = service.clean(MaintenanceKind.INVALID_DOWNLOADS)
+
+        assertEquals(1, result.removedDownloads)
+        org.mockito.Mockito.verify(repository).deleteById(7L)
+        assertTrue(outsideRoot.exists()) // 根外内容只保留不删
+    }
+
+    @Test
+    fun `re-scan before clean skips entries that became valid after preview`() {
+        // 预览时行未落库 → 目录冗余；执行前行已保存（findAll 返回引用）→ 不删。
+        val row = finishedRow(1, 800)
+        withContent(File(root, "800"))
+        `when`(repository.findAll()).thenReturn(emptyList()).thenReturn(listOf(row))
+
+        assertTrue(service.preview().redundantFiles.isNotEmpty()) // 第一段看到它
+        val result = service.clean(MaintenanceKind.REDUNDANT_FILES) // 第二段重扫后跳过
+
+        assertEquals(0, result.removedFiles)
+        assertTrue(File(root, "800").isDirectory)
+    }
+
+    @Test
+    fun `blank or missing downloads path yields empty scan results`() {
+        val config = SiteCoreConfigProperties().apply { download.path = "" }
+        val svc = DownloadMaintenanceService(repository, config)
+        `when`(repository.findAll()).thenReturn(emptyList())
+
+        val preview = svc.preview()
+
+        assertTrue(preview.redundantFiles.isEmpty())
+        assertTrue(preview.invalidDownloads.isEmpty())
+    }
+}

@@ -8,8 +8,9 @@
   设备本地设置（localStorage `anotherviewer-admin-download-ui`，仅本设备生效）:
     - 预加载图片数、排序方向、自动开始下载（旧版遗留键如 paginated 读取时忽略）
 
-  维护操作（清理冗余文件 / 清理无效下载）: downloadApi 暂未提供对应批量清理
-  接口，按钮置为 TODO，等待后端补充。
+  维护操作（清理冗余文件 / 清理无效下载, W2-DL F2）: 两段式流程——
+  点击先 GET preview 拉取将删清单，弹窗确认后 POST clean 执行；
+  服务端执行前重扫只删仍命中的条目。
 -->
 <template>
   <div class="admin-download">
@@ -205,15 +206,14 @@
         <section>
           <SectionHeader title="维护" />
           <PrefCard>
-            <!-- TODO: downloadApi 暂未提供批量清理冗余文件接口，待后端补充后接入。 -->
-            <PrefRow icon="clear-all-dark" title="清理冗余文件" summary="删除不再被任何下载引用的临时文件 · TODO：待后端接口">
-              <button type="button" class="pref-action-btn" aria-label="清理冗余文件" @click="notImplemented">
+            <!-- W2-DL F2: 点击先扫描预览（dry-run），弹窗确认后才执行清理。 -->
+            <PrefRow icon="clear-all-dark" title="清理冗余文件" summary="删除不再被任何下载引用的文件 · 先预览再确认">
+              <button type="button" class="pref-action-btn" aria-label="清理冗余文件" @click="openMaintenance('REDUNDANT_FILES')">
                 <AppIcon name="go-to-dark" size="20px" />
               </button>
             </PrefRow>
-            <!-- TODO: downloadApi 暂未提供批量清理无效下载接口，待后端补充后接入。 -->
-            <PrefRow icon="delete-dark" title="清理无效下载" summary="移除状态异常且无法恢复的下载记录 · TODO：待后端接口">
-              <button type="button" class="pref-action-btn" aria-label="清理无效下载" @click="notImplemented">
+            <PrefRow icon="delete-dark" title="清理无效下载" summary="移除内容缺失或损坏的已完成下载 · 先预览再确认">
+              <button type="button" class="pref-action-btn" aria-label="清理无效下载" @click="openMaintenance('INVALID_DOWNLOADS')">
                 <AppIcon name="go-to-dark" size="20px" />
               </button>
             </PrefRow>
@@ -236,6 +236,50 @@
       </div>
     </Transition>
 
+    <!-- Maintenance preview dialog (W2-DL F2: dry-run list → confirm → clean). -->
+    <Transition name="dialog">
+      <div v-if="maintenanceOpen" class="dialog-scrim" @click.self="closeMaintenance">
+        <div class="dialog" role="dialog" aria-modal="true" :aria-label="maintenanceTitle">
+          <h2 class="dialog__title">{{ maintenanceTitle }}</h2>
+          <p v-if="maintenancePhase === 'scanning'" class="dialog__message">正在扫描…</p>
+          <template v-else>
+            <p v-if="issueCount === 0" class="dialog__message">没有发现需要清理的条目。</p>
+            <template v-else>
+              <ul class="dialog__list">
+                <template v-if="maintenanceKind === 'REDUNDANT_FILES'">
+                  <li v-for="file in maintenanceFiles" :key="`f-${file.path}`" class="dialog__list-item">
+                    <span class="dialog__item-name">{{ file.path }}</span>
+                    <span class="dialog__item-meta">{{ formatBytes(file.sizeBytes) }}</span>
+                  </li>
+                </template>
+                <template v-else>
+                  <li v-for="dl in maintenanceDownloads" :key="`d-${dl.id}`" class="dialog__list-item">
+                    <span class="dialog__item-name">{{ dl.title || `#${dl.gid}` }}</span>
+                    <span class="dialog__item-meta">{{ reasonLabel(dl.reason) }}</span>
+                  </li>
+                </template>
+              </ul>
+              <p class="dialog__message">共 {{ issueCount }} 项将被删除，操作不可恢复。</p>
+            </template>
+          </template>
+          <div class="dialog__actions">
+            <button type="button" class="btn-text" @click="closeMaintenance">
+              {{ issueCount === 0 && maintenancePhase !== 'scanning' ? '关闭' : '取消' }}
+            </button>
+            <button
+              v-if="issueCount > 0"
+              type="button"
+              class="btn-primary"
+              :disabled="maintenancePhase === 'cleaning'"
+              @click="confirmClean"
+            >
+              {{ maintenancePhase === 'cleaning' ? '清理中…' : `确认清理 ${issueCount} 项` }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Snackbar. -->
     <Transition name="snack">
       <div v-if="snack" class="snackbar" role="status">{{ snack }}</div>
@@ -247,6 +291,13 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch, type Ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
+import {
+  downloadApi,
+  type MaintenanceDownloadIssue,
+  type MaintenanceFileIssue,
+  type MaintenanceKind,
+  type MaintenanceReason,
+} from '@/api/download'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 import {
@@ -442,8 +493,109 @@ function savePath(): void {
 
 /* -------------------------------- actions --------------------------------- */
 
-function notImplemented(): void {
-  showSnack('后端暂未提供此接口，待实现')
+/* ── 维护（W2-DL F2）：两段式——预览弹窗展示将删清单 → 确认执行 → 完成反馈 ── */
+
+type MaintenancePhase = 'scanning' | 'ready' | 'cleaning'
+
+const maintenanceOpen = ref(false)
+const maintenancePhase = ref<MaintenancePhase>('scanning')
+const maintenanceKind = ref<MaintenanceKind>('REDUNDANT_FILES')
+const maintenanceFiles = ref<MaintenanceFileIssue[]>([])
+const maintenanceDownloads = ref<MaintenanceDownloadIssue[]>([])
+
+const MAINTENANCE_TITLES: Record<MaintenanceKind, string> = {
+  REDUNDANT_FILES: '清理冗余文件',
+  INVALID_DOWNLOADS: '清理无效下载',
+}
+
+/** 无效下载原因 → 展示文案。 */
+const REASON_LABELS: Record<MaintenanceReason, string> = {
+  content_dir_missing: '本地内容目录缺失',
+  no_usable_page_files: '页面文件全部缺失或为空',
+}
+
+function reasonLabel(reason: MaintenanceReason): string {
+  return REASON_LABELS[reason] ?? reason
+}
+
+const maintenanceTitle = computed(() => MAINTENANCE_TITLES[maintenanceKind.value])
+
+/** 当前类别下将删除的条目数（preview 一次返回两类，按按钮取对应侧）。 */
+const issueCount = computed(() =>
+  maintenanceKind.value === 'REDUNDANT_FILES'
+    ? maintenanceFiles.value.length
+    : maintenanceDownloads.value.length,
+)
+
+/** 第一段：只读扫描，拉取将删清单。 */
+async function openMaintenance(kind: MaintenanceKind): Promise<void> {
+  if (maintenanceOpen.value) return
+  maintenanceKind.value = kind
+  maintenanceFiles.value = []
+  maintenanceDownloads.value = []
+  maintenancePhase.value = 'scanning'
+  maintenanceOpen.value = true
+  try {
+    const preview = await downloadApi.previewMaintenance()
+    // 扫描期间用户可能已切换到另一类清理——响应与当前弹窗不符则丢弃。
+    if (!maintenanceOpen.value || maintenanceKind.value !== kind) return
+    maintenanceFiles.value = preview.redundantFiles
+    maintenanceDownloads.value = preview.invalidDownloads
+    maintenancePhase.value = 'ready'
+  } catch (error) {
+    console.error('[AdminDownload] maintenance scan failed', error)
+    maintenanceOpen.value = false
+    showSnack('扫描失败，请稍后重试')
+  }
+}
+
+function closeMaintenance(): void {
+  if (maintenancePhase.value === 'cleaning') return
+  maintenanceOpen.value = false
+}
+
+/** 第二段：确认执行；服务端重扫只删仍命中的条目。 */
+async function confirmClean(): Promise<void> {
+  if (maintenancePhase.value !== 'ready') return
+  const kind = maintenanceKind.value
+  maintenancePhase.value = 'cleaning'
+  try {
+    const result = await downloadApi.cleanMaintenance(kind)
+    maintenanceOpen.value = false
+    if (kind === 'REDUNDANT_FILES') {
+      showSnack(
+        result.removedFiles > 0
+          ? `已清理 ${result.removedFiles} 个冗余条目${formatBytes(result.freedBytes)}`
+          : '没有需要清理的冗余文件',
+      )
+    } else {
+      showSnack(
+        result.removedDownloads > 0
+          ? `已移除 ${result.removedDownloads} 条无效下载`
+          : '没有需要清理的无效下载',
+      )
+    }
+  } catch (error) {
+    console.error('[AdminDownload] maintenance clean failed', error)
+    maintenanceOpen.value = false
+    showSnack('清理失败，请稍后重试')
+  } finally {
+    maintenancePhase.value = 'ready'
+  }
+}
+
+/** 字节数人性化（释放空间反馈用）；0/负值返回空串由调用方拼接。 */
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return ''
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  const text = value >= 100 || unit === 0 ? Math.round(value).toString() : value.toFixed(1)
+  return `，释放 ${text} ${units[unit]}`
 }
 
 /* --------------------------------- chrome --------------------------------- */
@@ -665,6 +817,53 @@ onMounted(async () => {
   margin-top: 16px;
   padding-top: 8px;
   border-top: 1px solid var(--color-divider);
+}
+
+/* Maintenance preview list (W2-DL F2): scrollable will-delete manifest. */
+.dialog__message {
+  margin: 0;
+  font-size: clamp(13px, 14px, 16px);
+  line-height: 1.5;
+  color: var(--text-color-secondary);
+}
+
+.dialog__list {
+  max-height: min(280px, 40vh);
+  margin: 0 0 10px;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+}
+
+.dialog__list-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.dialog__list-item + .dialog__list-item {
+  border-top: 1px solid var(--color-divider);
+}
+
+.dialog__item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(13px, 14px, 16px);
+  color: var(--text-color-primary);
+}
+
+.dialog__item-meta {
+  flex: 0 0 auto;
+  font-size: clamp(11px, 12px, 14px);
+  color: var(--text-color-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .dialog-enter-active,

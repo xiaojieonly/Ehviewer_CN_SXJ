@@ -193,7 +193,7 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
 
   it('loads the unfiltered history without q/regex params', async () => {
     await mountHistory([makeHistoryItem({ gid: 1 })])
-    expect(historyApi.listHistory).toHaveBeenCalledWith(null, undefined)
+    expect(historyApi.listHistory).toHaveBeenCalledWith(null, undefined, 0, 50)
   })
 
   it('activates a filter slot and requests q=pattern&regex=true', async () => {
@@ -202,14 +202,14 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     expect(wrapper.findAll('.filter-slot-bar__chip')).toHaveLength(3) // 全部 + 2
 
     await clickFilterChip('Artist')
-    expect(historyApi.listHistory).toHaveBeenLastCalledWith('artist', true)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('artist', true, 0, 50)
     // 互斥：选槽位清空搜索词。
     const input = wrapper.find('.search-bar__input').element as HTMLInputElement
     expect(input.value).toBe('')
 
-    // 回到「全部」→ 恢复无过滤加载。
+    // 回到「全部」→ 恢复无过滤加载（分页重置回 page=0）。
     await clickFilterChip('全部')
-    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined, 0, 50)
   })
 
   it('debounces a typed search to q=word and cancels the active slot', async () => {
@@ -226,7 +226,7 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     await flushPromises()
 
     // 输入搜索取消槽位 → LIKE 搜索（无 regex 参数）。
-    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined, 0, 50)
     const artistChip = wrapper
       .findAll('.filter-slot-bar__chip')
       .find((c) => c.text() === 'Artist')!
@@ -240,12 +240,79 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     await wrapper.find('.search-bar__input').setValue('futa')
     await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
-    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('futa', undefined, 0, 50)
 
     await wrapper.find('.search-bar__clear').trigger('click')
     await flushPromises()
-    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined, 0, 50)
     vi.useRealTimers()
+  })
+
+  /* ---------------- 服务端分页（W2-DL F3） ---------------- */
+
+  /** 按服务端分页语义切片的 mock：page 0 起始，pageSize 每页条数，返回 total 全集数。 */
+  function pagedServer(totalRows: number) {
+    return async (_q: unknown, _r: unknown, page = 0, pageSize = 50): Promise<{ history: HistoryItem[]; total: number }> => {
+      const start = page * pageSize
+      const count = Math.max(0, Math.min(pageSize, totalRows - start))
+      return {
+        history: Array.from({ length: count }, (_, i) =>
+          makeHistoryItem({ gid: start + i + 1, title: `H ${start + i + 1}` }),
+        ),
+        total: totalRows,
+      }
+    }
+  }
+
+  it('first screen loads page=0 only (server-side pagination, no full fetch)', async () => {
+    seedPrefs({ listMode: 'grid' })
+    vi.mocked(historyApi.listHistory).mockImplementation(pagedServer(120))
+    wrapper = mount(HistoryView)
+    await flushPromises()
+    await flushPromises()
+
+    // 首屏 offset=0：page=0&pageSize=50，只渲染第一页 50 行。
+    expect(historyApi.listHistory).toHaveBeenCalledTimes(1)
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined, 0, 50)
+    expect(wrapper.findAll('.gallery-grid__cell')).toHaveLength(50)
+    expect(wrapper.text()).toContain('H 1')
+    // 标题计数显示 已加载/全集。
+    expect(wrapper.find('.history-view__count').text()).toBe('50 / 120 galleries')
+  })
+
+  it('appends the next page on scroll-to-bottom until total is reached', async () => {
+    seedPrefs({ listMode: 'grid' })
+    vi.mocked(historyApi.listHistory).mockImplementation(pagedServer(120))
+    wrapper = mount(HistoryView)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.findAll('.gallery-grid__cell')).toHaveLength(50)
+
+    // 滚到底 → 追加 page=1（第 51–100 条）。
+    const el = wrapper.find('.fast-scroller__container').element as HTMLElement
+    Object.defineProperty(el, 'scrollTop', { value: 1000, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: 800, configurable: true })
+    el.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+    await flushPromises()
+
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined, 1, 50)
+    expect(wrapper.findAll('.gallery-grid__cell')).toHaveLength(100)
+
+    // 继续滚 → 追加最后一页（只剩 20 条）。
+    el.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+    await flushPromises()
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith(null, undefined, 2, 50)
+    expect(wrapper.findAll('.gallery-grid__cell')).toHaveLength(120)
+    expect(wrapper.text()).toContain('H 120')
+
+    // 达到 total 后继续滚动不再请求。
+    el.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+    expect(historyApi.listHistory).toHaveBeenCalledTimes(3)
+    // 计数回到纯总数形态。
+    expect(wrapper.find('.history-view__count').text()).toBe('120 galleries')
   })
 
   /* ---------------- F4 REGEX_INVALID 错误识别 --------------- */

@@ -1343,6 +1343,66 @@ paths:
               schema:
                 type: integer
 
+  # Download maintenance (W2-DL F2): dry-run scan + execute, two-phase.
+  # Synchronous small task by design — a local-disk diff over per-gallery
+  # directories (no network I/O); see DownloadMaintenanceService for why this
+  # is not a JobService async job.
+  /api/v1/download/maintenance/preview:
+    get:
+      tags: [Download]
+      operationId: previewMaintenance
+      summary: Scan downloads for redundant files and invalid downloads (dry run)
+      description: |
+        Read-only first phase of the two-phase maintenance flow.
+
+        Redundant files: direct children of the downloads root that no
+        download row references (reference = row's downloadDir resolves to the
+        path, or the directory name equals a row's gid; loose files at the
+        root are always redundant).
+
+        Invalid downloads: FINISHED (state=3) rows whose local content
+        directory is missing (`content_dir_missing`) or holds no file with
+        size > 0 (`no_usable_page_files`). Rows in active lifecycle states
+        (0/1/2) and retryable FAILED (4) rows are never reported.
+      responses:
+        '200':
+          description: Current list of cleanable items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenancePreviewResponse'
+
+  /api/v1/download/maintenance/clean:
+    post:
+      tags: [Download]
+      operationId: cleanMaintenance
+      summary: Execute the cleanup for one maintenance kind (second phase)
+      description: |
+        Re-scans immediately before deleting and only removes items that still
+        qualify, so changes between preview and execute are honored. For
+        INVALID_DOWNLOADS the DB row is deleted together with its leftover
+        content directory when it lives inside the downloads root (out-of-root
+        directories keep their files).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceCleanRequest'
+      responses:
+        '200':
+          description: Actual deletion counts and freed bytes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceCleanResponse'
+        '400':
+          description: 'Missing kind (code=VALIDATION_ERROR) or unparseable body (code=BAD_REQUEST)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
   # ============================================================
   # Comment
   # ============================================================
@@ -3229,6 +3289,82 @@ components:
         time:
           type: integer
           format: int64
+
+    MaintenanceFileIssue:
+      type: object
+      description: Unreferenced entry under the downloads root (W2-DL F2).
+      required: [path, sizeBytes]
+      properties:
+        path:
+          type: string
+          description: Entry name relative to the downloads root
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Total bytes of the entry (computed before any deletion)
+
+    MaintenanceDownloadIssue:
+      type: object
+      description: FINISHED download row whose local content is missing/corrupt (W2-DL F2).
+      required: [id, gid, title, reason]
+      properties:
+        id:
+          type: integer
+          format: int64
+        gid:
+          type: integer
+          format: int64
+        title:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          enum: [content_dir_missing, no_usable_page_files]
+
+    MaintenancePreviewResponse:
+      type: object
+      description: Dry-run scan result for GET /api/v1/download/maintenance/preview.
+      required: [redundantFiles, invalidDownloads]
+      properties:
+        redundantFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceFileIssue'
+        invalidDownloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceDownloadIssue'
+
+    MaintenanceKind:
+      type: string
+      description: Which maintenance cleanup to execute.
+      enum: [REDUNDANT_FILES, INVALID_DOWNLOADS]
+
+    MaintenanceCleanRequest:
+      type: object
+      description: Body for POST /api/v1/download/maintenance/clean.
+      required: [kind]
+      properties:
+        kind:
+          $ref: '#/components/schemas/MaintenanceKind'
+
+    MaintenanceCleanResponse:
+      type: object
+      description: Actual outcome of POST /api/v1/download/maintenance/clean.
+      required: [kind, removedFiles, removedDownloads, freedBytes]
+      properties:
+        kind:
+          $ref: '#/components/schemas/MaintenanceKind'
+        removedFiles:
+          type: integer
+          description: Deleted redundant entries (REDUNDANT_FILES branch)
+        removedDownloads:
+          type: integer
+          description: Deleted invalid download rows (INVALID_DOWNLOADS branch)
+        freedBytes:
+          type: integer
+          format: int64
+          description: Disk bytes reclaimed (measured before deletion)
 
     DownloadAddRequest:
       type: object
