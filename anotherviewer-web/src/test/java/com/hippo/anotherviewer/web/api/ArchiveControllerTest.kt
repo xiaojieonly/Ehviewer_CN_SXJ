@@ -49,6 +49,21 @@ class ArchiveControllerTest {
     }
 
     @Test
+    // MASTER-2026-08-22 P1：单飞护栏命中 → 409 CONFLICT 信封。
+    fun `download returns 409 uniform envelope when an archive is already in progress`() {
+        `when`(archiveService.downloadArchive(123L, "https://e-hentai.org/archiver.php?gid=123"))
+            .thenThrow(com.hippo.anotherviewer.web.service.ArchiveInProgressException())
+
+        val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://e-hentai.org/archiver.php?gid=123"))
+
+        assertEquals(409, response.statusCode.value())
+        val body = response.body as ApiErrorEnvelope
+        assertEquals(409, body.error.status)
+        assertEquals("CONFLICT", body.error.code)
+        assertTrue(body.error.traceId.isNotBlank())
+    }
+
+    @Test
     fun `download rejects disallowed hosts with 400 uniform envelope without calling the service`() {
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "http://evil.example/archive.zip"))
 

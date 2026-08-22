@@ -28,6 +28,9 @@ class ArchiveService(
     private val logger = LoggerFactory.getLogger(ArchiveService::class.java)
     private val client get() = sessionManager.okHttpClient
 
+    /** MASTER-2026-08-22 P1：单飞护栏状态位。 */
+    private val running = java.util.concurrent.atomic.AtomicBoolean(false)
+
     fun listArchives(gid: Long): List<ArchiveItem> {
         val token = galleryLookup.findToken(gid) ?: return emptyList()
         return try {
@@ -70,10 +73,26 @@ class ArchiveService(
     /**
      * Start downloading a gallery archive via the EH archiver flow.
      *
+     * MASTER-2026-08-22 P1：进程内单飞护栏——archiver 全流程（列表→表单→
+     * dlcheck→大文件落盘）分钟级同步执行，无护栏时并发提交会叠加阻塞 HTTP
+     * 线程并重复消耗上游配额。已有任务运行中抛 [ArchiveInProgressException]
+     * （控制器转 409）；Job 化为后续可选扩展，不在本最小修复范围。
+     *
      * @param url the archiver URL from [listArchives] (host-validated here)
      * @return true when the archive file was saved to the download directory
      */
     fun downloadArchive(gid: Long, url: String): Boolean {
+        if (!running.compareAndSet(false, true)) {
+            throw ArchiveInProgressException()
+        }
+        try {
+            return downloadArchiveInner(gid, url)
+        } finally {
+            running.set(false)
+        }
+    }
+
+    private fun downloadArchiveInner(gid: Long, url: String): Boolean {
         val parsedUrl = url.toHttpUrlOrNull() ?: return false
         if (!isAllowedArchiveHost(parsedUrl.host)) {
             logger.warn("Blocked archive download from disallowed host: {}", parsedUrl.host)
@@ -138,3 +157,7 @@ class ArchiveService(
         return normalized == "e-hentai.org" || normalized == "exhentai.org"
     }
 }
+
+/** MASTER-2026-08-22 P1：已有归档任务运行中再次提交时抛出（控制器转 409）。 */
+class ArchiveInProgressException :
+    IllegalStateException("An archive download is already in progress")

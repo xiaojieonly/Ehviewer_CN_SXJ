@@ -42,7 +42,13 @@ class ArchiveController(private val archiveService: ArchiveService) {
         if (parsed == null || !isAllowedArchiveHost(parsed.host)) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "INVALID_ARCHIVE_URL", "Archive URL host not allowed")
         }
-        val ok = archiveService.downloadArchive(request.gid, request.url)
+        val ok = try {
+            archiveService.downloadArchive(request.gid, request.url)
+        } catch (e: com.hippo.anotherviewer.web.service.ArchiveInProgressException) {
+            // MASTER-2026-08-22 P1：单飞护栏命中 → 409（与 ProcessingController
+            // 的 in-progress 409 CONFLICT 同语义）。
+            return errorEnvelope(HttpStatus.CONFLICT, "CONFLICT", e.message ?: "Archive download already in progress")
+        }
         return if (ok) {
             ResponseEntity.ok(
                 ArchiveDownloadResponse(success = true, path = "${request.gid}/")
