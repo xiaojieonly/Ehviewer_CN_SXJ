@@ -29,6 +29,10 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.R;
 
 public abstract class ToolbarScene extends BaseScene {
@@ -58,28 +62,37 @@ public abstract class ToolbarScene extends BaseScene {
         } else {
             mToolbar = toolbar;
             contentPanel.addView(contentView, 0);
-            applyStatusBarTopInset(toolbar);
+            applyStatusBarTopInset(view, toolbar, contentPanel);
             return view;
         }
     }
 
-    /**
-     * The scene draws under the transparent status bar — {@code EhStageLayout} no longer reserves
-     * the top inset (so the gallery 瀑布流 can scroll under the bar). Grow the toolbar up into the
-     * status bar so its background fills the bar (status bar takes the toolbar color) while the
-     * title / menu stay centered below the bar.
-     */
-    private static void applyStatusBarTopInset(Toolbar toolbar) {
-        int resId = toolbar.getResources().getIdentifier("status_bar_height", "dimen", "android");
-        int statusBarHeight = resId > 0 ? toolbar.getResources().getDimensionPixelSize(resId) : 0;
-        if (statusBarHeight <= 0) {
-            return;
-        }
-        ViewGroup.LayoutParams lp = toolbar.getLayoutParams();
-        lp.height += statusBarHeight;
-        toolbar.setLayoutParams(lp);
-        toolbar.setPadding(toolbar.getPaddingLeft(), toolbar.getPaddingTop() + statusBarHeight,
-                toolbar.getPaddingRight(), toolbar.getPaddingBottom());
+    private static void applyStatusBarTopInset(View root, Toolbar toolbar, FrameLayout contentPanel) {
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int topInset = systemBars.top;
+            int bottomInset = systemBars.bottom;
+
+            int baseActionBarSize = AttrResources.getAttrDimensionPixelSize(v.getContext(), androidx.appcompat.R.attr.actionBarSize);
+            ViewGroup.LayoutParams lp = toolbar.getLayoutParams();
+            lp.height = baseActionBarSize + topInset;
+            toolbar.setLayoutParams(lp);
+            toolbar.setPadding(
+                    toolbar.getPaddingLeft(),
+                    topInset,
+                    toolbar.getPaddingRight(),
+                    toolbar.getPaddingBottom()
+            );
+
+            contentPanel.setPadding(
+                    contentPanel.getPaddingLeft(),
+                    contentPanel.getPaddingTop(),
+                    contentPanel.getPaddingRight(),
+                    bottomInset
+            );
+
+            return insets;
+        });
     }
 
     @Override

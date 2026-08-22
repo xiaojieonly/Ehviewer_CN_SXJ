@@ -51,7 +51,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.transition.TransitionInflater;
@@ -655,6 +657,28 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mProgress = ViewUtils.$$(mainView, R.id.progress);
 
         mViewTransition2 = new ViewTransition(mBelowHeader, mProgress);
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int topInset = systemBars.top;
+            int bottomInset = systemBars.bottom;
+
+            mHeader.setPadding(
+                    mHeader.getPaddingLeft(),
+                    topInset,
+                    mHeader.getPaddingRight(),
+                    mHeader.getPaddingBottom()
+            );
+
+            mainView.setPadding(
+                    mainView.getPaddingLeft(),
+                    mainView.getPaddingTop(),
+                    mainView.getPaddingRight(),
+                    bottomInset
+            );
+
+            return insets;
+        });
 
         if (prepareData()) {
             if (mGalleryDetail != null) {
