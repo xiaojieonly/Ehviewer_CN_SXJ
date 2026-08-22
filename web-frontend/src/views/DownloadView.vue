@@ -107,7 +107,7 @@
       :loading-more="loadingMore"
       v-model:refreshing="refreshing"
       empty-text="No downloads"
-      error-text="Failed to load downloads"
+      :error-text="errorText"
       @refresh="onRefresh"
       @retry="onRetry"
     >
@@ -297,6 +297,19 @@ const total = ref(0)
 /** Guard against overlapping load-more requests. */
 const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
+/** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
+const errorText = ref('Failed to load downloads')
+
+/**
+ * F4: extracts the business error code from the API error envelope
+ * (`{error:{code,message,traceId,status}}` carried by axios as
+ * `error.response.data`); null for any other failure shape.
+ */
+function errorCodeOf(error: unknown): string | null {
+  const code = (error as { response?: { data?: { error?: { code?: unknown } } } } | undefined)
+    ?.response?.data?.error?.code
+  return typeof code === 'string' ? code : null
+}
 
 interface LabelTab {
   id: number | null
@@ -431,9 +444,17 @@ async function load(): Promise<void> {
   } catch (error) {
     if (seq !== requestSeq) return
     console.error('Failed to load downloads', error)
+    // F4: invalid regex in q → 400 REGEX_INVALID; name the cause instead of
+    // the generic "failed to load" tip (dedicated toast + error-state copy).
+    if (errorCodeOf(error) === 'REGEX_INVALID') {
+      errorText.value = '正则无效，请检查搜索/筛选的正则表达式'
+      showToast('正则无效，请检查筛选表达式')
+    } else {
+      errorText.value = 'Failed to load downloads'
+    }
     if (downloads.value.length === 0) {
       state.value = 'error'
-    } else {
+    } else if (errorCodeOf(error) !== 'REGEX_INVALID') {
       showToast('Failed to refresh downloads')
     }
   }

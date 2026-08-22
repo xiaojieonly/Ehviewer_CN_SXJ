@@ -37,7 +37,7 @@
       :state="state"
       v-model:refreshing="refreshing"
       empty-text="No history"
-      error-text="Failed to load history"
+      :error-text="errorText"
       @refresh="onRefresh"
       @retry="onRetry"
     >
@@ -110,6 +110,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Toast (Android Toast equivalent, F4/F6) -->
+      <div v-if="toastMessage" class="toast" role="status">{{ toastMessage }}</div>
     </Teleport>
   </div>
 </template>
@@ -132,7 +135,7 @@
  * (HistoryService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { historyApi } from '@/api/history'
 import type { HistoryItem } from '@/api/history'
@@ -190,6 +193,19 @@ const entries = ref<HistoryEntry[]>([])
 const state = ref<ViewState>('loading')
 const refreshing = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
+/** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
+const errorText = ref('Failed to load history')
+
+/**
+ * F4: extracts the business error code from the API error envelope
+ * (`{error:{code,message,traceId,status}}` carried by axios as
+ * `error.response.data`); null for any other failure shape.
+ */
+function errorCodeOf(error: unknown): string | null {
+  const code = (error as { response?: { data?: { error?: { code?: unknown } } } } | undefined)
+    ?.response?.data?.error?.code
+  return typeof code === 'string' ? code : null
+}
 
 /** Gallery payloads for the shared GalleryList (parallel to `entries`). */
 const galleries = computed(() => entries.value.map((entry) => entry.gallery))
@@ -282,6 +298,14 @@ async function load(): Promise<void> {
   } catch (error) {
     console.error('Failed to load history', error)
     if (seq !== requestSeq) return
+    // F4: invalid regex in q → 400 REGEX_INVALID; name the cause instead of
+    // the generic "failed to load" tip (dedicated toast + error-state copy).
+    if (errorCodeOf(error) === 'REGEX_INVALID') {
+      errorText.value = '正则无效，请检查搜索/筛选的正则表达式'
+      showToast('正则无效，请检查筛选表达式')
+    } else {
+      errorText.value = 'Failed to load history'
+    }
     if (entries.value.length === 0) state.value = 'error'
   }
 }
@@ -337,6 +361,23 @@ function onFabAction(action: FabAction): void {
 
 const showClearDialog = ref(false)
 const clearing = ref(false)
+
+/* -------------------------------------------------------------- toast --- */
+
+const toastMessage = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+function showToast(message: string): void {
+  toastMessage.value = message
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+  }, 2400)
+}
+
+onUnmounted(() => {
+  clearTimeout(toastTimer)
+})
 
 function closeClearDialog(): void {
   if (!clearing.value) showClearDialog.value = false
@@ -495,6 +536,33 @@ onMounted(() => {
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------- toast ---- */
+.toast {
+  position: fixed;
+  left: 50%;
+  /* The FAB cluster is offset by --safe-area-bottom (FabLayout) — carry the
+     same inset so the toast keeps its distance above the FABs / home
+     indicator on cutout devices. */
+  bottom: calc(96px + var(--safe-area-bottom));
+  transform: translateX(-50%);
+  z-index: 300;
+  padding: 10px 20px;
+  background: var(--grey-850);
+  color: var(--grey-100);
+  border-radius: var(--card-radius);
+  font-size: var(--text-small);
+  box-shadow: 0 3px 10px var(--shadow-color);
+  opacity: 1;
+  animation: toast-in 220ms var(--ease-decelerate-quint);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+}
+
 /* ------------------------------------------------------------- dialog --- */
 .dialog-scrim {
   position: fixed;
@@ -588,7 +656,8 @@ onMounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .dialog-scrim,
-  .dialog {
+  .dialog,
+  .toast {
     animation: none;
   }
 }
