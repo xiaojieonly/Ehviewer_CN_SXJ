@@ -8,7 +8,7 @@ trigger:
 
 jobs:
 - job: android_build
-  displayName: Build Android APK
+  displayName: Build & test Android
   pool:
     vmImage: 'macos-latest'
   steps:
@@ -19,11 +19,13 @@ jobs:
       gradleOptions: '-Xmx3072m'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'assembleDebug'
+      # MASTER-2026-08-22 B2：assembleDebug 之外接入单测门（Robolectric 全量）。
+      tasks: 'assembleDebug testAppReleaseDebugUnitTest'
 
   - task: AndroidSigning@2
     inputs:
-      apkFiles: 'build/Anotherviewer.apk'
+      # 修正：assembleDebug 产物路径（原指向不存在的 build/Anotherviewer.apk）。
+      apkFiles: 'app/build/outputs/apk/debug/app-debug.apk'
       jarsign: true
       jarsignerKeystoreFile: 'text.key'
       # Secrets: configure as secret pipeline variables (library/UI) — never hardcode in repo.
@@ -68,6 +70,13 @@ jobs:
       workingDir: 'web-frontend'
     displayName: npm ci (web-frontend)
 
+  # MASTER-2026-08-22 B2：前端质量门（类型 + 单测）。
+  - script: |
+      npm run typecheck
+      npx vitest run
+    workingDirectory: 'web-frontend'
+    displayName: Frontend typecheck & vitest
+
   - script: npx vite build
     workingDirectory: 'web-frontend'
     displayName: Vite build (frontend)
@@ -77,9 +86,11 @@ jobs:
       gradleWorkingDirectory: ''
       gradleWrapperFile: 'gradlew'
       gradleOptions: '-Xmx3072m'
-      publishJUnitResults: false
-      tasks: ':anotherviewer-web:bootJar'
-    displayName: Gradle bootJar (web backend)
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+      # B2：bootJar 之外接入 JVM 双门（core 解析器 + web 全量）。
+      tasks: ':anotherviewer-core:test :anotherviewer-web:test :anotherviewer-web:bootJar'
+    displayName: Gradle core/web tests + bootJar
 
   - task: PublishBuildArtifact@1
     inputs:

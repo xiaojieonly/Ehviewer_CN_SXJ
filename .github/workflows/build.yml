@@ -25,9 +25,79 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew app:assembleDebug
-          
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Build
           path: ./app/build/outputs/apk/
+
+  # MASTER-2026-08-22 B2：JVM 三门 + 前端双门质量关。
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JVM gates (core / web / app)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :anotherviewer-core:test :anotherviewer-web:test :app:testAppReleaseDebugUnitTest
+
+      - name: Frontend gates (typecheck / vitest)
+        run: |
+          npm ci --prefix web-frontend
+          npm run typecheck --prefix web-frontend
+          npx vitest run --root web-frontend
+
+      - name: Publish test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            **/build/test-results/
+            web-frontend/node_modules/.vitest/
+
+  # MASTER-2026-08-22 B2：api-test.sh auth-off 阶段运行时验收。
+  api-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build bootJar
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :anotherviewer-web:bootJar
+
+      - name: Start isolated instance
+        run: |
+          mkdir -p /tmp/av-ci/data
+          java -jar anotherviewer-web/build/libs/anotherviewer-web-*.jar \
+            --server.port=8083 --anotherviewer.data-dir=/tmp/av-ci/data &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8083/api/v1/health >/dev/null && break
+            sleep 2
+          done
+
+      - name: Run api-test (auth-off)
+        run: |
+          AUTHREQ=false bash scripts/api-test.sh http://localhost:8083 auth-off /tmp/av-ci/data
