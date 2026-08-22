@@ -1,9 +1,18 @@
 # Observability Contract — Structured Logging, Metrics & Health
 
-> **Status**: FROZEN (Wave 0, CA6)
+> **Status**: FROZEN (Wave 0, CA6) · **Rev. 1.1** (2026-08-22: galleryApi informational-only + path corrections + implementation-status annotations)
 > **Created**: 2026-07-28
 > **Consumers**: B10 (health endpoint + metrics implementation), I2 (WS integration), I4 (performance validation), H4 (deployment hardening)
 > **Dependencies**: None (Wave 0a, parallel with CA1–CA5)
+
+## 0. Implementation Status (rev. 1.1, 2026-08-22 audit)
+
+| Section | Status | Notes |
+|---|---|---|
+| §2 Health | **IMPLEMENTED** | Live at **`/api/v1/health`** (not `/api/health` as drafted); components `database` / `diskCache` / `galleryApi`; `waifu2x` component PLANNED |
+| §3 Metrics (Micrometer meters, timers/percentiles, prefetch hit ratio, sync counters) | **PLANNED** | Not implemented; current `/api/v1/metrics` is a hand-rolled subset |
+| §4 Dashboard | **PARTIAL** | `/api/v1/metrics/dashboard` exists; `processorAvailable` / `memoryUsagePercent` / `memoryMaxBytes` are placeholder semantics pending correction (tracked as P5 in docs/MASTER-2026-08-22.md); `recentErrors` ring buffer PLANNED |
+| §1 Structured JSON logging + TraceIdFilter | **PLANNED** | Standard Logback pattern output only today |
 
 ---
 
@@ -240,7 +249,7 @@ When `anotherviewer.logging.json-enabled=false`, switch to a pattern encoder:
 ### 2.1 Endpoint
 
 ```
-GET /api/health
+GET /api/v1/health
 ```
 
 - **Authentication**: None (public, for monitoring/load-balancer probes)
@@ -297,12 +306,19 @@ GET /api/health
 
 | Overall Status | Condition |
 |----------------|-----------|
-| `UP` | All required components UP (database, diskCache) |
-| `DEGRADED` | Required components UP but optional components DOWN (e.g., waifu2x not configured, galleryApi unreachable) |
+| `UP` | All required components UP **and** no aggregating optional component DOWN |
+| `DEGRADED` | Required components UP but an aggregating optional component DOWN (e.g., waifu2x not configured) |
 | `DOWN` | Any required component DOWN (database inaccessible, disk cache path unwritable) |
 
 **Required components**: `database`, `diskCache`
-**Optional components**: `galleryApi`, `waifu2x`
+**Aggregating optional components**: `waifu2x` (DOWN → overall DEGRADED)
+
+**Informational-only component**: `galleryApi` *(rev. 1.1, 2026-08-22)* — E-Hentai
+reachability is reported in `components` for display but is **excluded from
+status aggregation**. Rationale: the server's core business (database / disk
+cache / WebUI / sync / downloads served from cache or pushed content) does not
+depend on it, and forced-proxy or geo-blocked networks keep the probe
+permanently DOWN, which would otherwise pin every health response to DEGRADED.
 
 ### 2.4 Component Health Checks
 
@@ -324,7 +340,7 @@ Health checks are cached for **30 seconds** to avoid excessive probing. The `gal
 ### 3.1 Endpoint
 
 ```
-GET /api/metrics
+GET /api/v1/metrics
 ```
 
 - **Authentication**: None (configurable, see §5)
@@ -437,7 +453,7 @@ Percentiles computed via Micrometer's `Timer.builder().publishPercentiles(0.5, 0
 ### 4.1 Endpoint
 
 ```
-GET /api/metrics/dashboard
+GET /api/v1/metrics/dashboard
 ```
 
 - **Authentication**: Same as `/api/metrics` (configurable)
@@ -680,3 +696,4 @@ management:
 | Date | Version | Change |
 |------|---------|--------|
 | 2026-07-28 | 1.0 | Initial frozen specification |
+| 2026-08-22 | 1.1 | `galleryApi` reclassified informational-only (excluded from status aggregation); endpoint paths corrected to `/api/v1/*`; §0 implementation-status annotations added (PLANNED entries: JSON logging, TraceIdFilter, Micrometer meters, recentErrors, waifu2x component) |
