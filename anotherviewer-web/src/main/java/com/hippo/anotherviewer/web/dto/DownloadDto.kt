@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.dto
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class DownloadListResponse(
@@ -110,4 +111,50 @@ data class FilterSlotDto(
 /** 筛选槽位集合：GET /api/v1/download/slots 响应与 PUT 请求体共用。 */
 data class FilterSlotsResponse(
     val slots: List<FilterSlotDto> = emptyList()
+)
+
+// ── 下载维护（W2-DL F2）：冗余文件 / 无效下载，dry-run 预览 + 执行两段式 ──
+
+/** 冗余文件条目：downloads 根目录下无任何下载行引用的条目（path 相对根目录）。 */
+data class MaintenanceFileIssue(
+    val path: String,
+    val sizeBytes: Long,
+)
+
+/** 无效下载条目：行存在但本地内容缺失/损坏（判定语义见 DownloadMaintenanceService）。 */
+data class MaintenanceDownloadIssue(
+    val id: Long,
+    val gid: Long,
+    val title: String?,
+    /** 机器可读原因：content_dir_missing | no_usable_page_files。 */
+    val reason: String,
+)
+
+/** GET /api/v1/download/maintenance/preview 响应：两段式的第一段（只读扫描）。 */
+data class MaintenancePreviewResponse(
+    val redundantFiles: List<MaintenanceFileIssue>,
+    val invalidDownloads: List<MaintenanceDownloadIssue>,
+)
+
+/** 本次要清理的类别（两按钮一一对应）。 */
+enum class MaintenanceKind {
+    REDUNDANT_FILES,
+    INVALID_DOWNLOADS
+}
+
+/** POST /api/v1/download/maintenance/clean 请求体。 */
+data class MaintenanceCleanRequest(
+    @field:NotNull(message = "kind must not be null")
+    val kind: MaintenanceKind? = null
+)
+
+/** POST /api/v1/download/maintenance/clean 响应：实际删除结果（执行前重新扫描）。 */
+data class MaintenanceCleanResponse(
+    val kind: MaintenanceKind,
+    /** 删除的冗余条目个数（REDUNDANT_FILES 分支计数）。 */
+    val removedFiles: Int,
+    /** 删除的无效下载行数（INVALID_DOWNLOADS 分支计数）。 */
+    val removedDownloads: Int,
+    /** 释放的磁盘字节数（删除前统计；含无效下载分支清掉的残留目录）。 */
+    val freedBytes: Long
 )
