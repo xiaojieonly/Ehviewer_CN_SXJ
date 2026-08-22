@@ -620,7 +620,11 @@ All four events are published by `JobEventHandler` on **both**
 - `type` is one of `IMPORT | EXPORT | RESTORE | CACHE_CLEAR`.
 - `percent` = `processed / total × 100`, computed on the worker side
   (0 when `total` = 0).
-- One event per progress point, no server-side throttling (same policy as §3.2).
+- **`job.progress` is server-side throttled to one event per 500 ms per jobId**
+  (`JobService.PUBLISH_INTERVAL_MS`); the Job REST fields (`GET /api/v1/jobs/*`)
+  are updated in real time regardless. Lifecycle events (`job.started`,
+  `job.completed`, `job.failed`) are not throttled. This differs from §3.2
+  (`process.*`, no throttling) — do not copy that policy here.
 - The envelope structure is unchanged from v1.0; existing `process.*` /
   `download.*` events keep publishing their version-1.0 envelopes (§7.1).
 
@@ -914,13 +918,14 @@ The frontend manager registers subscriptions as consumers request them
 
 ### 6.5 Message Throttling
 
-The rate figures below are **aspirational** — the current implementation applies
-no server-side throttling:
+Most rate figures below are **aspirational** — the current implementation applies
+no server-side throttling to them; the exception is `job.progress` (enforced):
 
 | Message Type | Max Rate (aspirational) | Reality |
 |-------------|----------|----------|
 | `download.progress` (bare DTO) | 2/sec per task | No throttle in `DownloadProgressHandler`; forwards every event |
 | `process.progress` | 5/sec per task | No throttle; one event per processed page |
+| `job.progress` | 2/sec per job (500 ms) | **Enforced**: `JobService.publishThrottled` drops events within 500 ms of the last publish per jobId (§3.6) |
 | `system.health` | 1/30sec | Topic not implemented |
 | `image.enhanced.ready` | No throttle | One per page completion (naturally bounded by GPU) |
 

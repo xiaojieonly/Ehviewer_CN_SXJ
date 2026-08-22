@@ -3736,7 +3736,7 @@ components:
     # ----------------------------------------------------------
     SyncPushRequest:
       type: object
-      required: [entities, deviceId, timestamp]
+      required: [entities, deviceId]
       properties:
         entities:
           $ref: '#/components/schemas/SyncEntityCollection'
@@ -3746,7 +3746,11 @@ components:
         timestamp:
           type: integer
           format: int64
-          description: Client's current timestamp (ms epoch) for conflict resolution
+          description: >-
+            Client's current timestamp (ms epoch). Optional (v2.1): the server
+            currently IGNORES this field — conflict resolution uses the server
+            receive time, not the client-supplied value. Kept in the schema for
+            wire compatibility with existing clients.
         policy:
           allOf:
             - $ref: '#/components/schemas/SyncPolicy'
