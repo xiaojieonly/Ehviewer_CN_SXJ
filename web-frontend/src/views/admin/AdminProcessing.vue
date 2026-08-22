@@ -83,8 +83,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import type { Settings } from '@/api/settings'
-import { settingsApi } from '@/api/settings'
+import { settingsApi, type ProcessingSettings } from '@/api/settings'
 import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /* ------------------------------ option lists ----------------------------- */
@@ -108,17 +107,9 @@ const FORMAT_OPTIONS: Array<{ value: OutputFormat; label: string }> = [
 
 /* ------------------------- processing settings --------------------------- */
 
-/** 后端 SettingsResponse.processing 的字段（settings.ts 尚未声明，见组件头注释）。 */
-interface ProcessingSettings {
-  enabled: boolean
-  defaultType: ProcessingType
-  outputFormat: OutputFormat
-  outputQuality: number
-}
-
-interface SettingsWithProcessing extends Settings {
-  processing: ProcessingSettings
-}
+/* processing 段类型直接取自 api/settings.ts（后端 SettingsResponse.processing），
+ * 不再本地重复声明——局部 ProcessingType/OutputFormat 字面量联合是其 string
+ * 字段的子集，仅用于下拉选项列表。 */
 
 const DEFAULT_PROCESSING: ProcessingSettings = {
   enabled: false,
@@ -158,7 +149,7 @@ function persistProcessing(): void {
 
 async function saveProcessing(payload: { processing: ProcessingSettings }): Promise<void> {
   try {
-    await settingsApi.update(payload as Partial<Settings>)
+    await settingsApi.update(payload)
   } catch (error) {
     console.error('[AdminProcessing] failed to persist processing settings', error)
     Object.assign(processing, payload.processing)
@@ -173,7 +164,7 @@ function flushPendingSave(): void {
   const payload = pendingPayload
   pendingPayload = null
   if (payload) {
-    settingsApi.update(payload as Partial<Settings>).catch((error) => {
+    settingsApi.update(payload).catch((error) => {
       console.error('[AdminProcessing] failed to persist processing settings on unmount', error)
     })
   }
@@ -216,7 +207,7 @@ function showSnack(message: string): void {
 
 onMounted(async () => {
   try {
-    const settings = (await settingsApi.get()) as SettingsWithProcessing
+    const settings = await settingsApi.get()
     Object.assign(processing, DEFAULT_PROCESSING, settings.processing)
   } catch (error) {
     console.error('[AdminProcessing] failed to load settings', error)

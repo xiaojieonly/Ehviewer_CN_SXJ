@@ -155,16 +155,6 @@ export const galleryApi = {
     return data
   },
 
-  async getHistory(page = 0, pageSize = 20): Promise<GalleryListResponse> {
-    const { data } = await client.get(`/gallery/history?page=${page}&pageSize=${pageSize}`)
-    return ensureSuccess(data)
-  },
-
-  async getFavorites(): Promise<GalleryListResponse> {
-    const { data } = await client.get('/gallery/favorites')
-    return ensureSuccess(data)
-  },
-
   async getQuickSearches(): Promise<{ success: boolean; data: QuickSearch[] }> {
     const { data } = await client.get('/gallery/quick-search')
     return data

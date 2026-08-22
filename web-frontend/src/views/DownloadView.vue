@@ -252,7 +252,6 @@
  * 3 finish · 4 failed (anotherviewer-web mirrors the Android constants).
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import type { StompSubscription } from '@stomp/stompjs'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/download'
@@ -854,7 +853,9 @@ const liveSpeeds = ref<Record<number, number>>({})
 /** gid → last progress sample, used to derive speed from deltas. */
 const speedSamples = new Map<number, { done: number; time: number }>()
 
-let progressSubscription: StompSubscription | null = null
+/** True once the all-downloads subscription is registered (survives
+ *  reconnects via the composable's registry — no handle to keep). */
+let progressSubscribed = false
 
 function handleProgress(progress: DownloadProgress): void {
   const item = downloads.value.find((entry) => entry.gid === progress.gid)
@@ -885,8 +886,8 @@ function handleProgress(progress: DownloadProgress): void {
 watch(
   connected,
   (up) => {
-    if (up && !progressSubscription) {
-      progressSubscription = subscribeAll(handleProgress) ?? null
+    if (up && !progressSubscribed) {
+      progressSubscribed = !!subscribeAll(handleProgress)
     }
   },
   { immediate: true },
