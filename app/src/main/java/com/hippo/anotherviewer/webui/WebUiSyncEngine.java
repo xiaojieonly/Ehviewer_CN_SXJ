@@ -536,10 +536,24 @@ public final class WebUiSyncEngine {
                 pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
                 pendingFilters, pendingQuickSearches, pendingDownloadLabels,
                 pendingEhSession, localEhSession, pushLiveEhSession);
-        for (WebUiSyncModels.PushRequest push : requests) {
+        for (int i = 0; i < requests.size(); i++) {
+            WebUiSyncModels.PushRequest push = requests.get(i);
             WebUiSyncModels.PushResponse pushResponse = mTransport.push(config, push);
             if (!pushResponse.success) {
-                throw new IOException("Server rejected push");
+                // A5: carry the failing batch position and its entity counts in
+                // the message — a bare "Server rejected push" gives no clue
+                // which chunk or how many records to look at.
+                WebUiSyncModels.EntityCollection failed = push.entities;
+                throw new IOException("Server rejected push batch " + (i + 1) + "/"
+                        + requests.size()
+                        + " (favorites=" + failed.favorites.size()
+                        + ", history=" + failed.history.size()
+                        + ", downloads=" + failed.downloads.size()
+                        + ", bookmarks=" + failed.bookmarks.size()
+                        + ", filters=" + failed.filters.size()
+                        + ", quickSearches=" + failed.quickSearches.size()
+                        + ", downloadLabels=" + failed.downloadLabels.size()
+                        + ", ehSession=" + failed.ehSession.size() + ")");
             }
             WebUiSyncModels.EntityCollection entities = push.entities;
             result.pushedFavorites += entities.favorites.size();

@@ -325,6 +325,24 @@ public class WebUiSyncEngineTest {
     }
 
     @Test
+    public void pushRejection_messageCarriesBatchAndEntityContext() throws IOException {
+        // A5: the rejection message must say which batch failed and what was
+        // in it, instead of the bare "Server rejected push".
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.putDownloadInfo(download(2, 2000, 2500, DownloadInfo.STATE_WAIT));
+        server.rejectPushes = true;
+        try {
+            engineA.syncInternal(config, "devA", 0);
+            fail("Expected IOException for rejected push");
+        } catch (IOException expected) {
+            assertTrue("message carries the failing batch position",
+                    expected.getMessage().contains("batch 1/1"));
+            assertTrue(expected.getMessage().contains("favorites=1"));
+            assertTrue(expected.getMessage().contains("downloads=1"));
+        }
+    }
+
+    @Test
     public void testDownloadLastModifiedFallbackForLegacyData() throws IOException {
         // Pre-v8 record: lastModified column reads 0 -> fall back to `time`.
         storeA.putDownloadInfo(download(1, 1000, 0, DownloadInfo.STATE_NONE));

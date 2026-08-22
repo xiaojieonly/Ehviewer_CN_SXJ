@@ -16,7 +16,6 @@
 
 package com.hippo.anotherviewer.webui;
 
-import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.text.TextUtils;
@@ -59,9 +58,10 @@ public final class WebUiCredentialStore {
 
     private KeyStore keyStore;
 
-    public WebUiCredentialStore(Context context) {
+    public WebUiCredentialStore() {
         // No fallible work here: keystore access happens lazily on first use so
-        // construction can never throw or block the caller's thread.
+        // construction can never throw or block the caller's thread. (The
+        // former Context parameter was never used — removed, A5.)
     }
 
     /**

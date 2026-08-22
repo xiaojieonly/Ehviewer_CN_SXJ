@@ -57,7 +57,7 @@ public final class WebUiSettings {
     public WebUiSettings(Context context) {
         this.appContext = context.getApplicationContext();
         this.preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        this.credentialStore = new WebUiCredentialStore(appContext);
+        this.credentialStore = new WebUiCredentialStore();
     }
 
     /**

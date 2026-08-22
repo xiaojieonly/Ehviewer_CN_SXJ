@@ -119,7 +119,7 @@ public final class WebUiAutoSyncScheduler {
         networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                trigger("network-change");
+                trigger();
             }
         };
         try {
@@ -147,7 +147,7 @@ public final class WebUiAutoSyncScheduler {
         long delay = periodicDelayMs(settings.autoSyncIntervalSec());
         if (delay < 0) return;
         handler.postDelayed(() -> {
-            trigger("periodic");
+            trigger();
             synchronized (WebUiAutoSyncScheduler.this) {
                 if (running) scheduleNextPeriodic();
             }
@@ -155,7 +155,7 @@ public final class WebUiAutoSyncScheduler {
     }
 
     /** Runs one sync cycle if a server is configured; failures are swallowed. */
-    public void trigger(@NonNull String reason) {
+    public void trigger() {
         executor.submit(() -> runTriggerOnce(settings, runner));
     }
 
