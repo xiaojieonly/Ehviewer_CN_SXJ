@@ -2,11 +2,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminDownload from '../admin/AdminDownload.vue'
 import { settingsApi, type Settings } from '@/api/settings'
+import { downloadApi } from '@/api/download'
+import type { MaintenancePreviewResponse } from '@/api/download'
 import { AppSelect, AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
 }))
+
+vi.mock('@/api/download', () => ({
+  downloadApi: {
+    previewMaintenance: vi.fn(),
+    cleanMaintenance: vi.fn(),
+  },
+}))
+
+/** W2-DL F2 维护扫描夹具：1 个冗余文件 + 1 条无效下载。 */
+function maintenancePreview(): MaintenancePreviewResponse {
+  return {
+    redundantFiles: [{ path: '777', sizeBytes: 1024 * 1024 }],
+    invalidDownloads: [{ id: 9, gid: 600, title: 'Broken Gallery', reason: 'content_dir_missing' }],
+  }
+}
 
 function fullSettings(): Settings {
   return {
@@ -33,6 +50,13 @@ describe('AdminDownload (下载设置)', () => {
     localStorage.clear()
     vi.mocked(settingsApi.get).mockResolvedValue(fullSettings())
     vi.mocked(settingsApi.update).mockResolvedValue(true)
+    vi.mocked(downloadApi.previewMaintenance).mockResolvedValue(maintenancePreview())
+    vi.mocked(downloadApi.cleanMaintenance).mockResolvedValue({
+      kind: 'REDUNDANT_FILES',
+      removedFiles: 1,
+      removedDownloads: 0,
+      freedBytes: 1024 * 1024,
+    })
   })
 
   afterEach(() => {
@@ -156,9 +180,89 @@ describe('AdminDownload (下载设置)', () => {
     )
   })
 
-  it('shows a TODO snackbar for unimplemented maintenance actions', async () => {
+  /* ---------------- W2-DL F2 维护两端点接线（预览 → 确认 → 反馈） ---------------- */
+
+  it('previews redundant files in a dialog and cleans them after confirmation', async () => {
     const w = await mountView()
+
+    // 第一段：点击按钮 → 只读扫描，弹窗展示将删清单。
     await w.find('[aria-label="清理冗余文件"]').trigger('click')
-    expect(w.text()).toContain('后端暂未提供此接口，待实现')
+    expect(downloadApi.previewMaintenance).toHaveBeenCalledTimes(1)
+    await flushPromises()
+    const dialog = w.find('[aria-label="清理冗余文件"].dialog')
+    expect(dialog.exists()).toBe(true)
+    expect(dialog.text()).toContain('777')
+    expect(dialog.text()).toContain('共 1 项将被删除')
+
+    // 第二段：确认执行 → cleanMaintenance(kind) + 完成反馈 toast。
+    await w.findAll('button').find((b) => b.text() === '确认清理 1 项')!.trigger('click')
+    await flushPromises()
+    expect(downloadApi.cleanMaintenance).toHaveBeenCalledWith('REDUNDANT_FILES')
+    expect(w.text()).toContain('已清理 1 个冗余条目，释放 1.0 MB')
+    expect(w.find('.dialog-scrim').exists()).toBe(false)
+  })
+
+  it('previews invalid downloads and sends the INVALID_DOWNLOADS kind on confirm', async () => {
+    vi.mocked(downloadApi.cleanMaintenance).mockResolvedValue({
+      kind: 'INVALID_DOWNLOADS',
+      removedFiles: 0,
+      removedDownloads: 1,
+      freedBytes: 0,
+    })
+    const w = await mountView()
+
+    await w.find('[aria-label="清理无效下载"]').trigger('click')
+    expect(downloadApi.previewMaintenance).toHaveBeenCalledTimes(1)
+    await flushPromises()
+    // 弹窗按类别取对应侧：无效下载条目可见、冗余文件不可见。
+    const dialog = w.find('[aria-label="清理无效下载"].dialog')
+    expect(dialog.exists()).toBe(true)
+    expect(dialog.text()).toContain('Broken Gallery')
+    expect(dialog.text()).toContain('本地内容目录缺失')
+    expect(dialog.text()).not.toContain('777')
+
+    await w.findAll('button').find((b) => b.text() === '确认清理 1 项')!.trigger('click')
+    await flushPromises()
+    expect(downloadApi.cleanMaintenance).toHaveBeenCalledWith('INVALID_DOWNLOADS')
+    expect(w.text()).toContain('已移除 1 条无效下载')
+  })
+
+  it('shows an empty-result dialog and never calls clean when nothing to remove', async () => {
+    vi.mocked(downloadApi.previewMaintenance).mockResolvedValue({
+      redundantFiles: [],
+      invalidDownloads: [],
+    })
+    const w = await mountView()
+
+    await w.find('[aria-label="清理冗余文件"]').trigger('click')
+    await flushPromises()
+    expect(w.find('.dialog-scrim').text()).toContain('没有发现需要清理的条目')
+    expect(w.text()).not.toContain('确认清理')
+    // 无可删项时取消关闭弹窗，不触发执行端点。
+    await w.findAll('button').find((b) => b.text() === '关闭')!.trigger('click')
+    expect(w.find('.dialog-scrim').exists()).toBe(false)
+    expect(downloadApi.cleanMaintenance).not.toHaveBeenCalled()
+  })
+
+  it('reports scan failures via snackbar without opening the dialog', async () => {
+    vi.mocked(downloadApi.previewMaintenance).mockRejectedValue(new Error('boom'))
+    const w = await mountView()
+
+    await w.find('[aria-label="清理冗余文件"]').trigger('click')
+    await flushPromises()
+    expect(w.find('.dialog-scrim').exists()).toBe(false)
+    expect(w.text()).toContain('扫描失败，请稍后重试')
+  })
+
+  it('reports clean failures via snackbar', async () => {
+    vi.mocked(downloadApi.cleanMaintenance).mockRejectedValue(new Error('boom'))
+    const w = await mountView()
+
+    await w.find('[aria-label="清理无效下载"]').trigger('click')
+    await flushPromises()
+    await w.findAll('button').find((b) => b.text() === '确认清理 1 项')!.trigger('click')
+    await flushPromises()
+    expect(w.find('.dialog-scrim').exists()).toBe(false)
+    expect(w.text()).toContain('清理失败，请稍后重试')
   })
 })
