@@ -1155,6 +1155,8 @@
     <string name="settings_webui_connected">服务器已连接</string>
     <string name="settings_webui_invalid_config">服务器配置无效</string>
     <string name="settings_webui_connect_failed">连接失败：%s</string>
+    <string name="settings_webui_connect_failed_unreachable">Connection failed: server unreachable. Check the address, port and your network.</string>
+    <string name="settings_webui_connect_failed_auth">Connection failed: authentication required. Check the username/password, or use Pairing.</string>
     <string name="settings_webui_syncing">正在同步…</string>
     <string name="settings_webui_sync_done">同步完成：收藏 %1$d↑/%2$d↓、下载 %3$d↑/%4$d↓、过滤 %5$d↑/%6$d↓</string>
     <string name="settings_webui_sync_failed">同步失败：%s</string>

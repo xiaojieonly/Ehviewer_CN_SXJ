@@ -493,6 +493,56 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * Outcome classes for the ConnectTask anonymous status probe. The probe
+     * fails both when the server answers 401/403 ("auth required") and when
+     * nothing answered at all ("unreachable"); the failure toast tells them
+     * apart instead of blaming the network for wrong credentials.
+     */
+    static final int PROBE_OTHER = 0;
+    static final int PROBE_AUTH_REQUIRED = 1;
+    static final int PROBE_UNREACHABLE = 2;
+
+    /**
+     * Classifies an anonymous-probe failure. {@link WebUiApiClient} surfaces
+     * HTTP-level rejections as {@code IOException("HTTP <code> <message>")},
+     * so a 401/403 prefix means the server is alive and demands auth; any
+     * other {@code IOException} is a transport failure (connect refused,
+     * unknown host, timeout). Non-IO throwables stay unclassified and keep
+     * the generic connect-failed toast.
+     */
+    static int classifyProbeFailure(Throwable error) {
+        if (!(error instanceof java.io.IOException)) return PROBE_OTHER;
+        String message = error.getMessage();
+        if (message != null && (message.startsWith("HTTP 401") || message.startsWith("HTTP 403"))) {
+            return PROBE_AUTH_REQUIRED;
+        }
+        return PROBE_UNREACHABLE;
+    }
+
+    /**
+     * Appends the extra sync counters (bookmarks / quick searches / download
+     * labels / EH session) to the completion toast text as {@code name×n}
+     * items; zero counts are omitted so quiet datasets add no noise.
+     */
+    static String appendExtraSyncCounts(String base, WebUiSyncEngine.Result result) {
+        StringBuilder message = new StringBuilder(base);
+        appendSyncCount(message, "bookmarks", result.pushedBookmarks + result.pulledBookmarks);
+        appendSyncCount(message, "quickSearches",
+                result.pushedQuickSearches + result.pulledQuickSearches);
+        appendSyncCount(message, "downloadLabels",
+                result.pushedDownloadLabels + result.pulledDownloadLabels);
+        appendSyncCount(message, "ehSession",
+                result.pushedEhSessions + result.pulledEhSessions);
+        return message.toString();
+    }
+
+    private static void appendSyncCount(StringBuilder message, String label, int total) {
+        if (total > 0) {
+            message.append('、').append(label).append('×').append(total);
+        }
+    }
+
+    /**
      * Connects and persists the configuration. Skips login entirely when the
      * server permits anonymous access (auth-off), auto-pairing via
      * register-device; otherwise logs in and verifies sync access. When
@@ -536,6 +586,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 Throwable error = null;
                 boolean pairFallback = false;
                 boolean loginNeeded = true;
+                Throwable probeError = null;
                 try {
                     // Anonymous reachability probe: when the server runs with
                     // auth off it permits every /api/v1/** call, so a
@@ -544,11 +595,13 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                     // call is rejected with 401 and we fall through to login.
                     WebUiApiClient.status(new WebUiConfig(protocol, host, port, "", ""));
                     loginNeeded = false;
-                } catch (Throwable ignored) {
+                } catch (Throwable e) {
                     // Unreachable anonymously: the server requires auth, or the
-                    // network failed. Try the login flow either way; the failure
-                    // toast covers both cases.
+                    // network failed. Try the login flow either way; the
+                    // failure toast names which of the two it was.
+                    probeError = e;
                 }
+                final int probeFailure = classifyProbeFailure(probeError);
                 if (!loginNeeded) {
                     // Auth-off server: auto-pair without a code. setupKey 恒为
                     // null：App 没有 setup-key 输入入口；配置了 security.setup_key
@@ -595,11 +648,12 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 final String savedToken = token;
                 final Throwable finalError = error;
                 final boolean fallback = pairFallback;
-                handler.post(() -> onPostExecute(savedPairUsername, savedToken, finalError, fallback));
+                handler.post(() -> onPostExecute(savedPairUsername, savedToken, finalError, fallback, probeFailure));
             });
         }
 
-        private void onPostExecute(String pairUsername, String token, Throwable error, boolean pairFallback) {
+        private void onPostExecute(String pairUsername, String token, Throwable error,
+                boolean pairFallback, int probeFailure) {
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
@@ -629,6 +683,18 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                         fragment.getString(R.string.settings_webui_pair_failed, messageOf(error)),
                         Toast.LENGTH_LONG).show();
                 fragment.showPairDialog(protocol, host, port);
+            } else if (probeFailure == PROBE_AUTH_REQUIRED) {
+                // The probe drew an HTTP 401/403 answer: the server is alive
+                // and locked down, so credentials/pairing are the fix.
+                Toast.makeText(fragment.requireActivity(),
+                        R.string.settings_webui_connect_failed_auth,
+                        Toast.LENGTH_LONG).show();
+            } else if (probeFailure == PROBE_UNREACHABLE) {
+                // The probe died below HTTP (refused / unknown host / timeout):
+                // the address or network is the problem, not the account.
+                Toast.makeText(fragment.requireActivity(),
+                        R.string.settings_webui_connect_failed_unreachable,
+                        Toast.LENGTH_LONG).show();
             } else {
                 // Login-specific hint: on an auth-off server the login endpoint
                 // rejects every account, so point the user at pairing instead.
