@@ -865,10 +865,10 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                         .setLastSyncTimestamp(config.baseUrl(), result.serverTimestamp);
                 fragment.updateLastSyncSummary();
                 Toast.makeText(fragment.requireActivity(),
-                        fragment.getString(R.string.settings_webui_sync_done,
+                        appendExtraSyncCounts(fragment.getString(R.string.settings_webui_sync_done,
                                 result.pushedFavorites, result.pulledFavorites,
                                 result.pushedDownloads, result.pulledDownloads,
-                                result.pushedFilters, result.pulledFilters),
+                                result.pushedFilters, result.pulledFilters), result),
                         Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(fragment.requireActivity(),
