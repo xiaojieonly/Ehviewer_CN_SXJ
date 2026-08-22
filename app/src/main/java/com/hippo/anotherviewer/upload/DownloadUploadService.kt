@@ -58,6 +58,22 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * 参照 [com.hippo.anotherviewer.smb.SmbUploadService]：单线程 executor + 前台通知
  * （进度/取消）+ WakeLock。WebUI 未配置时仅 Toast 提示后结束。
+ *
+ * ## pushed_gids 断点续传判定与共存语义（A2）
+ *
+ * 本地集合（[PREFS_NAME]）只在「本设备曾推送过该 gid」时授权 force 续传。
+ * 条目自 A2 起带时间戳（`"<gid>:<戳入时刻 ms>"`），仅 [PUSHED_GID_TTL_MS]
+ * （7 天）内有效：过期条目、旧版无时间戳的裸 gid 条目、损坏条目一律按
+ * 「未推送」处理——宁可走跳过分支也绝不 force 覆盖服务器行。这是有意的
+ * 保守方向：TTL 过后最多损失一次断点续传机会（重新走 init→补页流程的
+ * 跳过路径），不会误覆盖他人的下载行。
+ *
+ * 同一 gid 既被其他设备委托下载（经同步落成本机 FINISHED 行）、又在本机
+ * 推送过时的共存行为：
+ * - TTL 窗口内 force 续传会以本机内容刷新该服务器行；因 gid/token/页数
+ *   相同、缺失页才补传，属收敛写而非破坏写；
+ * - TTL 窗口外（或任何无法证明「服务器半成品源自本设备」的情形）一律
+ *   跳过，满足类注释「绝不覆盖」承诺。
  */
 class DownloadUploadService : Service() {
 
@@ -69,15 +85,18 @@ class DownloadUploadService : Service() {
     private var mCancelled = false
 
     private fun isPushed(gid: Long): Boolean {
-        val pushed = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-            .getStringSet(KEY_PUSHED_GIDS, null) ?: return false
-        return pushed.contains(gid.toString())
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        return isPushedEntryFresh(
+            prefs.getStringSet(KEY_PUSHED_GIDS, null), gid, System.currentTimeMillis()
+        )
     }
 
     private fun markPushed(gid: Long) {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        val pushed = HashSet(prefs.getStringSet(KEY_PUSHED_GIDS, emptySet<String>()))
-        if (pushed.add(gid.toString())) {
+        val now = System.currentTimeMillis()
+        // 写入时顺带剪枝：清掉过期/损坏条目，集合不随历史无限增长。
+        val pushed = HashSet(prunePushedEntries(prefs.getStringSet(KEY_PUSHED_GIDS, null), now))
+        if (pushed.add(encodePushedEntry(gid, now))) {
             prefs.edit().putStringSet(KEY_PUSHED_GIDS, pushed).apply()
         }
     }
@@ -310,6 +329,47 @@ class DownloadUploadService : Service() {
         /** 本设备已推送过的 gid 持久化集合（断点续传判定用）。 */
         private const val PREFS_NAME = "webui_pushed_gids"
         private const val KEY_PUSHED_GIDS = "pushed_gids"
+
+        /**
+         * A2：pushed 条目的存活时长。超过即视为「未推送」，force 续传降级为
+         * 保守跳过——本地集合不再无限期授权覆盖服务器下载行。
+         */
+        const val PUSHED_GID_TTL_MS: Long = 7L * 24 * 60 * 60 * 1000
+
+        /** 条目编码 `"<gid>:<戳入时刻 ms>"`；gid 纯数字，冒号无歧义。 */
+        @JvmStatic
+        fun encodePushedEntry(gid: Long, at: Long): String = "$gid:$at"
+
+        /**
+         * [gid] 是否存在未过期条目。旧版裸 gid（无 `:`）与时间戳损坏的条目
+         * 一律按过期处理（保守：跳过而非 force）。同一 gid 多条目时任一鲜活
+         * 即算推送过。
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun isPushedEntryFresh(entries: Set<String>?, gid: Long, now: Long,
+                               ttlMs: Long = PUSHED_GID_TTL_MS): Boolean {
+            if (entries == null) return false
+            val prefix = "$gid:"
+            for (entry in entries) {
+                if (!entry.startsWith(prefix)) continue
+                val at = entry.substring(prefix.length).toLongOrNull() ?: continue
+                if (now - at < ttlMs) return true
+            }
+            return false
+        }
+
+        /** 剪掉过期与损坏条目，只留可解析且未过期的；null/空集返回空集。 */
+        @JvmStatic
+        @JvmOverloads
+        fun prunePushedEntries(entries: Set<String>?, now: Long,
+                               ttlMs: Long = PUSHED_GID_TTL_MS): Set<String> {
+            if (entries.isNullOrEmpty()) return emptySet()
+            return entries.filterTo(LinkedHashSet()) { entry ->
+                val at = entry.substringAfter(':', "").toLongOrNull()
+                at != null && now - at < ttlMs
+            }
+        }
 
         private val sRunning = AtomicBoolean(false)
 
