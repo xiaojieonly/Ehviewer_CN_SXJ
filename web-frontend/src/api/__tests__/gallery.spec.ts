@@ -200,6 +200,36 @@ describe('galleryApi.createQuickSearch (POST /gallery/quick-search)', () => {
   })
 })
 
+describe('galleryApi.addHistory (POST /gallery/history/{gid}, F1)', () => {
+  beforeEach(() => {
+    mockedPost.mockReset()
+  })
+
+  it('posts the token/title body to the gid-scoped path and returns the envelope', async () => {
+    mockedPost.mockResolvedValue({ data: { success: true } })
+    await expect(
+      galleryApi.addHistory(123456, { token: 'a1b2c3d4e5', title: 'Sample Gallery' }),
+    ).resolves.toEqual({ success: true })
+    expect(mockedPost).toHaveBeenCalledWith('/gallery/history/123456', {
+      token: 'a1b2c3d4e5',
+      title: 'Sample Gallery',
+    })
+  })
+
+  it('serializes an optional-title payload down to {token} (no title/mode keys)', async () => {
+    mockedPost.mockResolvedValue({ data: { success: true } })
+    await galleryApi.addHistory(42, { token: 'tok' })
+    expect(mockedPost).toHaveBeenCalledTimes(1)
+    const [url, body] = mockedPost.mock.calls[0]
+    expect(url).toBe('/gallery/history/42')
+    expect(body).toEqual({ token: 'tok' })
+    // Backend `AddHistoryRequest` defaults title=null / mode=0 — the web
+    // client omits them instead of sending placeholder values.
+    expect(body).not.toHaveProperty('title')
+    expect(body).not.toHaveProperty('mode')
+  })
+})
+
 describe('galleryApi.feed (GET /gallery/feed, frozen feed contract)', () => {
   beforeEach(() => {
     mockedGet.mockReset()

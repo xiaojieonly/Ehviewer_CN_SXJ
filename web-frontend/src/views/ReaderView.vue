@@ -64,6 +64,10 @@
  *   failure).
  * - The current page is synced back to the route (debounced) so refresh /
  *   back-navigation restore the reading position.
+ * - F1: the visit is written to server history on entry, throttled mid-reading
+ *   (≥10 pages or ≥30 s since the last write), and flushed once on
+ *   leave/pagehide — so web reading lands in History and syncs back to the
+ *   app. Failures degrade to console.warn.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -97,6 +101,8 @@ const gid = computed(() => Number(route.params.gid))
 const loadState = ref<'loading' | 'error' | 'ready'>('loading')
 const errorMessage = ref('Failed to load gallery')
 const title = ref('')
+/** Gallery site token from the detail response — required by history writeback. */
+const galleryToken = ref('')
 const totalPages = ref(0)
 /** 0-based reading position. */
 const currentPage = ref(0)
@@ -331,6 +337,68 @@ watch(currentPage, () => {
 })
 
 /* ------------------------------------------------------------------ */
+/* F1 — history writeback                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Mid-reading writeback strategy (at most one request per window):
+ *
+ * - Entering the reader records the visit once (`load()` success).
+ * - Afterwards a page change triggers a writeback only when EITHER
+ *   ≥ {@link HISTORY_WRITE_PAGE_STRIDE} pages flipped since the last write,
+ *   OR ≥ {@link HISTORY_WRITE_MIN_INTERVAL_MS} elapsed since it.
+ * - `pagehide` / unmount flush the tail once (best effort, fire-and-forget).
+ *
+ * Rationale: fast flippers keep the synced position within ~10 pages of
+ * reality without per-flip spam; slow readers still checkpoint every ~30 s.
+ * The server upserts one history row (timestamp refresh), so extra writes
+ * are idempotent but not free — hence the throttle. Failures degrade to
+ * console.warn; reading is never disturbed by a history outage.
+ */
+const HISTORY_WRITE_PAGE_STRIDE = 10
+const HISTORY_WRITE_MIN_INTERVAL_MS = 30_000
+
+/** Page already persisted by the last writeback (-1 = nothing yet). */
+let lastHistoryPage = -1
+/** Wall clock of the last writeback attempt — anti-spam bound, not delivery tracking. */
+let lastHistoryAt = 0
+
+function pushHistory(): void {
+  lastHistoryPage = currentPage.value
+  lastHistoryAt = Date.now()
+  galleryApi
+    .addHistory(gid.value, { token: galleryToken.value, title: title.value })
+    .catch((error) => {
+      console.warn(`[reader] history writeback failed (gid=${gid.value})`, error)
+    })
+}
+
+/** Throttle gate for mid-reading page changes (see strategy above). */
+function syncReadingProgress(): void {
+  if (loadState.value !== 'ready') return
+  const flipped = Math.abs(currentPage.value - lastHistoryPage)
+  if (flipped === 0) return
+  if (
+    flipped < HISTORY_WRITE_PAGE_STRIDE &&
+    Date.now() - lastHistoryAt < HISTORY_WRITE_MIN_INTERVAL_MS
+  ) {
+    return
+  }
+  pushHistory()
+}
+
+/** Last-chance flush on leave/unload: bypasses the throttle, skips no-op writes. */
+function flushHistoryOnLeave(): void {
+  if (loadState.value !== 'ready') return
+  if (currentPage.value === lastHistoryPage) return
+  pushHistory()
+}
+
+watch(currentPage, () => {
+  syncReadingProgress()
+})
+
+/* ------------------------------------------------------------------ */
 /* WebSocket — AI enhancement hot-swap (websocket-protocol §3.3/§6.3)  */
 /* ------------------------------------------------------------------ */
 
@@ -364,6 +432,7 @@ async function load() {
       throw new Error('Gallery has no pages')
     }
     title.value = detail.title || `Gallery ${gid.value}`
+    galleryToken.value = detail.token || ''
     totalPages.value = pages
 
     const start = Number(route.params.page)
@@ -374,6 +443,9 @@ async function load() {
     loadState.value = 'ready'
     document.title = title.value
     subscribeEnhanced()
+    // F1: entering the reader records the visit immediately (server upserts
+    // the history row and refreshes its timestamp).
+    pushHistory()
   } catch (error) {
     if (seq !== loadSeq) return
     console.error('Failed to load gallery', error)
@@ -391,6 +463,9 @@ function resetReaderState() {
   loadState.value = 'loading'
   errorMessage.value = 'Failed to load gallery'
   title.value = ''
+  galleryToken.value = ''
+  lastHistoryPage = -1
+  lastHistoryAt = 0
   totalPages.value = 0
   currentPage.value = 0
   zoom.value = 1
@@ -438,10 +513,15 @@ onMounted(() => {
     landscapeQuery.addEventListener('change', onLandscapeChange)
   }
   applyStoredSettings()
+  // F1: tab close / refresh — one best-effort writeback of the tail position.
+  window.addEventListener('pagehide', flushHistoryOnLeave)
 })
 
 onBeforeUnmount(() => {
   landscapeQuery?.removeEventListener('change', onLandscapeChange)
+  window.removeEventListener('pagehide', flushHistoryOnLeave)
+  // Leaving the reader (router navigation) ends the session — flush the tail.
+  flushHistoryOnLeave()
   if (autoPlayTimer !== null) clearInterval(autoPlayTimer)
   if (routeSyncTimer !== null) clearTimeout(routeSyncTimer)
   // The WebSocket subscription + connection ref are released by the
