@@ -37,7 +37,23 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
+// Pin the Kotlin JVM target to match sourceCompatibility: without it Kotlin
+// defaults to its own maximum supported target (e.g. 24 under JDK 26), which
+// fails compile with "Inconsistent JVM Target Compatibility" against javac 21.
+// Pinning lets the JVM test gates run on any JDK >= 21 without a toolchain.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}
+
 dependencies {
+    // Override Spring Boot 3.4.x BOM-managed versions so Mockito/ByteBuddy
+    // understand JDK 26 class files (inline-mock creation fails otherwise,
+    // e.g. "Could not modify all classes [interface javax.sql.DataSource]").
+    extra["mockito.version"] = "5.20.0"
+    extra["byte-buddy.version"] = "1.17.7"
+
     implementation(project(":anotherviewer-core"))
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -61,4 +77,7 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Allow ByteBuddy to instrument class-file versions newer than it was
+    // built for (belt-and-braces alongside the version overrides above).
+    jvmArgs("-Dnet.bytebuddy.experimental=true")
 }
