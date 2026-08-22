@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { useKeyboardNav, type KeyNavCallbacks } from '../useKeyboardNav'
+
+/** Currently mounted host — torn down afterEach so listeners never stack. */
+let active: VueWrapper | undefined
 
 /** Mount a throwaway host that installs the composable with the given callbacks. */
 function mountNav(callbacks: KeyNavCallbacks) {
@@ -11,19 +14,25 @@ function mountNav(callbacks: KeyNavCallbacks) {
       return () => h('div')
     },
   })
-  return mount(Host)
+  active = mount(Host)
+  return active
 }
 
-/** Dispatch a real keydown on window and return the preventDefault spy. */
-function press(key: string): ReturnType<typeof vi.fn> {
+/**
+ * Dispatch a real keydown on window; report whether the composable
+ * prevented the browser default (scroll / quick-find side effects).
+ */
+function press(key: string): boolean {
   const event = new KeyboardEvent('keydown', { key })
   const spy = vi.spyOn(event, 'preventDefault')
   window.dispatchEvent(event)
-  return spy
+  return spy.mock.calls.length > 0
 }
 
 describe('useKeyboardNav (T-F2)', () => {
   afterEach(() => {
+    active?.unmount()
+    active = undefined
     vi.restoreAllMocks()
   })
 
@@ -43,10 +52,10 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     mountNav(cbs)
 
-    expect(press('ArrowLeft')).toHaveBeenCalled()
-    expect(press('a')).toHaveBeenCalled()
-    expect(press('ArrowRight')).toHaveBeenCalled()
-    expect(press('d')).toHaveBeenCalled()
+    expect(press('ArrowLeft')).toBe(true)
+    expect(press('a')).toBe(true)
+    expect(press('ArrowRight')).toBe(true)
+    expect(press('d')).toBe(true)
 
     expect(cbs.onPrev).toHaveBeenCalledTimes(2)
     expect(cbs.onNext).toHaveBeenCalledTimes(2)
@@ -56,9 +65,9 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     mountNav(cbs)
 
-    press('Home')
-    press('End')
-    press('Escape')
+    expect(press('Home')).toBe(true)
+    expect(press('End')).toBe(true)
+    expect(press('Escape')).toBe(true)
 
     expect(cbs.onFirst).toHaveBeenCalledTimes(1)
     expect(cbs.onLast).toHaveBeenCalledTimes(1)
@@ -69,7 +78,7 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     mountNav(cbs)
 
-    press(' ')
+    expect(press(' ')).toBe(true)
     expect(cbs.onNext).toHaveBeenCalledTimes(1)
     expect(cbs.onToggleToolbar).not.toHaveBeenCalled()
   })
@@ -78,9 +87,9 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     mountNav(cbs)
 
-    press('+')
-    press('=')
-    press('-')
+    expect(press('+')).toBe(true)
+    expect(press('=')).toBe(true)
+    expect(press('-')).toBe(true)
 
     expect(cbs.onZoomIn).toHaveBeenCalledTimes(2)
     expect(cbs.onZoomOut).toHaveBeenCalledTimes(1)
@@ -90,21 +99,23 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     mountNav({ ...cbs, pagingEnabled: () => false })
 
-    press('ArrowLeft')
-    press('ArrowRight')
-    press('a')
-    press('d')
+    // Gated keys are swallowed WITHOUT preventDefault — the page keeps its
+    // native behavior (e.g. scrolling) when keyboard paging is off.
+    expect(press('ArrowLeft')).toBe(false)
+    expect(press('ArrowRight')).toBe(false)
+    expect(press('a')).toBe(false)
+    expect(press('d')).toBe(false)
     expect(cbs.onPrev).not.toHaveBeenCalled()
     expect(cbs.onNext).not.toHaveBeenCalled()
 
     // With paging off, Space toggles the chrome instead of flipping pages.
-    press(' ')
+    expect(press(' ')).toBe(true)
     expect(cbs.onNext).not.toHaveBeenCalled()
     expect(cbs.onToggleToolbar).toHaveBeenCalledTimes(1)
 
     // Jump keys stay live regardless of the paging preference.
-    press('Home')
-    press('End')
+    expect(press('Home')).toBe(true)
+    expect(press('End')).toBe(true)
     expect(cbs.onFirst).toHaveBeenCalledTimes(1)
     expect(cbs.onLast).toHaveBeenCalledTimes(1)
   })
@@ -113,11 +124,11 @@ describe('useKeyboardNav (T-F2)', () => {
     const cbs = makeCbs()
     const wrapper = mountNav(cbs)
 
-    press('ArrowRight')
+    expect(press('ArrowRight')).toBe(true)
     expect(cbs.onNext).toHaveBeenCalledTimes(1)
 
     wrapper.unmount()
-    press('ArrowRight')
+    expect(press('ArrowRight')).toBe(false)
     expect(cbs.onNext).toHaveBeenCalledTimes(1)
   })
 })
