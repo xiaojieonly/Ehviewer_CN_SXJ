@@ -46,7 +46,7 @@ cd ~/anotherviewer
 ./bin/stop.sh
 ```
 
-systemd 服务（可选）：`packaging/systemd/anotherviewer.service.tpl`（`ExecStart=... --data-dir=/var/lib/anotherviewer`）。
+systemd 服务（可选）：`packaging/systemd/anotherviewer.service.tpl`（经 `Environment=ANOTHERVIEWER_DATA_DIR=/var/lib/anotherviewer` 注入数据目录；裸 `--data-dir` 不是 Spring 配置键，命令行等价写法为 `--anotherviewer.data-dir=...`）。
 
 ## Docker 部署
 

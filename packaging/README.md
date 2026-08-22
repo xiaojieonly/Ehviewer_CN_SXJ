@@ -22,8 +22,8 @@ zip 是发布的主力形式：跨平台（Linux/macOS）、解压即用、无�
 | zip 发布包（scripts/package.sh） | deb/rpm 包（packaging/ospackage.gradle） | 抽象 |
 | --- | --- | --- |
 | `lib/app.jar` | 安装到 `/opt/anotherviewer/lib/app.jar` | 同一 app.jar 可执行 fat jar |
-| `data/`（解压目录内） | `/var/lib/anotherviewer` | 同一 `--data-dir` 参数（Spring `anotherviewer.data-dir`） |
-| `bin/start.sh`（脚本内推导） | `anotherviewer.service`（systemd unit） | 同一启动语义：`java -jar ... --data-dir=...` |
+| `data/`（解压目录内） | `/var/lib/anotherviewer` | 同一数据目录语义（`ANOTHERVIEWER_DATA_DIR` 环境变量 / Spring `anotherviewer.data-dir`） |
+| `bin/start.sh`（脚本内推导） | `anotherviewer.service`（systemd unit） | 同一启动语义：`java -jar lib/app.jar` + `ANOTHERVIEWER_DATA_DIR` 注入 |
 
 数据目录固定结构在两处声明一致：`anotherviewer.db` / `security.key` / `downloads/` / `cache/` /
 `backups/`（zip 内 `data/README.md` 与 unit 文件均依赖该结构）。

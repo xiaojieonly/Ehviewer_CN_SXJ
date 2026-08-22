@@ -1,29 +1,45 @@
 // 备用：发行版打包配置（nebula.ospackage）。激活后按 packaging/README.md 说明接入，
 // 执行 ./gradlew :anotherviewer-web:buildDeb buildRpm 产出 .deb/.rpm。默认不激活，不影响现有构建。
 //
-// 注意：deb/rpm 不捆绑 JRE，要求系统提供 Java 21（requires 'openjdk-21-jre-headless'）。
-// 数据目录保持 --data-dir 抽象：安装为 /var/lib/anotherviewer，与 zip 包内 data/ 同一语义。
+// 注意：deb/rpm 不捆绑 JRE，要求系统提供 Java 21（deb: openjdk-21-jre-headless，
+// rpm: java-21-openjdk-headless）。数据目录保持 data-dir 抽象：经 ANOTHERVIEWER_DATA_DIR
+// 环境变量注入（与 deploy unit、install.sh 一致），安装为 /var/lib/anotherviewer。
 
 apply plugin: 'nebula.ospackage'
 
-def avVersion = project.hasProperty('releaseVersion') ? project.property('releaseVersion') : project.version
+// 版本取值：root project 的 project.version 未显式配置时为 "unspecified"，不能直接用；
+// 本项目真实版本来自 gradle.properties 的 webVersion（jar 名即 anotherviewer-web-<webVersion>.jar），
+// 命令行可用 -PwebVersion=<ver> 覆盖；releaseVersion 保留为更高优先级的发布覆盖项。
+def avVersion = project.hasProperty('releaseVersion')
+        ? project.property('releaseVersion')
+        : (project.hasProperty('webVersion') ? project.property('webVersion') : project.version)
+
+// 架构映射：不硬编码 amd64。默认取构建宿主 os.arch，可用 -PpackageArch=<arch> 交叉指定；
+// x86_64/amd64 与 arm64/aarch64 分别映射到 deb / rpm 各自的命名。
+def hostArch = (project.hasProperty('packageArch')
+        ? project.property('packageArch')
+        : System.getProperty('os.arch', 'amd64')).toString().toLowerCase()
+def isArm = hostArch in ['aarch64', 'arm64']
+def debArch = isArm ? 'arm64' : 'amd64'
+def rpmArch = isArm ? 'aarch64' : 'x86_64'
 
 ospackage {
+    // 包名固定为本项目名 anotherviewer（rootProject.name，见 settings.gradle），
+    // deb/rpm 显式各设一份，避免 ospackage 回落到任务/项目派生名
     packageName = 'anotherviewer'
     version = avVersion
-    arch = 'amd64'
     os = 'LINUX'
 
     // 安装路径 /opt/anotherviewer ↔ zip 内 lib/（同一 app.jar）
     installDir '/opt/anotherviewer'
 
-    from("${project(':anotherviewer-web').buildDir}/libs/anotherviewer-web-${project.version}.jar") {
+    from("${project(':anotherviewer-web').buildDir}/libs/anotherviewer-web-${avVersion}.jar") {
         into 'lib'
         rename { 'app.jar' }
         fileMode 0644
     }
 
-    // 数据路径 /var/lib/anotherviewer ↔ zip 内 data/（同一 --data-dir 抽象）
+    // 数据路径 /var/lib/anotherviewer ↔ zip 内 data/（同一 data-dir 抽象）
     directory('/var/lib/anotherviewer', 0755)
 
     // systemd unit：模板安装为 /lib/systemd/system/anotherviewer.service
@@ -33,9 +49,18 @@ ospackage {
         fileMode 0644
     }
 
-    // 依赖系统 Java 21（发行版 JRE 包名因发行版而异，deb/rpm 分别映射）
-    requires('openjdk-21-jre-headless')
-
     preInstall('useradd --system --home /opt/anotherviewer --shell /usr/sbin/nologin anotherviewer || true')
     postInstall('systemctl daemon-reload || true')
+}
+
+// 依赖系统 Java 21；架构与依赖包名按 deb / rpm 分置
+buildDeb {
+    arch = debArch
+    requires('openjdk-21-jre-headless')
+}
+
+buildRpm {
+    packageName = 'anotherviewer'
+    arch = rpmArch
+    requires('java-21-openjdk-headless')
 }
