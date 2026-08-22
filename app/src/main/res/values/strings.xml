@@ -1155,6 +1155,8 @@
     <string name="settings_webui_connected">服务器已连接</string>
     <string name="settings_webui_invalid_config">服务器配置无效</string>
     <string name="settings_webui_connect_failed">连接失败：%s</string>
+    <string name="settings_webui_connect_failed_unreachable">Connection failed: server unreachable. Check the address, port and your network.</string>
+    <string name="settings_webui_connect_failed_auth">Connection failed: authentication required. Check the username/password, or use Pairing.</string>
     <string name="settings_webui_syncing">正在同步…</string>
     <string name="settings_webui_sync_done">同步完成：收藏 %1$d↑/%2$d↓、下载 %3$d↑/%4$d↓、过滤 %5$d↑/%6$d↓</string>
     <string name="settings_webui_sync_failed">同步失败：%s</string>
@@ -1171,7 +1173,7 @@
     <string name="settings_webui_tier_1">Tier-1 同步+流式（默认）</string>
     <string name="settings_webui_tier_2">Tier-2 浏览代理（经服务器）</string>
     <string name="settings_webui_tier_3">Tier-3 下载托管（押后）</string>
-    <string name="settings_webui_tier_3_deferred_note">Tier-3 下载托管押后至独立波；当前按 Tier-2 浏览代理生效</string>
+    <string name="settings_webui_tier_3_deferred_note">Tier-3 下载托管押后至独立波；当前按 Tier-2 浏览代理生效；画廊详情页已有手动委托下载入口可用</string>
     <string name="settings_webui_auto_sync_interval">自动同步间隔（秒）</string>
     <string name="settings_webui_auto_sync_interval_summary">进入已配对网络后的周期同步间隔；0=仅网络变化时同步</string>
     <string name="settings_webui_sync_preferences">同步配置</string>
