@@ -8,7 +8,12 @@ ehviewer-core/build/
 # Gradle
 .gradle/
 .gradle-user-home/
-gradle/
+# 注意：不能写 gradle/（目录级排除会让 git 不再下钻，下面的豁免全部失效）；
+# gradle/* 只排除其直接子项，配合显式豁免保住必须入库的 gradle wrapper
+gradle/*
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 # IDE
 .idea/
