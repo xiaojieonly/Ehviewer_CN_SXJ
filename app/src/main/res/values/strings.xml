@@ -30,6 +30,11 @@
     <string name="settings_advanced_dns_over_http_summary">解决某些地区的 DNS 污染问题</string>
     <string name="settings_advanced_domain_fronting_title">域名前置</string>
     <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁</string>
+    <string name="settings_eh_refresh_igneous">REFRESH IGNEOUS</string>
+    <string name="settings_advanced_cf_auto_retry_title">IGNEOUS auto-retry</string>
+    <string name="settings_advanced_cf_auto_retry_summary">Retry with CF-Connecting-IP if igneous=mystery</string>
+    <string name="settings_advanced_cf_connecting_ip_title">CF-Connecting-IP</string>
+    <string name="settings_advanced_cf_connecting_ip_summary">IP address to spoof in CF-Connecting-IP header</string>
     <string name="settings_advanced_url_replace_title">url伪装,需关闭SNI</string>
     <string name="settings_advanced_url_replace_summary">url伪装(需重启，开启后账户功能失效)</string>
     <string name="settings_about_donate_guide">支持指南</string>

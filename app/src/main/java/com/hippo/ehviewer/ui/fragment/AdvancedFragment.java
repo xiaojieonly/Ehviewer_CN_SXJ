@@ -29,12 +29,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.wifi.WiFiClientActivity;
 import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
 import com.hippo.ehviewer.widget.ProgressHelper;
@@ -58,6 +60,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_IMPORT_DATA = "import_data";
     private static final String KEY_WIFI_SERVER = "wifi_server";
     private static final String KEY_WIFI_CLIENT = "wifi_client";
+    private static final String KEY_CF_AUTO_RETRY = Settings.KEY_CF_AUTO_RETRY;
+    private static final String KEY_CF_CONNECTING_IP = Settings.KEY_CF_CONNECTING_IP;
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -74,6 +78,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference importData = findPreference(KEY_IMPORT_DATA);
         Preference socketData = findPreference(KEY_WIFI_SERVER);
         Preference clientData = findPreference(KEY_WIFI_CLIENT);
+        EditTextPreference cfConnectingIp = findPreference(KEY_CF_CONNECTING_IP);
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
@@ -82,6 +87,13 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         clientData.setOnPreferenceClickListener(this);
 
         appLanguage.setOnPreferenceChangeListener(this);
+
+        if (cfConnectingIp != null) {
+            String currentIp = Settings.getCfConnectingIp();
+            cfConnectingIp.setText(currentIp);
+            cfConnectingIp.setSummary(currentIp);
+            cfConnectingIp.setOnPreferenceChangeListener(this);
+        }
     }
 
     @Override
@@ -190,6 +202,10 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         String key = preference.getKey();
         if (KEY_APP_LANGUAGE.equals(key)) {
             ((EhApplication) getActivity().getApplication()).recreate();
+            return true;
+        }
+        if (KEY_CF_CONNECTING_IP.equals(key)) {
+            preference.setSummary((String) newValue);
             return true;
         }
         return false;

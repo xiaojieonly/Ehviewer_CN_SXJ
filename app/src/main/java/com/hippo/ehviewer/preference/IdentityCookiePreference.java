@@ -19,12 +19,17 @@ package com.hippo.ehviewer.preference;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhCookieStore;
+import com.hippo.ehviewer.client.EhRequestBuilder;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.preference.MessagePreference;
 import com.hippo.text.Html;
@@ -32,10 +37,15 @@ import java.util.LinkedList;
 import java.util.List;
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class IdentityCookiePreference extends MessagePreference {
 
+    private AlertDialog mDialog;
     private String message;
+    private CharSequence mDialogMessage;
 
     public IdentityCookiePreference(Context context) {
         super(context);
@@ -82,10 +92,13 @@ public class IdentityCookiePreference extends MessagePreference {
             message = EhCookieStore.KEY_IPD_MEMBER_ID + ": " + ipbMemberId + "<br>"
                     + EhCookieStore.KEY_IPD_PASS_HASH + ": " + ipbPassHash + "<br>"
                     + EhCookieStore.KEY_IGNEOUS + ": " + igneous;
-            setDialogMessage(Html.fromHtml(getContext().getString(R.string.settings_eh_identity_cookies_signed, message)));
+            mDialogMessage = Html.fromHtml(getContext().getString(R.string.settings_eh_identity_cookies_signed, message));
+            setDialogMessage(mDialogMessage);
             message = message.replace("<br>", "\n");
         } else {
-            setDialogMessage(getContext().getString(R.string.settings_eh_identity_cookies_tourist));
+            message = null;
+            mDialogMessage = getContext().getString(R.string.settings_eh_identity_cookies_tourist);
+            setDialogMessage(mDialogMessage);
         }
     }
 
@@ -100,6 +113,39 @@ public class IdentityCookiePreference extends MessagePreference {
 
                 IdentityCookiePreference.this.onClick(dialog, which);
             });
+            builder.setNeutralButton(R.string.settings_eh_refresh_igneous, null);
         }
+    }
+
+    @Override
+    protected void onDialogCreated(AlertDialog dialog) {
+        super.onDialogCreated(dialog);
+        mDialog = dialog;
+        Button refreshBtn = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+        if (refreshBtn != null) {
+            refreshBtn.setOnClickListener(v -> performIgneousRefresh(refreshBtn));
+        }
+    }
+
+    private void performIgneousRefresh(Button btn) {
+        btn.setEnabled(false);
+        EhApplication.getEhCookieStore(getContext()).removeIgneous();
+        OkHttpClient client = EhApplication.getOkHttpClient(getContext());
+        new Thread(() -> {
+            try {
+                Request request = new EhRequestBuilder(EhUrl.URL_UCONFIG_EX).build();
+                try (Response response = client.newCall(request).execute()) {
+                    // cookie jar updated by interceptors
+                }
+            } catch (Exception ignored) {
+            }
+            new Handler(Looper.getMainLooper()).post(() -> {
+                init();
+                if (mDialog != null && mDialog.isShowing()) {
+                    mDialog.setMessage(mDialogMessage);
+                }
+                btn.setEnabled(true);
+            });
+        }).start();
     }
 }
