@@ -45,7 +45,9 @@ class GalleryFeedServiceTest {
                 mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
                 mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
                 mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
-                sessionManager
+                sessionManager,
+                mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+                com.hippo.anotherviewer.web.config.SiteCoreConfigProperties()
             ),
             client
         )

@@ -37,6 +37,8 @@ class HistoryModePassthroughTest {
             mock(GalleryTagsRepository::class.java),
             mock(LocalFavoriteInfoRepository::class.java),
             mock(SiteSessionManager::class.java),
+            mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+            com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
         )
         historyService = HistoryService(historyRepository)
     }

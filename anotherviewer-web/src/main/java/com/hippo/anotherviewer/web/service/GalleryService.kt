@@ -25,7 +25,9 @@ class GalleryService(
     private val quickSearchRepository: QuickSearchRepository,
     private val galleryTagsRepository: GalleryTagsRepository,
     private val localFavoriteInfoRepository: LocalFavoriteInfoRepository,
-    private val sessionManager: SiteSessionManager
+    private val sessionManager: SiteSessionManager,
+    private val downloadRepository: com.hippo.anotherviewer.web.repository.DownloadInfoRepository,
+    private val config: com.hippo.anotherviewer.web.config.SiteCoreConfigProperties,
 ) {
     private val logger = LoggerFactory.getLogger(GalleryService::class.java)
     private val client get() = sessionManager.okHttpClient
@@ -293,6 +295,12 @@ class GalleryService(
         if (history != null) {
             return enrichHistoryDetail(gid, history)
         }
+        // 统一阅读器（2026-08-24）：本地推送下载行直接作为 detail 来源——
+        // pages 取行内 total（<=0 时数落盘文件），零 EH 依赖，阅读器必须能开。
+        val download = downloadRepository.findByGid(gid)
+        if (download != null) {
+            return downloadDetailDto(download)
+        }
         if (token.isNullOrBlank()) return null
         return try {
             val detail = SiteEngine.getGalleryDetail(
@@ -305,6 +313,42 @@ class GalleryService(
             null
         }
     }
+
+    /**
+     * 本地下载行 → detail DTO（统一阅读器回退）。EH 不可达或从未同步元数据时
+     * 阅读器仍可打开：pages 来自行内 total，total 缺失时数 downloads/<gid>/ 下
+     * 的 %04d.* 推送文件。
+     */
+    private fun downloadDetailDto(download: com.hippo.anotherviewer.web.entity.DownloadInfoEntity): GalleryDetailDto {
+        val pages = if (download.total > 0) download.total else countPushedPages(download.gid)
+        return GalleryDetailDto(
+            gid = download.gid,
+            token = download.token,
+            galleryUrl = SiteUrl.getGalleryDetailUrl(download.gid, download.token),
+            title = download.title,
+            titleJpn = download.titleJpn,
+            thumb = download.thumb,
+            category = download.category,
+            posted = download.posted,
+            uploader = download.uploader,
+            rating = download.rating,
+            rated = download.rated,
+            simpleLanguage = download.simpleLanguage,
+            simpleTags = download.simpleTags?.split(",")?.map { it.trim() } ?: emptyList(),
+            thumbWidth = download.thumbWidth,
+            thumbHeight = download.thumbHeight,
+            pages = pages,
+            favoriteSlot = download.favoriteSlot,
+            favoriteName = download.favoriteName,
+            tags = emptyList(),
+            imageUrl = download.thumb
+        )
+    }
+
+    private fun countPushedPages(gid: Long): Int =
+        java.io.File(config.download.path, gid.toString())
+            .listFiles { f -> f.name.matches(Regex("^\\d{4}\\..+")) }
+            ?.size ?: 0
 
     /**
      * Local history → detail DTO. The site detail is always attempted so the

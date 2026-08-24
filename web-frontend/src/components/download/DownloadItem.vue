@@ -193,6 +193,9 @@ const emit = defineEmits<{
   (e: 'menu', id: number): void
   /** Click on the card body while selectable — toggles this row. */
   (e: 'select', id: number): void
+  /** Click on the card body outside select mode — open the unified reader
+      (Android parity: tapping a finished download opens GalleryActivity). */
+  (e: 'read', gid: number): void
 }>()
 
 const title = computed(() => props.item.title || props.item.titleJpn || 'Untitled')
@@ -270,7 +273,12 @@ function onContextMenu(event: MouseEvent): void {
 /** Card body click in select mode toggles the row (Android toggleItemChecked);
     action buttons keep their own handlers (closest('button') guard). */
 function onBodyClick(event: MouseEvent): void {
-  if (!props.selectable) return
+  if (!props.selectable) {
+    // 统一阅读器入口：下载行点击 → /reader/{gid}（本地推送内容直接可读，
+    // detail 由后端 download 行回退提供）。
+    emit('read', props.item.gid)
+    return
+  }
   if ((event.target as HTMLElement).closest('button')) return
   emit('select', props.item.id)
 }

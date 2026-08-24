@@ -40,7 +40,9 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
-            sessionManager
+            sessionManager,
+            mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+            com.hippo.anotherviewer.web.config.SiteCoreConfigProperties()
         )
     }
 
@@ -311,7 +313,9 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
-            sessionManager
+            sessionManager,
+            mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+            com.hippo.anotherviewer.web.config.SiteCoreConfigProperties()
         )
 
         val response = service.searchGallery(null, null, 0, 20)
@@ -331,7 +335,9 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
             mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
-            sessionManager
+            sessionManager,
+            mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+            com.hippo.anotherviewer.web.config.SiteCoreConfigProperties()
         )
 
         // 历史为空 → 回退站点最新列表；沙箱内站点不可达 → E2E-6 语义 success=false（证明确实触网回退）。

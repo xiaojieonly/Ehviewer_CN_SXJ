@@ -252,6 +252,43 @@ function prefsWithReader(patch: Partial<typeof DEFAULT_READER_PREFERENCES>): voi
   }
 }
 
+describe('ReaderView 统一阅读器 — detail 失败仍打开（degraded open）', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset()
+    replaceMock.mockResolvedValue(undefined)
+    pushMock.mockReset()
+    vi.mocked(galleryApi.getDetail).mockReset()
+    vi.mocked(galleryApi.addHistory).mockReset()
+    vi.mocked(galleryApi.addHistory).mockResolvedValue(undefined as never)
+  })
+
+  it('opens the reader shell with a degraded banner when detail fetch fails', async () => {
+    vi.mocked(galleryApi.getDetail).mockRejectedValue(new Error('site unreachable'))
+    const wrapper = mount(ReaderView)
+    await flushPromises()
+
+    // 阅读器壳已挂载（ImageReader stub 渲染），而非全屏错误
+    expect(wrapper.find('.image-reader-stub').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="reader-degraded-banner"]').exists()).toBe(true)
+    expect(wrapper.find('.image-reader-stub').attributes('data-total')).toBe('1')
+    // 无 token 不做历史回写
+    expect(vi.mocked(galleryApi.addHistory)).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('does not show the degraded banner when detail succeeds', async () => {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    const wrapper = mount(ReaderView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="reader-degraded-banner"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+})
+
 describe('ReaderView (T-F2) — keyboard navigation', () => {
   let wrapper: VueWrapper | undefined
 

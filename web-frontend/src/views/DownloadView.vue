@@ -140,6 +140,7 @@
             @delete="onDelete"
             @menu="onItemMenu"
             @select="onItemSelect"
+            @read="onItemRead"
           />
         </li>
       </ul>
@@ -252,6 +253,7 @@
  * 3 finish · 4 failed (anotherviewer-web mirrors the Android constants).
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/download'
@@ -270,6 +272,8 @@ import DownloadItemCard from '@/components/download/DownloadItem.vue'
 type ViewState = 'loading' | 'content' | 'empty' | 'error'
 
 /** Android `DownloadInfo.STATE_*` used for optimistic UI updates. */
+const router = useRouter()
+
 const STATE_NONE = 0
 const STATE_WAIT = 1
 const STATE_DOWNLOAD = 2
@@ -595,6 +599,11 @@ const selectedStoppableIds = computed(() =>
 function onItemMenu(id: number): void {
   selectMode.value = true
   toggleSelect(id)
+}
+
+/** 统一阅读器入口：下载行点击直达 /reader/{gid}。 */
+function onItemRead(gid: number): void {
+  void router.push(`/reader/${gid}`)
 }
 
 function onItemSelect(id: number): void {

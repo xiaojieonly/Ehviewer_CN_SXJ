@@ -35,6 +35,15 @@
       @next="nextPage"
       @back="goBack"
     />
+
+    <div
+      v-if="degraded && loadState === 'ready'"
+      class="reader-view__degraded"
+      role="status"
+      data-testid="reader-degraded-banner"
+    >
+      画廊详情不可用（站点不可达或本地无元数据）——无法加载的页面会在页内提示
+    </div>
   </div>
 </template>
 
@@ -100,6 +109,8 @@ const gid = computed(() => Number(route.params.gid))
 
 const loadState = ref<'loading' | 'error' | 'ready'>('loading')
 const errorMessage = ref('Failed to load gallery')
+/** 统一阅读器：detail 拉取失败时仍打开阅读器壳（单页错误由 PageMode 呈现）。 */
+const degraded = ref(false)
 const title = ref('')
 /** Gallery site token from the detail response — required by history writeback. */
 const galleryToken = ref('')
@@ -364,6 +375,12 @@ let lastHistoryPage = -1
 let lastHistoryAt = 0
 
 function pushHistory(): void {
+  // 统一阅读器：降级态（无 detail token）不做回写——同步脏标记防 leave-flush 误发。
+  if (degraded.value || !galleryToken.value) {
+    lastHistoryPage = currentPage.value
+    lastHistoryAt = Date.now()
+    return
+  }
   lastHistoryPage = currentPage.value
   lastHistoryAt = Date.now()
   galleryApi
@@ -449,8 +466,15 @@ async function load() {
   } catch (error) {
     if (seq !== loadSeq) return
     console.error('Failed to load gallery', error)
-    errorMessage.value = 'Failed to load gallery'
-    loadState.value = 'error'
+    // 统一阅读器（2026-08-24）：detail 拉不到（EH 不可达 / 无本地元数据）也必须
+    // 打开阅读器壳——单页失败由 PageMode 的错误覆盖层呈现（含重试）。
+    // total 置 1 让阅读器停在可交互状态；历史回写跳过（无 token）。
+    title.value = `Gallery ${gid.value}`
+    totalPages.value = 1
+    currentPage.value = 0
+    degraded.value = true
+    loadState.value = 'ready'
+    document.title = title.value
   }
 }
 
@@ -462,6 +486,7 @@ async function load() {
 function resetReaderState() {
   loadState.value = 'loading'
   errorMessage.value = 'Failed to load gallery'
+  degraded.value = false
   title.value = ''
   galleryToken.value = ''
   lastHistoryPage = -1
@@ -552,6 +577,20 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--grey-500);
   font-size: var(--text-little-small); /* 16sp */
+}
+
+.reader-view__degraded {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--grey-300, #aaa);
+  font-size: var(--text-little-small);
+  pointer-events: none;
 }
 
 .reader-view__retry {
