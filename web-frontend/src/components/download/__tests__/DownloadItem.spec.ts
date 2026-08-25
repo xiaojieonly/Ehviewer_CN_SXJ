@@ -23,6 +23,32 @@ function makeDownload(overrides: Partial<DownloadItemType> = {}): DownloadItemTy
   }
 }
 
+describe('DownloadItem 点击分区（Android 端逻辑：缩略图→详情，主体→阅读）', () => {
+  it('thumb click emits open (detail) and not read', async () => {
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    await wrapper.find('.download-item__thumb').trigger('click')
+    expect(wrapper.emitted('open')).toEqual([[9001]])
+    expect(wrapper.emitted('read')).toBeUndefined()
+  })
+
+  it('body click outside select mode emits read (direct reader)', async () => {
+    const wrapper = mount(DownloadItem, { props: { item: makeDownload() } })
+    await wrapper.find('.download-item__body').trigger('click')
+    expect(wrapper.emitted('read')).toEqual([[9001]])
+    expect(wrapper.emitted('open')).toBeUndefined()
+  })
+
+  it('action buttons do not bubble into body read/open', async () => {
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ state: 2, total: 10, done: 3 }) },
+    })
+    await wrapper.find('button[aria-label="Pause download"]').trigger('click')
+    expect(wrapper.emitted('pause')).toEqual([[wrapper.props('item').id]])
+    expect(wrapper.emitted('read')).toBeUndefined()
+    expect(wrapper.emitted('open')).toBeUndefined()
+  })
+})
+
 describe('DownloadItem (thumbnail handling, E2E-9 / E2E-3)', () => {
   it('renders title, progress, percent and buttons when thumb is null', () => {
     const wrapper = mount(DownloadItem, {

@@ -24,8 +24,16 @@
       <AppIcon v-if="selected" name="check-dark" size="16px" color="var(--color-white)" />
     </span>
 
-    <!-- FixedThumb replica: 80×120dp, CENTER_CROP (item_download.xml) -->
-    <div class="download-item__thumb">
+    <!-- FixedThumb replica: 80×120dp, CENTER_CROP (item_download.xml)。
+         Android 端逻辑：点缩略图 → 详情页（stop 防触发主体的直接阅读）。 -->
+    <div
+      class="download-item__thumb"
+      role="link"
+      tabindex="0"
+      :aria-label="`${title} — 详情`"
+      @click.stop="emit('open', item.gid)"
+      @keydown.enter.stop="emit('open', item.gid)"
+    >
       <img
         v-if="hasThumb"
         :src="thumbSrc ?? undefined"
@@ -90,7 +98,7 @@
             class="download-item__action"
             title="Start"
             aria-label="Start download"
-            @click="emit('start', item.id)"
+            @click.stop="emit('start', item.id)"
           >
             <AppIcon name="play-dark" size="24px" />
           </button>
@@ -100,7 +108,7 @@
             class="download-item__action"
             title="Pause"
             aria-label="Pause download"
-            @click="emit('pause', item.id)"
+            @click.stop="emit('pause', item.id)"
           >
             <AppIcon name="pause-dark" size="24px" />
           </button>
@@ -110,7 +118,7 @@
             class="download-item__action"
             title="Stop"
             aria-label="Stop download"
-            @click="emit('cancel', item.id)"
+            @click.stop="emit('cancel', item.id)"
           >
             <AppIcon name="close-dark" size="24px" />
           </button>
@@ -119,7 +127,7 @@
             class="download-item__action download-item__action--danger"
             title="Delete"
             aria-label="Delete download"
-            @click="emit('delete', item.id)"
+            @click.stop="emit('delete', item.id)"
           >
             <AppIcon name="delete-dark" size="24px" />
           </button>
@@ -193,8 +201,9 @@ const emit = defineEmits<{
   (e: 'menu', id: number): void
   /** Click on the card body while selectable — toggles this row. */
   (e: 'select', id: number): void
-  /** Click on the card body outside select mode — open the unified reader
-      (Android parity: tapping a finished download opens GalleryActivity). */
+  /** Android 端逻辑：点缩略图 → 详情页。 */
+  (e: 'open', gid: number): void
+  /** Android 端逻辑：点主体（非缩略图/按钮）→ 直接进入统一阅读器。 */
   (e: 'read', gid: number): void
 }>()
 
@@ -274,8 +283,7 @@ function onContextMenu(event: MouseEvent): void {
     action buttons keep their own handlers (closest('button') guard). */
 function onBodyClick(event: MouseEvent): void {
   if (!props.selectable) {
-    // 统一阅读器入口：下载行点击 → /reader/{gid}（本地推送内容直接可读，
-    // detail 由后端 download 行回退提供）。
+    // Android 端逻辑：主体点击 → 直接阅读（快速续读下载内容）。
     emit('read', props.item.gid)
     return
   }

@@ -140,6 +140,7 @@
             @delete="onDelete"
             @menu="onItemMenu"
             @select="onItemSelect"
+            @open="onItemOpen"
             @read="onItemRead"
           />
         </li>
@@ -601,7 +602,11 @@ function onItemMenu(id: number): void {
   toggleSelect(id)
 }
 
-/** 统一阅读器入口：下载行点击直达 /reader/{gid}。 */
+/** Android 端逻辑：缩略图 → 详情页；主体 → 直接阅读。 */
+function onItemOpen(gid: number): void {
+  void router.push(`/gallery/${gid}`)
+}
+
 function onItemRead(gid: number): void {
   void router.push(`/reader/${gid}`)
 }
