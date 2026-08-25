@@ -93,12 +93,24 @@ class GalleryLookupService(
      */
     fun fetchImageUrl(gid: Long, token: String, page: Int): String {
         val previewSet = detail(gid, token).previewSet
-        if (page < 1 || page > previewSet.size()) {
-            throw SiteException("Invalid page.")
+        if (page in 1..previewSet.size()) {
+            // Fast path: the first detail page's preview set (20/40 entries).
+            val pageUrl = previewSet.getPageUrlAt(page - 1)
+            val result = SiteEngine.getGalleryPage(null, client, pageUrl, gid, token)
+            return result.imageUrl
         }
-        // The page URL carries the page-specific /s/ token from the detail
-        // page preview data; the gallery detail token is only the Referer.
-        val pageUrl = previewSet.getPageUrlAt(page - 1)
+        // 统一阅读器（2026-08-25）：>首页条数的页码走详情分页（?p=N，0-based）——
+        // core getGalleryDetail 只解析第一页预览，多页画廊此前第 21 页起全部
+        // "Invalid page"。以首页条数为步长定位对应详情页的预览集。
+        val perPage = previewSet.size().coerceAtLeast(1)
+        val detailPageIndex = (page - 1) / perPage
+        if (detailPageIndex <= 0) throw SiteException("Invalid page.")
+        val pagedUrl = SiteUrl.getGalleryDetailUrl(gid, token) + "?p=" + detailPageIndex
+        val paged = SiteEngine.getPreviewSet(null, client, pagedUrl)
+        val pagedSet = paged.first
+        val idx = (page - 1) % perPage
+        if (idx >= pagedSet.size()) throw SiteException("Invalid page.")
+        val pageUrl = pagedSet.getPageUrlAt(idx)
         val result = SiteEngine.getGalleryPage(null, client, pageUrl, gid, token)
         return result.imageUrl
     }
