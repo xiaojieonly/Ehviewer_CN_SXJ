@@ -278,6 +278,11 @@
     <string name="filter_the_uploader">把上傳者 \"%s\" 加入遮蔽列表？</string>
     <string name="uploader_action_title">你想對這個上傳者做什麼？</string>
     <string name="subscribe_the_uploader">訂閱該上傳者</string>
+    <string name="unsubscribe_the_uploader">取消訂閱該上傳者</string>
+    <string name="unsubscribe_the_uploader_success">已取消訂閱</string>
+    <string name="subscription_feed_tags">只看訂閱標籤</string>
+    <string name="subscription_feed_uploaders">只看訂閱上傳者</string>
+    <string name="subscription_feed_both">同時顯示訂閱標籤和上傳者</string>
     <string name="block_the_uploader">遮蔽該上傳者</string>
     <string name="filter_the_tag">把標籤 \"%s\" 加入遮蔽列表？</string>
     <string name="filter_added">已經新增遮蔽項</string>

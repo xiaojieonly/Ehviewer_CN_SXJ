@@ -275,6 +275,11 @@
     <string name="filter_the_uploader">屏蔽上传者“%s”？</string>
     <string name="uploader_action_title">你想对这个上传者做什么？</string>
     <string name="subscribe_the_uploader">订阅该上传者</string>
+    <string name="unsubscribe_the_uploader">取消订阅该上传者</string>
+    <string name="unsubscribe_the_uploader_success">已取消订阅</string>
+    <string name="subscription_feed_tags">只看订阅标签</string>
+    <string name="subscription_feed_uploaders">只看订阅上传者</string>
+    <string name="subscription_feed_both">同时显示订阅标签和上传者</string>
     <string name="block_the_uploader">屏蔽该上传者</string>
     <string name="filter_the_tag">屏蔽标签“%s”？</string>
     <string name="filter_added">已添加屏蔽项</string>

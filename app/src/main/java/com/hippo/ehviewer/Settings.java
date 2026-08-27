@@ -46,9 +46,12 @@ import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.NumberUtils;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class Settings {
 
@@ -1529,5 +1532,58 @@ public class Settings {
 
     public static void putUpdateTime(long updateTime) {
         putLong(KEY_LAST_UPDATE_TIME,updateTime);
+    }
+
+    public static final String KEY_SUBSCRIBED_UPLOADERS = "subscribed_uploaders";
+
+    public static Set<String> getSubscribedUploaders() {
+        Set<String> stored = sSettingsPre.getStringSet(KEY_SUBSCRIBED_UPLOADERS, Collections.emptySet());
+        if (stored == null || stored.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(stored);
+    }
+
+    public static boolean isSubscribedUploader(String name) {
+        return name != null && getSubscribedUploaders().contains(name);
+    }
+
+    public static void addSubscribedUploader(String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        Set<String> set = new HashSet<>(getSubscribedUploaders());
+        if (!set.add(name)) {
+            return;
+        }
+        sSettingsPre.edit().putStringSet(KEY_SUBSCRIBED_UPLOADERS, set).apply();
+    }
+
+    public static void removeSubscribedUploader(String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        Set<String> set = new HashSet<>(getSubscribedUploaders());
+        if (!set.remove(name)) {
+            return;
+        }
+        sSettingsPre.edit().putStringSet(KEY_SUBSCRIBED_UPLOADERS, set).apply();
+    }
+
+    public static final String KEY_SUBSCRIPTION_FEED_MODE = "subscription_feed_mode";
+    public static final int SUBSCRIPTION_FEED_BOTH = 0;
+    public static final int SUBSCRIPTION_FEED_TAGS = 1;
+    public static final int SUBSCRIPTION_FEED_UPLOADERS = 2;
+
+    public static int getSubscriptionFeedMode() {
+        int mode = getInt(KEY_SUBSCRIPTION_FEED_MODE, SUBSCRIPTION_FEED_TAGS);
+        if (mode < SUBSCRIPTION_FEED_BOTH || mode > SUBSCRIPTION_FEED_UPLOADERS) {
+            return SUBSCRIPTION_FEED_TAGS;
+        }
+        return mode;
+    }
+
+    public static void setSubscriptionFeedMode(int mode) {
+        putInt(KEY_SUBSCRIPTION_FEED_MODE, mode);
     }
 }

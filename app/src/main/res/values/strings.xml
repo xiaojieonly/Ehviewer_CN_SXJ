@@ -363,6 +363,11 @@
     <string name="filter_the_uploader">Block the uploader \"%s\"?</string>
     <string name="uploader_action_title">What would you like to do with this uploader?</string>
     <string name="subscribe_the_uploader">Subscribe to this uploader</string>
+    <string name="unsubscribe_the_uploader">Unsubscribe from this uploader</string>
+    <string name="unsubscribe_the_uploader_success">Unsubscribed</string>
+    <string name="subscription_feed_tags">Tags only</string>
+    <string name="subscription_feed_uploaders">Uploaders only</string>
+    <string name="subscription_feed_both">Tags and uploaders</string>
     <string name="block_the_uploader">Block this uploader</string>
     <string name="filter_the_tag">Block the tag \"%s\"?</string>
     <string name="filter_added">Blocker added</string>

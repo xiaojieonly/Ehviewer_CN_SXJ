@@ -1622,16 +1622,36 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             return;
         }
 
+        boolean subscribed = Settings.isSubscribedUploader(uploader);
+        CharSequence[] items = new CharSequence[] {
+                getString(subscribed ? R.string.unsubscribe_the_uploader : R.string.subscribe_the_uploader),
+                getString(R.string.block_the_uploader)
+        };
         new AlertDialog.Builder(context)
                 .setTitle(R.string.uploader_action_title)
-                .setItems(R.array.uploader_action_entries, (dialog, which) -> {
+                .setItems(items, (dialog, which) -> {
                     if (which == 0) {
-                        subscribeUploader(uploader);
+                        if (subscribed) {
+                            unsubscribeUploader(uploader);
+                        } else {
+                            subscribeUploader(uploader);
+                        }
                     } else if (which == 1) {
                         showFilterUploaderDialog();
                     }
                 })
                 .show();
+    }
+
+    private void unsubscribeUploader(String uploader) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        if (tagDialog == null) {
+            tagDialog = new GalleryListSceneDialog(this);
+        }
+        tagDialog.unsubscribeUploader(uploader);
     }
 
     private void subscribeUploader(String uploader) {

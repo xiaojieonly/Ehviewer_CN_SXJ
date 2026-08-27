@@ -1,7 +1,7 @@
 package com.hippo.ehviewer.client.data.userTag;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 public class TagPushParam {
 
@@ -35,17 +35,21 @@ public class TagPushParam {
     }
 
     private String getEncodeTagName() {
-        if (tagNameNew == null) {
-            return "";
-        }
-        return URLEncoder.encode(tagNameNew, StandardCharsets.UTF_8);
+        return encode(tagNameNew);
     }
 
     private String getEncodeColorName() {
-        if (tagColorNew == null) {
-            return "";
-        }
-        return URLEncoder.encode(tagColorNew, StandardCharsets.UTF_8);
+        return encode(tagColorNew);
     }
 
+    private static String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        try {
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return value;
+        }
+    }
 }
