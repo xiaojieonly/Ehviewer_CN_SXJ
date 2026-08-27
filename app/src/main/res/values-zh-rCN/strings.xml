@@ -863,6 +863,7 @@
 
     <!--  订阅服务  -->
     <string name="subscription_watched">订阅</string>
+    <string name="subscription_unwatched">取消订阅</string>
     <string name="subscription_hidden">排除</string>
     <string name="delete_subscription_title">删除标签</string>
     <string name="can_not_use_this_tag">标签不可用</string>

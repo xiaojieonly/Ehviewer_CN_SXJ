@@ -878,6 +878,7 @@
 
     <!--  订阅服务  -->
     <string name="subscription_watched">Beobachtet</string>
+    <string name="subscription_unwatched">Nicht mehr beobachten</string>
     <string name="subscription_hidden">Versteckt</string>
     <string name="delete_subscription_title">Etikett entfernen</string>
     <string name="can_not_use_this_tag">Etiketten sind nicht verfügbar</string>

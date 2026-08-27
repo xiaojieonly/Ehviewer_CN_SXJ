@@ -884,6 +884,7 @@
     <string name="category_all">Todo</string>
     <!--  订阅服务  -->
     <string name="subscription_watched">Visto</string>
+    <string name="subscription_unwatched">Dejar de seguir</string>
     <string name="subscription_hidden">Oculto</string>
     <string name="delete_subscription_title">Eliminar etiqueta</string>
     <string name="can_not_use_this_tag">Las etiquetas no están disponibles</string>

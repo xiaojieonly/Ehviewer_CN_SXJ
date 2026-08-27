@@ -864,6 +864,7 @@
 
     <!--  訂閱服務  -->
     <string name="subscription_watched">訂閱</string>
+    <string name="subscription_unwatched">取消訂閱</string>
     <string name="subscription_hidden">排除</string>
     <string name="delete_subscription_title">刪除標籤</string>
     <string name="can_not_use_this_tag">標籤不可用</string>

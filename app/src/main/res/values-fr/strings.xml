@@ -861,6 +861,7 @@
     <string name="settings_eh_sign_out_restart">Redémarrage automatique en cours, veuillez patienter</string>
     <!--  订阅服务  -->
     <string name="subscription_watched">Surveillé</string>
+    <string name="subscription_unwatched">Ne plus surveiller</string>
     <string name="subscription_hidden">Masqué</string>
     <string name="delete_subscription_title">Supprimer le tag</string>
     <string name="can_not_use_this_tag">Les tags ne sont pas disponibles</string>
