@@ -326,6 +326,11 @@
         <item>@string/add_filter</item>
     </string-array>
 
+    <string-array name="uploader_action_entries">
+        <item>@string/subscribe_the_uploader</item>
+        <item>@string/block_the_uploader</item>
+    </string-array>
+
     <string-array name="app_language_entries">
         <item>@string/app_language_system</item>
         <item>@string/app_language_de</item>

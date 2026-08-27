@@ -302,6 +302,9 @@
     <string name="add_to_favorite_failure">Failed to add to favorites</string>
     <string name="remove_from_favorite_failure">Failed to remove from favorites</string>
     <string name="filter_the_uploader">Block the uploader \"%s\"?</string>
+    <string name="uploader_action_title">What would you like to do with this uploader?</string>
+    <string name="subscribe_the_uploader">Subscribe to this uploader</string>
+    <string name="block_the_uploader">Block this uploader</string>
     <string name="filter_the_tag">Block the tag \"%s\"?</string>
     <string name="filter_added">Blocker added</string>
 

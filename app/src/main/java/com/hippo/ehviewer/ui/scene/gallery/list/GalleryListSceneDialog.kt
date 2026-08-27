@@ -112,6 +112,13 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
         Toast.makeText(context, R.string.gallery_tag_copy, Toast.LENGTH_LONG).show()
     }
 
+    fun subscribeUploader(uploader: String?) {
+        if (uploader.isNullOrEmpty()) {
+            return
+        }
+        requestTag("uploader:$uploader", true)
+    }
+
     private fun requestTag(tagName: String?, tagState: Boolean) {
         val url = EhUrl.getMyTag()
 

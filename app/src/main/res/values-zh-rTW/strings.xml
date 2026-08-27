@@ -276,6 +276,9 @@
     <string name="add_to_favorite_failure">無法新增至收藏</string>
     <string name="remove_from_favorite_failure">無法從收藏中移除</string>
     <string name="filter_the_uploader">把上傳者 \"%s\" 加入遮蔽列表？</string>
+    <string name="uploader_action_title">你想對這個上傳者做什麼？</string>
+    <string name="subscribe_the_uploader">訂閱該上傳者</string>
+    <string name="block_the_uploader">遮蔽該上傳者</string>
     <string name="filter_the_tag">把標籤 \"%s\" 加入遮蔽列表？</string>
     <string name="filter_added">已經新增遮蔽項</string>
     <string name="copy_tag">複製</string>

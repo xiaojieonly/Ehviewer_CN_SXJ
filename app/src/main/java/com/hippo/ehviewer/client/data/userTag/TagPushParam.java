@@ -1,5 +1,8 @@
 package com.hippo.ehviewer.client.data.userTag;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 public class TagPushParam {
 
     public String userTagAction;
@@ -32,22 +35,17 @@ public class TagPushParam {
     }
 
     private String getEncodeTagName() {
-        String tagName = tagNameNew;
-
-        tagName.replace(":", "%3A");
-        tagName.replace(" ", "+");
-
-        return tagName;
+        if (tagNameNew == null) {
+            return "";
+        }
+        return URLEncoder.encode(tagNameNew, StandardCharsets.UTF_8);
     }
 
     private String getEncodeColorName() {
         if (tagColorNew == null) {
             return "";
         }
-        String tagColor = tagColorNew;
-        tagColor.replace("#", "%23");
-
-        return tagColor;
+        return URLEncoder.encode(tagColorNew, StandardCharsets.UTF_8);
     }
 
 }
