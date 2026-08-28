@@ -359,6 +359,11 @@
     <string name="download_start_all">Alle starten</string>
     <string name="download_stop_all">Alle stoppen</string>
     <string name="download_service_label">EhViewer-Download-Dienst</string>
+    <string name="archiver_download_service_label">EhViewer-Archiv-Download</string>
+    <string name="archiver_download_pause">Pausieren</string>
+    <string name="archiver_download_resume">Fortsetzen</string>
+    <string name="archiver_download_paused">Pausiert</string>
+    <string name="archiver_download_restart_no_range">Der Server unterstützt kein Fortsetzen; Download wird neu gestartet</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, noch %2$s übrig</string>
     <string name="remember_download_label">Download-Etikette merken</string>

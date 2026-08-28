@@ -408,6 +408,11 @@
     <string name="download_search_gallery">Buscar galería</string>
     <string name="download_search_hint">Ingrese clave de búsqueda</string>
     <string name="download_service_label">Servicio de descarga EhViewer</string>
+    <string name="archiver_download_service_label">Descarga de archivos EhViewer</string>
+    <string name="archiver_download_pause">Pausar</string>
+    <string name="archiver_download_resume">Reanudar</string>
+    <string name="archiver_download_paused">En pausa</string>
+    <string name="archiver_download_restart_no_range">El servidor no admite reanudar; se reinicia la descarga</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s restantes</string>
     <string name="remember_download_label">Recordar etiqueta de descarga</string>

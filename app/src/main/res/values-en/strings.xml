@@ -403,6 +403,11 @@
     <string name="download_reset_reading_progress">Reset reading progress</string>
     <string name="reset_reading_progress_message">Reset the reading progress of all downloaded galleries?</string>
     <string name="download_service_label">EhViewer Download Service</string>
+    <string name="archiver_download_service_label">EhViewer Archive Download</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Resume</string>
+    <string name="archiver_download_paused">Paused</string>
+    <string name="archiver_download_restart_no_range">Server does not support resume; restarting download</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s left</string>
     <string name="remember_download_label">Remember download label</string>

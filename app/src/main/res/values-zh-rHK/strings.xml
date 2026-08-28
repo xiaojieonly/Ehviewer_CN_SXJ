@@ -458,6 +458,11 @@
     <string name="download_search_hint">輸入搜尋關鍵字</string>
     <string name="reset_reading_progress_message">重設所有已下載圖庫的閱讀進度？</string>
     <string name="download_service_label">EhViewer 下載服務</string>
+    <string name="archiver_download_service_label">EhViewer 檔案下載</string>
+    <string name="archiver_download_pause">暫停</string>
+    <string name="archiver_download_resume">繼續</string>
+    <string name="archiver_download_paused">已暫停</string>
+    <string name="archiver_download_restart_no_range">伺服器不支援斷點續傳，將重新下載</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s，剩餘 %2$s</string>
     <string name="remember_download_label">記住下載標籤</string>

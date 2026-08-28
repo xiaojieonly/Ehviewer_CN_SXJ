@@ -417,6 +417,11 @@
     <string name="download_reset_reading_progress">รีเซ็ตตำแหน่งที่อ่าน</string>
     <string name="reset_reading_progress_message">รีเซ็ตตำแหน่งที่อ่านค้างไว้ทั้งหมดในแกลเลอรี่ที่โหลดไว้ทั้งหมดหรือไม่?</string>
     <string name="download_service_label">บริการดาวน์โหลดของ EhViewer</string>
+    <string name="archiver_download_service_label">ดาวน์โหลดไฟล์เก็บถาวร EhViewer</string>
+    <string name="archiver_download_pause">หยุดชั่วคราว</string>
+    <string name="archiver_download_resume">ทำต่อ</string>
+    <string name="archiver_download_paused">หยุดชั่วคราวแล้ว</string>
+    <string name="archiver_download_restart_no_range">เซิร์ฟเวอร์ไม่รองรับการดาวน์โหลดต่อ จะเริ่มดาวน์โหลดใหม่</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, เหลือ %2$s</string>
     <string name="remember_download_label">จดจำป้ายชื่อดาวน์โหลด</string>

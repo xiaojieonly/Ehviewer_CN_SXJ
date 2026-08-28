@@ -98,35 +98,72 @@ public class Settings {
         return ehConfig;
     }
 
-    public static GalleryInfo getArchiverDownload(long downloadId){
-        String s = sArchiverPre.getString(String.valueOf(downloadId),"");
+    /** 按应用内 taskId 读取归档任务对应的画廊信息。 */
+    public static GalleryInfo getArchiverDownload(long taskId){
+        String s = sArchiverPre.getString(String.valueOf(taskId),"");
         if (s.isEmpty()){
             return null;
         }
         return GalleryInfo.galleryInfoFromJson(JSONObject.parseObject(s));
     }
 
-    public static void putArchiverDownload(long downloadId,GalleryInfo info){
-        sArchiverPre.edit().putString(String.valueOf(downloadId),info.toJson().toJSONString()).apply();
+    public static void putArchiverDownload(long taskId,GalleryInfo info){
+        sArchiverPre.edit().putString(String.valueOf(taskId),info.toJson().toJSONString()).apply();
     }
 
-    public static boolean deleteArchiverDownload(long downloadId){
-        return sArchiverPre.edit().remove(String.valueOf(downloadId)).commit();
+    public static boolean deleteArchiverDownload(long taskId){
+        return sArchiverPre.edit().remove(String.valueOf(taskId)).commit();
     }
 
     public static long getArchiverDownloadId(long gid){
         return sArchiverPre.getLong(gid+"DId",-1L);
     }
 
-    public static void putArchiverDownloadId(long gid,long downloadId){
-        sArchiverPre.edit().putLong(gid+"DId",downloadId).apply();
+    public static void putArchiverDownloadId(long gid,long taskId){
+        sArchiverPre.edit().putLong(gid+"DId",taskId).apply();
     }
 
     public static boolean deleteArchiverDownloadId(long gid){
         return sArchiverPre.edit().remove(gid+"DId").commit();
     }
 
-    /** 是否存在尚未导入完成的归档 DownloadManager 任务。 */
+    public static String getArchiverDownloadUrl(long taskId) {
+        return sArchiverPre.getString(taskId + "Url", "");
+    }
+
+    public static void putArchiverDownloadUrl(long taskId, String url) {
+        sArchiverPre.edit().putString(taskId + "Url", url).apply();
+    }
+
+    public static boolean deleteArchiverDownloadUrl(long taskId) {
+        return sArchiverPre.edit().remove(taskId + "Url").commit();
+    }
+
+    public static boolean getArchiverDownloadPaused(long taskId) {
+        return sArchiverPre.getBoolean(taskId + "Paused", false);
+    }
+
+    public static void putArchiverDownloadPaused(long taskId, boolean paused) {
+        sArchiverPre.edit().putBoolean(taskId + "Paused", paused).apply();
+    }
+
+    public static boolean deleteArchiverDownloadPaused(long taskId) {
+        return sArchiverPre.edit().remove(taskId + "Paused").commit();
+    }
+
+    public static long getArchiverDownloadTotal(long taskId) {
+        return sArchiverPre.getLong(taskId + "Total", -1L);
+    }
+
+    public static void putArchiverDownloadTotal(long taskId, long total) {
+        sArchiverPre.edit().putLong(taskId + "Total", total).apply();
+    }
+
+    public static boolean deleteArchiverDownloadTotal(long taskId) {
+        return sArchiverPre.edit().remove(taskId + "Total").commit();
+    }
+
+    /** 是否存在尚未导入完成的归档下载任务。 */
     public static boolean hasPendingArchiverDownloads() {
         if (sArchiverPre == null) {
             return false;
@@ -139,7 +176,7 @@ public class Settings {
         return false;
     }
 
-    /** 所有进行中的归档 downloadId（来自 gid+DId 键）。 */
+    /** 所有进行中的归档 taskId（来自 gid+DId 键）。 */
     @NonNull
     public static long[] getPendingArchiverDownloadIds() {
         if (sArchiverPre == null) {

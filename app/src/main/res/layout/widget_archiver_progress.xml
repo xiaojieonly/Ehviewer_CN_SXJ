@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginLeft="@dimen/progress_padding"
     android:layout_marginRight="@dimen/progress_padding"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/archiver_downloading"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/archiver_downloading"
-        android:textColor="?android:attr/textColorHighlight" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/archiver_downloading"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/archiver_downloading"
+            android:textColor="?android:attr/textColorHighlight" />
+
+        <ImageButton
+            android:id="@+id/archiver_pause_resume"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/archiver_download_pause"
+            android:padding="6dp"
+            app:srcCompat="@drawable/v_pause_x24" />
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/archiver_progress"

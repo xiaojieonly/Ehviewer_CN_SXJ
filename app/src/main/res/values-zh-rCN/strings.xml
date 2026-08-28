@@ -398,6 +398,11 @@
     <string name="download_search_hint">输入关键字</string>
     <string name="reset_reading_progress_message">重置所有已下载画廊的阅读进度？</string>
     <string name="download_service_label">EhViewer 下载服务</string>
+    <string name="archiver_download_service_label">EhViewer 档案下载</string>
+    <string name="archiver_download_pause">暂停</string>
+    <string name="archiver_download_resume">继续</string>
+    <string name="archiver_download_paused">已暂停</string>
+    <string name="archiver_download_restart_no_range">服务器不支持断点续传，将重新下载</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s，剩余 %2$s</string>
     <string name="remember_download_label">记住下载标签</string>

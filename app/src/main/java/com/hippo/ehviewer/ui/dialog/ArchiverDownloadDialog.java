@@ -1,71 +1,37 @@
 package com.hippo.ehviewer.ui.dialog;
 
-
-import static com.hippo.ehviewer.client.EhConfig.ARCHIVER_PATH;
-
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_LONG;
-
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_SHORT;
 
-
 import android.app.Dialog;
-
-import android.app.DownloadManager;
-
 import android.content.Context;
-
 import android.content.DialogInterface;
-
 import android.net.Uri;
-
-import android.os.Environment;
-
 import android.util.Log;
-
 import android.view.View;
-
 import android.widget.Button;
-
 import android.widget.LinearLayout;
-
 import android.widget.ProgressBar;
-
 import android.widget.TextView;
-
 import android.widget.Toast;
-
 
 import androidx.appcompat.app.AlertDialog;
 
-
 import com.hippo.ehviewer.EhApplication;
-
 import com.hippo.ehviewer.R;
-
 import com.hippo.ehviewer.Settings;
-
 import com.hippo.ehviewer.client.EhClient;
-
 import com.hippo.ehviewer.client.EhRequest;
-
 import com.hippo.ehviewer.client.EhUrl;
-
 import com.hippo.ehviewer.client.data.ArchiverData;
-
 import com.hippo.ehviewer.client.data.GalleryDetail;
-
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
-
 import com.hippo.ehviewer.download.ArchiverDownloadCompleter;
-
+import com.hippo.ehviewer.download.ArchiverDownloader;
 import com.hippo.ehviewer.ui.MainActivity;
-
 import com.hippo.ehviewer.ui.scene.EhCallback;
-
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-
 import com.hippo.scene.SceneFragment;
-
 
 public class ArchiverDownloadDialog implements
         DialogInterface.OnDismissListener, EhClient.Callback<ArchiverData> {
@@ -83,6 +49,7 @@ public class ArchiverDownloadDialog implements
     private ProgressBar progressBar;
     private LinearLayout body;
     private ArchiverData data = new ArchiverData();
+
     public ArchiverDownloadDialog(GalleryDetail galleryDetail, GalleryDetailScene detailScene) {
         this.galleryDetail = galleryDetail;
         this.detailScene = detailScene;
@@ -152,7 +119,7 @@ public class ArchiverDownloadDialog implements
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-        // 下载在系统 DownloadManager 中继续；完成由 ArchiverDownloadCompleter 处理
+        // 下载在应用内继续；完成由 ArchiverDownloadCompleter 处理
     }
 
     @Override
@@ -226,42 +193,13 @@ public class ArchiverDownloadDialog implements
                 return;
             }
 
-            DownloadManager.Request request;
-            try {
-                request = new DownloadManager.Request(downloadUri);
-            } catch (IllegalArgumentException e) {
-                Log.e("ArchiverDownloadDialog", "Invalid download URL: " + downloadUrl, e);
+            ArchiverDownloader downloader = ArchiverDownloader.getInstance(context);
+            if (downloader == null) {
                 Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
                 return;
             }
 
-            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
-            request.setAllowedOverRoaming(true);
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-            request.setTitle(galleryDetail.title);
-            request.setDescription(context.getString(R.string.download_archive_started));
-            request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH + fileName + ".zip");
-            request.allowScanningByMediaScanner();
-
-            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-
-            if (downloadManager == null) {
-                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            ArchiverDownloadCompleter completer = ArchiverDownloadCompleter.getInstance(context);
-            if (completer == null) {
-                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            completer.ensureReceiverRegistered();
-            long downloadId = downloadManager.enqueue(request);
-            Settings.putArchiverDownloadId(galleryDetail.gid, downloadId);
-            Settings.putArchiverDownload(downloadId, galleryDetail);
-            completer.checkAndHandleStatus(downloadId);
+            downloader.start(context, galleryDetail, downloadUrl, fileName);
             detailScene.bindArchiverProgress(galleryDetail);
         }
 
@@ -287,5 +225,3 @@ public class ArchiverDownloadDialog implements
         }
     }
 }
-
-
