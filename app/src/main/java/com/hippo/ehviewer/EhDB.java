@@ -973,6 +973,18 @@ public class EhDB {
      * @return error string, null for no error
      */
     public static synchronized String importDB(Context context, File file, Handler handler) {
+        return importDB(context, file, handler, false);
+    }
+
+    /**
+     * @param file      The db file
+     * @param overwrite when {@code true}, imported records replace existing records with the
+     *                  same key instead of being skipped — reproducing an "uninstall + import"
+     *                  for downloads and gallery tags without losing the local image files.
+     *                  When {@code false} the legacy merge behavior is used.
+     * @return error string, null for no error
+     */
+    public static synchronized String importDB(Context context, File file, Handler handler, boolean overwrite) {
         try {
             SQLiteDatabase db = SQLiteDatabase.openDatabase(
                     file.getPath(), null, SQLiteDatabase.NO_LOCALIZED_COLLATORS);
@@ -994,7 +1006,7 @@ public class EhDB {
             manager.addDownloadLabel(downloadLabelList);
             // Downloads
             List<DownloadInfo> downloadInfoList = session.getDownloadsDao().queryBuilder().list();
-            manager.addDownload(downloadInfoList);
+            manager.addDownload(downloadInfoList, overwrite);
 
             sendImportProgress(handler, 50);
             // Download dirname
@@ -1055,7 +1067,14 @@ public class EhDB {
             List<GalleryTags> galleryTagsList = session.getGalleryTagsDao().queryBuilder().list();
             List<GalleryTags> currentGalleryTags = sDaoSession.getGalleryTagsDao().queryBuilder().list();
             for (GalleryTags tags : galleryTagsList) {
-                if (!currentGalleryTags.contains(tags)) {
+                if (overwrite) {
+                    // Replace tags for this gid so edited tag info wins.
+                    GalleryTags exist = queryGalleryTags(tags.gid);
+                    if (exist != null) {
+                        deleteGalleryTags(exist);
+                    }
+                    insertGalleryTags(tags);
+                } else if (!currentGalleryTags.contains(tags)) {
                     insertGalleryTags(tags);
                 }
             }

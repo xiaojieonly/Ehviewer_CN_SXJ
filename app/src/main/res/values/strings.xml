@@ -744,6 +744,9 @@
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
+    <string name="import_mode_title">Import mode</string>
+    <string name="import_mode_merge">Merge (keep existing records)</string>
+    <string name="import_mode_overwrite">Overwrite (imported data wins)</string>
     <string name="settings_advanced_wifi_sender">WiFi data migration</string>
     <string name="settings_advanced_wifi_sander_summary">Data Migration via Wi-Fi Hotspot</string>
     <string name="settings_advanced_wifi_client">WiFi migration data reception</string>

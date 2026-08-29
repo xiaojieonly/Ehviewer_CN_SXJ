@@ -521,10 +521,28 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     }
 
     public void addDownload(List<DownloadInfo> downloadInfoList) {
+        addDownload(downloadInfoList, false);
+    }
+
+    /**
+     * Batch add download records (used by database import).
+     *
+     * @param overwrite when {@code true}, an imported record replaces the existing record
+     *                  that has the same gid. The downloaded image files on disk are kept;
+     *                  only the in-memory record and its DB row are refreshed, so the
+     *                  imported title / label / state win. When {@code false} the existing
+     *                  record is kept and the imported one skipped (legacy merge behavior).
+     */
+    public void addDownload(List<DownloadInfo> downloadInfoList, boolean overwrite) {
         for (DownloadInfo info : downloadInfoList) {
             if (containDownloadInfo(info.gid)) {
-                // Contain
-                continue;
+                if (!overwrite) {
+                    // Contain
+                    continue;
+                }
+                // Overwrite: drop the stale in-memory record so the imported one wins.
+                // Files on disk are untouched; the DB row is updated below via putDownloadInfo.
+                removeDownloadFromMemory(info.gid);
             }
 
             // Ensure download state
@@ -565,6 +583,25 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 l.onReload();
             }
         });
+    }
+
+    /**
+     * Remove a download record from the in-memory structures only, without deleting the
+     * downloaded files or the DB row. Used by the overwrite import path so the imported
+     * record can be re-added cleanly (its DB row is then refreshed via putDownloadInfo).
+     */
+    private void removeDownloadFromMemory(long gid) {
+        DownloadInfo info = mAllInfoMap.get(gid);
+        if (info == null) {
+            return;
+        }
+        mAllInfoList.remove(info);
+        mAllInfoMap.remove(gid);
+        mWaitList.remove(info);
+        LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
+        if (list != null) {
+            list.remove(info);
+        }
     }
 
     public void addDownloadLabel(List<DownloadLabel> downloadLabelList) {
