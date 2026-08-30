@@ -747,6 +747,49 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     expect(wrapper.find('.pagination-bar__info').text()).toBe('第 5 / 5 页 · 250 条')
   })
 
+  it('renders a PC page-number window with ellipsis and jumps on click', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(900)(offset, limit),
+      labels: [],
+      total: 900,
+    }))
+    await mountView()
+    const bar = wrapper.find('[data-testid="download-pagination"]')
+    expect(bar.exists()).toBe(true)
+    // totalPages = 900/50 = 18；首页窗口：1 2 3 … 18
+    const pageBtns = bar.findAll('.pagination-bar__page').map((b) => b.text())
+    expect(pageBtns).toContain('1')
+    expect(pageBtns).toContain('18')
+    expect(bar.find('.pagination-bar__ellipsis').exists()).toBe(true)
+    // 点击第 3 页按钮 → offset = (3-1)*50 = 100
+    await bar.findAll('.pagination-bar__page').find((b) => b.text() === '3')!.trigger('click')
+    await flushPromises()
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 100, 50, 'time_desc', null, false)
+    expect(bar.find('.pagination-bar__info').text()).toBe('第 3 / 18 页 · 900 条')
+    // 当前页按钮带 active 标记
+    expect(bar.find('.pagination-bar__page--active').text()).toBe('3')
+  })
+
+  it('PageDown / PageUp keys page through the list (PC keyboard)', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 1 / 5 页 · 250 条')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }))
+    await flushPromises()
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 50, 50, 'time_desc', null, false)
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 2 / 5 页 · 250 条')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }))
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 1 / 5 页 · 250 条')
+  })
+
   it('changing the page size saves prefs and reloads page 1', async () => {
     vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
       downloads: pages(250)(offset, limit),

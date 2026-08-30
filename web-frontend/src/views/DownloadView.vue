@@ -45,7 +45,9 @@
 
     <!-- 分页条（Android PaginationIndicator 对齐，plan-2026-08-30 §3.4.0.1）：
          页码指示 + 每页条数切换（localStorage 与 AdminDownload 同键）+ 跳页
-         （服务端 offset 直取并替换列表）。无限加载体验保留。 -->
+         （服务端 offset 直取并替换列表）。无限加载体验保留。
+         PC 适配（2026-08-30）：直点页码按钮组（滚动窗口 + 省略号折叠）+ 前后页，
+         不再只有输入框。 -->
     <nav
       v-if="paginationVisible"
       class="pagination-bar"
@@ -54,6 +56,40 @@
     >
       <span class="pagination-bar__info">
         第 {{ currentPage }} / {{ totalPages }} 页 · {{ total }} 条
+      </span>
+      <span class="pagination-bar__pages" role="group" aria-label="页码">
+        <button
+          type="button"
+          class="pagination-bar__page"
+          :disabled="currentPage <= 1"
+          aria-label="上一页"
+          @click="jumpToPage(currentPage - 1)"
+        >
+          ‹
+        </button>
+        <template v-for="(item, i) in pageWindow" :key="`${item}-${i}`">
+          <button
+            v-if="item !== '…'"
+            type="button"
+            class="pagination-bar__page"
+            :class="{ 'pagination-bar__page--active': item === currentPage }"
+            :aria-current="item === currentPage ? 'page' : undefined"
+            :aria-label="`第 ${item} 页`"
+            @click="jumpToPage(item)"
+          >
+            {{ item }}
+          </button>
+          <span v-else class="pagination-bar__ellipsis" aria-hidden="true">…</span>
+        </template>
+        <button
+          type="button"
+          class="pagination-bar__page"
+          :disabled="currentPage >= totalPages"
+          aria-label="下一页"
+          @click="jumpToPage(currentPage + 1)"
+        >
+          ›
+        </button>
       </span>
       <label class="pagination-bar__size">
         条/页
@@ -76,6 +112,7 @@
           :max="totalPages"
           :aria-label="`跳页（1 至 ${totalPages}）`"
           @keyup.enter="jumpToPage()"
+          placeholder="页"
         />
         <button type="button" class="pagination-bar__btn" @click="jumpToPage()">
           跳页
@@ -402,10 +439,47 @@ function jumpToPage(force?: number): void {
     totalPages.value,
   )
   if (!Number.isFinite(target) || target < 1) return
+  if (target === currentPage.value) return
   jumpInput.value = target
   state.value = 'loading'
   void load((target - 1) * pageSize.value)
 }
+
+/**
+ * PC 页码窗口（2026-08-30）：总页数 ≤7 全量；否则首页/末页夹在窗口两端，
+ * 窗口内 ±1 邻页 + 折叠省略号（每侧至多 7 字节），当前页永遠可见。
+ * 返回示例（page=6/total=30）：[1,'…',5,6,7,'…',30]。
+ */
+const pageWindow = computed<(number | '…')[]>(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const windowSize = 5 // 当前 ±2（含本身）
+  const start = Math.max(2, Math.min(current - 2, total - windowSize))
+  const end = start + windowSize - 1
+  const items: (number | '…')[] = []
+  items.push(1)
+  if (start > 2) items.push('…')
+  for (let p = start; p <= end; p++) items.push(p)
+  if (end < total - 1) items.push('…')
+  items.push(total)
+  return items
+})
+
+/** PC 键盘：PageUp/PageDown 上一页/下一页（列表失焦时仍生效，全页级）。 */
+function onPageKey(e: KeyboardEvent): void {
+  const target = e.target as HTMLElement | null
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')) return
+  if (e.key === 'PageDown') {
+    e.preventDefault()
+    if (currentPage.value < totalPages.value) jumpToPage(currentPage.value + 1)
+  } else if (e.key === 'PageUp') {
+    e.preventDefault()
+    if (currentPage.value > 1) jumpToPage(currentPage.value - 1)
+  }
+}
+onMounted(() => window.addEventListener('keydown', onPageKey))
+onUnmounted(() => window.removeEventListener('keydown', onPageKey))
 
 /** 每页条数切换（分页条下拉）→ 即时保存本地偏好 + 重置回第 1 页加载。 */
 watch(pageSize, (next) => {
@@ -1163,6 +1237,61 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+/* PC 页码窗口（2026-08-30）：直点页码 + 省略号折叠 + 前后页。 */
+.pagination-bar__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pagination-bar__pages::-webkit-scrollbar {
+  display: none;
+}
+
+.pagination-bar__page {
+  min-width: 26px;
+  padding: 2px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: var(--text-super-small);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-decelerate-quart);
+}
+
+.pagination-bar__page:hover:not(:disabled) {
+  background: var(--color-surface-activated);
+}
+
+.pagination-bar__page:disabled {
+  color: var(--text-color-disabled, #9e9e9e);
+  cursor: default;
+}
+
+.pagination-bar__page--active {
+  background: var(--color-primary);
+  color: var(--color-primary-inverse, #fff);
+  border-color: var(--color-primary);
+}
+
+.pagination-bar__page--active:hover {
+  background: var(--color-primary);
+}
+
+.pagination-bar__ellipsis {
+  min-width: 18px;
+  text-align: center;
+  color: var(--text-color-secondary);
+  user-select: none;
 }
 
 .pagination-bar__size,
