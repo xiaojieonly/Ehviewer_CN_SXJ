@@ -279,7 +279,7 @@ const perPageCssWidth = computed(() =>
 const preloaded = new Set<string>()
 
 function preloadPage(page: number) {
-  if (page < 0 || page >= props.totalPages || perPageCssWidth.value <= 0) return
+  if (page < 0 || (props.totalPages > 0 && page >= props.totalPages) || perPageCssWidth.value <= 0) return
   const url =
     props.enhancedUrls?.get(page) ??
     pageImageUrl(props.gid, page, perPageCssWidth.value * devicePixelRatio())

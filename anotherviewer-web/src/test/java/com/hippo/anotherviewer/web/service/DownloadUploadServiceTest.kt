@@ -192,7 +192,7 @@ class DownloadUploadServiceTest {
     fun `storePage writes the file preserving the original extension`() {
         service.storePage(123L, 7, "page.PNG", ByteArray(3) { 1 })
 
-        val file = File(downloadDir(123L), "0007.png")
+        val file = File(downloadDir(123L), "00000007.png")
         assertTrue(file.isFile)
         assertTrue(file.readBytes().contentEquals(ByteArray(3) { 1 }))
     }
@@ -202,7 +202,7 @@ class DownloadUploadServiceTest {
         service.storePage(123L, 1, "page.jpg", ByteArray(3) { 1 })
         service.storePage(123L, 1, "page.jpg", ByteArray(5) { 2 })
 
-        val file = File(downloadDir(123L), "0001.jpg")
+        val file = File(downloadDir(123L), "00000001.jpg")
         assertEquals(5, file.length())
         assertTrue(file.readBytes().contentEquals(ByteArray(5) { 2 }))
     }
@@ -221,7 +221,7 @@ class DownloadUploadServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.storePage(123L, 1, "page.jpg", ByteArray(1))
         }
-        assertFalse(File(downloadDir(123L), "0001.jpg").exists())
+        assertFalse(File(downloadDir(123L), "00000001.jpg").exists())
     }
 
     @Test
@@ -235,7 +235,7 @@ class DownloadUploadServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.storePage(123L, 1, null, ByteArray(1))
         }
-        assertFalse(File(downloadDir(123L), "0001.txt").exists())
+        assertFalse(File(downloadDir(123L), "00000001.txt").exists())
     }
 
     // ── completeUpload ───────────────────────────────────────────

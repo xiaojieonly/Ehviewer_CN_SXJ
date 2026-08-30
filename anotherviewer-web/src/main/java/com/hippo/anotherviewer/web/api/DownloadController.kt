@@ -2,14 +2,19 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.DownloadService
+import com.hippo.anotherviewer.web.service.DownloadZipImportService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/v1/download")
-class DownloadController(private val downloadService: DownloadService) {
+class DownloadController(
+    private val downloadService: DownloadService,
+    private val downloadZipImportService: DownloadZipImportService,
+) {
 
     @GetMapping("/list")
     fun listDownloads(
@@ -139,6 +144,20 @@ class DownloadController(private val downloadService: DownloadService) {
             ResponseEntity.ok(FilterSlotsResponse(downloadService.putFilterSlots(request.slots)))
         } catch (e: IllegalArgumentException) {
             errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", e.message ?: "Invalid filter slots")
+        }
+    }
+
+    /**
+     * Android 缓存批量导入：multipart 字段 `file`（.zip），逐顶层目录归一化为
+     * downloads/<gid>/%04d.<ext>；导入后点「全部下载」（restart-all）即磁盘校验
+     * 通过 → 跳过。zip 空 / MIME 不符 → 400 BAD_REQUEST。
+     */
+    @PostMapping("/import-zip")
+    fun importZip(@RequestParam("file") file: MultipartFile): ResponseEntity<*> {
+        return try {
+            ResponseEntity.ok(downloadZipImportService.importZip(file))
+        } catch (e: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.message ?: "导入 zip 失败")
         }
     }
 }

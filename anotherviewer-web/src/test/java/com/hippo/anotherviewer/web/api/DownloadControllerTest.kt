@@ -12,11 +12,13 @@ import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
 import com.hippo.anotherviewer.web.service.DownloadDirIndex
 import com.hippo.anotherviewer.web.service.DownloadService
+import com.hippo.anotherviewer.web.service.DownloadZipImportService
 import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.ServerConfigService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
+import com.hippo.anotherviewer.web.service.ZipImportResponse
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -29,8 +31,10 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -45,6 +49,7 @@ class DownloadControllerTest {
     private lateinit var labelRepository: DownloadLabelRepository
     private lateinit var serverConfigService: ServerConfigService
     private lateinit var config: SiteCoreConfigProperties
+    private lateinit var zipImportService: DownloadZipImportService
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
@@ -67,7 +72,8 @@ class DownloadControllerTest {
             mock(EhAvailabilityService::class.java),
             mock(DownloadDirIndex::class.java)
         )
-        mockMvc = MockMvcBuilders.standaloneSetup(DownloadController(downloadService))
+        zipImportService = mock(DownloadZipImportService::class.java)
+        mockMvc = MockMvcBuilders.standaloneSetup(DownloadController(downloadService, zipImportService))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
     }
@@ -437,7 +443,7 @@ class DownloadControllerTest {
     @Test
     fun `start-range calls startDownloads and returns the count`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.startDownloads(listOf(1L, 2L), false, null, null, false)).thenReturn(2)
@@ -455,7 +461,7 @@ class DownloadControllerTest {
     @Test
     fun `stop-range calls pauseDownloads and returns the count`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.pauseDownloads(listOf(3L), false, null, null, false)).thenReturn(1)
@@ -473,7 +479,7 @@ class DownloadControllerTest {
     @Test
     fun `delete-range calls deleteDownloads and returns the count`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.deleteDownloads(listOf(1L, 2L, 3L), false, null, null, false)).thenReturn(3)
@@ -491,7 +497,7 @@ class DownloadControllerTest {
     @Test
     fun `move forwards ids and labelId`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.moveDownloads(listOf(1L, 2L), false, null, null, false, 7)).thenReturn(2)
@@ -509,7 +515,7 @@ class DownloadControllerTest {
     @Test
     fun `move rejects unknown label with 400 envelope`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.moveDownloads(listOf(1L), false, null, null, false, -1)).thenReturn(0)
@@ -526,7 +532,7 @@ class DownloadControllerTest {
     @Test
     fun `batch range forwards all mode with label and q filters`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
         `when`(service.startDownloads(null, true, 7, "futa", false)).thenReturn(42)
@@ -544,7 +550,7 @@ class DownloadControllerTest {
     @Test
     fun `batch range rejects missing ids when all is false`() {
         val service = mock(DownloadService::class.java)
-        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service))
+        val mvc = MockMvcBuilders.standaloneSetup(DownloadController(service, mock(DownloadZipImportService::class.java)))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
 
@@ -686,5 +692,41 @@ class DownloadControllerTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.message").value("slot pattern must be at most 256 characters"))
         verify(serverConfigService, never()).set(anyString(), anyString())
+    }
+
+    // ── import-zip（Android 缓存批量导入）─────────────────────
+
+    @Test
+    fun `importZip accepts a zip and returns the summary`() {
+        `when`(zipImportService.importZip(any())).thenReturn(
+            ZipImportResponse(imported = 2, skipped = 1, verified = 2, completedTotal = 10)
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/download/import-zip")
+                .file(MockMultipartFile("file", "android-cache.zip", "application/zip", ByteArray(8) { 1 }))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.imported").value(2))
+            .andExpect(jsonPath("$.skipped").value(1))
+            .andExpect(jsonPath("$.verified").value(2))
+            .andExpect(jsonPath("$.completedTotal").value(10))
+        verify(zipImportService).importZip(any())
+    }
+
+    @Test
+    fun `importZip empty zip yields 400 BAD_REQUEST envelope`() {
+        doThrow(IllegalArgumentException("上传的 zip 文件为空"))
+            .`when`(zipImportService).importZip(any())
+
+        mockMvc.perform(
+            multipart("/api/v1/download/import-zip")
+                .file(MockMultipartFile("file", "empty.zip", "application/zip", ByteArray(0)))
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.status").value(400))
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+            .andExpect(jsonPath("$.error.message").value("上传的 zip 文件为空"))
+        verify(zipImportService).importZip(any())
     }
 }

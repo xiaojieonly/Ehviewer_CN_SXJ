@@ -55,13 +55,13 @@ class DownloadDirIndexTest {
 
         val first = index.findPage(77L, 0)
         assertNotNull(first)
-        assertEquals("0001.jpg", first!!.fileName())
+        assertEquals("0001.jpg", first!!.fileName)
         assertEquals("jpg", first.ext)
         assertEquals(3L, first.size)
 
         val second = index.findPage(77L, 1)
         assertNotNull(second)
-        assertEquals("0002.png", second!!.fileName())
+        assertEquals("0002.png", second!!.fileName)
 
         assertNull(index.findPage(77L, 2), "out-of-range 0-based page")
         assertNull(index.findPage(77L, -1), "negative pages are never valid")
@@ -76,7 +76,7 @@ class DownloadDirIndexTest {
         val ref = index.findPage(88L, 0)
         assertNotNull(ref)
         assertEquals("jpg", ref!!.ext)
-        assertEquals("0001.jpg", ref.fileName())
+        assertEquals("0001.jpg", ref.fileName)
     }
 
     @Test

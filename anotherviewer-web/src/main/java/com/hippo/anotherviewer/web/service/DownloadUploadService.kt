@@ -115,7 +115,7 @@ class DownloadUploadService(
             ?: throw IllegalArgumentException("unsupported image extension: ${filename ?: "(none)"}")
         val dir = rowDirOrRoot(gid)
         dir.mkdirs()
-        val target = File(dir, "%04d.$ext".format(page))
+        val target = File(dir, "%08d.$ext".format(page))
         target.writeBytes(bytes)
     }
 

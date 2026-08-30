@@ -8,18 +8,19 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A single located pushed page file: 1-based [page], image [ext] and stored
- * [size]. `fileName()` rebuilds the `%04d.<ext>` layout name so callers can
- * materialise the file path for serving.
+ * A single located pushed page file: 1-based [page], image [ext], stored
+ * [size] and the ACTUAL [fileName] on disk (Android-aligned `%08d.<ext>` or
+ * legacy `%04d.<ext>` — both accepted at scan time; [fileName] is the source
+ * of truth so legacy files keep serving without rename).
  */
 data class PageRef(
     val gid: Long,
     val page: Int,
     val ext: String,
     val size: Long,
-) {
-    fun fileName(): String = "%04d.%s".format(page, ext)
-}
+    /** Actual file name on disk (either 4- or 8-digit layout). */
+    val fileName: String,
+)
 
 /**
  * In-memory index of the App-pushed download layout `{downloads root}/<gid>/%04d.<ext>`
@@ -123,14 +124,14 @@ class DownloadDirIndex(
             if (priority < 0) return@forEach
             val existing = pages[pageNo]
             if (existing == null || priority < existing.priority) {
-                pages[pageNo] = MutablePage(ext, file.length(), priority)
+                pages[pageNo] = MutablePage(ext, file.length(), priority, file.name)
             }
         }
         val entry = DirEntry(
             gid = gid,
             dirMtime = mtime,
             pageFiles = pages.mapValues { (pageNo, p) ->
-                PageRef(gid = gid, page = pageNo, ext = p.ext, size = p.size)
+                PageRef(gid = gid, page = pageNo, ext = p.ext, size = p.size, fileName = p.fileName)
             }
         )
         index[gid] = entry
@@ -153,6 +154,12 @@ class DownloadDirIndex(
     }
 
     /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */
+    fun dirFor(gid: Long): File? {
+        val dir = findDir(gid)
+        return if (dir.isDirectory) dir else null
+    }
+
+    /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */
     private fun findDir(gid: Long): File {
         if (!root.isDirectory) return File(root, gid.toString())
         root.listFiles()
@@ -162,7 +169,7 @@ class DownloadDirIndex(
         return File(root, gid.toString())
     }
 
-    private data class MutablePage(val ext: String, val size: Long, val priority: Int)
+    private data class MutablePage(val ext: String, val size: Long, val priority: Int, val fileName: String)
 
     private companion object {
         val FILE_NAME_PATTERN = Regex("^(\\d{4,})\\.(.+)$")

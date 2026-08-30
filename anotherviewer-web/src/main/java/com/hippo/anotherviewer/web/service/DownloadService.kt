@@ -381,7 +381,7 @@ class DownloadService(
         if (total <= 0) return false
         val dir = DownloadDirs.resolve(config.download.path, gid, storedDir)
         if (!dir.isDirectory) return false
-        val count = dir.listFiles { f -> f.isFile && f.name.matches(Regex("^\\d{4}\\..+")) }
+        val count = dir.listFiles { f -> f.isFile && f.name.matches(Regex("^\\d{4,}\\..+")) }
             ?.count { it.length() > 0 } ?: 0
         return count >= total
     }
@@ -655,7 +655,7 @@ class DownloadService(
         try {
             if (task.stopRequested.get()) return
 
-            val fileName = "%04d.jpg".format(page)
+            val fileName = "%08d.jpg".format(page)
             val file = File(downloadDir, fileName)
             if (file.exists() && file.length() > 0) {
                 val current = done.incrementAndGet()

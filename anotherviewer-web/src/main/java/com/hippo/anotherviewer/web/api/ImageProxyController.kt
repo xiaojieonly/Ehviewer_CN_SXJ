@@ -279,7 +279,12 @@ class ImageProxyController(
      */
     private fun findPushedPageFile(galleryId: Long, page: Int): File? {
         val ref = downloadDirIndex.findPage(galleryId, page) ?: return null
-        val file = File(File(config.download.path, galleryId.toString()), ref.fileName())
+        // 目录可为 `{gid}`（旧）或 `{gid}-{title}`（新/Android）；经索引的
+        // PageRef.fileName 是磁盘真实文件名（4 位/8 位均可），子目录由索引
+        // findDir 语义解析——此处借 downloadDirIndex 定位目录，避免按纯 gid 拼路径。
+        val dir = downloadDirIndex.dirFor(galleryId)
+        if (dir == null) return null
+        val file = File(dir, ref.fileName)
         return if (file.isFile && file.length() > 0) file else null
     }
 

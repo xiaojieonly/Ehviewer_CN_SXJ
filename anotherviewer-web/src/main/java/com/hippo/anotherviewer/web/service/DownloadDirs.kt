@@ -44,25 +44,53 @@ object DownloadDirs {
     }
 
     /**
-     * Directory name for new downloads: `{gid}-{sanitizedTitle}`, mirroring the
-     * Android cache layout so the downloads root stays human-readable. Title is
-     * sanitized to filesystem-safe characters; empty titles fall back to the
-     * plain `{gid}` name (same as legacy).
+     * 目录名的新下载写入：`{gid}-{sanitizedTitle}`，逐字对齐 Android
+     * `FileUtils.sanitizeFilename`（SpiderDen.getGalleryDownloadDir），保证两端
+     * 同一标题生成同一目录名（存储互用）。空白标题回落纯 `{gid}`。
      */
     fun dirName(gid: Long, title: String?): String {
         val safe = title?.let(::sanitizeTitle).orEmpty()
         return if (safe.isBlank()) gid.toString() else "$gid-$safe"
     }
 
-    /** Filesystem-sanitized title: keep unicode, drop path separators/control chars. */
+    /**
+     * 与 Android `com.hippo.lib.yorozuya.FileUtils.sanitizeFilename` 逐字等价：
+     * 移除 FORBIDDEN_FILENAME_CHARACTERS（\ / : * ? " < > |），UTF-8 字节数
+     * ≤255 截断（含代理对 4 字节），trim。差异仅限 Kotlin/Java 的尾随写法。
+     */
     fun sanitizeTitle(title: String): String {
-        return title
-            .replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1f]"), " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .trimEnd('.')
-            .take(120)
+        var filename = StringBuilder(title.length)
+        for (ch in title) {
+            if (ch !in FORBIDDEN_CHARS) filename.append(ch)
+        }
+        var result = filename.toString()
+        // UTF-8 byte count <= 255（镜像 Android 逐字符累加，代理对按 4 字节）
+        var byteCount = 0
+        var length = 0
+        val chars = result
+        while (length < chars.length && byteCount <= 255) {
+            val ch = chars[length]
+            val bytes = when {
+                ch.code <= 0x7F -> 1
+                ch.code <= 0x7FF -> 2
+                Character.isHighSurrogate(ch) -> {
+                    // 高代理=4 字节，且其低代理必须一并计入（Android: ++length 跳过 pair）
+                    length++
+                    4
+                }
+                else -> 3
+            }
+            byteCount += bytes
+            if (byteCount > 255) {
+                result = chars.substring(0, length)
+                break
+            }
+            length++
+        }
+        return result.trim()
     }
+
+    private val FORBIDDEN_CHARS = charArrayOf('\\', '/', ':', '*', '?', '"', '<', '>', '|')
 
     /**
      * Parse gid from a directory name: `1234` → 1234, `1234-Some Title` → 1234.
