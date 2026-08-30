@@ -42,6 +42,7 @@ class PrefetchServiceTest {
     private lateinit var response: Response
     private lateinit var config: SiteCoreConfigProperties
     private lateinit var service: PrefetchService
+    private lateinit var availability: EhAvailabilityService
 
     private val gid = 12345L
     private val token = "0123456789abcdef"
@@ -74,7 +75,8 @@ class PrefetchServiceTest {
 
         config = SiteCoreConfigProperties()
         config.reader.prefetchPages = 3
-        service = PrefetchService(galleryLookup, imageCache, sessionManager, config)
+        availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
+        service = PrefetchService(galleryLookup, imageCache, sessionManager, config, availability)
     }
 
     // ── happy path / cache skipping ─────────────────────────────
@@ -210,6 +212,19 @@ class PrefetchServiceTest {
         service.prefetchAround(gid, 0)
 
         verifyNoInteractions(galleryLookup, imageCache)
+    }
+
+    @Test
+    fun `prefetch is a no-op while EH is DOWN`() {
+        availability.recordFailure("connect timed out")
+
+        service.prefetchAround(gid, 0)
+
+        Thread.sleep(300)
+        verify(galleryLookup, never()).findToken(anyLong())
+        verify(galleryLookup, never()).fetchPageCount(anyLong(), anyString())
+        verify(galleryLookup, never()).fetchImageUrl(anyLong(), anyString(), anyInt())
+        verify(imageCache, never()).cacheImageByKey(anyLong(), anyInt(), any(ByteArray::class.java), anyString())
     }
 
     @Test

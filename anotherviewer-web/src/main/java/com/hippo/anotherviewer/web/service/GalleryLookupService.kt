@@ -35,6 +35,7 @@ class GalleryLookupService(
     private val historyRepository: HistoryInfoRepository,
     private val favoriteRepository: LocalFavoriteInfoRepository,
     private val sessionManager: SiteSessionManager,
+    private val availability: EhAvailabilityService,
 ) {
     private val client get() = sessionManager.okHttpClient
 
@@ -67,10 +68,13 @@ class GalleryLookupService(
 
     /**
      * Fetch the total page count from the Gallery Site gallery detail page.
-     * Throws when the upstream request or parse fails.
+     * Throws when the upstream request or parse fails — and immediately
+     * [EhUnavailableException] when EH is currently DOWN (no network I/O).
      */
-    fun fetchPageCount(gid: Long, token: String): Int =
-        detail(gid, token).pages
+    fun fetchPageCount(gid: Long, token: String): Int {
+        if (availability.isBlocked()) throw EhUnavailableException()
+        return detail(gid, token).pages
+    }
 
     /**
      * Resolve the page count for a gallery known to the server
@@ -92,6 +96,7 @@ class GalleryLookupService(
      * @param page 1-based Gallery Site page number
      */
     fun fetchImageUrl(gid: Long, token: String, page: Int): String {
+        if (availability.isBlocked()) throw EhUnavailableException()
         val previewSet = detail(gid, token).previewSet
         if (page in 1..previewSet.size()) {
             // Fast path: the first detail page's preview set (20/40 entries).
@@ -118,8 +123,13 @@ class GalleryLookupService(
     /**
      * Gallery detail (page count + per-page preview URLs), cached per gid.
      * On cache miss the detail page is fetched through the shared client.
+     * While EH is DOWN the entry point short-circuits with
+     * [EhUnavailableException] — even a cache hit is not served, because a
+     * caller reaching here was about to issue page-URL fetches against the
+     * upstream (which are impossible while DOWN).
      */
     private fun detail(gid: Long, token: String): GalleryDetail {
+        if (availability.isBlocked()) throw EhUnavailableException()
         val cached = detailCache.getIfPresent(gid)
         if (cached != null) return cached
         val detail = SiteEngine.getGalleryDetail(null, client, SiteUrl.getGalleryDetailUrl(gid, token))

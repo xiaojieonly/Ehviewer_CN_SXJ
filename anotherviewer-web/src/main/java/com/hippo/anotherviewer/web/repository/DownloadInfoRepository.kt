@@ -15,6 +15,8 @@ interface DownloadInfoRepository : JpaRepository<DownloadInfoEntity, Long> {
     fun findByLabel(label: Int, pageable: Pageable): Page<DownloadInfoEntity>
     fun countByLabel(label: Int): Long
     fun findByState(state: Int): List<DownloadInfoEntity>
+    /** COUNT(state) 派生查询：stats 计数不加载实体（Metrics 150-200ms → ms 级）。 */
+    fun countByState(state: Int): Long
     fun findAllByUsernameIsNull(): List<DownloadInfoEntity>
     fun countByUsername(username: String): Long
     @Transactional

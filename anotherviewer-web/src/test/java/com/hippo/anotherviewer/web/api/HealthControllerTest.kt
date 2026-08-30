@@ -1,6 +1,8 @@
 package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.service.EhAvailabilityService
+import com.hippo.anotherviewer.web.service.SiteSessionManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -10,6 +12,7 @@ import java.io.File
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.Statement
+import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
 class HealthControllerTest {
@@ -17,6 +20,7 @@ class HealthControllerTest {
     private lateinit var dataSource: DataSource
     private lateinit var config: SiteCoreConfigProperties
     private lateinit var controller: HealthController
+    private lateinit var availability: EhAvailabilityService
 
     /** Mirrors the controller's own loader: read version.properties from the classpath. */
     private fun versionFromResource(): String {
@@ -36,7 +40,13 @@ class HealthControllerTest {
         dataSource = mock(DataSource::class.java)
         config = SiteCoreConfigProperties()
         config.download.cachePath = tempDir.absolutePath
-        controller = HealthController(dataSource, config)
+        availability = EhAvailabilityService(
+            mock(SiteSessionManager::class.java),
+            "https://e-hentai.org",
+            5000,
+            probe = { true }
+        )
+        controller = HealthController(dataSource, config, availability)
     }
 
     @Test
@@ -162,6 +172,66 @@ class HealthControllerTest {
         val body = response.body!!
 
         assertEquals(mapOf("reason" to "connection refused"), body.components["database"]?.details)
+    }
+
+    // --- galleryApi delegation to EhAvailabilityService (plan-2026-08-30) ---
+
+    private fun upDatabase() {
+        val connection = mock(Connection::class.java)
+        val statement = mock(Statement::class.java)
+        val resultSet = mock(ResultSet::class.java)
+        `when`(dataSource.connection).thenReturn(connection)
+        `when`(connection.createStatement()).thenReturn(statement)
+        `when`(statement.executeQuery("SELECT 1")).thenReturn(resultSet)
+        `when`(resultSet.next()).thenReturn(true)
+    }
+
+    @Test
+    fun `galleryApi probes through EhAvailabilityService and reports UP on reachable`() {
+        upDatabase()
+        val probes = AtomicInteger(0)
+        availability = EhAvailabilityService(
+            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            probe = { probes.incrementAndGet(); true }
+        )
+        controller = HealthController(dataSource, config, availability)
+
+        val body = controller.healthCheck().body!!
+        assertEquals("UP", body.components["galleryApi"]?.status)
+        assertEquals(1, probes.get())
+    }
+
+    @Test
+    fun `galleryApi is DOWN when probe fails but overall stays UP`() {
+        upDatabase()
+        availability = EhAvailabilityService(
+            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            probe = { false }
+        )
+        controller = HealthController(dataSource, config, availability)
+
+        val response = controller.healthCheck()
+        val body = response.body!!
+        assertEquals("DOWN", body.components["galleryApi"]?.status)
+        // galleryApi is informational only — overall stays UP (observability.md §2.3).
+        assertEquals(200, response.statusCode.value())
+        assertEquals("UP", body.status)
+    }
+
+    @Test
+    fun `galleryApi result is cached with cached=true within the 60s window`() {
+        upDatabase()
+        val probes = AtomicInteger(0)
+        availability = EhAvailabilityService(
+            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            probe = { probes.incrementAndGet(); true }
+        )
+        controller = HealthController(dataSource, config, availability)
+
+        controller.healthCheck()
+        val cached = controller.healthCheck().body!!.components["galleryApi"]!!
+        assertEquals("true", cached.details!!["cached"])
+        assertEquals(1, probes.get(), "second check must serve the cached result without a new probe")
     }
 
     // --- computeOverallStatus: observability.md §2.3 rev.1.1 semantics ---

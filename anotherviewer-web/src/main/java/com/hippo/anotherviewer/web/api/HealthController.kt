@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.HealthComponent
 import com.hippo.anotherviewer.web.dto.HealthResponse
+import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -10,11 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.lang.management.ManagementFactory
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import java.time.Instant
 import java.util.Properties
 import javax.sql.DataSource
@@ -23,22 +19,10 @@ import javax.sql.DataSource
 @RequestMapping("/api/v1/health")
 class HealthController(
     private val dataSource: DataSource,
-    private val config: SiteCoreConfigProperties
+    private val config: SiteCoreConfigProperties,
+    private val availability: EhAvailabilityService
 ) {
     private val logger = LoggerFactory.getLogger(HealthController::class.java)
-
-    private val httpClient: HttpClient = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(10))
-        .followRedirects(HttpClient.Redirect.NORMAL)
-        .build()
-
-    // Cached Gallery Site check result
-    @Volatile
-    private var galleryLastCheck: Long = 0
-    @Volatile
-    private var galleryLastStatus: String = "UNKNOWN"
-    @Volatile
-    private var galleryLastResponseMs: Long = 0
 
     companion object {
         private const val GALLERY_CHECK_INTERVAL_MS = 60_000L
@@ -172,63 +156,46 @@ class HealthController(
         }
     }
 
+    /**
+     * Gallery Site reachability (informational component) is delegated to
+     * [EhAvailabilityService]: no HTTP happens on this request thread beyond
+     * the probe. Result is cached for [GALLERY_CHECK_INTERVAL_MS] since the
+     * last actual probe; an older entry (or none) triggers ONE manual probe
+     * (single-flighted, probe-timeout bounded). See observability.md §2.3 —
+     * galleryApi DOWN never degrades the overall status.
+     */
     private fun checkGalleryApi(): HealthComponent {
         val now = System.currentTimeMillis()
-        if (now - galleryLastCheck < GALLERY_CHECK_INTERVAL_MS && galleryLastCheck > 0) {
+        val status = availability.status()
+        val lastProbeAt = status.lastProbeAt ?: 0L
+        if (lastProbeAt > 0 && now - lastProbeAt < GALLERY_CHECK_INTERVAL_MS) {
             return HealthComponent(
-                status = galleryLastStatus,
+                status = galleryStatusString(status.state),
                 details = mapOf(
-                    "lastCheck" to Instant.ofEpochMilli(galleryLastCheck).toString(),
-                    "responseTimeMs" to galleryLastResponseMs.toString(),
+                    "lastCheck" to Instant.ofEpochMilli(lastProbeAt).toString(),
                     "cached" to "true"
                 )
             )
         }
 
-        return try {
-            val start = System.currentTimeMillis()
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create("https://e-hentai.org"))
-                .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                // Same fingerprint as the app's ChromeRequestBuilder / core SiteRequestBuilder.
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
-                .timeout(Duration.ofSeconds(10))
-                .build()
-            val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
-            val elapsed = System.currentTimeMillis() - start
-
-            galleryLastCheck = now
-            galleryLastResponseMs = elapsed
-
-            if (response.statusCode() in 200..399) {
-                galleryLastStatus = "UP"
-                HealthComponent(
-                    status = "UP",
-                    details = mapOf(
-                        "lastCheck" to Instant.ofEpochMilli(now).toString(),
-                        "responseTimeMs" to elapsed.toString()
-                    )
-                )
-            } else {
-                galleryLastStatus = "DOWN"
-                HealthComponent(
-                    status = "DOWN",
-                    details = mapOf(
-                        "lastCheck" to Instant.ofEpochMilli(now).toString(),
-                        "statusCode" to response.statusCode().toString()
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            logger.warn("Gallery Site API health check failed", e)
-            galleryLastCheck = now
-            galleryLastStatus = "DOWN"
-            HealthComponent(
-                status = "DOWN",
-                details = mapOf("reason" to (e.message ?: "connection failed"))
-            )
-        }
+        // probeNow() records success/failure into the state machine and returns
+        // the outcome: true = UP (probe succeeded or the site is not blocked).
+        availability.probeNow()
+        val fresh = availability.status()
+        val freshProbeAt = fresh.lastProbeAt ?: now
+        val details = mutableMapOf<String, String>(
+            "lastCheck" to Instant.ofEpochMilli(freshProbeAt).toString()
+        )
+        fresh.lastReason?.let { details["reason"] = it }
+        return HealthComponent(
+            status = galleryStatusString(fresh.state),
+            details = details
+        )
     }
+
+    /** UNKNOWN/UP are informational "UP" for health; DOWN stays DOWN. */
+    private fun galleryStatusString(state: String): String =
+        if (state == EhAvailabilityService.State.DOWN.name) "DOWN" else "UP"
 
     private fun formatUptime(ms: Long): String {
         val seconds = ms / 1000

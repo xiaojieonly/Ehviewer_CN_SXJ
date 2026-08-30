@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.data.GalleryDetail
 import com.hippo.anotherviewer.client.data.NormalPreviewSet
+import com.hippo.anotherviewer.client.data.PreviewSet
 import com.hippo.anotherviewer.client.exception.SiteException
 import com.hippo.anotherviewer.client.parser.GalleryPageParser
 import com.hippo.anotherviewer.web.any
@@ -45,6 +46,7 @@ class GalleryLookupServiceTest {
         val downloads: DownloadInfoRepository,
         val history: HistoryInfoRepository,
         val favorites: LocalFavoriteInfoRepository,
+        val availability: EhAvailabilityService,
     )
 
     private fun harness(): Harness {
@@ -54,9 +56,10 @@ class GalleryLookupServiceTest {
         val downloads = mock(DownloadInfoRepository::class.java)
         val history = mock(HistoryInfoRepository::class.java)
         val favorites = mock(LocalFavoriteInfoRepository::class.java)
+        val availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
         return Harness(
-            GalleryLookupService(downloads, history, favorites, sessionManager),
-            client, downloads, history, favorites
+            GalleryLookupService(downloads, history, favorites, sessionManager, availability),
+            client, downloads, history, favorites, availability
         )
     }
 
@@ -110,6 +113,15 @@ class GalleryLookupServiceTest {
             engine.`when`<GalleryDetail> {
                 SiteEngine.getGalleryDetail(any(), any(), anyString())
             }.thenReturn(twoPageDetail())
+            // 预览分页回退（2026-08-25）：>首页条数（此处 2）的页码查 ?p=N 详情页
+            // 的预览集；返回空集 → 该页为无效页（SiteException），不再是 NPE。
+            engine.`when`<com.hippo.anotherviewer.util.Pair<PreviewSet, Int>> {
+                SiteEngine.getPreviewSet(any(), any(), anyString())
+            }.thenReturn(
+                com.hippo.anotherviewer.util.Pair.create<PreviewSet, Int>(
+                    NormalPreviewSet() as PreviewSet, 0
+                )
+            )
 
             assertThrows(SiteException::class.java) { service.fetchImageUrl(GID, DETAIL_TOKEN, 0) }
             assertThrows(SiteException::class.java) { service.fetchImageUrl(GID, DETAIL_TOKEN, 3) }
@@ -216,6 +228,40 @@ class GalleryLookupServiceTest {
         `when`(h.downloads.findByGid(GID)).thenReturn(null)
         `when`(h.history.findByGid(GID)).thenReturn(null)
         `when`(h.favorites.findByGid(GID)).thenReturn(null)
+
+        assertNull(h.service.resolvePageCount(GID))
+    }
+
+    // ------------------------------------------------------------------
+    // EH DOWN 熔断：入口立即抛 EhUnavailableException，零 SiteEngine 调用
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `entry points throw EhUnavailableException without any site call while blocked`() {
+        val h = harness()
+        h.availability.recordFailure("connect timed out")
+
+        mockStatic(SiteEngine::class.java).use { engine ->
+            assertThrows(EhUnavailableException::class.java) {
+                h.service.fetchPageCount(GID, DETAIL_TOKEN)
+            }
+            assertThrows(EhUnavailableException::class.java) {
+                h.service.fetchImageUrl(GID, DETAIL_TOKEN, 1)
+            }
+            // resolvePageCount 自身带 try/null 语义：DOWN 时返回 null 而非抛出。
+            `when`(h.downloads.findByGid(GID)).thenReturn(DownloadInfoEntity().apply { token = "t" })
+            assertNull(h.service.resolvePageCount(GID))
+            // 本地 token 解析不受熔断影响。
+            assertEquals("t", h.service.findToken(GID))
+            engine.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `resolvePageCount falls back to null while blocked`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(DownloadInfoEntity().apply { token = "t" })
+        h.availability.recordFailure("connect timed out")
 
         assertNull(h.service.resolvePageCount(GID))
     }

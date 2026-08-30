@@ -65,6 +65,14 @@ class ImageCacheService(
     /** Running total of bytes on disk, seeded at startup by [init]. */
     private val diskSizeBytes = AtomicLong(0)
 
+    /**
+     * Running count of files on disk, seeded at startup by [init] and
+     * maintained by every disk write/delete path — [getDiskEntryCount] reads
+     * this counter instead of scanning the whole tree (G4: metrics from
+     * 150-200ms back to ms-level).
+     */
+    private val diskEntryCount = AtomicLong(0)
+
     /** Running total of byte sizes of values currently held in the memory cache. */
     private val memorySizeBytes = AtomicLong(0)
 
@@ -73,10 +81,13 @@ class ImageCacheService(
     @PostConstruct
     fun init() {
         cacheDir.mkdirs()
-        diskSizeBytes.set(scanDiskSize(cacheDir))
+        val files = collectFiles(cacheDir)
+        diskSizeBytes.set(files.sumOf { it.length() })
+        diskEntryCount.set(files.size.toLong())
         logger.info(
-            "ImageCacheService initialised: cacheDir={}, diskSize={}MB, maxDisk={}MB, maxMemEntries={}",
+            "ImageCacheService initialised: cacheDir={}, files={}, diskSize={}MB, maxDisk={}MB, maxMemEntries={}",
             cacheDir.absolutePath,
+            diskEntryCount.get(),
             diskSizeBytes.get() / (1024 * 1024),
             maxDiskBytes / (1024 * 1024),
             maxMemoryEntries,
@@ -155,9 +166,10 @@ class ImageCacheService(
         // Remove disk directory
         val dir = File(cacheDir, galleryId.toString())
         if (dir.isDirectory) {
-            val size = scanDiskSize(dir)
+            val files = collectFiles(dir)
+            diskSizeBytes.addAndGet(-files.sumOf { it.length() })
+            diskEntryCount.addAndGet(-files.size.toLong())
             dir.deleteRecursively()
-            diskSizeBytes.addAndGet(-size)
             removed = true
         }
 
@@ -186,14 +198,17 @@ class ImageCacheService(
         cacheDir.listFiles()
             ?.filter { it.isDirectory && (it.listFiles()?.isEmpty() != false) }
             ?.forEach { it.delete() }
-        diskSizeBytes.set(0)
+        // 重新归一两个运行值（删除失败的文件仍留在磁盘上）。
+        val remaining = collectFiles(cacheDir)
+        diskSizeBytes.set(remaining.sumOf { it.length() })
+        diskEntryCount.set(remaining.size.toLong())
         return CacheClearOutcome(removed, total)
     }
 
     fun getCacheSize(): Int = memoryCache.asMap().size
 
-    /** Number of files currently stored on disk (scan-based, for metrics). */
-    fun getDiskEntryCount(): Long = collectFiles(cacheDir).size.toLong()
+    /** Number of files currently stored on disk (running counter, O(1)). */
+    fun getDiskEntryCount(): Long = diskEntryCount.get()
 
     /** Total byte size of values currently held in the memory cache. */
     fun getMemorySizeBytes(): Long = memorySizeBytes.get()
@@ -250,12 +265,16 @@ class ImageCacheService(
     private fun putToDisk(file: File, data: ByteArray) {
         try {
             file.parentFile?.mkdirs()
-            // If overwriting, subtract old size first
-            if (file.isFile) {
+            // If overwriting, subtract old size first (entry count unchanged).
+            val existed = file.isFile
+            if (existed) {
                 diskSizeBytes.addAndGet(-file.length())
             }
             file.writeBytes(data)
             diskSizeBytes.addAndGet(data.size.toLong())
+            if (!existed) {
+                diskEntryCount.incrementAndGet()
+            }
             evictDiskIfNeeded()
         } catch (e: Exception) {
             logger.warn("Failed to write disk cache file: {}", file, e)
@@ -276,6 +295,7 @@ class ImageCacheService(
             val size = file.length()
             if (file.delete()) {
                 diskSizeBytes.addAndGet(-size)
+                diskEntryCount.decrementAndGet()
             }
         }
 

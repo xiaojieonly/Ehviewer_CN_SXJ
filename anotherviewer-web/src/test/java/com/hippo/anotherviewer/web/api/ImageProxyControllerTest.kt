@@ -5,6 +5,8 @@ import com.hippo.anotherviewer.web.argThatK
 import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.eq
+import com.hippo.anotherviewer.web.service.DownloadDirIndex
+import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.InMemoryJobStore
@@ -21,6 +23,8 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -65,11 +69,15 @@ class ImageProxyControllerTest {
     private lateinit var mockMvc: MockMvc
     private lateinit var site: FakeSite
     private val config = SiteCoreConfigProperties()
+    private lateinit var availability: EhAvailabilityService
 
     private fun setUpClient(interceptor: FakeSite) {
         `when`(sessionManager.okHttpClient)
             .thenReturn(OkHttpClient.Builder().addInterceptor(interceptor).build())
     }
+
+    private fun probeFalseService(): EhAvailabilityService =
+        EhAvailabilityService(mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000, probe = { false })
 
     @BeforeEach
     fun setUp() {
@@ -77,12 +85,15 @@ class ImageProxyControllerTest {
         val galleryLookupService = mock(GalleryLookupService::class.java)
         sessionManager = mock(SiteSessionManager::class.java)
         val prefetchService = mock(PrefetchService::class.java)
+        availability = probeFalseService().apply { recordSuccess() }
         // P10 required 注入：测试显式提供真实 config 与轻量 JobService 替身。
         mockMvc = MockMvcBuilders.standaloneSetup(
             ImageProxyController(
                 imageCacheService, galleryLookupService, sessionManager, prefetchService,
                 config,
                 JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
+                availability,
+                mock(DownloadDirIndex::class.java),
             )
         )
             .setControllerAdvice(GlobalExceptionHandler())
@@ -201,5 +212,50 @@ class ImageProxyControllerTest {
             .andExpect(jsonPath("$.error.status").value(404))
             .andExpect(jsonPath("$.error.code").value("NOT_FOUND"))
             .andExpect(jsonPath("$.error.traceId").exists())
+    }
+
+    // ------------------------------------------------------------------
+    // EH DOWN 熔断：cache/pushed 命中之后、上游 fetch 之前秒回 EH_UNAVAILABLE
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `proxyImage miss returns 404 EH_UNAVAILABLE without any upstream request when blocked`() {
+        val url = "https://e-hentai.org/t/1001/cover.jpg"
+        `when`(imageCacheService.getCachedImage(url)).thenReturn(null)
+        site = FakeSite { canned(it, 200, "image/jpeg", "") }
+        setUpClient(site)
+        availability.recordFailure("connect timed out")
+
+        mockMvc.perform(get("/api/v1/image/proxy").param("url", url))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.error.code").value("EH_UNAVAILABLE"))
+            .andExpect(jsonPath("$.error.message").value("EH 平台当前不可达，仅显示本地内容"))
+            .andExpect(jsonPath("$.error.traceId").exists())
+
+        org.junit.jupiter.api.Assertions.assertEquals(0, site.callCount, "no upstream fetch while DOWN")
+        verify(imageCacheService, never()).cacheImage(any(), any())
+    }
+
+    @Test
+    fun `proxyImage cache hit is still served while DOWN`() {
+        val url = "https://e-hentai.org/t/1001/cover.jpg"
+        `when`(imageCacheService.getCachedImage(url)).thenReturn(byteArrayOf(1, 2, 3))
+        availability.recordFailure("connect timed out")
+
+        mockMvc.perform(get("/api/v1/image/proxy").param("url", url))
+            .andExpect(status().isOk)
+            .andExpect(header().string("Content-Type", "image/jpeg"))
+    }
+
+    @Test
+    fun `streamGalleryImage returns 404 EH_UNAVAILABLE on cache miss when blocked`() {
+        `when`(imageCacheService.findCachedPageFile(anyLong(), anyInt())).thenReturn(null)
+        `when`(imageCacheService.getCachedImageByKey(anyLong(), anyInt())).thenReturn(null)
+        availability.recordFailure("connect timed out")
+
+        mockMvc.perform(get("/api/v1/image/555/0"))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.error.code").value("EH_UNAVAILABLE"))
+            .andExpect(jsonPath("$.error.message").value("EH 平台当前不可达，仅显示本地内容"))
     }
 }

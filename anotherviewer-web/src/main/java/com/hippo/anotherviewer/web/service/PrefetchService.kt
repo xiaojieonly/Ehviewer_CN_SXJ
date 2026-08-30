@@ -28,6 +28,7 @@ class PrefetchService(
     private val imageCacheService: ImageCacheService,
     private val sessionManager: SiteSessionManager,
     private val config: SiteCoreConfigProperties,
+    private val availability: EhAvailabilityService,
 ) {
     private val logger = LoggerFactory.getLogger(PrefetchService::class.java)
 
@@ -53,6 +54,11 @@ class PrefetchService(
      * the in-flight budget is exhausted, or the gallery/page lookup fails.
      */
     fun prefetchAround(galleryId: Long, page: Int) {
+        // EH DOWN 熔断：不发起任何预取（否则每次翻页都触发 4 个上游请求被短路）。
+        if (availability.isBlocked()) {
+            logger.debug("Reader prefetch skipped for gid={} page={}: EH unavailable", galleryId, page)
+            return
+        }
         val pages = prefetchPages
         if (pages <= 0) return
         if (!inFlight.tryAcquire()) {
