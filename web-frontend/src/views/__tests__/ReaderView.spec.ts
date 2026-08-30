@@ -292,12 +292,35 @@ describe('ReaderView 统一阅读器 — detail 失败仍打开（degraded open�
     wrapper.unmount()
   })
 
-  it('does not show the degraded banner when detail succeeds', async () => {
+  it('enters unknown-page-counts mode (no degraded banner) when pages=0 with a gallery row', async () => {
+    // 导入 .db：detail 返回 pages=0（行存在但 total 缺失、token 失效）——不再是
+    // 「detail 拉不到」的降级（total=1 卡死），进入未知页数模式：
+    // 阅读器壳打开、无降级横幅、totalPages=0（PageMode 逐页驱动）、翻页可前进。
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(
+      detailFixture({ pages: 0, title: 'Imported Gallery' }),
+    )
+    const wrapper = mount(ReaderView)
+    await flushPromises()
+
+    const stub = wrapper.find('.image-reader-stub')
+    expect(stub.exists()).toBe(true)
+    expect(stub.attributes('data-total')).toBe('0')
+    expect(wrapper.find('[data-testid="reader-degraded-banner"]').exists()).toBe(false)
+    expect(stub.text()).toContain('0')
+    // 翻页不被 totalPages=1 卡死：ArrowRight → nextPage() 到第 1 页。
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
+    await flushPromises()
+    expect(stub.text()).toContain('1')
+    wrapper.unmount()
+  })
+
+    it('does not show the degraded banner when detail succeeds', async () => {
     vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
     const wrapper = mount(ReaderView)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="reader-degraded-banner"]').exists()).toBe(false)
+
     wrapper.unmount()
   })
 })

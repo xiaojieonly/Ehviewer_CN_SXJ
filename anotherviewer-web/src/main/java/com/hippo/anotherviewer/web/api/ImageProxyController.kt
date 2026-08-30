@@ -9,6 +9,7 @@ import com.hippo.anotherviewer.web.dto.JobType
 import com.hippo.anotherviewer.web.util.ResponseTooLargeException
 import com.hippo.anotherviewer.web.util.bytesBounded
 import com.hippo.anotherviewer.web.service.DownloadDirIndex
+import com.hippo.anotherviewer.web.service.DownloadService
 import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import com.hippo.anotherviewer.web.service.EhUnavailableException
 import com.hippo.anotherviewer.web.service.Job
@@ -48,6 +49,7 @@ class ImageProxyController(
     private val galleryLookupService: GalleryLookupService,
     private val sessionManager: SiteSessionManager,
     private val prefetchService: PrefetchService,
+    private val downloadService: DownloadService,
     // MASTER-2026-08-22 P10：required 注入——构造器默认参数会绕过 Spring 装配
     // 静默产生孤儿 JobStore/配置实例，测试需要替身时显式传入。
     private val config: SiteCoreConfigProperties,
@@ -204,6 +206,9 @@ class ImageProxyController(
         //      pushed content is served locally even when EH is unreachable.
         val pushedFile = findPushedPageFile(galleryId, page)
         if (pushedFile != null) {
+            // 需求 1（2026-08-30）：阅读命中存储池文件 → 若磁盘校验通过即置
+            // 「已完成」——导入时所有行视为未下载完成，阅读匹配后升级。
+            downloadService.completeIfVerified(galleryId)
             return serveFile(pushedFile, range)
         }
 

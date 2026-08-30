@@ -48,6 +48,12 @@ class DownloadController(private val downloadService: DownloadService) {
         return ResponseEntity.ok(true)
     }
 
+    @PostMapping("/restart-all")
+    fun restartAllDownloads(): ResponseEntity<Boolean> {
+        downloadService.restartAllDownloads()
+        return ResponseEntity.ok(true)
+    }
+
     @PostMapping("/start-range")
     fun startRange(@Valid @RequestBody request: DownloadRangeRequest): ResponseEntity<*> {
         if (!request.all && request.ids.isNullOrEmpty()) {

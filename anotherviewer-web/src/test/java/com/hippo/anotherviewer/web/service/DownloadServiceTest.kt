@@ -66,6 +66,61 @@ class DownloadServiceTest {
     }
 
     @Test
+    fun `restartAll skips disk-verified rows and restarts the rest`() {
+        `when`(availability.isBlocked()).thenReturn(false)
+        // DownloadDirs.resolve：相对 downloadDir 原样采用 → CWD 下建测试目录。
+        val dir = java.io.File("dl-test-42").apply { mkdirs() }
+        try {
+            java.io.File(dir, "0001.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0002.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0003.jpg").writeBytes(ByteArray(10))
+            val verified = DownloadInfoEntity().apply {
+                id = 1L; gid = 42L; token = "tok-v"; total = 3; done = 3
+                state = 3; downloadDir = "dl-test-42" // 相对路径 → resolve 原样返回
+            }
+            `when`(downloadRepository.findAll()).thenReturn(listOf(verified))
+            `when`(downloadRepository.findById(1L)).thenReturn(Optional.of(verified))
+            `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+            val restarted = service.restartAllDownloads()
+
+            assertEquals(0, restarted) // verified 行跳过；无其他行可重下
+            verify(downloadRepository).save(verified) // 仍写回 state=3/done=3
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `completeIfVerified only upgrades when disk holds full pages`() {
+        val dir = java.io.File("dl-test-99").apply { mkdirs() }
+        try {
+            java.io.File(dir, "0001.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0002.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0003.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0004.jpg").writeBytes(ByteArray(10))
+            java.io.File(dir, "0005.jpg").writeBytes(ByteArray(10))
+
+            val entity = DownloadInfoEntity().apply {
+                id = 7L; gid = 99L; token = "tok"; total = 5; done = 2; state = 0
+                downloadDir = "dl-test-99"
+            }
+            `when`(downloadRepository.findByGid(99L)).thenReturn(entity)
+            `when`(downloadRepository.findById(7L)).thenReturn(Optional.of(entity))
+            `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+            service.completeIfVerified(99L)
+
+            assertEquals(3, entity.state)
+            assertEquals(5, entity.done)
+            verify(downloadRepository).save(entity)
+            verify(downloadDirIndex).invalidate(99L)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `startDownload marks the task FAILED with EH_UNAVAILABLE error while blocked`() {
         `when`(availability.isBlocked()).thenReturn(true)
         val entity = DownloadInfoEntity().apply {

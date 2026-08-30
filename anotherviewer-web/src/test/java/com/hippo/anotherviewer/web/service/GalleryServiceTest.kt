@@ -118,6 +118,36 @@ class GalleryServiceTest {
     }
 
     @Test
+    fun `download detail falls back to upstream page count when total and pushed files are zero`() {
+        // 2026-08-30 导入 .db：download.total=0 且 downloads/ 目录为空 —— 页数将
+        // 经 galleryLookup.resolvePageCount（detailCache+上游）救回，而非 0 页
+        // 触发阅读器「只读第一页」。
+        val h = harness()
+        val row = downloadRow().apply { total = 0 }
+        `when`(h.downloads.findByGid(GID)).thenReturn(row)
+        `when`(h.galleryLookup.resolvePageCount(GID)).thenReturn(47)
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals(47, detail!!.pages)
+        assertEquals("Download title", detail.title)
+    }
+
+    @Test
+    fun `download detail stays open with zero pages when upstream cannot resolve either`() {
+        val h = harness()
+        val row = downloadRow().apply { total = 348 }
+        `when`(h.downloads.findByGid(GID)).thenReturn(row)
+        `when`(h.galleryLookup.resolvePageCount(GID)).thenReturn(348)
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals(348, detail!!.pages)
+    }
+
+    @Test
     fun `detail with a history row is served locally while blocked without upstream`() {
         val h = harness()
         `when`(h.downloads.findByGid(GID)).thenReturn(null)

@@ -105,6 +105,7 @@ class ImportControllerTest {
             mock(BlackListRepository::class.java),
             mock(GalleryTagsRepository::class.java),
             mock(SiteSessionManager::class.java),
+            mock(com.hippo.anotherviewer.web.service.DownloadDirIndex::class.java),
         )
         val realJobService = JobService(InMemoryJobStore(), mock(ApplicationEventPublisher::class.java))
         val mvc = MockMvcBuilders.standaloneSetup(ImportController(realService, realJobService))

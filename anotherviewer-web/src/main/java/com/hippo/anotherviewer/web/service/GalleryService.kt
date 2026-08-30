@@ -390,11 +390,12 @@ class GalleryService(
 
     /**
      * 本地下载行 → detail DTO（统一阅读器回退）。EH 不可达或从未同步元数据时
-     * 阅读器仍可打开：pages 来自行内 total，total 缺失时数 downloads/<gid>/ 下
-     * 的 %04d.* 推送文件。
+     * 阅读器仍可打开：pages 优先级 = 行内 total > 落盘推送文件数 > 上游
+     * resolvePageCount（带 detailCache，失败静默）> 0（仍返回 DTO，阅读器
+     * 按未知页数门限）。
      */
     private fun downloadDetailDto(download: com.hippo.anotherviewer.web.entity.DownloadInfoEntity): GalleryDetailDto {
-        val pages = if (download.total > 0) download.total else countPushedPages(download.gid)
+        val pages = resolveDownloadPages(download)
         return GalleryDetailDto(
             gid = download.gid,
             token = download.token,
@@ -420,6 +421,26 @@ class GalleryService(
     }
 
     private fun countPushedPages(gid: Long): Int = downloadDirIndex.pageCount(gid)
+
+    /**
+     * 下载行页数三级 fallback（2026-08-30 联调：导入 .db 的 8797/8799 行
+     * total=0 且 downloads/ 目录为空 → 阅读器 0 页降级「只读第一页」）：
+     * ① 行内 total（App 推送/正常同步通常有值）→ ② 落盘推送文件
+     * （downloads/<gid>/%04d.*，read 已下载内容）→ ③ 上游 resolvePageCount
+     * （detailCache 10min，可达时救回历史/可用 token）→ ④ 0（DTO 仍返回，
+     * 阅读器按「未知页数」处理而非卡 1 页）。
+     */
+    private fun resolveDownloadPages(download: com.hippo.anotherviewer.web.entity.DownloadInfoEntity): Int {
+        if (download.total > 0) return download.total
+        val pushed = countPushedPages(download.gid)
+        if (pushed > 0) return pushed
+        return try {
+            galleryLookupService.resolvePageCount(download.gid) ?: 0
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve page count for download gid={}: {}", download.gid, e.message)
+            0
+        }
+    }
 
     /**
      * Local history → detail DTO. The site detail is attempted only while EH is

@@ -83,6 +83,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { isEhUnavailableError } from '@/api/client'
 import { markDown } from '@/stores/availability'
 import { galleryApi } from '@/api/gallery'
+
+/** 画廊存在但未知页数（导入 .db 的 total=0 行且上游无法解析）：进入
+ *  unknownPageCounts 模式，翻页由 PageMode 逐页请求驱动，不降级卡 1 页。 */
+class UnknownPageCounts extends Error {
+  readonly title: string
+  constructor(title: string) {
+    super('Gallery has no pages')
+    this.name = 'UnknownPageCounts'
+    this.title = title
+  }
+}
 import { useKeyboardNav } from '@/composables/useKeyboardNav'
 import { useEnhancedImage } from '@/composables/useEnhancedImage'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -113,6 +124,8 @@ const loadState = ref<'loading' | 'error' | 'ready'>('loading')
 const errorMessage = ref('Failed to load gallery')
 /** 统一阅读器：detail 拉取失败时仍打开阅读器壳（单页错误由 PageMode 呈现）。 */
 const degraded = ref(false)
+/** 未知页数模式（import .db total=0）：totalPages=0，翻页由 PageMode 逐页驱动。 */
+const unknownPageCounts = ref(false)
 const title = ref('')
 /** Gallery site token from the detail response — required by history writeback. */
 const galleryToken = ref('')
@@ -283,6 +296,10 @@ function onLandscapeChange(event: { matches: boolean }) {
 }
 
 const resolvedMode = computed<ResolvedReaderMode>(() => {
+  // 未知页数（import .db total=0）：scroll/dual 依赖 totalPages 枚举渲染
+  // （v-for in total / spread 计算），强制 page 单页模式——翻页由 PageMode
+  // 逐页请求驱动，失败页内提示。
+  if (unknownPageCounts.value) return 'page'
   if (direction.value === 'vertical') return 'scroll'
   switch (pageModePref.value) {
     case 'scroll':
@@ -301,7 +318,10 @@ const resolvedMode = computed<ResolvedReaderMode>(() => {
 /* ------------------------------------------------------------------ */
 
 function onPageChange(page: number) {
-  currentPage.value = Math.min(Math.max(page, 0), Math.max(0, totalPages.value - 1))
+  currentPage.value =
+    totalPages.value > 0
+      ? Math.min(Math.max(page, 0), Math.max(0, totalPages.value - 1))
+      : Math.max(page, 0)
 }
 
 /** Advance one page — or one whole spread in dual mode. Returns false at the end. */
@@ -309,11 +329,11 @@ function nextPage(): boolean {
   const max = totalPages.value - 1
   if (resolvedMode.value === 'dual') {
     const target = firstPageOfSpread(spreadIndexOf(currentPage.value) + 1)
-    if (target > max || target === currentPage.value) return false
+    if (totalPages.value > 0 && (target > max || target === currentPage.value)) return false
     currentPage.value = target
     return true
   }
-  if (currentPage.value >= max) return false
+  if (totalPages.value > 0 && currentPage.value >= max) return false
   currentPage.value += 1
   return true
 }
@@ -528,7 +548,10 @@ async function load() {
     if (seq !== loadSeq) return
     const pages = Number(detail?.pages)
     if (!Number.isFinite(pages) || pages <= 0) {
-      throw new Error('Gallery has no pages')
+      // 2026-08-30：导入 .db 的元数据行 total=0（无上游/token 失效）——不再
+      // 降级 totalPages=1 卡死，改为「未知页数」：允许翻页、页内失败由
+      // PageMode 的错误覆盖层提示（本站可达时图片流会逐页解析）。
+      throw new UnknownPageCounts(detail?.title ?? `Gallery ${gid.value}`)
     }
     title.value = detail.title || `Gallery ${gid.value}`
     galleryToken.value = detail.token || ''
@@ -550,6 +573,17 @@ async function load() {
     console.error('Failed to load gallery', error)
     // EH 熔断（§0）：落 DOWN 标记——PageMode 图片失败直接终态（不重试风暴）。
     if (isEhUnavailableError(error)) markDown()
+    if (error instanceof UnknownPageCounts) {
+      // 画廊存在（title 已知）但页数未定：进入「未知页数」阅读模式——
+      // 从第 1 页起，翻页由 PageMode 逐页请求驱动，失败给出页内提示而非卡死。
+      title.value = error.title
+      totalPages.value = 0 // 0 = 未知（CodeBlock: PageMode 据此允许任意翻页）
+      currentPage.value = 0
+      unknownPageCounts.value = true
+      loadState.value = 'ready'
+      document.title = title.value
+      return
+    }
     // 统一阅读器（2026-08-24）：detail 拉不到（EH 不可达 / 无本地元数据）也必须
     // 打开阅读器壳——单页失败由 PageMode 的错误覆盖层呈现（含重试）。
     // total 置 1 让阅读器停在可交互状态；历史回写跳过（无 token）。
@@ -571,6 +605,7 @@ function resetReaderState() {
   loadState.value = 'loading'
   errorMessage.value = 'Failed to load gallery'
   degraded.value = false
+  unknownPageCounts.value = false
   title.value = ''
   galleryToken.value = ''
   lastHistoryPage = -1

@@ -880,6 +880,7 @@ const fabExpanded = ref(false)
 
 const fabActions: FabAction[] = [
   { id: 'start-all', icon: 'play-dark', label: 'Start all' },
+  { id: 'restart-all', icon: 'refresh-dark', label: 'Restart all' },
   { id: 'pause-all', icon: 'pause-dark', label: 'Pause all' },
   { id: 'new-label', icon: 'folder-add-dark', label: 'New label' },
 ]
@@ -887,6 +888,7 @@ const fabActions: FabAction[] = [
 function onFabAction(action: FabAction): void {
   fabExpanded.value = false
   if (action.id === 'start-all') void startAll()
+  else if (action.id === 'restart-all') void restartAll()
   else if (action.id === 'pause-all') void pauseAll()
   else if (action.id === 'new-label') openLabelDialog()
 }
@@ -903,6 +905,22 @@ async function startAll(): Promise<void> {
   } catch (error) {
     console.error('Failed to start all downloads', error)
     showToast('Failed to start downloads')
+  }
+}
+
+/** 「全部下载」：无视现有状态重新开始；磁盘有文件且校验通过的行服务端跳过。 */
+async function restartAll(): Promise<void> {
+  try {
+    await downloadApi.restartAll()
+    for (const item of downloads.value) {
+      if (item.state === STATE_FINISH) continue
+      item.state = STATE_WAIT
+      item.error = null
+    }
+    showToast('All downloads restarted')
+  } catch (error) {
+    console.error('Failed to restart all downloads', error)
+    showToast('Failed to restart downloads')
   }
 }
 

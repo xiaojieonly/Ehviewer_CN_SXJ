@@ -79,6 +79,7 @@ class EhImportServiceTest {
             fixtures.bookmarkRepo, fixtures.filterRepo, fixtures.quickSearchRepo,
             fixtures.downloadLabelRepo, fixtures.downloadDirnameRepo,
             fixtures.blackListRepo, fixtures.galleryTagsRepo, sessionManager,
+            mock(com.hippo.anotherviewer.web.service.DownloadDirIndex::class.java),
         )
     }
 
@@ -111,7 +112,7 @@ class EhImportServiceTest {
     }
 
     @Test
-    fun `download rows keep state and stamp total done zero with lastModified equals time`() {
+    fun `download rows mark incomplete on import and stamp total done zero with lastModified equals time`() {
         service.importEhViewer(file(v7SampleDb()), cookies = null, force = false, username = "alice")
 
         val alpha = fixtures.downloadStore.getValue(1001L)
@@ -122,7 +123,9 @@ class EhImportServiceTest {
         assertEquals("2020-01-01 00:00", alpha.posted)
         assertEquals("bob", alpha.uploader)
         assertEquals(4.5f, alpha.rating)
-        assertEquals(2, alpha.state)
+        // 2026-08-30（用户裁决）：导入一律视为「未下载完成」——存储池无文件时置
+        // 0（NONE/WAIT），后续阅读/收集匹配文件后再完成化（completeIfVerified）。
+        assertEquals(0, alpha.state)
         assertEquals(0, alpha.total)
         assertEquals(0, alpha.done)
         assertEquals(1_700_000_000_000L, alpha.time)
@@ -131,9 +134,10 @@ class EhImportServiceTest {
         assertEquals(fixtures.labelStore.getValue("Favorites").id.toInt(), alpha.label)
         assertNull(alpha.downloadDir)
 
-        assertEquals(1, fixtures.downloadStore.getValue(1002L).state)
+        assertEquals(0, fixtures.downloadStore.getValue(1002L).state)
         val gamma = fixtures.downloadStore.getValue(1003L)
-        assertEquals(3, gamma.state)
+        // 有磁盘文件的导入行（若受测 fixture 无文件时一律 0；此处样张无落盘文件）
+        assertEquals(0, gamma.state)
         assertEquals("sdcard/ehviewer/Gamma", gamma.downloadDir)
     }
 

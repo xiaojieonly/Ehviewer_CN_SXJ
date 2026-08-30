@@ -90,6 +90,12 @@ export const downloadApi = {
     return data
   },
 
+  /** 无视现状全部重下（已完成且磁盘校验通过的行跳过）——POST /download/restart-all。 */
+  async restartAll(): Promise<boolean> {
+    const { data } = await client.post('/download/restart-all')
+    return data
+  },
+
   async pause(id: number): Promise<boolean> {
     const { data } = await client.post(`/download/pause/${id}`)
     return data

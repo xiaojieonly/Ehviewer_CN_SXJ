@@ -346,6 +346,65 @@ class DownloadService(
         waiting.forEach { startDownload(it.id) }
     }
 
+    /**
+     * 2026-08-30（用户裁决）：「全部下载」——无视现有状态（含已完成 3 / 失败 4 /
+     * 暂停 0）全部重新开始；磁盘上有完整页面文件且通过校验的行直接标记完成
+     * 并跳过（state=3, done=total, 零网络），缺失/损坏行走正常下载管线补下。
+     */
+    fun restartAllDownloads(): Int {
+        var restarted = 0
+        var skippedVerified = 0
+        downloadRepository.findAll().forEach { entity ->
+            val total = entity.total
+            if (isVerifiedOnDisk(entity.gid, entity.downloadDir, total)) {
+                updateEntity(entity.id) {
+                    it.state = 3
+                    it.done = total
+                    it.error = null
+                }
+                skippedVerified++
+                return@forEach
+            }
+            if (startDownload(entity.id)) restarted++
+        }
+        logger.info(
+            "restartAllDownloads: restarted={}, skippedVerified={}",
+            restarted, skippedVerified
+        )
+        return restarted
+    }
+
+    /** 磁盘校验：目录存在且 %04d.* 文件数 >= total（total<=0 视为未决，不判定完成）。 */
+    private fun isVerifiedOnDisk(gid: Long, storedDir: String?, total: Int): Boolean {
+        if (total <= 0) return false
+        val dir = DownloadDirs.resolve(config.download.path, gid, storedDir)
+        if (!dir.isDirectory) return false
+        val count = dir.listFiles { f -> f.isFile && f.name.matches(Regex("^\\d{4}\\..+")) }
+            ?.count { it.length() > 0 } ?: 0
+        return count >= total
+    }
+
+    /**
+     * 阅读命中存储池推送文件后的「完成化」（需求 1）：下载行存在、当前非完成态、
+     * 且磁盘校验（%04d.* 文件数 == total）通过 → 置 3（已完成）。
+     * 调用点：ImageProxyController.servePushedPage（阅读器读到推送文件即标记）。
+     */
+    fun completeIfVerified(gid: Long) {
+        val entity = downloadRepository.findByGid(gid) ?: return
+        if (entity.state == 3) return
+        val total = entity.total
+        if (total <= 0) return
+        if (isVerifiedOnDisk(gid, entity.downloadDir, total)) {
+            updateEntity(entity.id) {
+                it.state = 3
+                it.done = total
+                it.error = null
+            }
+            downloadDirIndex.invalidate(gid)
+            logger.info("Download gid={} marked complete after disk verification", gid)
+        }
+    }
+
     fun pauseAllDownloads() {
         val active = downloadRepository.findByState(1) + downloadRepository.findByState(2)
         active.forEach { pauseDownload(it.id) }

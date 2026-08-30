@@ -6,6 +6,7 @@ import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.eq
 import com.hippo.anotherviewer.web.service.DownloadDirIndex
+import com.hippo.anotherviewer.web.service.DownloadService
 import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
@@ -90,6 +91,7 @@ class ImageProxyControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(
             ImageProxyController(
                 imageCacheService, galleryLookupService, sessionManager, prefetchService,
+                mock(DownloadService::class.java),
                 config,
                 JobService(InMemoryJobStore(), ApplicationEventPublisher {}),
                 availability,

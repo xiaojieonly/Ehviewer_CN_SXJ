@@ -68,10 +68,18 @@ class EhImportService(
     private val blackListRepository: BlackListRepository,
     private val galleryTagsRepository: GalleryTagsRepository,
     private val sessionManager: SiteSessionManager,
+    private val downloadDirIndex: DownloadDirIndex,
     private val transactionManager: PlatformTransactionManager? = null,
 ) {
     private val logger = LoggerFactory.getLogger(EhImportService::class.java)
     private val mapper = jacksonObjectMapper()
+
+    /**
+     * 导入行落 `完成` 的判据：磁盘存储池已有 ≥1 个 >0 字节页面文件。
+     * （阅读/下载完成后由下载管线补全校验，见 DownloadService.completeIfVerified。）
+     */
+    private fun hasUsablePushedContent(gid: Long): Boolean =
+        downloadDirIndex.pageCount(gid) > 0
 
     /** prep 产物：db 临时文件 + cookies 字节（worker 线程不再触碰 MultipartFile）。 */
     data class PreparedImport(
@@ -286,7 +294,13 @@ class EhImportService(
             val entity = existing ?: DownloadInfoEntity()
             entity.apply {
                 row.applyGalleryInfo(this)
-                this.state = row.int("state")
+                // 2026-08-30（用户裁决）：导入 .db 的所有画廊一律视为「未下载完成」
+                // ——state 无视旧值置 0（NONE/WAIT），除非本轮能匹配到磁盘上已存在
+                // 的完整页面文件（此时可直接置 3=完成后按需校验）。阅读/全部下载
+                // 时若匹配到存储池文件（downloads/<gid>/%04d.* 数量==total 且 >0
+                // 字节）再置 3（§需求 1 完成化逻辑见 ImageProxyController.servePushed
+                // / DownloadService.completeIfVerified）。
+                this.state = if (hasUsablePushedContent(row.long("gid"))) 3 else 0
                 this.legacy = row.int("legacy")
                 this.time = row.long("time")
                 this.lastModified = row.long("time")
