@@ -75,7 +75,7 @@ class PrefetchServiceTest {
 
         config = SiteCoreConfigProperties()
         config.reader.prefetchPages = 3
-        availability = EhAvailabilityService("https://e-hentai.org", 5000)
+        availability = EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000)
         service = PrefetchService(galleryLookup, imageCache, sessionManager, config, availability)
     }
 

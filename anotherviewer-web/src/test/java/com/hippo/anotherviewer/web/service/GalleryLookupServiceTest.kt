@@ -56,7 +56,7 @@ class GalleryLookupServiceTest {
         val downloads = mock(DownloadInfoRepository::class.java)
         val history = mock(HistoryInfoRepository::class.java)
         val favorites = mock(LocalFavoriteInfoRepository::class.java)
-        val availability = EhAvailabilityService("https://e-hentai.org", 5000)
+        val availability = EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000)
         return Harness(
             GalleryLookupService(downloads, history, favorites, sessionManager, availability),
             client, downloads, history, favorites, availability

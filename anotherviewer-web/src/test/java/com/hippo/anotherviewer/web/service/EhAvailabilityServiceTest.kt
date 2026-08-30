@@ -2,7 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.junit.jupiter.api.AfterAll
+import java.net.ProxySelector
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.IOException
 import java.net.InetSocketAddress
+import java.net.Proxy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,8 +27,19 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class EhAvailabilityServiceTest {
 
+    /** 无代理管理器（直连本机 HttpServer 的探针测试用）。 */
+    private fun noProxyManager(): WebProxyManager {
+        val m = mock(WebProxyManager::class.java)
+        `when`(m.selector()).thenReturn(object : ProxySelector() {
+            override fun select(uri: java.net.URI): List<Proxy> = listOf(Proxy.NO_PROXY)
+            override fun connectFailed(uri: java.net.URI, sa: java.net.SocketAddress, ioe: IOException) {}
+        })
+        `when`(m.authenticator()).thenReturn(okhttp3.Authenticator { route, response -> null })
+        return m
+    }
+
     private fun service(probe: () -> Boolean = { true }): EhAvailabilityService =
-        EhAvailabilityService("https://e-hentai.org", 5000, probe = probe)
+        EhAvailabilityService(noProxyManager(), "https://e-hentai.org", 5000, probe = probe)
 
     // ── state machine ──────────────────────────────────────────
 
@@ -141,12 +154,12 @@ class EhAvailabilityServiceTest {
         // probeHttp 是原始 HTTP 探测（仅更新 lastReason）；状态转换由 probeNow 完成。
         val (s2xx, u2) = echoServer(200)
         servers.add(s2xx)
-        val ok = EhAvailabilityService(u2, 5000)
+        val ok = EhAvailabilityService(noProxyManager(), u2, 5000)
         assertTrue(ok.probeHttp())
 
         val (s3xx, u3) = echoServer(302)
         servers.add(s3xx)
-        val redirect = EhAvailabilityService(u3, 5000)
+        val redirect = EhAvailabilityService(noProxyManager(), u3, 5000)
         assertTrue(redirect.probeHttp())
     }
 
@@ -154,7 +167,7 @@ class EhAvailabilityServiceTest {
     fun `probeHttp treats 404 as a DOWN failure with the status reason`() {
         val (server, url) = echoServer(404)
         servers.add(server)
-        val h = EhAvailabilityService(url, 5000)
+        val h = EhAvailabilityService(noProxyManager(), url, 5000)
         assertFalse(h.probeHttp())
         assertEquals("probe HTTP 404", h.status().lastReason)
         // 经 probeNow 落库为 DOWN（模拟一个失败探测完整链路）。
@@ -165,7 +178,7 @@ class EhAvailabilityServiceTest {
     @Test
     fun `probeHttp failure reason comes from the exception message`() {
         // 不可解析的 host（DNS 失败）→ 异常路径 → lastReason 来自 exception。
-        val s = EhAvailabilityService("https://eh-unreachable-zzz.invalid", 2000)
+        val s = EhAvailabilityService(noProxyManager(), "https://eh-unreachable-zzz.invalid", 2000)
         assertFalse(s.probeHttp())
         assertTrue(s.status().lastReason!!.isNotBlank())
     }

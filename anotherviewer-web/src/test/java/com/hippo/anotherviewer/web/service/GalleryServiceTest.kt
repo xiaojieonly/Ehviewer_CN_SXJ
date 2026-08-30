@@ -55,7 +55,7 @@ class GalleryServiceTest {
         val historyTags = mock(GalleryTagsRepository::class.java)
         val favorites = mock(LocalFavoriteInfoRepository::class.java)
         val galleryLookup = mock(GalleryLookupService::class.java)
-        val availability = EhAvailabilityService("https://e-hentai.org", 5000)
+        val availability = EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000)
         val service = GalleryService(
             history,
             mock(QuickSearchRepository::class.java),

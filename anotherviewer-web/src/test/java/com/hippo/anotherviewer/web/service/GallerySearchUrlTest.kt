@@ -44,7 +44,7 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
-            EhAvailabilityService("https://e-hentai.org", 5000),
+            EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
             mock(DownloadDirIndex::class.java)
         )
     }
@@ -320,7 +320,7 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
-            EhAvailabilityService("https://e-hentai.org", 5000),
+            EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
             mock(DownloadDirIndex::class.java)
         )
 
@@ -345,7 +345,7 @@ class GallerySearchUrlTest {
             mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
-            EhAvailabilityService("https://e-hentai.org", 5000),
+            EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
             mock(DownloadDirIndex::class.java)
         )
 

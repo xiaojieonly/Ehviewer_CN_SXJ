@@ -77,7 +77,7 @@ class ImageProxyControllerTest {
     }
 
     private fun probeFalseService(): EhAvailabilityService =
-        EhAvailabilityService("https://e-hentai.org", 5000, probe = { false })
+        EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000, probe = { false })
 
     @BeforeEach
     fun setUp() {
