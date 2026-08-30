@@ -58,32 +58,83 @@ class DownloadDirIndex(
 
     private val root: File get() = File(config.download.path)
 
+    /** 上次全量扫描的根列表指纹（目录名集合）；查询时轻量检测以触发自愈刷新。 */
+    @Volatile
+    private var lastDirFingerprint: Set<String>? = null
+
     @PostConstruct
     fun loadAll() {
+        refresh()
+    }
+
+    /**
+     * 全量重建索引（启动与自动感知共用）：清空 index 后重扫 root 下全部
+     * `{gid}`/`{gid}-{title}` 目录。运行时被 [ensureFresh] 在检测到根目录
+     * 列表变化时调用——复制/上传新缓存无需重启。
+     */
+    fun refresh() {
         if (!root.isDirectory) {
-            logger.info("DownloadDirIndex initialised: downloads root missing at {}", root.absolutePath)
+            logger.info("DownloadDirIndex refresh: downloads root missing at {}", root.absolutePath)
+            lastDirFingerprint = null
+            index.clear()
             return
         }
         val dirs = root.listFiles()
             ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
             .orEmpty()
+        val fingerprint = dirs.map { it.name }.toSet()
+        // 顺序敏感不必要——以指纹丢失/新增判断即可（名称级）。
+        val next = ConcurrentHashMap<Long, DirEntry>()
         var indexed = 0
         var files = 0
         for (dir in dirs) {
             val gid = DownloadDirs.parseGid(dir.name) ?: continue
             val entry = scanDir(gid, dir) ?: continue
+            next[gid] = entry
             indexed++
             files += entry.pageCount
         }
+        index.clear()
+        index.putAll(next)
+        lastDirFingerprint = fingerprint
         logger.info(
-            "DownloadDirIndex initialised: {} gid directories, {} pushed page files under {}",
+            "DownloadDirIndex refreshed: {} gid directories, {} pushed page files under {}",
             indexed, files, root.absolutePath
         )
         if (dirs.size > LARGE_TREE_THRESHOLD) {
             logger.info(
-                "DownloadDirIndex: large download tree ({} gid directories); startup scan was one listFiles per directory",
+                "DownloadDirIndex: large download tree ({} gid directories); refresh was one listFiles per directory",
                 dirs.size
             )
+        }
+    }
+
+    /**
+     * 自动感知（无需重启）：根目录列表指纹与上次不同（用户复制/上传/删除
+     * 缓存目录）→ 全量重建。所有查询入口先调用；触发只在指纹差异时发生
+     * （幂等，无变化零开销）。refresh 与并发查询用 synchronized 串行化——
+     * 避免两个请求同时全量扫描。
+     */
+    private fun ensureFresh() {
+        val dirs = root.listFiles()
+            ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
+            .orEmpty()
+        val fingerprint = dirs.map { it.name }.toSet()
+        if (fingerprint != lastDirFingerprint) {
+            synchronized(this) {
+                // double-check：持锁后重试，避免并发都进 refresh
+                val dirsLocked = root.listFiles()
+                    ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
+                    .orEmpty()
+                val fpLocked = dirsLocked.map { it.name }.toSet()
+                if (fpLocked != lastDirFingerprint) {
+                    logger.info(
+                        "DownloadDirIndex: root listing changed ({} dirs); auto-refreshing",
+                        fpLocked.size
+                    )
+                    refresh()
+                }
+            }
         }
     }
 
@@ -91,7 +142,10 @@ class DownloadDirIndex(
      * Indexed page count for [gid]: 0 when the gallery has no indexed pushed
      * files (unknown gallery, empty dir or not yet refreshed).
      */
-    fun pageCount(gid: Long): Int = lookup(gid)?.pageCount ?: 0
+    fun pageCount(gid: Long): Int {
+        ensureFresh()
+        return lookup(gid)?.pageCount ?: 0
+    }
 
     /**
      * Locate a pushed page file for a 0-based API [page] (files are 1-based,
@@ -99,6 +153,7 @@ class DownloadDirIndex(
      */
     fun findPage(gid: Long, page: Int): PageRef? {
         if (page < 0) return null
+        ensureFresh()
         return lookup(gid)?.pageFiles?.get(page + 1)
     }
 
@@ -155,6 +210,7 @@ class DownloadDirIndex(
 
     /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */
     fun dirFor(gid: Long): File? {
+        ensureFresh()
         val dir = findDir(gid)
         return if (dir.isDirectory) dir else null
     }
