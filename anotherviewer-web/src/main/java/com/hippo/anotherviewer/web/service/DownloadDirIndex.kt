@@ -64,12 +64,12 @@ class DownloadDirIndex(
             return
         }
         val dirs = root.listFiles()
-            ?.filter { it.isDirectory && it.name.matches(DIR_NAME_PATTERN) }
+            ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
             .orEmpty()
         var indexed = 0
         var files = 0
         for (dir in dirs) {
-            val gid = dir.name.toLongOrNull() ?: continue
+            val gid = DownloadDirs.parseGid(dir.name) ?: continue
             val entry = scanDir(gid, dir) ?: continue
             indexed++
             files += entry.pageCount
@@ -140,20 +140,31 @@ class DownloadDirIndex(
     /**
      * Current entry for [gid], refetching when the directory is absent from
      * the index (created after startup, e.g. by an App push) or when its mtime
-     * changed (files pushed/removed since the last scan).
+     * changed (files pushed/removed since the last scan). Directory naming is
+     * `{gid}` (legacy) or `{gid}-{title}` (Android-aligned, 2026-08-30); both
+     * are located by parsing the leading gid from the directory name.
      */
     private fun lookup(gid: Long): DirEntry? {
+        val dir = findDir(gid)
         index[gid]?.let { entry ->
-            val dir = File(root, gid.toString())
             if (dir.isDirectory && dir.lastModified() == entry.dirMtime) return entry
         }
-        return scanDir(gid, File(root, gid.toString()))
+        return scanDir(gid, dir)
+    }
+
+    /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */
+    private fun findDir(gid: Long): File {
+        if (!root.isDirectory) return File(root, gid.toString())
+        root.listFiles()
+            ?.filter { it.isDirectory && DownloadDirs.parseGid(it.name) == gid }
+            ?.maxByOrNull { it.lastModified() }
+            ?.let { return it }
+        return File(root, gid.toString())
     }
 
     private data class MutablePage(val ext: String, val size: Long, val priority: Int)
 
     private companion object {
-        val DIR_NAME_PATTERN = Regex("^\\d+$")
         val FILE_NAME_PATTERN = Regex("^(\\d{4,})\\.(.+)$")
 
         /** Only above this tree size does the startup scan log a hint. */

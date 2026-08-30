@@ -1,6 +1,7 @@
 package com.hippo.anotherviewer.web.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -50,5 +51,50 @@ class DownloadDirsTest {
         assertEquals(File(root, "9").path, DownloadDirs.resolve(root.absolutePath, 9L, null).path)
         assertEquals(File(root, "9").path, DownloadDirs.resolve(root.absolutePath, 9L, "").path)
         assertEquals(File(root, "9").path, DownloadDirs.resolve(root.absolutePath, 9L, "   ").path)
+    }
+
+    // ── 2026-08-30：Android 对齐目录命名 `{gid}-{title}` ──
+
+    @Test
+    fun `dirName builds gid-title and falls back to plain gid when title blank`() {
+        assertEquals("123-Some Title", DownloadDirs.dirName(123L, "Some Title"))
+        assertEquals("123", DownloadDirs.dirName(123L, ""))
+        assertEquals("123", DownloadDirs.dirName(123L, null))
+    }
+
+    @Test
+    fun `dirName sanitizes filesystem-special chars like Android sanitizeFilename`() {
+        // 与 Android sanitizeFilename（\ / : * ? " < > | + control 移除）对齐——
+        // 方括号/括弧和空格保留，超长/空白标题回落到纯 gid。
+        assertEquals(
+            "1014380-(C84) [Behind Moon (Q)] DRII Ep.3 Hermes no-komodo",
+            DownloadDirs.dirName(
+                1014380L,
+                "(C84) [Behind Moon (Q)] DRII: Ep.3 \"Hermes\" <no-komodo> \\ | ? *",
+            ),
+        )
+    }
+
+    @Test
+    fun `parseGid reads legacy plain and gid-title directory names`() {
+        assertEquals(123L, DownloadDirs.parseGid("123"))
+        assertEquals(123L, DownloadDirs.parseGid("123-Some Title"))
+        assertEquals(123L, DownloadDirs.parseGid("123-(C84) 标题"))
+        assertNull(DownloadDirs.parseGid("-123"))
+        assertNull(DownloadDirs.parseGid("not-a-number"))
+    }
+
+    @Test
+    fun `isOursDir accepts both layouts and rejects others`() {
+        assertTrue(DownloadDirs.isOursDir("123"))
+        assertTrue(DownloadDirs.isOursDir("123-title"))
+        assertTrue(!DownloadDirs.isOursDir("title-only"))
+        assertTrue(!DownloadDirs.isOursDir(""))
+    }
+
+    @Test
+    fun `resolve with a title falls back to gid-title dir`() {
+        val resolved = DownloadDirs.resolve(root.absolutePath, 7L, "/some/old/nas/dir", "Alpha")
+        assertEquals(File(root, "7-Alpha").path, resolved.path)
     }
 }

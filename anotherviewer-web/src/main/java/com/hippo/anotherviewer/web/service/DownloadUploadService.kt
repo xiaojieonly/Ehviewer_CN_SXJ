@@ -53,7 +53,11 @@ class DownloadUploadService(
             )
         }
 
-        val downloadDir = File(config.download.path, "$gid")
+        // 2026-08-30：目录命名对齐 Android——`{gid}-{title}`（人读可辨）。
+        val downloadDir = File(
+            config.download.path,
+            DownloadDirs.dirName(gid, request.title)
+        )
         downloadDir.mkdirs()
 
         val now = System.currentTimeMillis()
@@ -83,19 +87,18 @@ class DownloadUploadService(
     }
 
     /**
-     * 扫描 `downloads/<gid>` 下已按 `%04d.<ext>` 命名存在的页序号（1-based，
-     * 断点续传用）。
+     * 扫描 `downloads/<gid>(-{title})` 下已按 `%04d.<ext>` 命名存在的页序号
+     * （1-based，断点续传用）。目录按行内 downloadDir 定位，行缺省回落
+     * `<root>/<gid>`。
      */
     fun existingPages(gid: Long): List<Int> {
-        val dir = File(config.download.path, "$gid")
+        val dir = rowDirOrRoot(gid)
         if (!dir.isDirectory) return emptyList()
         return dir.listFiles()
             ?.mapNotNull { file ->
                 val m = pageFilePattern.matcher(file.name)
                 if (m.matches() && file.isFile && file.length() > 0) m.group(1).toInt() else null
-            }
-            ?.sorted()
-            ?: emptyList()
+            }?.sorted() ?: emptyList()
     }
 
     /**
@@ -110,10 +113,23 @@ class DownloadUploadService(
         require(page >= 1) { "page must be >= 1" }
         val ext = extensionOf(filename)
             ?: throw IllegalArgumentException("unsupported image extension: ${filename ?: "(none)"}")
-        val dir = File(config.download.path, "$gid")
+        val dir = rowDirOrRoot(gid)
         dir.mkdirs()
         val target = File(dir, "%04d.$ext".format(page))
         target.writeBytes(bytes)
+    }
+
+    /**
+     * 页落盘目录：优先下载行内 downloadDir（绝对路径，含 `{gid}-{title}` 命名），
+     * 行缺失时回落 `<root>/<gid>`（旧布局兼容）。
+     */
+    private fun rowDirOrRoot(gid: Long): File {
+        val row = downloadRepository.findByGid(gid)
+        if (row?.downloadDir?.isNotBlank() == true) {
+            val stored = File(row.downloadDir)
+            if (stored.isAbsolute) return stored
+        }
+        return File(config.download.path, gid.toString())
     }
 
     /** 收尾：行存在即更新 state=3 + total/done；不存在返回 false（控制器转 404）。

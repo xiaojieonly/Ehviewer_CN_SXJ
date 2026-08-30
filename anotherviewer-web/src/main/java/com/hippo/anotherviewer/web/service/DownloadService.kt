@@ -222,7 +222,9 @@ class DownloadService(
         val existing = downloadRepository.findByGid(request.gid)
         if (existing != null) return false
 
-        val downloadPath = File(config.download.path, "${request.gid}")
+        // 2026-08-30：目录命名对齐 Android——`{gid}-{title}`（人读可辨），
+        // 标题缺席回落纯 gid（旧布局兼容）。
+        val downloadPath = File(config.download.path, DownloadDirs.dirName(request.gid, request.title))
         downloadPath.mkdirs()
 
         val entity = DownloadInfoEntity().apply {

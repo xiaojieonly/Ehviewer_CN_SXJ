@@ -108,8 +108,9 @@ class DownloadUploadServiceTest {
         assertEquals(20, entity.pages)
         assertEquals(2, entity.state)
         assertEquals("alice", entity.username)
-        assertEquals(File(tempDir, "123").absolutePath, entity.downloadDir)
-        assertTrue(File(tempDir, "123").isDirectory)
+        // 2026-08-30：目录命名对齐 Android——`{gid}-{title}`。
+        assertEquals(File(tempDir, "123-Alpha").absolutePath, entity.downloadDir)
+        assertTrue(File(tempDir, "123-Alpha").isDirectory)
     }
 
     @Test
@@ -161,20 +162,24 @@ class DownloadUploadServiceTest {
 
     @Test
     fun `existingPages scans the percent-04d layout sorted`() {
-        downloadDir(123L).mkdirs()
-        File(downloadDir(123L), "0003.png").writeBytes(byteArrayOf(1))
-        File(downloadDir(123L), "0001.jpg").writeBytes(byteArrayOf(1))
-        File(downloadDir(123L), "0007.jpeg").writeBytes(byteArrayOf(1))
-        File(downloadDir(123L), "not-a-page.txt").writeBytes(byteArrayOf(1))
-        File(downloadDir(123L), "0002.jpg").writeBytes(ByteArray(0)) // 空文件不算
+        service.initUpload(123L, req(), "alice")
+        val dir = File(tempDir, "123-Alpha")
+        dir.mkdirs()
+        File(dir, "0003.png").writeBytes(byteArrayOf(1))
+        File(dir, "0001.jpg").writeBytes(byteArrayOf(1))
+        File(dir, "0007.jpeg").writeBytes(byteArrayOf(1))
+        File(dir, "not-a-page.txt").writeBytes(byteArrayOf(1))
+        File(dir, "0002.jpg").writeBytes(ByteArray(0)) // 空文件不算
 
         assertEquals(listOf(1, 3, 7), service.existingPages(123L))
     }
 
     @Test
     fun `initUpload reports existingPages after a previous push`() {
-        downloadDir(123L).mkdirs()
-        File(downloadDir(123L), "0001.jpg").writeBytes(byteArrayOf(1))
+        service.initUpload(123L, req(), "alice")
+        val dir = File(tempDir, "123-Alpha")
+        dir.mkdirs()
+        File(dir, "0001.jpg").writeBytes(byteArrayOf(1))
 
         val response = service.initUpload(123L, req(), "alice")
 
