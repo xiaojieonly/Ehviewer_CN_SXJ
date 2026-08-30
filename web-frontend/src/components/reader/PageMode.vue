@@ -41,7 +41,7 @@
     </Transition>
 
     <div v-if="error" class="page-mode__overlay page-mode__overlay--error" role="alert">
-      <p class="page-mode__error-text">第 {{ page + 1 }} 页加载失败</p>
+      <p class="page-mode__error-text">{{ errorText }}</p>
       <button type="button" class="page-mode__retry" @click="retry">重试</button>
     </div>
   </div>
@@ -250,6 +250,7 @@ export function useReaderGestures(options: ReaderGestureOptions): ReaderGestures
 // would be a duplicate identifier (and a self-import would be a cycle).
 import { computed, reactive, ref, watch } from 'vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { availability } from '@/stores/availability'
 import { usePreferencesStore } from '@/stores/preferences'
 
 interface PageModeProps {
@@ -289,6 +290,8 @@ const imgRef = ref<HTMLImageElement | null>(null)
 
 const loaded = ref(false)
 const error = ref(false)
+/** 错误类别：generic=瞬态失败（走指数退避）；eh=EH 熔断（直接终态）。 */
+const errorKind = ref<'generic' | 'eh'>('generic')
 const hasLoaded = ref(false)
 const retryTick = ref(0)
 const panX = ref(0)
@@ -377,6 +380,7 @@ watch(
   () => {
     loaded.value = false
     error.value = false
+    errorKind.value = 'generic'
     hasLoaded.value = false
     retryAttempts.value = 0
     retryDelayMs.value = 0
@@ -402,10 +406,19 @@ function onImageError() {
     console.debug('[PageMode] enhanced image failed to load, keeping original', props.page)
     return
   }
+  // EH 熔断（plan-2026-08-30 §0/§3.2）：服务器已短路图片流（404
+  // EH_UNAVAILABLE，只有此状态才会命中这里的 DOWN），不再进入指数退避自动重试
+  // ——srcset 双 1x/2x 候选会连发多次。直接终态 + 专属文案，保留手动重试按钮。
+  if (availability.state === 'down') {
+    errorKind.value = 'eh'
+    error.value = true
+    return
+  }
   // Transient failures (429 rate-limit / 401 session-gated / connectivity)
   // are retried with exponential backoff; only after the budget is exhausted
   // does the manual-retry error page appear. This absorbs the reader's
   // multi-width srcset retry storms without spamming the server.
+  errorKind.value = 'generic'
   const delay = retryDelayMs.value === 0 ? 1000 : Math.min(retryDelayMs.value * 2, 8000)
   retryDelayMs.value = delay
   if (retryAttempts.value >= MAX_AUTO_RETRIES) {
@@ -419,8 +432,15 @@ function onImageError() {
   }, delay)
 }
 
+const errorText = computed(() =>
+  errorKind.value === 'eh'
+    ? `第 ${props.page + 1} 页加载失败（EH 平台不可达）`
+    : `第 ${props.page + 1} 页加载失败`,
+)
+
 function retry() {
   error.value = false
+  errorKind.value = 'generic'
   retryTick.value += 1
   retryAttempts.value = 0
   retryDelayMs.value = 0

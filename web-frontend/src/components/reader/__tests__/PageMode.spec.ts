@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PageMode from '../PageMode.vue'
 import { usePreferencesStore } from '@/stores/preferences'
+import { markDown, markUnknown } from '@/stores/availability'
 import {
   DEFAULT_PREFERENCES,
   DEFAULT_READER_PREFERENCES,
@@ -81,5 +82,59 @@ describe('PageMode — 放大平移（既有语义回归）', () => {
   it('zoom > 1 时舞台可平移', () => {
     const wrapper = mountPageMode(2)
     expect(wrapper.find('.page-mode').classes()).toContain('page-mode--zoomed')
+  })
+})
+
+describe('PageMode — EH 熔断：跳过指数退避直接终态（plan-2026-08-30 §0/§3.2）', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    prefsWithScaling('fit')
+    markUnknown()
+  })
+
+  afterEach(() => {
+    markUnknown()
+    // 任意遗留的指数退避定时器由组件 unmount 清理。
+  })
+
+  async function fireImageError(wrapper: ReturnType<typeof mountPageMode>): Promise<void> {
+    await wrapper.find('.page-mode__img').trigger('error')
+  }
+
+  it('DOWN 时图片失败立即终态（EH 文案），不调度自动重试', async () => {
+    markDown('site unreachable')
+    const wrapper = mountPageMode()
+    const img = wrapper.find('.page-mode__img')
+    const srcBefore = img.attributes('src')
+
+    await fireImageError(wrapper)
+
+    const overlay = wrapper.find('.page-mode__overlay--error')
+    expect(overlay.exists()).toBe(true)
+    expect(overlay.text()).toContain('EH 平台不可达')
+    expect(overlay.find('.page-mode__retry').exists()).toBe(true)
+    // 未进入指数退避：src 未追加 ?_r= 重试 tick，无自动重试调度。
+    expect(img.attributes('src')).toBe(srcBefore)
+    wrapper.unmount()
+  })
+
+  it('手动重试（终态后）仍然可用', async () => {
+    markDown('site unreachable')
+    const wrapper = mountPageMode()
+    await fireImageError(wrapper)
+    expect(wrapper.find('.page-mode__overlay--error').exists()).toBe(true)
+
+    await wrapper.find('.page-mode__retry').trigger('click')
+    expect(wrapper.find('.page-mode__overlay--error').exists()).toBe(false)
+    // 重试触发新 src（? 后缀）——手动语义保留。
+    expect(wrapper.find('.page-mode__img').attributes('src')).toContain('_r=')
+    wrapper.unmount()
+  })
+
+  it('未知状态仍走指数退避（对照：不直接终态）', async () => {
+    const wrapper = mountPageMode()
+    await fireImageError(wrapper)
+    expect(wrapper.find('.page-mode__overlay--error').exists()).toBe(false)
+    wrapper.unmount()
   })
 })

@@ -31,6 +31,9 @@ export interface GalleryDetail extends GalleryInfo {
     time: string
     score: number
   }>
+  /** Upstream failure marker (plan-2026-08-30 §4.1); `"EH_UNAVAILABLE"` means
+   *  the EH platform is unreachable (see {@link ListCause}). */
+  cause?: ListCause | null
 }
 
 export interface TagInfo {
@@ -84,10 +87,19 @@ export interface AuthStatusResponse {
   username?: string
 }
 
+/**
+ * Upstream failure marker (plan-2026-08-30 §4.1): list-class endpoints keep
+ * the `success:false` envelope and report the circuit-breaker via this
+ * optional field instead of an HTTP error code. `"EH_UNAVAILABLE"` means the
+ * EH platform is currently unreachable (client shows the local-only tip).
+ */
+export type ListCause = 'EH_UNAVAILABLE' | string
+
 export interface GalleryListResponse {
   success: boolean
   data: GalleryInfo[]
   total: number
+  cause?: ListCause | null
 }
 
 /** One ranked entry of the toplist feed (GET /gallery/feed?mode=toplist). */
@@ -104,5 +116,6 @@ export interface TopListResponse {
   success: boolean
   data: TopListItem[]
   total: number
+  cause?: ListCause | null
 }
 

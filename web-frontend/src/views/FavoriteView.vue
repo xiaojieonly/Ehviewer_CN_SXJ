@@ -385,7 +385,11 @@ function onLoadMore(): void {
 }
 
 function openGallery(gallery: GalleryInfo): void {
-  void router.push(`/gallery/${gallery.gid}`)
+  // 本地 token 透传（P-A）：收藏行若无历史/下载背书，服务端凭 token 上游直取。
+  void router.push({
+    path: `/gallery/${gallery.gid}`,
+    query: gallery.token ? { token: gallery.token } : {},
+  })
 }
 
 /* --------------------------------------------------------------- FAB ---- */

@@ -1,5 +1,12 @@
 <template>
-  <div class="home">
+  <div class="home" :style="homeBannerOffset">
+    <!-- EH 熔断提示（plan-2026-08-30）：只读本地内容仍可用；「重新连接」探测
+         成功后刷新列表。放在视图根顶部一行（ContentLayout 外）。 -->
+    <AvailabilityBanner
+      v-if="availability.state === 'down'"
+      class="home__banner"
+      @refresh="onRefresh"
+    />
     <!-- Floating SearchBar (Android: the search bar floats over the list;
          the list clears it via --gallery-padding-top-search-bar). Kept below
          the pull-to-refresh header (z 5) but above the scrolling content. -->
@@ -160,7 +167,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
 import { galleryApi, type FeedMode } from '@/api/gallery'
-import { isOfflineError } from '@/api/client'
+import { isOfflineError, isEhUnavailableError } from '@/api/client'
+import { availability, loadAvailability, markDown } from '@/stores/availability'
+import AvailabilityBanner from '@/components/common/AvailabilityBanner.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
@@ -201,6 +210,14 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
+
+/**
+ * EH 提示条（AvailabilityBanner 固定 40px 高）可见时的偏移量：浮动 SearchBar
+ * 与列表顶部清理位同步下移，保证不遮挡横幅也不相互覆盖。
+ */
+const homeBannerOffset = computed(() => ({
+  '--availability-offset': availability.state === 'down' ? '40px' : '0px',
+}))
 
 /* -------------------------------- feed mode ----------------------------- */
 
@@ -305,7 +322,14 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
     // Append failures keep the loaded content; replace failures show the
     // error tip (retry button re-triggers a refresh).
     if (mode === 'replace') {
-      errorText.value = isOfflineError(error) ? '当前离线，且无本地缓存可用' : '加载失败，请稍后重试'
+      if (isEhUnavailableError(error)) {
+        // EH 熔断（§0）：列表端点不携带 HTTP 错误码（success:false + cause），
+        // 由视图落 DOWN 标记 + 专属文案——服务器已短路，只读本地内容。
+        markDown()
+        errorText.value = 'EH 平台当前不可达，仅显示本地内容'
+      } else {
+        errorText.value = isOfflineError(error) ? '当前离线，且无本地缓存可用' : '加载失败，请稍后重试'
+      }
       contentState.value = 'error'
     }
   } finally {
@@ -700,6 +724,9 @@ onMounted(() => {
   // Probe the EH session once so the empty-state hint can guide users whose
   // Android-login session hasn't synced yet (or has expired).
   void checkEhSession()
+  // 读取服务器侧 EH 熔断状态（幂等：in-flight 单飞）——DOWN 时顶部提示条
+  // 与自动请求短路（服务器/拦截器）同时生效。
+  void loadAvailability()
   void loadPage(0, 'replace')
 })
 
@@ -757,11 +784,17 @@ onBeforeUnmount(detachVirtualScroll)
    sits at z-index 1) but below its pull-to-refresh header (z-index 5), so
    the spinner stays visible while pulling; the FabLayout cluster (z 90/100)
    tops everything. */
+.home__banner {
+  flex-shrink: 0;
+}
+
 .home__searchbar {
   position: absolute;
   /* Offset below the status bar / cutout; the list clears the bar via
-     --gallery-padding-top-search-bar, which carries the same inset. */
-  top: var(--safe-area-top);
+     --gallery-padding-top-search-bar, which carries the same inset.
+     EH 提示条可见时（--availability-offset 40px）同步下移，与内容区顶部
+     行对齐，不遮挡横幅。 */
+  top: calc(var(--safe-area-top) + var(--availability-offset, 0px));
   left: 0;
   right: 0;
   z-index: 4;
@@ -789,12 +822,16 @@ onBeforeUnmount(detachVirtualScroll)
    `--gallery-list-clear-top` (its grid/rows no longer carry the clearance
    themselves). */
 .home__virtual {
-  --gallery-list-clear-top: var(--gallery-padding-top-search-bar);
+  --gallery-list-clear-top: calc(
+    var(--gallery-padding-top-search-bar) + var(--availability-offset, 0px)
+  );
 }
 
 /* Toplist feed rows — clear the floating SearchBar like the gallery list. */
 .home__toplist {
-  padding-top: var(--gallery-padding-top-search-bar);
+  padding-top: calc(
+    var(--gallery-padding-top-search-bar) + var(--availability-offset, 0px)
+  );
 }
 
 .home__toplist-row {

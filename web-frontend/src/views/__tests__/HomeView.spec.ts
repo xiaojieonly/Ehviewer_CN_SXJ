@@ -5,8 +5,10 @@ import { reactive } from 'vue'
 import HomeView from '../HomeView.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import { galleryApi } from '@/api/gallery'
+import { siteApi } from '@/api/site'
 import { preferencesApi } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
+import { availability, markUnknown } from '@/stores/availability'
 import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo, GalleryListResponse, TopListItem } from '@/types'
 
@@ -28,6 +30,10 @@ vi.mock('@/api/gallery', () => ({
 
 vi.mock('@/api/preferences', () => ({
   preferencesApi: { get: vi.fn(), update: vi.fn() },
+}))
+
+vi.mock('@/api/site', () => ({
+  siteApi: { getAvailability: vi.fn(), probeAvailability: vi.fn() },
 }))
 
 /**
@@ -92,11 +98,20 @@ describe('HomeView (首页)', () => {
     localStorage.clear()
     pushMock.mockClear()
     routeMock.query = {}
+    // 熔断单例（模块级）在 spec 间持久——重置为初始未知态。
+    availability.state = null
+    availability.downAt = null
+    availability.lastReason = null
+    availability.lastLoadedAt = null
+    markUnknown()
     vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
     // Default: preferences resolve with the grid layout (the pre-migration
     // tests below can override per case).
     vi.mocked(preferencesApi.get).mockResolvedValue(makePrefs({ listMode: 'grid' }))
     vi.mocked(preferencesApi.update).mockResolvedValue(makePrefs({}))
+    // 默认站点状态 UP：横幅不出现（每个用例可按需覆盖）。
+    vi.mocked(siteApi.getAvailability).mockResolvedValue({ state: 'UP' })
+    vi.mocked(siteApi.probeAvailability).mockResolvedValue({ state: 'UP' })
   })
 
   afterEach(() => {
@@ -384,5 +399,97 @@ describe('HomeView (B-1 localStorage → preferences listMode migration)', () =>
     await vi.advanceTimersByTimeAsync(600)
     expect(store.prefs?.general.listMode).toBe('list')
     expect(localStorage.getItem(LIST_MODE_KEY)).toBeNull()
+  })
+})
+
+describe('HomeView — EH 熔断（plan-2026-08-30 §0）', () => {
+  let wrapper: VueWrapper
+
+  beforeEach(() => {
+    // 迁移 describe 共用同一外层 beforeEach？不——此处建立独立前置。
+    setActivePinia(createPinia())
+    localStorage.clear()
+    pushMock.mockClear()
+    routeMock.query = {}
+    availability.state = null
+    availability.downAt = null
+    availability.lastReason = null
+    availability.lastLoadedAt = null
+    markUnknown()
+    vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
+    vi.mocked(preferencesApi.get).mockResolvedValue(makePrefs({ listMode: 'grid' }))
+    vi.mocked(preferencesApi.update).mockResolvedValue(makePrefs({}))
+    vi.mocked(siteApi.getAvailability).mockResolvedValue({ state: 'UNKNOWN' })
+    vi.mocked(siteApi.probeAvailability).mockResolvedValue({ state: 'UP' })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    availability.state = null
+    availability.downAt = null
+    availability.lastReason = null
+    availability.lastLoadedAt = null
+    vi.clearAllMocks()
+  })
+
+  /** 当 EH 不可达时搜索以 404 信封形式快速失败（服务端已短路）。 */
+  function ehError() {
+    return {
+      response: {
+        status: 404,
+        data: {
+          error: {
+            code: 'EH_UNAVAILABLE',
+            message: 'EH 平台当前不可达，仅显示本地内容',
+          },
+        },
+      },
+    }
+  }
+
+  it('defers to the local-only tip when the feed fails with EH_UNAVAILABLE', async () => {
+    vi.mocked(galleryApi.search).mockRejectedValue(ehError())
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('EH 平台当前不可达，仅显示本地内容')
+    expect(wrapper.text()).not.toContain('加载失败，请稍后重试')
+  })
+
+  it('shows the banner at the top when the availability state is down', async () => {
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    // 服务器自身判定 DOWN。
+    vi.mocked(siteApi.getAvailability).mockResolvedValue({
+      state: 'DOWN',
+      downAt: 9,
+      lastReason: 'probe failed',
+    })
+    wrapper = mount(HomeView)
+    await flushPromises()
+    await flushPromises()
+
+    const banner = wrapper.find('[data-testid="availability-banner"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.text()).toContain('重新连接')
+    // 内容区不受影响（本地内容照常）。
+    expect(wrapper.find('[data-testid="content-state-content"]').exists()).toBe(true)
+  })
+
+  it('hides the banner and refreshes the list after a successful reconnect', async () => {
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    vi.mocked(siteApi.getAvailability).mockResolvedValue({ state: 'DOWN' })
+    wrapper = mount(HomeView)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="availability-banner"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="availability-banner"] button').trigger('click')
+    await flushPromises()
+    await flushPromises()
+
+    // 探测成功 → 状态 UP → 横幅消失 + 父视图刷新（再次加载第 0 页）。
+    expect(wrapper.find('[data-testid="availability-banner"]').exists()).toBe(false)
+    expect(galleryApi.search).toHaveBeenCalledTimes(2)
   })
 })

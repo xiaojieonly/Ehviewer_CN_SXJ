@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { markDown, EH_UNAVAILABLE_MESSAGE } from '@/stores/availability'
 
 const client = axios.create({
   baseURL: '/api/v1',
@@ -43,6 +44,38 @@ export function isOfflinePayload(status: number | undefined, data: unknown): boo
   return typeof data === 'string' && data.includes('offline')
 }
 
+/**
+ * Error code of the server error envelope (`{error:{code,message,…}}`, plan
+ * §4.1) — same extraction as the views' `errorCodeOf` helpers.
+ */
+export function errorCodeOf(error: unknown): string | null {
+  const code = (error as { response?: { data?: { error?: { code?: unknown } } } } | undefined)
+    ?.response?.data?.error?.code
+  return typeof code === 'string' ? code : null
+}
+
+/**
+ * The server's circuit-breaker answered "EH platform unreachable" (HTTP 404 +
+ * `EH_UNAVAILABLE`, see plan-2026-08-30 §3.2). Views use this to stop auto
+ * retries / switch to the local-only tip; the availability store is marked
+ * DOWN by the response interceptor below.
+ */
+export class EhUnavailableError extends Error {
+  constructor(message: string = EH_UNAVAILABLE_MESSAGE) {
+    super(message)
+    this.name = 'EhUnavailableError'
+  }
+}
+
+/**
+ * Type guard for {@link EhUnavailableError}. Also accepts the raw
+ * axios-shaped error (envelope code check) so mocked/thrown list-envelope
+ * errors (success:false + cause) are recognized by the same predicate.
+ */
+export function isEhUnavailableError(error: unknown): error is EhUnavailableError {
+  return error instanceof EhUnavailableError || errorCodeOf(error) === 'EH_UNAVAILABLE'
+}
+
 client.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -56,6 +89,18 @@ client.interceptors.response.use(
     // distinguish "offline, no cache" from a plain network/server failure.
     if (isOfflinePayload(error.response?.status, error.response?.data)) {
       return Promise.reject(new OfflineError())
+    }
+    // Circuit-breaker: the server short-circuited an EH upstream call
+    // (404 EH_UNAVAILABLE). Mark DOWN immediately (views/banner react without
+    // waiting for the next /site/availability load) and surface a typed error
+    // so callers stop auto-retrying.
+    if (errorCodeOf(error) === 'EH_UNAVAILABLE') {
+      const message =
+        typeof error.response?.data?.error?.message === 'string'
+          ? error.response.data.error.message
+          : EH_UNAVAILABLE_MESSAGE
+      markDown(message)
+      return Promise.reject(new EhUnavailableError(message))
     }
     return Promise.reject(error)
   }

@@ -186,7 +186,21 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     seedPrefs({ listMode: 'grid' })
     await mountHistory([makeHistoryItem({ gid: 42 })])
     await wrapper.find('.app-card').trigger('click')
-    expect(pushMock).toHaveBeenCalledWith('/gallery/42')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/42', query: { token: 'abc123' } })
+  })
+
+  it('passes through the local token in the detail route query (P-A)', async () => {
+    seedPrefs({ listMode: 'grid' })
+    await mountHistory([makeHistoryItem({ gid: 7, token: 'tok7' })])
+    await wrapper.find('.app-card').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/7', query: { token: 'tok7' } })
+  })
+
+  it('omits the token query when the history row carries none', async () => {
+    seedPrefs({ listMode: 'grid' })
+    await mountHistory([makeHistoryItem({ gid: 9, token: '' })])
+    await wrapper.find('.app-card').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/9', query: {} })
   })
 
   /* ---------------- search + filter slots (A5d, 互斥) ---------------- */

@@ -218,6 +218,8 @@
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { isEhUnavailableError } from '@/api/client'
+import { availability, loadAvailability, markDown } from '@/stores/availability'
 import { galleryApi } from '@/api/gallery'
 import { commentApi, type CommentItem } from '@/api/comment'
 import { favoriteApi } from '@/api/favorite'
@@ -250,6 +252,9 @@ const comments = ref<CommentItem[]>([])
 const commentsLoading = ref(false)
 /** F6: 评论加载失败——占位提示替代「No comments」，提供重试入口。 */
 const commentsError = ref(false)
+/** EH 熔断（plan-2026-08-30 §0）：评论抓取失败时静默——顶栏提示已说明原因，
+ *  不再显示「评论加载失败」，也不伪装「No comments」。 */
+const commentsUnavailable = ref(false)
 const posting = ref(false)
 const votingId = ref<number | null>(null)
 
@@ -305,7 +310,7 @@ const tagGroups = computed<TagGroup[]>(() => {
 
 /** Android `comments_text` status line ("No comments" / count). */
 const commentsStatus = computed(() => {
-  if (commentsLoading.value || commentsError.value) return ''
+  if (commentsLoading.value || commentsError.value || commentsUnavailable.value) return ''
   const n = comments.value.length
   return n === 0 ? 'No comments' : `${n} comment${n === 1 ? '' : 's'}`
 })
@@ -330,12 +335,32 @@ async function load() {
   try {
     detail = await galleryApi.getDetail(galleryId.value, entryToken.value)
     if (seq !== loadSeq) return
+    if (!detail) {
+      // 服务器无本地行且 EH 上游不可达时返回 200 null（P-C 短路语义）：
+      // DOWN 熔断文案；否则保留「Gallery not found」常规语义。深链直入
+      // 时 availability 尚未加载（state=null），先对齐一次服务器状态再断言。
+      if (availability.state === null) {
+        await loadAvailability()
+        if (seq !== loadSeq) return
+      }
+      error.value =
+        availability.state === 'down'
+          ? 'EH 平台当前不可达，仅显示本地内容'
+          : 'Gallery not found'
+      return
+    }
     gallery.value = detail
     isFavorited.value = (detail.favoriteSlot ?? -1) >= 0
   } catch (e) {
     if (seq !== loadSeq) return
     gallery.value = null
-    error.value = e instanceof Error ? e.message : 'Failed to load gallery detail'
+    if (isEhUnavailableError(e)) {
+      // EH 熔断（§0）：只读本地内容，提示位说明后台不可达（与横幅同文案）。
+      markDown()
+      error.value = 'EH 平台当前不可达，仅显示本地内容'
+    } else {
+      error.value = e instanceof Error ? e.message : 'Failed to load gallery detail'
+    }
   } finally {
     if (seq === loadSeq) loading.value = false
   }
@@ -350,6 +375,7 @@ async function loadComments(fromDetail?: CommentItem[] | null) {
   const seq = loadSeq
   commentsLoading.value = true
   commentsError.value = false
+  commentsUnavailable.value = false
   try {
     if (fromDetail && fromDetail.length > 0) {
       if (seq !== loadSeq) return
@@ -361,7 +387,10 @@ async function loadComments(fromDetail?: CommentItem[] | null) {
     comments.value = res.comments ?? []
   } catch (e) {
     console.error('Failed to load comments', e)
-    if (seq === loadSeq) commentsError.value = true
+    if (seq !== loadSeq) return
+    // EH 熔断：静默（不占位、不伪装 No comments）——横幅/文案已提示不可达。
+    if (isEhUnavailableError(e)) commentsUnavailable.value = true
+    else commentsError.value = true
   } finally {
     if (seq === loadSeq) commentsLoading.value = false
   }
@@ -379,7 +408,11 @@ function goBack() {
 
 /** Open the reader (Android `read` button → GalleryActivity). */
 function read() {
-  router.push(`/reader/${galleryId.value}`)
+  const token = gallery.value?.token
+  router.push({
+    path: `/reader/${galleryId.value}`,
+    query: token ? { token } : {},
+  })
 }
 
 async function download() {
@@ -509,6 +542,7 @@ function reset() {
   error.value = null
   comments.value = []
   commentsLoading.value = false
+  commentsUnavailable.value = false
   posting.value = false
   votingId.value = null
   isFavorited.value = false

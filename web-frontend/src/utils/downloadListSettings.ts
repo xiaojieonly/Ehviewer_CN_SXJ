@@ -25,8 +25,9 @@ export const DOWNLOAD_SORT_OPTIONS: { value: DownloadSort; label: string }[] = [
   { value: 'title_desc', label: '标题（Z → A）' },
 ]
 
-/** 每页条数选项——与 Android 端一致（默认 50 条/页）。 */
-export const DOWNLOAD_PAGE_SIZES = [50, 100, 200] as const
+/** 每页条数选项——与 Android 端 perPageCountChoices 对齐（默认 50 条/页）。
+ *  服务端 listDownloads limit 上限 500，300/500 亦受支持。 */
+export const DOWNLOAD_PAGE_SIZES = [50, 100, 200, 300, 500] as const
 
 export const DEFAULT_DOWNLOAD_LIST_PREFS: DownloadListPrefs = {
   sortMode: 'time_desc',
@@ -61,4 +62,16 @@ export function loadDownloadListPrefs(): DownloadListPrefs {
     // Corrupt/unavailable storage — fall back to defaults.
   }
   return { ...DEFAULT_DOWNLOAD_LIST_PREFS }
+}
+
+/** 保存下载列表偏好（写回与读取相同的 localStorage 键；存储不可用则静默）。 */
+export function saveDownloadListPrefs(prefs: DownloadListPrefs): void {
+  try {
+    localStorage.setItem(
+      DOWNLOAD_UI_KEY,
+      JSON.stringify({ sortMode: prefs.sortMode, pageSize: prefs.pageSize }),
+    )
+  } catch {
+    // Storage unavailable / full — the in-memory list keeps working.
+  }
 }

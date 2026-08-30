@@ -7,14 +7,15 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { DEFAULT_PREFERENCES, DEFAULT_READER_PREFERENCES } from '@/api/preferences'
 import { spreadIndexOf, firstPageOfSpread } from '@/components/reader/PageMode.vue'
 
-const { pushMock, replaceMock, routeParams } = vi.hoisted(() => ({
+const { pushMock, replaceMock, routeParams, routeQuery } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
   routeParams: { gid: '123456', page: undefined as string | undefined },
+  routeQuery: { token: undefined as string | undefined },
 }))
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: routeParams }),
+  useRoute: () => ({ params: routeParams, query: routeQuery }),
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
 }))
 
@@ -637,6 +638,63 @@ describe('ReaderView (T-F2) — auto-play timer', () => {
     expect(stub().text()).toBe('49')
     expect(stub().attributes('data-enabled')).toBe('off')
     expect(stub().attributes('data-progress')).toBe('0')
+  })
+})
+
+describe('ReaderView — P-B 入口 token 透传（plan-2026-08-30 §3.4.0）', () => {
+  let wrapper: VueWrapper | undefined
+
+  async function mountReader(): Promise<VueWrapper> {
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    routeQuery.token = undefined
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    vi.mocked(galleryApi.getDetail).mockReset()
+    vi.mocked(galleryApi.addHistory).mockReset()
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    routeQuery.token = undefined
+    vi.restoreAllMocks()
+  })
+
+  it('passes the route token into getDetail', async () => {
+    routeQuery.token = 'tokFromList'
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    wrapper = await mountReader()
+    expect(galleryApi.getDetail).toHaveBeenCalledWith(123456, 'tokFromList')
+  })
+
+  it('calls getDetail without a token when the query carries none', async () => {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    wrapper = await mountReader()
+    expect(galleryApi.getDetail).toHaveBeenCalledWith(123456, undefined)
+  })
+
+  it('re-derives the token from the query on each load (token 只从 query 一次取)', async () => {
+    // 每次 load 独立读取 route.query.token——resetReaderState 不携带 token 状态，
+    // 新加载以查询参数为准（route.params.page 的 watch 亦从不改动它）。
+    routeQuery.token = 'tokA'
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    wrapper = await mountReader()
+    expect(galleryApi.getDetail).toHaveBeenLastCalledWith(123456, 'tokA')
+    wrapper.unmount()
+    wrapper = undefined
+
+    routeQuery.token = 'tokB'
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    wrapper = await mountReader()
+    expect(galleryApi.getDetail).toHaveBeenLastCalledWith(123456, 'tokB')
   })
 })
 

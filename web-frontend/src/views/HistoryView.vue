@@ -369,7 +369,11 @@ function onRetry(): void {
 }
 
 function openGallery(gallery: GalleryInfo): void {
-  void router.push(`/gallery/${gallery.gid}`)
+  // 本地 token 透传（P-A）：服务端先查历史行/上游直取，无本地行时不再必然失败。
+  void router.push({
+    path: `/gallery/${gallery.gid}`,
+    query: gallery.token ? { token: gallery.token } : {},
+  })
 }
 
 /* ---------------------------------------------------------- timestamp --- */

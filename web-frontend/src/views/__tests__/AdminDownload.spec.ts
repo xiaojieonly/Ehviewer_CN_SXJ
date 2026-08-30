@@ -105,7 +105,8 @@ describe('AdminDownload (下载设置)', () => {
     expect(selects.length).toBe(2)
     expect(selects.map((s) => s.attributes('aria-label'))).toEqual(['排序模式', '每页条数'])
     expect(selects[0].props('options').length).toBe(4)
-    expect(selects[1].props('options').map((o) => o.value)).toEqual([50, 100, 200])
+    // plan-2026-08-30 §3.4.0.1：与 Android perPageCountChoices 对齐。
+    expect(selects[1].props('options').map((o) => o.value)).toEqual([50, 100, 200, 300, 500])
 
     const switches = w.findAllComponents(AppSwitch)
     expect(switches.length).toBe(1)

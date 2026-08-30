@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import GalleryDetailView from '../GalleryDetailView.vue'
+import { EhUnavailableError } from '@/api/client'
+import { availability, markDown } from '@/stores/availability'
 import { galleryApi } from '@/api/gallery'
 import { commentApi } from '@/api/comment'
 import { favoriteApi } from '@/api/favorite'
@@ -8,11 +10,14 @@ import { downloadApi } from '@/api/download'
 import type { CommentItem } from '@/api/comment'
 import type { GalleryDetail } from '@/types'
 
-const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+const { pushMock, routeQuery } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  routeQuery: { token: undefined as string | undefined },
+}))
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: pushMock }),
-  useRoute: () => ({ query: {} }),
+  useRoute: () => ({ query: routeQuery }),
 }))
 
 vi.mock('@/api/gallery', () => ({
@@ -29,6 +34,10 @@ vi.mock('@/api/favorite', () => ({
 
 vi.mock('@/api/download', () => ({
   downloadApi: { add: vi.fn() },
+}))
+
+vi.mock('@/api/site', () => ({
+  siteApi: { getAvailability: vi.fn(), probeAvailability: vi.fn() },
 }))
 
 function makeDetail(overrides: Partial<GalleryDetail> = {}): GalleryDetail {
@@ -501,5 +510,107 @@ describe('GalleryDetailView (T-F2) — route param change reuses the component',
 
     expect(wrapper.find('.detail-actions__btn--favorite').attributes('aria-pressed')).toBe('false')
     expect(wrapper.find('.detail-actions__btn--download').text()).toBe('Download')
+  })
+})
+
+describe('GalleryDetailView — token 透传与 EH 熔断提示（plan-2026-08-30 P-B/§0）', () => {
+  beforeEach(() => {
+    pushMock.mockClear()
+    routeQuery.token = undefined
+    // 模块级熔断单例在 spec 间持久——每例重置初始未知态。
+    availability.state = null
+    availability.downAt = null
+    availability.lastReason = null
+    availability.lastLoadedAt = null
+    vi.mocked(commentApi.listComments).mockResolvedValue({ comments: [] })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    routeQuery.token = undefined
+    availability.state = null
+    availability.downAt = null
+    availability.lastReason = null
+    availability.lastLoadedAt = null
+    vi.clearAllMocks()
+  })
+
+  it('read() routes to the reader carrying the detail token (P-B)', async () => {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(makeDetail({ token: 'tok42' }))
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    await wrapper.find('.detail-actions__btn--read').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/reader/42', query: { token: 'tok42' } })
+  })
+
+  it('read() omits the token query when the detail carries none', async () => {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(makeDetail({ token: '' }))
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    await wrapper.find('.detail-actions__btn--read').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/reader/42', query: {} })
+  })
+
+  it('forwards the entry ?token= into getDetail (P-D)', async () => {
+    routeQuery.token = 'tokEntry'
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(makeDetail())
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+
+    expect(galleryApi.getDetail).toHaveBeenCalledWith(42, 'tokEntry')
+  })
+
+  it('names EH unavailability in the tip when the detail fetch is short-circuited', async () => {
+    vi.mocked(galleryApi.getDetail).mockRejectedValue(new EhUnavailableError())
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('.gallery-detail__tip').text()).toBe(
+      'EH 平台当前不可达，仅显示本地内容',
+    )
+    // 重试按钮保留（手动语义）。
+    expect(wrapper.find('.gallery-detail__retry').exists()).toBe(true)
+  })
+
+  it('treats a 200-null detail during DOWN as the EH tip (not a null-crash)', async () => {
+    // 后端阻塞语义：无本地行 + EH DOWN → HTTP 200 null。
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(null as unknown as GalleryDetail)
+    markDown('probe failed')
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('.gallery-detail__tip').text()).toBe(
+      'EH 平台当前不可达，仅显示本地内容',
+    )
+    // 对照：可达性未知/UP 时保留常规「Gallery not found」语义。
+  })
+
+  it('keeps the plain "Gallery not found" tip for a 200-null detail when not down', async () => {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(null as unknown as GalleryDetail)
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('.gallery-detail__tip').text()).toBe('Gallery not found')
+  })
+
+  it('is silent on EH-unavailable comment failures (no placeholder, no fake "No comments")', async () => {
+    vi.mocked(commentApi.listComments).mockRejectedValue({
+      response: { data: { error: { code: 'EH_UNAVAILABLE' } } },
+    })
+    wrapper = mount(GalleryDetailView, { props: { gid: '42' } })
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="comments-retry"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('评论加载失败')
+    expect(wrapper.text()).not.toContain('No comments')
   })
 })

@@ -109,6 +109,18 @@ describe('FavoriteView (搜索 + 筛选槽位 A5d)', () => {
     expect(wrapper.text()).toContain('Favorite 1')
   })
 
+  it('passes through the local token in the detail route query (P-A)', async () => {
+    await mountFavorites([makeFavorite(42)])
+    await wrapper.find('.app-card').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/42', query: { token: 'tok42' } })
+  })
+
+  it('omits the token query when the favorite row carries none', async () => {
+    await mountFavorites([makeFavorite(43, { token: '' })])
+    await wrapper.find('.app-card').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/43', query: {} })
+  })
+
   it('switching the folder chip reloads with the new slot param', async () => {
     await mountFavorites([makeFavorite(1)])
     await wrapper.findAll('.slot-bar__chip').find((c) => c.text() === 'Favorites 3')!.trigger('click')

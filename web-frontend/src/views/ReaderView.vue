@@ -80,6 +80,8 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { isEhUnavailableError } from '@/api/client'
+import { markDown } from '@/stores/availability'
 import { galleryApi } from '@/api/gallery'
 import { useKeyboardNav } from '@/composables/useKeyboardNav'
 import { useEnhancedImage } from '@/composables/useEnhancedImage'
@@ -518,8 +520,11 @@ function subscribeEnhanced() {
 async function load() {
   const seq = ++loadSeq
   loadState.value = 'loading'
+  // P-B：入口 token 透传——token 只从 route.query 一次取（页面自翻页替换路由
+  // 参数时保持原 token 不变；route.params.page 的 watch 不重置它）。
+  const token = typeof route.query.token === 'string' ? route.query.token : undefined
   try {
-    const detail = await galleryApi.getDetail(gid.value)
+    const detail = await galleryApi.getDetail(gid.value, token)
     if (seq !== loadSeq) return
     const pages = Number(detail?.pages)
     if (!Number.isFinite(pages) || pages <= 0) {
@@ -543,6 +548,8 @@ async function load() {
   } catch (error) {
     if (seq !== loadSeq) return
     console.error('Failed to load gallery', error)
+    // EH 熔断（§0）：落 DOWN 标记——PageMode 图片失败直接终态（不重试风暴）。
+    if (isEhUnavailableError(error)) markDown()
     // 统一阅读器（2026-08-24）：detail 拉不到（EH 不可达 / 无本地元数据）也必须
     // 打开阅读器壳——单页失败由 PageMode 的错误覆盖层呈现（含重试）。
     // total 置 1 让阅读器停在可交互状态；历史回写跳过（无 token）。

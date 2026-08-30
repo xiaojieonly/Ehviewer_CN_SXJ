@@ -43,6 +43,46 @@
          与上方搜索框互斥。 -->
     <FilterSlotBar :slots="slots" :active-id="activeSlotId" @select="onSlotBarSelect" />
 
+    <!-- 分页条（Android PaginationIndicator 对齐，plan-2026-08-30 §3.4.0.1）：
+         页码指示 + 每页条数切换（localStorage 与 AdminDownload 同键）+ 跳页
+         （服务端 offset 直取并替换列表）。无限加载体验保留。 -->
+    <nav
+      v-if="paginationVisible"
+      class="pagination-bar"
+      data-testid="download-pagination"
+      aria-label="下载分页"
+    >
+      <span class="pagination-bar__info">
+        第 {{ currentPage }} / {{ totalPages }} 页 · {{ total }} 条
+      </span>
+      <label class="pagination-bar__size">
+        条/页
+        <select
+          v-model.number="pageSize"
+          class="pagination-bar__select"
+          aria-label="每页条数"
+        >
+          <option v-for="size in DOWNLOAD_PAGE_SIZES" :key="size" :value="size">
+            {{ size }}
+          </option>
+        </select>
+      </label>
+      <span class="pagination-bar__jump">
+        <input
+          v-model.number="jumpInput"
+          class="pagination-bar__input"
+          type="number"
+          min="1"
+          :max="totalPages"
+          :aria-label="`跳页（1 至 ${totalPages}）`"
+          @keyup.enter="jumpToPage()"
+        />
+        <button type="button" class="pagination-bar__btn" @click="jumpToPage()">
+          跳页
+        </button>
+      </span>
+    </nav>
+
     <!-- Multi-select toolbar (Android custom choice mode: 全选/开始/停止/
          删除/移动；长按或右键条目进入) -->
     <div
@@ -237,6 +277,34 @@
   </div>
 </template>
 
+<script lang="ts">
+/**
+ * 下载条目的路由构建（独立于组件生命周期，可被测试直接调用）。
+ * P-A/P-B（plan-2026-08-30 §3.4.0）：本地 token 透传——详情/阅读器入口携
+ * token 让服务端优先走本地行 / 上游直取，无本地背书时不再必然失败。
+ */
+export interface DownloadRouteTarget {
+  gid: number
+  token?: string | null
+}
+
+/** 缩略图 → 详情（`/gallery/:gid?token=`）。 */
+export function buildDetailRoute(target: DownloadRouteTarget): {
+  path: string
+  query: Record<string, string>
+} {
+  return { path: `/gallery/${target.gid}`, query: target.token ? { token: target.token } : {} }
+}
+
+/** 主体 → 直接阅读（`/reader/:gid?token=`）。 */
+export function buildReaderRoute(target: DownloadRouteTarget): {
+  path: string
+  query: Record<string, string>
+} {
+  return { path: `/reader/${target.gid}`, query: target.token ? { token: target.token } : {} }
+}
+</script>
+
 <script setup lang="ts">
 /**
  * DownloadView — web replica of Android `DownloadsScene`:
@@ -263,7 +331,12 @@ import type { DownloadProgress } from '@/composables/useWebSocket'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import type { FabAction } from '@/types/components'
-import { loadDownloadListPrefs } from '@/utils/downloadListSettings'
+import {
+  DOWNLOAD_PAGE_SIZES,
+  isDownloadPageSize,
+  loadDownloadListPrefs,
+  saveDownloadListPrefs,
+} from '@/utils/downloadListSettings'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -283,9 +356,10 @@ const STATE_FAILED = 4
 
 /* ------------------------------------------------------------- list ----- */
 
-/** 列表偏好（设备本地）：每页条数 + 排序模式，与 AdminDownload 同键共享。 */
+/** 列表偏好（设备本地）：每页条数 + 排序模式，与 AdminDownload 同键共享。
+ *  每页条数可在下方分页条切换（即时保存回 localStorage）。 */
 const listPrefs = loadDownloadListPrefs()
-const PAGE_SIZE = listPrefs.pageSize
+const pageSize = ref(listPrefs.pageSize)
 const SORT_MODE = listPrefs.sortMode
 
 /** Fixed row-height estimate for the virtualizer (single-column list). */
@@ -303,6 +377,44 @@ const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
 const errorText = ref('Failed to load downloads')
+
+/* ---------------------------------------------------- pagination bar ---- */
+
+/** 当前页码（1 起，跟随加载位置；无限加载用当前语义，跳页用 offset 语义）。 */
+const currentPage = ref(1)
+/** 跳页输入。 */
+const jumpInput = ref<number | null>(1)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+/**
+ * 分页条可见性：total > pageSize 才显示。对齐 Android 仅当可见条数 ≥
+ * paginationSize(500) 时显示指示器——WebUI 是无限加载，「可见条数」恒等于已
+ * 加载数，因此用更合理的 total ≤ pageSize 同义判定（还有更多页才需要定位）。
+ */
+const paginationVisible = computed(() => total.value > pageSize.value)
+
+/**
+ * 跳页：服务端 offset 直取并替换列表（offset = (k-1)*pageSize），列表顶部
+ * 重置为所跳页面（虚拟滚动由 virtualizer + scrollToTop 滚回顶部）。
+ */
+function jumpToPage(force?: number): void {
+  const target = Math.min(
+    Math.max(Math.floor(force ?? jumpInput.value ?? currentPage.value), 1),
+    totalPages.value,
+  )
+  if (!Number.isFinite(target) || target < 1) return
+  jumpInput.value = target
+  state.value = 'loading'
+  void load((target - 1) * pageSize.value)
+}
+
+/** 每页条数切换（分页条下拉）→ 即时保存本地偏好 + 重置回第 1 页加载。 */
+watch(pageSize, (next) => {
+  if (!isDownloadPageSize(next)) return
+  saveDownloadListPrefs({ sortMode: SORT_MODE, pageSize: next })
+  jumpInput.value = 1
+  state.value = 'loading'
+  void load(0)
+})
 
 /**
  * F4: extracts the business error code from the API error envelope
@@ -427,14 +539,18 @@ function clearSearch(): void {
   void load()
 }
 
-async function load(): Promise<void> {
+/**
+ * 加载（替换模式）：`offset` 为服务端分页偏移（跳页时 (n-1)*pageSize，
+ * 其余入口保持 0）。成功后当前页码跟随加载位置（offset 语义）。
+ */
+async function load(offset = 0): Promise<void> {
   const seq = ++requestSeq
   try {
     const filter = currentFilter()
     const result = await downloadApi.list(
       activeLabel.value ?? undefined,
-      0,
-      PAGE_SIZE,
+      offset,
+      pageSize.value,
       SORT_MODE,
       filter.q,
       filter.regex,
@@ -443,6 +559,7 @@ async function load(): Promise<void> {
     downloads.value = result.downloads
     labels.value = result.labels
     total.value = result.total
+    currentPage.value = Math.min(Math.floor(offset / pageSize.value) + 1, totalPages.value)
     state.value = result.downloads.length === 0 ? 'empty' : 'content'
     contentRef.value?.scrollToTop()
   } catch (error) {
@@ -475,7 +592,7 @@ async function loadMore(): Promise<void> {
     const result = await downloadApi.list(
       activeLabel.value ?? undefined,
       downloads.value.length,
-      PAGE_SIZE,
+      pageSize.value,
       SORT_MODE,
       filter.q,
       filter.regex,
@@ -483,6 +600,11 @@ async function loadMore(): Promise<void> {
     if (seq !== requestSeq) return
     downloads.value.push(...result.downloads)
     total.value = result.total
+    // 无限加载：当前页码跟随已加载位置的下一页（封顶到最后一页）。
+    currentPage.value = Math.min(
+      Math.floor(Math.max(downloads.value.length - 1, 0) / pageSize.value) + 1,
+      totalPages.value,
+    )
   } catch (error) {
     console.error('Failed to load more downloads', error)
     // Retryable: the next scroll / virtualizer update re-triggers the load.
@@ -602,13 +724,16 @@ function onItemMenu(id: number): void {
   toggleSelect(id)
 }
 
-/** Android 端逻辑：缩略图 → 详情页；主体 → 直接阅读。 */
+/** Android 端逻辑：缩略图 → 详情页；主体 → 直接阅读。
+ *  P-A/P-B（plan-2026-08-30 §3.4.0）：本地 token 透传。 */
 function onItemOpen(gid: number): void {
-  void router.push(`/gallery/${gid}`)
+  const item = downloads.value.find((entry) => entry.gid === gid)
+  void router.push(item ? buildDetailRoute(item) : `/gallery/${gid}`)
 }
 
 function onItemRead(gid: number): void {
-  void router.push(`/reader/${gid}`)
+  const item = downloads.value.find((entry) => entry.gid === gid)
+  void router.push(item ? buildReaderRoute(item) : `/reader/${gid}`)
 }
 
 function onItemSelect(id: number): void {
@@ -996,6 +1121,85 @@ onUnmounted(() => {
 .label-tabs__tab:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
+}
+
+/* ----------------------------------------------------- pagination bar ---- */
+/* 简洁一行条（label-tabs 样式语言）：页码 / 每页条数 / 跳页。 */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing);
+  flex-shrink: 0;
+  padding: 6px max(var(--gallery-list-margin-h), 4px);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
+  font-size: var(--text-super-small); /* 12sp */
+  color: var(--text-color-secondary);
+}
+
+.pagination-bar__info {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination-bar__size,
+.pagination-bar__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.pagination-bar__select,
+.pagination-bar__input {
+  padding: 2px 6px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+  background: var(--color-surface);
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-super-small);
+}
+
+.pagination-bar__input {
+  width: 52px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.pagination-bar__input::-webkit-outer-spin-button,
+.pagination-bar__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pagination-bar__select:focus,
+.pagination-bar__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.pagination-bar__btn {
+  padding: 2px 8px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: var(--text-super-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-decelerate-quart);
+}
+
+.pagination-bar__btn:hover {
+  background: var(--color-surface-activated);
 }
 
 /* -------------------------------------------------- server-side search ---- */

@@ -5,6 +5,7 @@ import {
   DOWNLOAD_PAGE_SIZES,
   isDownloadPageSize,
   loadDownloadListPrefs,
+  saveDownloadListPrefs,
   type DownloadListPrefs,
 } from '../downloadListSettings'
 
@@ -124,7 +125,7 @@ describe('loadDownloadListPrefs — 非法 pageSize 回落默认（表驱动）'
     expect(loadDownloadListPrefs().pageSize).toBe(expectedPageSize)
   })
 
-  it.each([50, 100, 200])('合法每页条数 %i 原样保留', (size) => {
+  it.each([50, 100, 200, 300, 500])('合法每页条数 %i 原样保留', (size) => {
     expect(DOWNLOAD_PAGE_SIZES).toContain(size)
     seed({ pageSize: size, sortMode: 'title_asc' })
     expect(loadDownloadListPrefs()).toEqual({ sortMode: 'title_asc', pageSize: size })
@@ -161,11 +162,42 @@ describe('isDownloadPageSize', () => {
     { value: 50, expected: true },
     { value: 100, expected: true },
     { value: 200, expected: true },
+    { value: 300, expected: true },
+    { value: 500, expected: true },
     { value: 37, expected: false },
     { value: '50', expected: false },
     { value: null, expected: false },
     { value: undefined, expected: false },
   ])('$value → $expected', ({ value, expected }) => {
     expect(isDownloadPageSize(value)).toBe(expected)
+  })
+})
+
+describe('DOWNLOAD_PAGE_SIZES — 与 Android perPageCountChoices 对齐', () => {
+  it('contains exactly [50, 100, 200, 300, 500]', () => {
+    expect([...DOWNLOAD_PAGE_SIZES]).toEqual([50, 100, 200, 300, 500])
+  })
+})
+
+describe('saveDownloadListPrefs — 写回与 load 相同的 localStorage 键', () => {
+  it('saves sortMode + pageSize under DOWNLOAD_UI_KEY', () => {
+    saveDownloadListPrefs({ sortMode: 'title_asc', pageSize: 300 })
+    expect(localStorage.getItem(DOWNLOAD_UI_KEY)).toBe(
+      JSON.stringify({ sortMode: 'title_asc', pageSize: 300 }),
+    )
+  })
+
+  it('round-trips: save then load yields the same prefs', () => {
+    const prefs: DownloadListPrefs = { sortMode: 'time_asc', pageSize: 500 }
+    saveDownloadListPrefs(prefs)
+    expect(loadDownloadListPrefs()).toEqual(prefs)
+  })
+
+  it('clears the legacy paginated key on next write (迁移语义)', () => {
+    seed({ paginated: true, sortAscending: true })
+    saveDownloadListPrefs({ sortMode: 'time_desc', pageSize: 100 })
+    expect(localStorage.getItem(DOWNLOAD_UI_KEY)).toBe(
+      JSON.stringify({ sortMode: 'time_desc', pageSize: 100 }),
+    )
   })
 })

@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import DownloadView from '../DownloadView.vue'
+import DownloadView, { buildDetailRoute, buildReaderRoute } from '../DownloadView.vue'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem } from '@/api/download'
+import { DOWNLOAD_UI_KEY } from '@/utils/downloadListSettings'
 import { filterSlotsApi } from '@/api/filterSlots'
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: pushMock }),
+}))
 
 vi.mock('@/api/download', () => ({
   downloadApi: {
@@ -144,6 +151,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
 
   beforeEach(() => {
     localStorage.clear()
+    pushMock.mockClear()
     vi.mocked(downloadApi.list).mockResolvedValue({ downloads: [], labels: [], total: 0 })
     vi.mocked(filterSlotsApi.get).mockResolvedValue([])
     ws.subscribeAll.mockClear()
@@ -669,5 +677,150 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     expect(wrapper.find('[data-testid="content-state-error"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('正则无效')
     expect(document.querySelector('.toast')).toBeNull()
+  })
+  /* ---------------- 分页条（plan-2026-08-30 §3.4.0.1） ---------------- */
+
+  it('hides the pagination bar when total <= pageSize (Android 语义)', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(50)(offset, limit),
+      labels: [],
+      total: 50,
+    }))
+    await mountView()
+    expect(wrapper.find('[data-testid="download-pagination"]').exists()).toBe(false)
+  })
+
+  it('shows the pagination bar with page/size info when total > pageSize', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    const bar = wrapper.find('[data-testid="download-pagination"]')
+    expect(bar.exists()).toBe(true)
+    expect(bar.find('.pagination-bar__info').text()).toBe('第 1 / 5 页 · 250 条')
+    expect(bar.findAll('option').map((o) => o.text())).toEqual([
+      '50',
+      '100',
+      '200',
+      '300',
+      '500',
+    ])
+  })
+
+  it('jumps to a page via server offset and replaces the list', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 1 / 5 页 · 250 条')
+
+    const input = wrapper.find('.pagination-bar__input')
+    await input.setValue('3')
+    await input.trigger('keyup.enter')
+    await flushPromises()
+    await flushPromises()
+
+    // 第 3 页 → offset = (3-1)*50 = 100 直取（替换列表）。
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 100, 50, 'time_desc', null, false)
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 3 / 5 页 · 250 条')
+    // 替换语义：列表内容重置为所跳页首行。
+    expect(wrapper.text()).toContain('Dl 101')
+  })
+
+  it('clamps the jump target to [1, totalPages]', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    const input = wrapper.find('.pagination-bar__input')
+    await input.setValue('999')
+    await input.trigger('keyup.enter')
+    await flushPromises()
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 200, 50, 'time_desc', null, false)
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 5 / 5 页 · 250 条')
+  })
+
+  it('changing the page size saves prefs and reloads page 1', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+
+    await wrapper.find('.pagination-bar__select').setValue('100')
+    await flushPromises()
+    await flushPromises()
+
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 100, 'time_desc', null, false)
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 1 / 3 页 · 250 条')
+    // 本地偏好即时保存（与 AdminDownload 同键）。
+    expect(JSON.parse(localStorage.getItem(DOWNLOAD_UI_KEY)!)).toEqual({
+      sortMode: 'time_desc',
+      pageSize: 100,
+    })
+  })
+
+  it('restores the persisted page size on mount', async () => {
+    localStorage.setItem(
+      DOWNLOAD_UI_KEY,
+      JSON.stringify({ sortMode: 'title_asc', pageSize: 100 }),
+    )
+    vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 100) => ({
+      downloads: pages(250)(offset, limit),
+      labels: [],
+      total: 250,
+    }))
+    await mountView()
+    expect(downloadApi.list).toHaveBeenCalledWith(undefined, 0, 100, 'title_asc', null, false)
+    expect(wrapper.find('.pagination-bar__info').text()).toBe('第 1 / 3 页 · 250 条')
+  })
+
+  /* ---------------- token 透传（P-A/P-B） ---------------- */
+
+  it('buildDetailRoute carries the token into the query', () => {
+    expect(buildDetailRoute({ gid: 7, token: 'tok7' })).toEqual({
+      path: '/gallery/7',
+      query: { token: 'tok7' },
+    })
+    expect(buildDetailRoute({ gid: 7, token: null })).toEqual({ path: '/gallery/7', query: {} })
+    expect(buildDetailRoute({ gid: 7 })).toEqual({ path: '/gallery/7', query: {} })
+  })
+
+  it('buildReaderRoute carries the token into the query', () => {
+    expect(buildReaderRoute({ gid: 8, token: 'tok8' })).toEqual({
+      path: '/reader/8',
+      query: { token: 'tok8' },
+    })
+    expect(buildReaderRoute({ gid: 8, token: '' })).toEqual({ path: '/reader/8', query: {} })
+  })
+
+  it('thumbnail open routes to the detail with the item token (P-A)', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [makeDownload(1)],
+      labels: [],
+      total: 1,
+    }))
+    await mountView()
+    await wrapper.find('.download-item__thumb').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/9001', query: { token: 'tok1' } })
+  })
+
+  it('body click reads the gallery with the item token (P-B)', async () => {
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [makeDownload(2)],
+      labels: [],
+      total: 1,
+    }))
+    await mountView()
+    await wrapper.find('.download-item').trigger('click')
+    expect(pushMock).toHaveBeenCalledWith({ path: '/reader/9002', query: { token: 'tok2' } })
   })
 })

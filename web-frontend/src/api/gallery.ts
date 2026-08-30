@@ -1,4 +1,4 @@
-import client from './client'
+import client, { EhUnavailableError } from './client'
 import type {
   GalleryListResponse,
   GalleryDetail,
@@ -12,9 +12,17 @@ import type {
  * distinguish that from a genuine empty result, so these helpers reject
  * instead of returning the same shape as an empty list — callers' existing
  * catch paths then show the error state.
+ *
+ * plan-2026-08-30 §4.1: circuit-breaker list failures carry
+ * `cause: "EH_UNAVAILABLE"`; surface those as {@link EhUnavailableError} so
+ * views can apply the local-only tip and the availability store can be marked
+ * DOWN by the view (no HTTP error code travels for list endpoints).
  */
-function ensureSuccess<T extends { success: boolean }>(response: T): T {
+function ensureSuccess<T extends { success: boolean; cause?: string | null }>(
+  response: T,
+): T {
   if (response.success === false) {
+    if (response.cause === 'EH_UNAVAILABLE') throw new EhUnavailableError()
     throw new Error('Gallery request failed')
   }
   return response
