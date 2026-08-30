@@ -224,11 +224,29 @@
       </ul>
     </ContentLayout>
 
+    <!-- PC 常驻批量工具条（2026-08-30）：pointer:fine + ≥720px 时替代 FAB 集群
+         ——全部开始 / 全部下载（无视状态重下，磁盘校验通过跳过）/ 全部暂停 /
+         新建标签 直接可见；触摸/窄屏仍用右下 FAB。 -->
+    <div v-if="pcInput && !selectMode" class="pc-batch-bar" role="toolbar" aria-label="批量操作">
+      <button type="button" class="pc-batch-bar__btn" @click="startAll()">
+        <AppIcon name="play-dark" size="14px" />全部开始
+      </button>
+      <button type="button" class="pc-batch-bar__btn" @click="restartAll()">
+        <AppIcon name="refresh-dark" size="14px" />全部下载
+      </button>
+      <button type="button" class="pc-batch-bar__btn" @click="pauseAll()">
+        <AppIcon name="pause-dark" size="14px" />全部暂停
+      </button>
+      <button type="button" class="pc-batch-bar__btn" @click="openLabelDialog()">
+        <AppIcon name="folder-add-dark" size="14px" />新建标签
+      </button>
+    </div>
+
     <!-- FabLayout replica: primary 56dp FAB + mini FABs
          (scene_download.xml: play / pause / … cluster); hidden in select mode
          (Android choice mode replaces the FAB cluster with the action bar). -->
     <FabLayout
-      v-if="!selectMode"
+      v-if="!selectMode && !pcInput"
       v-model:expanded="fabExpanded"
       primary-icon="plus-dark"
       :actions="fabActions"
@@ -366,6 +384,7 @@ import type { DownloadItem, DownloadLabel, DownloadBatchTarget } from '@/api/dow
 import { useWebSocket } from '@/composables/useWebSocket'
 import type { DownloadProgress } from '@/composables/useWebSocket'
 import { useFilterSlots } from '@/composables/useFilterSlots'
+import { usePcInput } from '@/composables/usePcInput'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import type { FabAction } from '@/types/components'
 import {
@@ -951,6 +970,7 @@ async function confirmMove(labelId: number): Promise<void> {
 /* -------------------------------------------------------------- FAB ----- */
 
 const fabExpanded = ref(false)
+const { pcInput } = usePcInput()
 
 const fabActions: FabAction[] = [
   { id: 'start-all', icon: 'play-dark', label: 'Start all' },
@@ -1347,6 +1367,40 @@ onUnmounted(() => {
 
 .pagination-bar__btn:hover {
   background: var(--color-surface-activated);
+}
+
+/* -------------------------------------------------- PC batch bar ---- */
+.pc-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px max(var(--gallery-list-margin-h), 4px);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+}
+
+.pc-batch-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 140ms var(--ease-decelerate-quart),
+    border-color 140ms var(--ease-decelerate-quart);
+}
+
+.pc-batch-bar__btn:hover {
+  background: var(--color-surface-activated);
+  border-color: var(--color-primary);
 }
 
 /* -------------------------------------------------- server-side search ---- */

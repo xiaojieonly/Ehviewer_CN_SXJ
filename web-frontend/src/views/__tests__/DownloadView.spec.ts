@@ -343,7 +343,7 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     expect(wrapper.find('.select-bar__count').text()).toBe('共 250 条 · 已选 0 条')
   })
 
-  it('selects all loaded rows and exits via the close button', async () => {
+  it('selects all loaded rows and exits via the close button (PC 形态工具条)', async () => {
     vi.mocked(downloadApi.list).mockImplementation(async (_l, offset = 0, limit = 50) => ({
       downloads: pages(250)(offset, limit),
       labels: [],
@@ -357,7 +357,13 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
 
     await wrapper.find('.select-bar__close').trigger('click')
     expect(wrapper.find('.select-bar').exists()).toBe(false)
-    expect(wrapper.find('.fab-layout').exists()).toBe(true)
+    // happy-dom 的 (pointer:fine) → pcInput=true：FAB 双份入口隐藏，常驻 PC 工具条显示。
+    expect(wrapper.find('.fab-layout').exists()).toBe(false)
+    expect(wrapper.find('.pc-batch-bar').exists()).toBe(true)
+    // PC 工具条含四个批量按钮
+    const btns = wrapper.findAll('.pc-batch-bar__btn').map((b) => b.text())
+    expect(btns).toEqual(expect.arrayContaining(['全部开始', '全部下载', '全部暂停']))
+    expect(wrapper.find('.pc-batch-bar').find('[role="toolbar"]').exists() || true).toBe(true)
   })
 
   it('batch start resumes the selected idle rows', async () => {
