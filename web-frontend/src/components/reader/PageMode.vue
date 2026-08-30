@@ -2,7 +2,7 @@
   <div
     ref="stageRef"
     class="page-mode"
-    :class="{ 'page-mode--zoomed': zoomed }"
+    :class="{ 'page-mode--zoomed': pannable }"
     role="region"
     :aria-label="`Page ${page + 1} of ${totalPages}`"
     @pointerdown="onPointerDown"
@@ -16,12 +16,15 @@
         v-if="!error"
         ref="imgRef"
         class="page-mode__img"
-        :class="{
-          'page-mode__img--loaded': loaded,
-          'page-mode__img--gesture': gesturing,
-        }"
+        :class="[
+          {
+            'page-mode__img--loaded': loaded,
+            'page-mode__img--gesture': gesturing,
+          },
+          scalingClass,
+        ]"
         :src="src"
-        :srcset="srcset"
+        :srcset="pageScaling === 'fit' ? srcset : undefined"
         :alt="`Page ${page + 1} of ${totalPages}`"
         :style="imgTransform"
         draggable="false"
@@ -299,7 +302,21 @@ const retryDelayMs = ref(0)
 const retryAttempts = ref(0)
 let retryTimer: ReturnType<typeof setTimeout> | undefined
 
-const zoomed = computed(() => props.zoom > 1.001)
+/* ------------------------------------------------------------------ */
+/* 页面缩放偏好（reader.pageScaling：fit|width|height|original）        */
+/*                                                                     */
+/* 此前该设置只有设置界面在读写，阅读器从未消费（死设置）。这里把它      */
+/* 接成 <img> 的布局尺寸类；'fit' 保持既有 max-* + contain 行为，其余    */
+/* 取消对应约束。非 'fit' 下布局盒本身可超出舞台，因此平移在 zoom=1     */
+/* 也必须可用（pannable），手势语义与放大状态一致。                     */
+/* ------------------------------------------------------------------ */
+
+const pageScaling = computed(() => preferencesStore.prefs?.reader.pageScaling ?? 'fit')
+
+const scalingClass = computed(() => `page-mode__img--${pageScaling.value}`)
+
+/** 布局盒可能超出舞台（缩放中或非 fit 缩放）→ 需要拖拽平移。 */
+const pannable = computed(() => props.zoom > 1.001 || pageScaling.value !== 'fit')
 
 /* ------------------------------------------------------------------ */
 /* Responsive image URLs (§8: container width × DPR)                   */
@@ -363,6 +380,10 @@ watch(
     hasLoaded.value = false
     retryAttempts.value = 0
     retryDelayMs.value = 0
+    // 每页从中性位置开始：fit 下 zoom 复位会顺带清零，但非 fit 缩放
+    // （原始大小/适应宽度）跨页保持 zoom=1，必须显式复位平移。
+    panX.value = 0
+    panY.value = 0
     if (retryTimer) clearTimeout(retryTimer)
     retryTimer = undefined
   },
@@ -451,8 +472,10 @@ function clampPan() {
 
 watch(
   () => props.zoom,
-  (zoom) => {
-    if (zoom <= 1.001) {
+  () => {
+    // 仅在完全无平移必要时归零（fit + 未放大）；非 fit 缩放下 zoom=1
+    // 依然是可平移状态，必须保留并夹紧偏移。
+    if (!pannable.value) {
       panX.value = 0
       panY.value = 0
     } else {
@@ -468,7 +491,8 @@ watch(
 const gestures: ReaderGestures = useReaderGestures({
   el: stageRef,
   isRtl: () => props.direction === 'rtl',
-  suppressed: () => zoomed.value,
+  // 平移可用时（放大中或非 fit 缩放）单点区域与滑动都让位给拖拽。
+  suppressed: () => pannable.value,
   onPrev: () => emit('prev'),
   onNext: () => emit('next'),
   onToggleChrome: () => emit('toggle-chrome'),
@@ -538,7 +562,7 @@ let panLastX = 0
 let panLastY = 0
 
 function onPointerDown(event: PointerEvent) {
-  if (!zoomed.value || pinchStartDist > 0) return
+  if (!pannable.value || pinchStartDist > 0) return
   panPointerId = event.pointerId
   panLastX = event.clientX
   panLastY = event.clientY
@@ -575,6 +599,14 @@ function onPointerUp(event: PointerEvent) {
   touch-action: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* 舞台的可用高度（扣除底部拖动条）；dvh 跟随移动端地址栏收展。 */
+  --page-fit-height: calc(100vh - var(--seekbar-panel-height));
+}
+
+@supports (height: 100dvh) {
+  .page-mode {
+    --page-fit-height: calc(100dvh - var(--seekbar-panel-height));
+  }
 }
 
 .page-mode--zoomed {
@@ -585,8 +617,10 @@ function onPointerUp(event: PointerEvent) {
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  max-height: 100%;
+  /* 填满舞台：fit 图片需要能放大到舞台尺寸（漫画原图常小于平板视口，
+     只用 max-* 约束时图片按原尺寸显示、四周全是黑边）。 */
+  width: 100%;
+  height: var(--page-fit-height);
 }
 
 .page-mode__frame--from-right {
@@ -599,10 +633,11 @@ function onPointerUp(event: PointerEvent) {
     var(--ease-decelerate-quint);
 }
 
+/* 适应屏幕（fit）：铺满舞台框（object-fit contain 保持纵横比，可放大也可
+   缩小——max-* 只缩不放是平板上"图片不适应屏幕"的根因）。 */
 .page-mode__img {
-  max-width: 100%;
-  max-height: calc(100vh - var(--seekbar-panel-height));
-  max-height: calc(100dvh - var(--seekbar-panel-height));
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   opacity: 0;
   /* Wave-1 1c: pageTransition pref (slide/fade/none) via root CSS var. */
@@ -612,6 +647,26 @@ function onPointerUp(event: PointerEvent) {
     opacity var(--duration-scene-opacity) var(--ease-decelerate-quart)
   );
   will-change: transform;
+}
+
+/* reader.pageScaling（此前只有设置界面、阅读器未消费）：
+   fit=铺满舞台框；width/height/original 解除对应方向的约束，
+   超出舞台的部分由 pannable 拖拽平移查看。
+   注意：非 fit 模式需要布局盒语义（宽度撑满/原始尺寸），因此覆盖
+   fit 的 width/height:100%。 */
+.page-mode__img--width {
+  width: 100%;
+  height: auto;
+}
+
+.page-mode__img--height {
+  width: auto;
+  height: var(--page-fit-height);
+}
+
+.page-mode__img--original {
+  width: auto;
+  height: auto;
 }
 
 .page-mode__img--loaded {

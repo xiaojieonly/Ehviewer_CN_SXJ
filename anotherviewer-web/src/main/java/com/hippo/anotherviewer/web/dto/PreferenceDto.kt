@@ -54,7 +54,10 @@ data class ReaderPreferences(
     @field:Size(max = 64, message = "readingDirection must be at most 64 characters")
     val readingDirection: String = "rtl",
     @field:Size(max = 64, message = "pageMode must be at most 64 characters")
-    val pageMode: String = "dual",
+    // 'auto'（非 'dual'）：竖屏单页全屏适应、横屏并排双页，与前端
+    // DEFAULT_READER_PREFERENCES 保持一致（固定 dual 在竖屏手机上每页
+    // 只有半屏宽，用户被迫逐页手动缩放）。
+    val pageMode: String = "auto",
     val firstPageCover: Boolean = true,
     @field:Size(max = 64, message = "pageScaling must be at most 64 characters")
     val pageScaling: String = "fit",

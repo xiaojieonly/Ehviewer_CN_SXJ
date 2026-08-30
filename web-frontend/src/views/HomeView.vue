@@ -117,11 +117,13 @@
       </div>
     </ContentLayout>
 
-    <!-- FAB cluster: primary = back to top (Android `v_go_to`), secondary =
-         refresh (the list/grid toggle moved into GalleryList's toolbar, B-1).
-         Starts collapsed like the Android scene. -->
+    <!-- FAB pair: primary = back to top (Android `v_go_to`), secondary =
+         refresh. The cluster once expanded speed-dial style, but after the
+         list/grid toggle moved into GalleryList's toolbar (B-1) only refresh
+         remained — a single action behind an expand step is pure friction,
+         so both FABs are permanently visible (FabLayout alwaysVisible). -->
     <FabLayout
-      v-model:expanded="fabExpanded"
+      always-visible
       primary-icon="go-to-dark"
       :actions="fabActions"
       @click-primary="onPrimaryFab"
@@ -502,12 +504,9 @@ function onDismissSuggestion(suggestion: SearchSuggestion): void {
 
 /* ---------------------------------- FABs -------------------------------- */
 
-/** Cluster starts collapsed, like the Android scene (tap primary to open). */
-const fabExpanded = ref(false)
-
 /**
  * The list/grid toggle moved into GalleryList's sticky toolbar (B-1) — the
- * cluster keeps refresh only.
+ * cluster keeps refresh only, so it renders always-visible (no speed-dial).
  */
 const fabActions: FabAction[] = [{ id: 'refresh', icon: 'refresh-dark', label: '刷新列表' }]
 
@@ -516,9 +515,6 @@ function onPrimaryFab(): void {
 }
 
 function onSecondaryFab(action: FabAction): void {
-  // Android collapses the cluster after a secondary action (the backdrop
-  // would otherwise keep the freshly re-laid-out list dimmed).
-  fabExpanded.value = false
   if (action.id === 'refresh') {
     void onRefresh()
   }

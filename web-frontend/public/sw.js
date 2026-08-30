@@ -23,7 +23,9 @@
 
 'use strict'
 
-const CACHE_NAME = 'anotherviewer-v1'
+// v1→v2：阅读器页面模式默认值变更（dual→auto）+ 本地设置迁移。升版强制
+// 所有客户端在下次 activate 时丢弃旧 shell/图片缓存，确保新壳生效。
+const CACHE_NAME = 'anotherviewer-v2'
 
 const SHELL_CACHE = `${CACHE_NAME}-shell`
 const API_CACHE = `${CACHE_NAME}-api`

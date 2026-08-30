@@ -458,6 +458,14 @@ export interface FabLayoutProps {
   autoCancel?: boolean
   /** Hide the primary FAB while collapsed (Android `setHidePrimaryFab`). @default false */
   hidePrimaryFab?: boolean
+  /**
+   * Speed-dial disabled: secondary FABs are permanently visible and the
+   * primary FAB never toggles expansion (no backdrop). For clusters whose
+   * action count no longer justifies an extra expand step (e.g. HomeView's
+   * single refresh after the list/grid toggle moved to the toolbar).
+   * @default false
+   */
+  alwaysVisible?: boolean
 }
 
 /** Emits for `FabLayout.vue`. */

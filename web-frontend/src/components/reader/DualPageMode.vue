@@ -290,10 +290,11 @@ useReaderGestures({
   grid-column: 1 / -1;
 }
 
+/* 铺满槽位（contain 可放大可缩小）——max-* 只缩不放会让原图小于
+   槽位的平板出现大片黑边。封面独页（--alone）保持"半幅居中"语义。 */
 .dual-page__img {
-  max-width: 100%;
-  max-height: calc(100vh - var(--toolbar-height) - var(--seekbar-panel-height));
-  max-height: calc(100dvh - var(--toolbar-height) - var(--seekbar-panel-height));
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   opacity: 0;
   transition: opacity var(--duration-scene-opacity) var(--ease-decelerate-quart);
@@ -301,7 +302,7 @@ useReaderGestures({
 
 /* A lone page reads as one column of the spread, centered. */
 .dual-page__img--alone {
-  max-width: 50%;
+  width: 50%;
 }
 
 .dual-page__img--loaded {

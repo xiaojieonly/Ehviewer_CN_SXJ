@@ -71,7 +71,8 @@ class DownloadMaintenanceService(
             MaintenanceKind.INVALID_DOWNLOADS -> scanInvalid(rows).forEach { issue ->
                 val row = rows.firstOrNull { it.id == issue.id } ?: return@forEach
                 // 内容目录若存在且已无可用页面，一并清掉（否则会转为冗余文件）。
-                resolveDir(row)?.let { dir ->
+                run {
+                    val dir = resolveDir(row)
                     if (dir.isDirectory && !isInsideRoot(dir)) {
                         // 目录指向 downloads 根之外（如 App 推流的任意路径）：
                         // 只删 DB 行，绝不递归删除根外文件系统内容。
@@ -99,13 +100,14 @@ class DownloadMaintenanceService(
     private fun rootOrNull(): File? =
         config.download.path.takeIf { it.isNotBlank() }?.let(::File)
 
-    /** 引用集合：所有行的 downloadDir 规范路径 + 默认目录 `<root>/<gid>`。 */
+    /**
+     * 引用集合：所有行的内容目录（经 [DownloadDirs.resolve] 归一到当前
+     * 主机——跨机器迁移行的旧绝对路径不可用，回落 `<root>/<gid>`）。
+     */
     private fun referencedDirs(root: File, rows: List<DownloadInfoEntity>): Set<String> =
-        rows.flatMap { row ->
-            listOfNotNull(
-                row.downloadDir?.takeIf { it.isNotBlank() }?.let { runCatching { File(it).canonicalPath }.getOrNull() },
-                runCatching { File(root, row.gid.toString()).canonicalPath }.getOrNull()
-            )
+        rows.map { row ->
+            runCatching { DownloadDirs.resolve(root.path, row.gid, row.downloadDir).canonicalPath }
+                .getOrDefault(File(root, row.gid.toString()).path)
         }.toSet()
 
     private fun scanRedundant(rows: List<DownloadInfoEntity>): List<MaintenanceFileIssue> {
@@ -126,7 +128,7 @@ class DownloadMaintenanceService(
             val dir = resolveDir(row)
             when {
                 // 行声称已完成，但内容目录整个不存在 → 记录与磁盘不一致。
-                dir == null || !dir.exists() ->
+                !dir.exists() ->
                     MaintenanceDownloadIssue(row.id, row.gid, row.title, REASON_DIR_MISSING)
                 // 目录在但没有任何 >0 字节的常规文件 → 全部页面缺失或 0 字节损坏。
                 !hasUsableContent(dir) ->
@@ -135,12 +137,9 @@ class DownloadMaintenanceService(
             }
         }
 
-    /** 行的内容目录：downloadDir 优先，缺省回落 `<root>/<gid>`。 */
-    private fun resolveDir(row: DownloadInfoEntity): File? {
-        val fromRow = row.downloadDir?.takeIf { it.isNotBlank() }?.let(::File)
-        val root = rootOrNull() ?: return fromRow
-        return fromRow ?: File(root, row.gid.toString())
-    }
+    /** 行的内容目录：downloadDir 经 [DownloadDirs.resolve] 归一（缺省回落 `<root>/<gid>`）。 */
+    private fun resolveDir(row: DownloadInfoEntity): File =
+        DownloadDirs.resolve(config.download.path, row.gid, row.downloadDir)
 
     /** 目录内是否存在至少一个 >0 字节的常规文件（一层足够：页面均为平铺 %04d.jpg）。 */
     private fun hasUsableContent(dir: File): Boolean =

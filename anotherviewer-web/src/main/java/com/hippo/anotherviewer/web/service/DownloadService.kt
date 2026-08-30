@@ -248,19 +248,21 @@ class DownloadService(
         val entity = downloadRepository.findById(id).orElse(null) ?: return false
         if (entity.state == 1 || entity.state == 2) return false
 
-        val downloadDir = entity.downloadDir
-            ?: File(config.download.path, "${entity.gid}").absolutePath
+        // Rows migrated from another host carry the old machine's absolute
+        // paths; resolve against the current root and write the usable path
+        // back so the row self-heals on every (re)start.
+        val downloadDir = DownloadDirs.resolve(config.download.path, entity.gid, entity.downloadDir)
         updateEntity(id) {
             it.state = 1
             it.error = null
-            if (it.downloadDir == null) it.downloadDir = downloadDir
+            if (it.downloadDir != downloadDir.path) it.downloadDir = downloadDir.path
         }
 
         val task = DownloadTask(
             id = entity.id,
             gid = entity.gid,
             token = entity.token,
-            downloadDir = downloadDir,
+            downloadDir = downloadDir.path,
             label = entity.label,
             maxConcurrentImages = config.download.maxConcurrentImages.coerceAtLeast(1)
         )
@@ -311,10 +313,11 @@ class DownloadService(
         val task = tasks[id]
         task?.requestStop()
         task?.awaitFinished(90_000)
-        entity.downloadDir?.let { dir ->
-            val dirFile = File(dir)
-            if (dirFile.exists()) dirFile.deleteRecursively()
-        }
+        // Resolve through DownloadDirs so rows migrated from another host
+        // delete their files at the current-root location instead of no-oping
+        // on the old machine's path (which can never exist here).
+        val dirFile = DownloadDirs.resolve(config.download.path, entity.gid, entity.downloadDir)
+        if (dirFile.exists()) dirFile.deleteRecursively()
         if (downloadRepository.existsById(id)) {
             downloadRepository.deleteById(id)
         }

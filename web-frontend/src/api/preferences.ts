@@ -99,7 +99,9 @@ export const DEFAULT_GENERAL_PREFERENCES: GeneralPreferences = {
 
 export const DEFAULT_READER_PREFERENCES: ReaderPreferences = {
   readingDirection: 'rtl',
-  pageMode: 'dual',
+  // 'auto'（非 'dual'）：竖屏手机单页全屏适应、横屏才并排双页。固定 'dual'
+  // 会让竖屏每页只有半屏宽，用户被迫逐页手动缩放。
+  pageMode: 'auto',
   firstPageCover: true,
   pageScaling: 'fit',
   startPosition: 'top_right',

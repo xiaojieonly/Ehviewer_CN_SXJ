@@ -114,6 +114,30 @@ class DownloadMaintenanceServiceTest {
         assertTrue(service.preview().invalidDownloads.isEmpty())
     }
 
+    // ── 跨机器迁移行（旧主机绝对路径） ─────────────────────────
+
+    @Test
+    fun `row migrated from another host resolves to root-gid and is not invalid when content exists`() {
+        // 从 macOS 迁移来的行：downloadDir 指向旧主机的绝对路径，本机不存在。
+        val migrated = finishedRow(1, 700, dir = File("/Users/bob/AnotherViewer/data/downloads/700"))
+        withContent(File(root, "700"))
+        `when`(repository.findAll()).thenReturn(listOf(migrated))
+
+        val preview = service.preview()
+
+        assertTrue(preview.invalidDownloads.isEmpty())
+        // 且该行在冗余扫描中继续引用 <root>/<gid>，不会把内容目录误报为冗余。
+        assertTrue(preview.redundantFiles.isEmpty())
+    }
+
+    @Test
+    fun `migrated row without local content is still flagged via resolved default dir`() {
+        val migrated = finishedRow(2, 800, dir = File("/Users/bob/AnotherViewer/data/downloads/800"))
+        `when`(repository.findAll()).thenReturn(listOf(migrated))
+
+        assertEquals("content_dir_missing", service.preview().invalidDownloads.single().reason)
+    }
+
     // ── 执行清理（第二段） ──────────────────────────────────────
 
     @Test

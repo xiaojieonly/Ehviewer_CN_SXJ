@@ -35,12 +35,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.io.File
+import java.util.Optional
 
 class DownloadControllerTest {
 
     private lateinit var downloadRepository: DownloadInfoRepository
     private lateinit var labelRepository: DownloadLabelRepository
     private lateinit var serverConfigService: ServerConfigService
+    private lateinit var config: SiteCoreConfigProperties
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
@@ -48,7 +50,7 @@ class DownloadControllerTest {
         downloadRepository = mock(DownloadInfoRepository::class.java)
         labelRepository = mock(DownloadLabelRepository::class.java)
         serverConfigService = mock(ServerConfigService::class.java)
-        val config = SiteCoreConfigProperties().apply {
+        config = SiteCoreConfigProperties().apply {
             download.path = File(System.getProperty("java.io.tmpdir"), "av-dl-test-${System.nanoTime()}").absolutePath
         }
         val downloadService = DownloadService(
@@ -141,6 +143,55 @@ class DownloadControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
         verify(downloadRepository, never()).save(any(DownloadInfoEntity::class.java))
+    }
+
+    // ── start：跨机器迁移路径自愈 ───────────────────────────────
+
+    @Test
+    fun `start heals a download dir migrated from another host`() {
+        val migrated = entity(7, 700).apply {
+            state = 0
+            total = 0
+            downloadDir = "/Users/bob/AnotherViewer/./data/downloads/700"
+        }
+        `when`(downloadRepository.findById(7L)).thenReturn(Optional.of(migrated))
+
+        mockMvc.perform(post("/api/v1/download/start/7"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(true))
+
+        val expected = File(config.download.path, "700").path
+        // 等 worker 收尾（页数拉取失败 → state=4），避免与异步保存竞争验证。
+        awaitWorkerSettled(migrated)
+        // 启动即写回当前主机可用的目录（异步 worker 的后续保存也保持该值）。
+        verify(downloadRepository, atLeastOnce()).save(
+            argThatK { it.downloadDir == expected }
+        )
+    }
+
+    @Test
+    fun `start keeps an existing directory under the current root`() {
+        val kept = File(config.download.path, "42").apply { mkdirs() }
+        val row = entity(8, 42).apply {
+            state = 0
+            total = 0
+            downloadDir = kept.absolutePath
+        }
+        `when`(downloadRepository.findById(8L)).thenReturn(Optional.of(row))
+
+        mockMvc.perform(post("/api/v1/download/start/8"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(true))
+
+        verify(downloadRepository, atLeastOnce()).save(
+            argThatK { it.downloadDir == kept.canonicalPath }
+        )
+    }
+
+    /** 轮询等待异步 worker 终态（mock 页数拉取失败 → state=4），最多 5s。 */
+    private fun awaitWorkerSettled(row: DownloadInfoEntity) {
+        val deadline = System.currentTimeMillis() + 5_000
+        while (row.state != 4 && System.currentTimeMillis() < deadline) Thread.sleep(10)
     }
 
     // ── labels ──────────────────────────────────────────────────

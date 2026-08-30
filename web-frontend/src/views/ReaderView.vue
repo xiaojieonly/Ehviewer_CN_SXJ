@@ -150,7 +150,16 @@ const readerRef = ref<InstanceType<typeof ImageReader> | null>(null)
 
 const SETTINGS_STORAGE_KEY = 'anotherviewer-web.reader-settings'
 
+/**
+ * 载荷版本。v1（无 v 字段）是「服务器偏好」与本地快捷设置统一之前的产物：
+ * 它固化了当时的默认 pageMode:'dual'，对竖屏手机是错误的持久值，因此迁移
+ * 时丢弃其 pageMode，让服务器偏好（'auto'）重新生效；direction/brightness
+ * 默认未变，照常继承。
+ */
+const SETTINGS_VERSION = 2
+
 interface PersistedReaderSettings {
+  v?: number
   direction: ReadingDirection
   pageMode: PageModePref
   brightness: number
@@ -160,7 +169,31 @@ const direction = ref<ReadingDirection>('ltr')
 const pageModePref = ref<PageModePref>('auto')
 const brightness = ref(0)
 
-function applyStoredSettings() {
+/** Clamp helper for the persisted brightness (0–100). */
+function clampBrightness(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)))
+}
+
+/**
+ * Resolve effective settings — precedence:
+ *   localStorage (per-device in-reader choice, v≥2) > server prefs > defaults.
+ * Server prefs are the base so the main settings page actually drives the
+ * reader; the per-device layer only overrides what the reader sheet changed.
+ */
+function applyStoredSettings(): void {
+  const r = preferencesStore.prefs?.reader
+  if (r) {
+    if (READING_DIRECTIONS.includes(r.readingDirection as ReadingDirection)) {
+      direction.value = r.readingDirection as ReadingDirection
+    }
+    if (PAGE_MODE_PREFS.includes(r.pageMode as PageModePref)) {
+      pageModePref.value = r.pageMode as PageModePref
+    }
+    if (typeof r.brightness === 'number' && Number.isFinite(r.brightness)) {
+      brightness.value = clampBrightness(r.brightness)
+    }
+  }
+
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
     if (!raw) return
@@ -168,20 +201,51 @@ function applyStoredSettings() {
     if (stored.direction && READING_DIRECTIONS.includes(stored.direction)) {
       direction.value = stored.direction
     }
-    if (stored.pageMode && PAGE_MODE_PREFS.includes(stored.pageMode)) {
+    // v1 payload 的 pageMode 是过期默认（见 SETTINGS_VERSION），不继承。
+    if (
+      stored.v === SETTINGS_VERSION &&
+      stored.pageMode &&
+      PAGE_MODE_PREFS.includes(stored.pageMode)
+    ) {
       pageModePref.value = stored.pageMode
     }
     if (typeof stored.brightness === 'number' && Number.isFinite(stored.brightness)) {
-      brightness.value = Math.min(100, Math.max(0, Math.round(stored.brightness)))
+      brightness.value = clampBrightness(stored.brightness)
     }
   } catch {
-    // Corrupted storage — fall back to defaults.
+    // Corrupted storage — fall back to server prefs / defaults.
+  }
+  appliedSnapshot = settingsSnapshot()
+
+  // 主动升级旧版本载荷：v1 的过期 pageMode（'dual' 默认）已在上面的解析中
+  // 被忽略，这里把当前生效值立即重写为 v2，不让过期值滞留到下次会话。
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (raw && JSON.parse(raw)?.v !== SETTINGS_VERSION) writeSettings()
+  } catch {
+    /* 解析失败时无需升级——下次写入自然带版本号。 */
   }
 }
 
-watch([direction, pageModePref, brightness], () => {
+/** 用户在本会话内改过任一项后置位——此后异步到达的服务器偏好不再回冲。 */
+let settingsTouched = false
+
+/**
+ * 「最近一次程序化应用」的快照：applyStoredSettings 的批量赋值同样会触发
+ * 下面的 watcher（Vue 预刷新队列），用快照比对把它与真实用户改动区分开，
+ * 避免打开页面就误写 localStorage / 服务器偏好。
+ */
+let appliedSnapshot = ''
+
+function settingsSnapshot(): string {
+  return JSON.stringify([direction.value, pageModePref.value, brightness.value])
+}
+
+/** 把当前生效值写入 localStorage（v2）并镜像到服务器偏好。 */
+function writeSettings(): void {
   try {
     const payload: PersistedReaderSettings = {
+      v: SETTINGS_VERSION,
       direction: direction.value,
       pageMode: pageModePref.value,
       brightness: brightness.value,
@@ -190,6 +254,19 @@ watch([direction, pageModePref, brightness], () => {
   } catch {
     // Storage unavailable / full — reading continues unimpaired.
   }
+  // 回写服务器偏好：主设置页与阅读器快捷设置自此保持同一份状态
+  // （updateReader 内部有防抖合并保存）。
+  preferencesStore.updateReader({
+    readingDirection: direction.value,
+    pageMode: pageModePref.value,
+    brightness: brightness.value,
+  })
+}
+
+watch(settingsSnapshot, (next) => {
+  if (next === appliedSnapshot) return
+  settingsTouched = true
+  writeSettings()
 })
 
 /* ------------------------------------------------------------------ */
@@ -538,6 +615,16 @@ onMounted(() => {
     landscapeQuery.addEventListener('change', onLandscapeChange)
   }
   applyStoredSettings()
+  // 服务器偏好异步到达后重新解析基底——但用户已在本会话做过选择时跳过，
+  // 防止在途的旧值覆盖刚改的设置。
+  const applyIfUntouched = () => {
+    if (!settingsTouched) applyStoredSettings()
+  }
+  if (!preferencesStore.prefs && !preferencesStore.loading) {
+    void preferencesStore.load().then(applyIfUntouched)
+  } else {
+    void applyIfUntouched()
+  }
   // F1: tab close / refresh — one best-effort writeback of the tail position.
   window.addEventListener('pagehide', flushHistoryOnLeave)
 })

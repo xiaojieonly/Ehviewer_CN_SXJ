@@ -108,4 +108,41 @@ describe('FabLayout', () => {
     expect(minis[0].attributes('aria-label')).toBe('Refresh')
     expect(minis[1].attributes('aria-label')).toBe('Random')
   })
+
+  // ── alwaysVisible（无 speed-dial 的常驻模式） ─────────────────
+
+  it('alwaysVisible keeps secondary FABs visible even when expanded=false', () => {
+    const wrapper = mount(FabLayout, {
+      props: { actions: [actions[0]], expanded: false, alwaysVisible: true },
+    })
+    for (const mini of wrapper.findAll('.fab--mini')) {
+      expect(mini.classes()).not.toContain('fab--collapsed')
+    }
+    // 常驻按钮必须可聚焦（不因折叠被移出 tab 序列）。
+    for (const mini of wrapper.findAll('.fab--mini')) {
+      expect(mini.attributes('tabindex')).toBe('0')
+    }
+  })
+
+  it('alwaysVisible never renders the backdrop', () => {
+    const expanded = mount(FabLayout, {
+      props: { actions, expanded: true, alwaysVisible: true },
+    })
+    expect(expanded.find('.fab-layout__backdrop').exists()).toBe(false)
+
+    const collapsed = mount(FabLayout, {
+      props: { actions, expanded: false, alwaysVisible: true },
+    })
+    expect(collapsed.find('.fab-layout__backdrop').exists()).toBe(false)
+  })
+
+  it('alwaysVisible primary click reports click-primary without toggling expansion', async () => {
+    const wrapper = mount(FabLayout, {
+      props: { actions: [actions[0]], expanded: false, alwaysVisible: true },
+    })
+    await wrapper.find('.fab--primary').trigger('click')
+    expect(wrapper.emitted('click-primary')).toBeTruthy()
+    expect(wrapper.emitted('update:expanded')).toBeUndefined()
+    expect(wrapper.emitted('expand')).toBeUndefined()
+  })
 })

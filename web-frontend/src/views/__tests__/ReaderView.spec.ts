@@ -40,14 +40,24 @@ vi.mock('@/composables/useEnhancedImage', () => ({
 vi.mock('@/components/reader/ImageReader.vue', () => ({
   default: {
     name: 'ImageReader',
-    props: ['gid', 'title', 'totalPages', 'currentPage', 'autoPlay', 'autoPlayProgress'],
+    props: [
+      'gid',
+      'title',
+      'totalPages',
+      'currentPage',
+      'autoPlay',
+      'autoPlayProgress',
+      'pageMode',
+      'direction',
+      'brightness',
+    ],
     emits: ['update:current-page'],
     methods: {
       // ReaderView calls readerRef.toggleChrome() on Space/Esc.
       toggleChrome() {},
     },
     template:
-      '<div class="image-reader-stub" :data-enabled="autoPlay && autoPlay.enabled ? \'on\' : \'off\'" :data-progress="String(autoPlayProgress ?? 0)" :data-total="String(totalPages ?? 0)">{{ currentPage }}</div>',
+      '<div class="image-reader-stub" :data-enabled="autoPlay && autoPlay.enabled ? \'on\' : \'off\'" :data-progress="String(autoPlayProgress ?? 0)" :data-total="String(totalPages ?? 0)" :data-page-mode="String(pageMode ?? \'\')" :data-direction="String(direction ?? \'\')" :data-brightness="String(brightness ?? 0)">{{ currentPage }}</div>',
   },
 }))
 
@@ -240,7 +250,9 @@ function pressKey(key: string): void {
 }
 
 function setReaderSettings(settings: Record<string, unknown>): void {
-  localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify(settings))
+  // 当前载荷版本（v2）——与 ReaderView.SETTINGS_VERSION 对齐；缺 v 的
+  // 旧载荷会被迁移逻辑丢弃 pageMode。
+  localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify({ v: 2, ...settings }))
 }
 
 function prefsWithReader(patch: Partial<typeof DEFAULT_READER_PREFERENCES>): void {
@@ -625,5 +637,82 @@ describe('ReaderView (T-F2) — auto-play timer', () => {
     expect(stub().text()).toBe('49')
     expect(stub().attributes('data-enabled')).toBe('off')
     expect(stub().attributes('data-progress')).toBe('0')
+  })
+})
+
+describe('ReaderView — 阅读设置统一（服务器基底 + 本地覆盖 + v1 迁移）', () => {
+  let wrapper: VueWrapper | undefined
+
+  function stub(): VueWrapper {
+    return wrapper!.findComponent({ name: 'ImageReader' })
+  }
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.removeItem(READER_SETTINGS_KEY)
+    vi.restoreAllMocks()
+  })
+
+  it('v1 本地载荷的 pageMode 被迁移丢弃，回落服务器偏好 auto', async () => {
+    // 旧手机上遗留的 v1 载荷固化了过期默认 dual。
+    localStorage.setItem(
+      READER_SETTINGS_KEY,
+      JSON.stringify({ direction: 'ltr', pageMode: 'dual', brightness: 0 }),
+    )
+    prefsWithReader({ pageMode: 'auto' })
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    wrapper = mount(ReaderView)
+    await flushPromises()
+
+    expect(stub().attributes('data-page-mode')).toBe('auto')
+    // 迁移后立即以当前生效值重写为 v2。
+    const stored = JSON.parse(localStorage.getItem(READER_SETTINGS_KEY)!)
+    expect(stored.v).toBe(2)
+    expect(stored.pageMode).toBe('auto')
+  })
+
+  it('无本地载荷时以服务器偏好为基底', async () => {
+    prefsWithReader({ pageMode: 'single', readingDirection: 'rtl' })
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    wrapper = mount(ReaderView)
+    await flushPromises()
+
+    expect(stub().attributes('data-page-mode')).toBe('single')
+    expect(stub().attributes('data-direction')).toBe('rtl')
+  })
+
+  it('v2 本地覆盖优先于服务器偏好', async () => {
+    setReaderSettings({ direction: 'ltr', pageMode: 'dual', brightness: 30 })
+    prefsWithReader({ pageMode: 'auto', brightness: 0 })
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    wrapper = mount(ReaderView)
+    await flushPromises()
+
+    expect(stub().attributes('data-page-mode')).toBe('dual')
+    expect(stub().attributes('data-brightness')).toBe('30')
+  })
+
+  it('阅读器内改动回写服务器偏好状态', async () => {
+    prefsWithReader({ pageMode: 'auto' })
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    wrapper = mount(ReaderView)
+    await flushPromises()
+
+    const reader = wrapper.findComponent({ name: 'ImageReader' })
+    ;(reader.vm as unknown as { $emit: (e: string, ...a: unknown[]) => void }).$emit(
+      'update:page-mode',
+      'single',
+    )
+    await flushPromises()
+
+    const store = usePreferencesStore()
+    expect(store.prefs?.reader.pageMode).toBe('single')
+    const stored = JSON.parse(localStorage.getItem(READER_SETTINGS_KEY)!)
+    expect(stored.pageMode).toBe('single')
   })
 })

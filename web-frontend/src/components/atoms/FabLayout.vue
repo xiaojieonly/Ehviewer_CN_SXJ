@@ -1,24 +1,27 @@
 <template>
-  <div class="fab-layout" :class="{ 'fab-layout--expanded': expanded }">
-    <!-- Dim backdrop shown while expanded; tap collapses (autoCancel) -->
+  <div class="fab-layout" :class="{ 'fab-layout--expanded': expanded || alwaysVisible }">
+    <!-- Dim backdrop shown while expanded; tap collapses (autoCancel).
+         Speed-dial-less clusters (alwaysVisible) never render it. -->
     <div
+      v-if="!alwaysVisible"
       class="fab-layout__backdrop"
       :class="{ 'fab-layout__backdrop--visible': expanded && autoCancel }"
       @click="onBackdropClick"
     />
 
     <div class="fab-layout__cluster">
-      <!-- Secondary 40dp mini FABs stacked above the primary -->
+      <!-- Secondary 40dp mini FABs stacked above the primary. With
+           alwaysVisible they are permanently shown (no expand step). -->
       <button
         v-for="(action, index) in visibleActions"
         :key="action.id"
         type="button"
         class="fab fab--mini"
-        :class="{ 'fab--collapsed': !expanded }"
-        :style="{ transitionDelay: expanded ? `${index * 30}ms` : '0ms' }"
+        :class="{ 'fab--collapsed': !alwaysVisible && !expanded }"
+        :style="{ transitionDelay: !alwaysVisible && expanded ? `${index * 30}ms` : '0ms' }"
         :aria-label="action.label"
         :title="action.label"
-        :tabindex="expanded ? 0 : -1"
+        :tabindex="alwaysVisible || expanded ? 0 : -1"
         @click.stop="onSecondaryClick(action, index)"
       >
         <AppIcon :name="action.icon" size="24px" color="#ffffff" />
@@ -30,7 +33,7 @@
         type="button"
         class="fab fab--primary"
         :aria-label="primaryLabel"
-        :aria-expanded="expanded"
+        :aria-expanded="alwaysVisible ? undefined : expanded"
         @click.stop="onPrimaryClick"
       >
         <AppIcon :name="primaryIcon" size="24px" color="#ffffff" />
@@ -53,6 +56,11 @@
  * the backdrop collapses it. Secondary taps only report `click-secondary`
  * (with the action + its rendered index) — mirroring Android, where the host
  * scene decides whether to collapse after an action.
+ *
+ * `alwaysVisible` disables the speed-dial entirely: secondary FABs render
+ * permanently, no backdrop exists, and the primary FAB only reports
+ * `click-primary` — for clusters whose remaining actions don't justify an
+ * expand/collapse round-trip.
  */
 import { computed } from 'vue'
 import type { FabLayoutProps, FabLayoutEmits, FabAction } from '@/types/components'
@@ -63,6 +71,7 @@ const props = withDefaults(defineProps<FabLayoutProps>(), {
   expanded: true,
   autoCancel: true,
   hidePrimaryFab: false,
+  alwaysVisible: false,
 })
 
 const emit = defineEmits<FabLayoutEmits>()
@@ -81,7 +90,7 @@ function setExpanded(next: boolean) {
 }
 
 function onPrimaryClick() {
-  setExpanded(!props.expanded)
+  if (!props.alwaysVisible) setExpanded(!props.expanded)
   emit('click-primary')
 }
 
