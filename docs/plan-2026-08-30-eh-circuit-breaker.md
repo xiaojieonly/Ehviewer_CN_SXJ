@@ -1,6 +1,9 @@
 # 方案：EH 可达性熔断（Availability Circuit Breaker）、下载页分页对齐与本地数据驻留
 
-**日期**：2026-08-30 · **状态**：规划中 · **关联**：perf 评估（192.168.6.141 迟滞）、`docs/observability.md` §2.3
+**日期**：2026-08-30 · **状态**：✅ 完成（2026-08-30 收口：backend/frontend/契约三路并行实现+终验） · **关联**：perf 评估（192.168.6.141 迟滞）、`docs/observability.md` §2.3
+
+> 执行摘要（2026-08-30）：EhAvailabilityService 状态机+熔断接线、DownloadDirIndex 内存索引、countByState/metrics 索引化、详情来源顺序修正、前端 availability store/banner/token 透传、下载页分页条（50/100/200/300/500）全部落地。
+> 终验：后端 826 tests ✓、前端 978 tests ✓、typecheck ✓；本地实例实测 DOWN 下 image-proxy miss 3.6ms（原 60s）、stream 未缓存 404 8ms（原 60s）、metrics 15ms（原 150-200ms）、详情本地行 11ms（原 0.4-1.5s）。
 
 ## 0. 范围与语义（用户已定，执行者不得变更）
 
@@ -148,11 +151,11 @@ Android 参照（`DownloadsScene.java`）：
 
 ## 4. 契约增量（附录 A · 冻结清单）
 
-1. 错误码枚举新增：`EH_UNAVAILABLE`（HTTP 404，`error.code`，用于 image/stream；list 类端点保持 `success=false` 信封并把 code 放入 message 或新增可选字段 `errorCode` —— 二选一，**建议**统一扩展 GalleryListResponse/TopListResponse 可选字段 `cause?: "EH_UNAVAILABLE"`，向后兼容）。
-2. `GET /api/v1/site/availability` → `{state: "UP|DOWN|UNKNOWN", downAt, lastReason}`（公开只读）。
-3. `POST /api/v1/site/availability` → 同结构（执行一次探测，鉴权）。
-4. `GalleryListResponse`/`GalleryDetailDto`：可选 `cause` 字段（缺省 null，不影响旧客户端）。
-5. 同步（sync）契约不变；本机制不产生同步记录（服务器本地运行时状态，ADR-0001）。
+1. 错误码枚举新增：`EH_UNAVAILABLE`（HTTP 404，`error.code`，用于 image/stream；list 类端点保持 `success=false` 信封并把 code 放入 message 或新增可选字段 `errorCode` —— 二选一，**建议**统一扩展 GalleryListResponse/TopListResponse 可选字段 `cause?: "EH_UNAVAILABLE"`，向后兼容）。 **[done 契约]** `contracts/openapi.yaml` 已标注：image/proxy 与 image/{gid}/{page} 的 404 描述补充 `code=EH_UNAVAILABLE`（message 含"仅显示本地内容"，熔断时无网络 IO；image/proxy 为 ErrorResponse 信封、流图为 ImageErrorResponse 复用现有错误字段）。服务端实现 **[pending]**（backend agent）。
+2. `GET /api/v1/site/availability` → `{state: "UP|DOWN|UNKNOWN", downAt, lastReason}`（公开只读）。 **[done 契约]** openapi 已新增（tags Health，security 公开）；按实现约定响应追加 `lastProbeAt`（最近一次探测时间，比 §4 原表多一个可选字段）。
+3. `POST /api/v1/site/availability` → 同结构（执行一次探测，鉴权）。 **[done 契约]** openapi 已标注（手动恢复唯一路径，无自动探测/TTL 重探）。
+4. `GalleryListResponse`/`GalleryDetailDto`：可选 `cause` 字段（缺省 null，不影响旧客户端）。 **[done 契约]** openapi 已扩充，范围含 TopListResponse（用户约定）：三者均加 `cause`（enum `EH_UNAVAILABLE`，nullable，缺省 null/省略）。
+5. 同步（sync）契约不变；本机制不产生同步记录（服务器本地运行时状态，ADR-0001）。 **[确认]** 本次未改 `sync-schemas.json` 与同步路径。
 
 ## 5. 不做（范围排除）
 

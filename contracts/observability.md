@@ -333,6 +333,22 @@ permanently DOWN, which would otherwise pin every health response to DEGRADED.
 
 Health checks are cached for **30 seconds** to avoid excessive probing. The `galleryApi` check is additionally rate-limited to once per 60 seconds.
 
+### 2.6 Gallery Site Availability *(new, plan 2026-08-30)*
+
+```
+GET /api/v1/site/availability    # read-only, public — never probes
+POST /api/v1/site/availability   # performs one manual probe (auth, manual recovery)
+```
+
+```json
+{ "state": "UP", "downAt": null, "lastReason": null, "lastProbeAt": 1710000000000 }
+```
+
+- `state`: `UP` (reachable) / `DOWN` (circuit-broken: automatic upstream requests short-circuit to 404 `EH_UNAVAILABLE`, no network I/O) / `UNKNOWN` (never probed since startup).
+- Recovery is **manual only** (POST); no automatic probe or TTL recheck.
+- Process-local state (`EhAvailabilityService`); not persisted, not synced (ADR-0001).
+- The `galleryApi` health component now reports this state instead of issuing its own HEAD probe (§2.4 check method superseded — no probe in request threads).
+
 ---
 
 ## 3. Metrics Endpoint

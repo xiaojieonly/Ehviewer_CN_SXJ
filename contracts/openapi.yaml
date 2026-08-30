@@ -7,7 +7,8 @@ info:
     Authentication: all endpoints under /api/v1 require a bearer token
     (Authorization: Bearer <token>) except the publicly permitted ones
     (auth/register, auth/login, auth/status, auth/pair/complete, health,
-    metrics, metrics/dashboard) and non-API resources.
+    metrics, metrics/dashboard, GET site/availability) and non-API
+    resources.
   version: 1.1.0
   contact:
     name: AnotherViewer WebUI Team
@@ -506,7 +507,10 @@ paths:
           description: Number of results per page
       responses:
         '200':
-          description: Gallery list
+          description: >-
+            Gallery list. When the Gallery Site is circuit-broken, returns
+            success=false, empty data, total=0 and cause="EH_UNAVAILABLE"
+            (no upstream I/O; see /api/v1/site/availability).
           content:
             application/json:
               schema:
@@ -549,7 +553,9 @@ paths:
             subscription/popular return GalleryListResponse (identical to
             GET /gallery/search); toplist returns TopListResponse. An
             unreachable site surfaces success=false with empty data and
-            total 0 (E2E-6, same as /search).
+            total 0 (E2E-6, same as /search); when the site is
+            circuit-broken the response additionally carries
+            cause="EH_UNAVAILABLE".
           content:
             application/json:
               schema:
@@ -1641,7 +1647,11 @@ paths:
                 type: string
                 format: binary
         '404':
-          description: Not in cache and not fetchable (non-whitelisted host, site unreachable, or site error)
+          description: >-
+            Not in cache and not fetchable (non-whitelisted host, site
+            unreachable, or site error). When the site is circuit-broken
+            (code=EH_UNAVAILABLE, message states "仅显示本地内容") the handler
+            short-circuits without any network I/O.
           content:
             application/json:
               schema:
@@ -1807,7 +1817,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '404':
-          description: Gallery or page not found (or enhanced variant not processed)
+          description: >-
+            Gallery or page not found (or enhanced variant not processed).
+            When the site is circuit-broken (code=EH_UNAVAILABLE, message
+            states "仅显示本地内容") the handler short-circuits before any
+            upstream fetch — only pushed/local file misses may still serve
+            local content.
           content:
             application/json:
               schema:
@@ -2626,6 +2641,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
+  /api/v1/site/availability:
+    get:
+      tags: [Health]
+      operationId: getSiteAvailability
+      summary: Get the Gallery Site availability state (read-only, no probe)
+      security: []
+      description: |
+        Process-level availability state machine of the Gallery Site
+        (EH circuit breaker, plan 2026-08-30). Read-only: never performs a
+        network probe. `DOWN` = upstream requests are short-circuited
+        (automatic upstream traffic returns 404 EH_UNAVAILABLE);
+        `UP` = reachable; `UNKNOWN` = not yet probed since startup.
+        The `galleryApi` component of /api/v1/health reports this state.
+      responses:
+        '200':
+          description: Availability state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityStatus'
+    post:
+      tags: [Health]
+      operationId: probeSiteAvailability
+      summary: Trigger a single manual Gallery Site probe (manual recovery)
+      description: |
+        Executes one probe attempt against the Gallery Site (single-flight,
+        5s timeout) and returns the resulting state. Success restores UP;
+        failure keeps DOWN. The only recovery path — there is no automatic
+        probe or TTL-based recheck. Manual/user-triggered action only.
+      responses:
+        '200':
+          description: Availability state after the manual probe completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityStatus'
+        '401':
+          description: Authentication required
+
   /api/v1/metrics:
     get:
       tags: [Health]
@@ -2864,6 +2918,14 @@ components:
             $ref: '#/components/schemas/GalleryItemDto'
         total:
           type: integer
+        cause:
+          type: string
+          enum: [EH_UNAVAILABLE]
+          nullable: true
+          description: >-
+            Optional failure cause; "EH_UNAVAILABLE" when the Gallery Site is
+            circuit-broken and the list is empty (success=false, total=0).
+            Absent/null on success or plain errors.
 
     GalleryItemDto:
       type: object
@@ -2928,6 +2990,14 @@ components:
             $ref: '#/components/schemas/TopListFeedItemDto'
         total:
           type: integer
+        cause:
+          type: string
+          enum: [EH_UNAVAILABLE]
+          nullable: true
+          description: >-
+            Optional failure cause; "EH_UNAVAILABLE" when the Gallery Site is
+            circuit-broken and the list is empty (success=false, total=0).
+            Absent/null on success or plain errors.
 
     TopListFeedItemDto:
       type: object
@@ -3015,6 +3085,14 @@ components:
         imageUrl:
           type: string
           nullable: true
+        cause:
+          type: string
+          enum: [EH_UNAVAILABLE]
+          nullable: true
+          description: >-
+            Optional failure cause; "EH_UNAVAILABLE" when the Gallery Site is
+            circuit-broken and the detail could not be enriched from upstream.
+            Absent/null otherwise.
 
     TagDto:
       type: object
@@ -4852,6 +4930,34 @@ components:
             type: string
           nullable: true
           description: Structured key/value details (e.g. type, reason, freeSpace, path, responseTimeMs)
+
+    AvailabilityStatus:
+      type: object
+      description: >-
+        Gallery Site availability state machine (plan 2026-08-30): DOWN =
+        circuit-broken (automatic upstream requests short-circuited with 404
+        EH_UNAVAILABLE, no network I/O); UP = reachable after a successful
+        probe; UNKNOWN = no probe since startup (requests treated as UP,
+        failures transition to DOWN). Process-local runtime state; never
+        persisted and never synced (ADR-0001).
+      properties:
+        state:
+          type: string
+          enum: [UP, DOWN, UNKNOWN]
+        downAt:
+          type: integer
+          format: int64
+          nullable: true
+          description: Epoch milliseconds of the DOWN transition; null unless state=DOWN
+        lastReason:
+          type: string
+          nullable: true
+          description: Last failure reason (e.g. timeout, connection refused, HTTP 5xx); null if never failed
+        lastProbeAt:
+          type: integer
+          format: int64
+          nullable: true
+          description: Epoch milliseconds of the last probe attempt; null before the first probe
 
     MetricsResponse:
       type: object
