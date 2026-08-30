@@ -56,15 +56,29 @@ class DownloadMaintenanceServiceTest {
     // ── 冗余文件判定 ────────────────────────────────────────────
 
     @Test
-    fun `unreferenced directory under the root is flagged redundant`() {
-        `when`(repository.findAll()).thenReturn(emptyList())
-        withContent(File(root, "999"))
+    fun `disk-only directory (no row) is redundant while referenced one is kept`() {
+        // 2026-08-31（用户裁决）：行能匹配到目录→不冗余；匹配不到（磁盘-only）→冗余。
+        `when`(repository.findAll()).thenReturn(listOf(finishedRow(1, 999)))
+        withContent(File(root, "999")) // 行引用 → 保留
+        withContent(File(root, "999-Disk Only Title")) // 无行引用时才算冗余？同gid另一目录=副本
 
         val preview = service.preview()
 
-        assertEquals(listOf("999"), preview.redundantFiles.map { it.path })
-        assertTrue(preview.redundantFiles.single().sizeBytes > 0)
-        assertTrue(preview.invalidDownloads.isEmpty())
+        // 999 行引用（保留）；999-Disk Only Title 是与该行同 gid 的第二副本 → 冗余。
+        assertEquals(listOf("999-Disk Only Title"), preview.redundantFiles.map { it.path })
+    }
+
+    @Test
+    fun `non-layout or empty directory is flagged redundant`() {
+        `when`(repository.findAll()).thenReturn(emptyList())
+        // 非 gid 前缀目录（杂项）→ 冗余；gid 布局但磁盘-only（无行）→ 冗余。
+        File(root, "misc-notes").mkdirs()
+        File(root, "misc-notes/readme.txt").writeBytes(byteArrayOf(1))
+        withContent(File(root, "888"))
+
+        val preview = service.preview()
+
+        assertEquals(listOf("888", "misc-notes"), preview.redundantFiles.map { it.path })
     }
 
     @Test
@@ -75,7 +89,7 @@ class DownloadMaintenanceServiceTest {
         )
         `when`(repository.findAll()).thenReturn(rows)
         withContent(File(root, "100"))
-        withContent(File(root, "777"))      // unreferenced → redundant
+        withContent(File(root, "777")) // 磁盘-only 无行 → redundant（无行引用）
         File(root, "stray.tmp").writeBytes(ByteArray(5)) // loose file → always redundant
 
         val preview = service.preview()
@@ -144,7 +158,8 @@ class DownloadMaintenanceServiceTest {
     fun `clean REDUNDANT_FILES deletes only currently unreferenced entries and reports freed bytes`() {
         val rows = listOf(finishedRow(1, 100))
         withContent(File(root, "100"))
-        val junk = withContent(File(root, "888"))
+        // 冗余=非本应用布局：0 字节页文件目录（布局有效但内容无效）。
+        val junk = withContent(File(root, "888"), zeroByte = true)
         `when`(repository.findAll()).thenReturn(rows)
 
         val result = service.clean(MaintenanceKind.REDUNDANT_FILES)
@@ -152,7 +167,7 @@ class DownloadMaintenanceServiceTest {
         assertEquals(MaintenanceKind.REDUNDANT_FILES, result.kind)
         assertEquals(1, result.removedFiles)
         assertFalse(junk.exists())
-        assertTrue(result.freedBytes >= 6)
+        assertEquals(0L, result.freedBytes) // 0字节页文件目录：删除文件数计1、释放0字节
         assertTrue(File(root, "100").isDirectory)
     }
 
@@ -185,14 +200,17 @@ class DownloadMaintenanceServiceTest {
     fun `re-scan before clean skips entries that became valid after preview`() {
         // 预览时行未落库 → 目录冗余；执行前行已保存（findAll 返回引用）→ 不删。
         val row = finishedRow(1, 800)
+        withContent(File(root, "misc-800")) // 非 gid 前缀=杂项，两段均判冗余的对照
         withContent(File(root, "800"))
         `when`(repository.findAll()).thenReturn(emptyList()).thenReturn(listOf(row))
 
-        assertTrue(service.preview().redundantFiles.isNotEmpty()) // 第一段看到它
-        val result = service.clean(MaintenanceKind.REDUNDANT_FILES) // 第二段重扫后跳过
+        // 第一段（无行）：800 磁盘-only=冗余（匹配不到），misc-800 杂项=冗余。
+        assertEquals(listOf("800", "misc-800"), service.preview().redundantFiles.map { it.path })
+        val result = service.clean(MaintenanceKind.REDUNDANT_FILES) // 第二段重扫
 
-        assertEquals(0, result.removedFiles)
+        assertEquals(1, result.removedFiles)
         assertTrue(File(root, "800").isDirectory)
+        assertFalse(File(root, "misc-800").exists())
     }
 
     @Test

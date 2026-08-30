@@ -114,13 +114,56 @@ class DownloadMaintenanceService(
         val root = rootOrNull() ?: return emptyList()
         if (!root.isDirectory) return emptyList()
         val referenced = referencedDirs(root, rows)
+        // 行引用 gid 集合：目录只要命中任何一个行引用即「有效」。
+        val referencedGids = rows.map { it.gid }.toSet()
         val children = root.listFiles() ?: return emptyList()
-        return children.sortedBy { it.name }.mapNotNull { child ->
-            val referencedChild = child.isDirectory &&
-                runCatching { child.canonicalPath in referenced }.getOrDefault(false)
-            if (referencedChild) null
-            else MaintenanceFileIssue(path = child.name, sizeBytes = sizeOf(child))
+
+        val redundant = mutableListOf<MaintenanceFileIssue>()
+        val cataloged = mutableMapOf<Long, MutableList<File>>() // gid → 目录组（本应用布局）
+
+        for (child in children.sortedBy { it.name }) {
+            val gid = if (child.isDirectory) DownloadDirs.parseGid(child.name) else null
+            if (gid == null) {
+                // 非本应用布局（杂项/文件/空目录）→ 一律冗余（行引用的自定义
+                // 目录如 elsewhere-200 无 gid 前缀，在下方 canonical 判定豁免）。
+                if (child.isDirectory &&
+                    runCatching { child.canonicalPath in referenced }.getOrDefault(false)
+                ) continue
+                redundant += MaintenanceFileIssue(path = child.name, sizeBytes = sizeOf(child))
+            } else {
+                cataloged.getOrPut(gid) { mutableListOf() }.add(child)
+            }
         }
+
+        // 副本判定（2026-08-31 用户裁决）：
+        //  - 行能匹配到的目录（gid 在行集合 referencedGids 且该目录被行引用）→
+        //    不算冗余（环前已 continue）；
+        //  - gid 在行集合但出现多目录（副本：-1/-2 后缀或同名）→ 保留被行引用
+        //    的（keep），其余冗余；
+        //  - gid 不在行集合（磁盘-only，匹配不到行）→ 全部冗余。
+        for ((gid, gidDirs) in cataloged) {
+            val isReferenced = gid in referencedGids
+            val keep = if (isReferenced) keepOne(gidDirs, referenced) else null
+            for (dir in gidDirs) {
+                val isKept = dir == keep
+                if (isKept) continue
+                redundant += MaintenanceFileIssue(path = dir.name, sizeBytes = sizeOf(dir))
+            }
+        }
+
+        // 行引用的 gid 目录保留（keepOne 已处理），磁盘-only 的目录已被并入冗余
+        return redundant.sortedBy { it.path }
+    }
+
+    /**
+     * 一个 gid 目录组中应保留的一个：优先行引用指向（referenced 的 canonicalPath），
+     * 无则在组内选 mtime 最新者。
+     */
+    private fun keepOne(gidDirs: List<File>, referenced: Set<String>): File {
+        gidDirs.firstOrNull { dir ->
+            runCatching { dir.canonicalPath in referenced }.getOrDefault(false)
+        }?.let { return it }
+        return gidDirs.maxByOrNull { it.lastModified() } ?: gidDirs.first()
     }
 
     private fun scanInvalid(rows: List<DownloadInfoEntity>): List<MaintenanceDownloadIssue> =
