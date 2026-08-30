@@ -356,10 +356,10 @@ class DownloadService(
     fun restartAllDownloads(): Int {
         // 2026-08-31：点击「全部下载」先强制重扫导目录索引——用户复制/上传
         // 缓存后无需重启，本次即读到刚落盘的文件（校验/阅读路径共享索引）。
+        // 索引刷新是只读感知；**不**为磁盘-only 目录建 DB 行（数据库是行数据
+        // 的权威，只能由 App 推送/WebUI 添加/导入 .db 产生，磁盘文件夹不得
+        // 反向写库——2026-08-31 用户裁决）。
         downloadDirIndex.refresh()
-        // 磁盘目录 ↔ DB 行对账：只复制了缓存（无元数据行）的 gid 补未完成行，
-        // 使「全部下载」可处理/校验它们。
-        reconcileDiskRows()
         var restarted = 0
         var skippedVerified = 0
         downloadRepository.findAll().forEach { entity ->
@@ -380,41 +380,6 @@ class DownloadService(
             restarted, skippedVerified
         )
         return restarted
-    }
-
-    /**
-     * 磁盘目录 ↔ DB 行对账（2026-08-31）：用户直接复制 Android 缓存到
-     * downloads/ 时没有对应下载行——按目录名 {gid}-{title} 回填未完成行
-     * （state=0, total=0：交给「全部下载」按磁盘校验/补下）。已有行跳过。
-     */
-    private fun reconcileDiskRows() {
-        val root = File(config.download.path)
-        if (!root.isDirectory) return
-        var created = 0
-        root.listFiles()
-            ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
-            ?.forEach { dir ->
-                val gid = DownloadDirs.parseGid(dir.name) ?: return@forEach
-                if (downloadRepository.findByGid(gid) != null) return@forEach
-                val title = dir.name.substringAfter('-', "")
-                // 本地数页直接回填 total，让「全部下载」磁盘校验即刻命中（免 EH）。
-                val localTotal = downloadDirIndex.pageCount(gid)
-                downloadRepository.save(DownloadInfoEntity().apply {
-                    this.gid = gid
-                    this.token = ""
-                    this.title = title.ifBlank { null }
-                    this.titleJpn = null
-                    state = 0
-                    total = localTotal
-                    done = localTotal
-                    downloadDir = dir.absolutePath
-                    this.time = System.currentTimeMillis()
-                })
-                created++
-            }
-        if (created > 0) {
-            logger.info("reconcileDiskRows: created {} rows for disk-only galleries", created)
-        }
     }
 
     /** 磁盘校验：目录存在且 %04d.* 文件数 >= total（total<=0 视为未决，不判定完成）。 */
