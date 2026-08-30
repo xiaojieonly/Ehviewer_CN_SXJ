@@ -267,6 +267,14 @@
               {{ issueCount === 0 && maintenancePhase !== 'scanning' ? '关闭' : '取消' }}
             </button>
             <button
+              v-if="issueCount > 0 && maintenanceKind === 'REDUNDANT_FILES' && maintenancePhase !== 'cleaning'"
+              type="button"
+              class="btn-text"
+              @click="exportMaintenanceCsv"
+            >
+              导出 CSV
+            </button>
+            <button
               v-if="issueCount > 0"
               type="button"
               class="btn-primary"
@@ -300,6 +308,7 @@ import {
 } from '@/api/download'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
+import { buildMaintenanceCsv, csvFileName } from '@/utils/maintenanceCsv'
 import {
   DOWNLOAD_PAGE_SIZES,
   DOWNLOAD_SORT_OPTIONS,
@@ -516,6 +525,29 @@ const REASON_LABELS: Record<MaintenanceReason, string> = {
 
 function reasonLabel(reason: MaintenanceReason): string {
   return REASON_LABELS[reason] ?? reason
+}
+
+/** 冗余清单导出 CSV（本地生成，Vite 前端域 → URL.createObjectURL 下载）。 */
+async function exportMaintenanceCsv(): Promise<void> {
+  // 导出前重扫一次保证与即将展示的一致（预览可能已过期）。
+  try {
+    const preview = await downloadApi.previewMaintenance()
+    const stamp = new Date().toISOString().slice(0, 10)
+    const csv = buildMaintenanceCsv(preview.redundantFiles)
+    // UTF-8 BOM：Excel/WPS 按中文文件名正确解码。
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = csvFileName(stamp)
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Failed to export maintenance CSV', error)
+    showSnack('导出失败：重扫预览出错')
+  }
 }
 
 const maintenanceTitle = computed(() => MAINTENANCE_TITLES[maintenanceKind.value])
