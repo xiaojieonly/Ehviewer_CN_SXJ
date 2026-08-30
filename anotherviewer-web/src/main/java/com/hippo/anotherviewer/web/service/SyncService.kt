@@ -500,7 +500,12 @@ class SyncService(
         val incomingPlatform = platformOf(incomingDevice)
         val naturalKey = filterKey(incoming.mode, incoming.text)
         // MASTER-2026-08-22 P8：派生查询替代 findAll 全表扫描 + 内存 firstOrNull。
-        val raw = filterRepository.findByTypeAndText(incoming.mode, incoming.text)
+        // 2026-08-30 联调修复：历史数据允许 (type,text) 重复行（UNIQUE 约束仅约束新插入），
+        // 单值 find* 会抛 NonUniqueResultException → 整个 push 500。改为 List + 取最近一条，
+        // 幸存逻辑不变（existing==null / ownedBy / merge 分支均照旧语义）。
+        val raw = filterRepository.findByTypeAndTextIgnoreCaseOrderByLastModifiedDesc(
+            incoming.mode, incoming.text
+        ).firstOrNull()
         val existing = ownedBy(raw, username) { it.username }
         if (existing == null) {
             if (raw == null) {

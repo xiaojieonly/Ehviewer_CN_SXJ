@@ -243,8 +243,10 @@ class SyncServiceTest {
             e
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
-        `when`(repo.findByTypeAndText(anyInt(), anyString())).thenAnswer { inv ->
-            store.values.firstOrNull { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+        `when`(repo.findByTypeAndTextIgnoreCaseOrderByLastModifiedDesc(anyInt(), anyString())).thenAnswer { inv ->
+            store.values
+                .filter { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+                .sortedByDescending { it.lastModified }
         }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
@@ -254,8 +256,13 @@ class SyncServiceTest {
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<FilterEntity>(0) }
         }.`when`(repo).delete(any(FilterEntity::class.java))
+        // 模拟历史脏数据：绕过 UNIQUE 语义直接注入重复 (type,text) 行（旧版本无约束时产生）。
+        duplicateSeed = { entity ->
+            store["${entity.type}:${entity.text}#${System.identityHashCode(entity)}"] = entity
+        }
         return repo
     }
+    private var duplicateSeed: ((FilterEntity) -> Unit)? = null
 
     private fun fakeQuickSearchRepo(): QuickSearchRepository {
         val repo = mock(QuickSearchRepository::class.java)
@@ -542,6 +549,33 @@ class SyncServiceTest {
         // Within skew the additive bias keeps the enabled version.
         assertTrue(rows[0].enabled)
         assertEquals(1_000L, rows[0].lastModified)
+    }
+
+    @Test
+    fun `filter tolerate archived duplicate rows without NonUniqueResultException`() {
+        // 2026-08-30 联调事故：历史数据含 (type,text) 重复行时单值查询抛
+        // NonUniqueResultException → push 500。list 查询 + firstOrNull 必须容忍。
+        val seed = listOf(100L, 200L, 300L).map { lm ->
+            FilterEntity().apply {
+                this.type = 5
+                this.text = "old:dup"
+                this.enabled = true
+                this.lastModified = lm
+                this.username = "A"
+            }
+        }
+        seed.forEach { duplicateSeed!!.invoke(it) }
+
+        // incoming.lastModified 远超 skew（> SKEW_TOLERANCE）→ 走 LWW 分支，
+        // 即 merge 命中 lastModified=300 的历史行并应用 incoming（enabled=false）。
+        val response = push("A", filters = listOf(flt(mode = 5, text = "old:dup", enabled = false, lastModified = 140_000)))
+
+        assertTrue(response.success) // 核心：不再抛 NonUniqueResultException
+        // merge 命中 lastModified=300 的历史行：LWW(incoming=140000) 将其 enabled=false。
+        // 其余重复历史行保持原样；save 可能新增规范化 key 行（fake repo 语义）。
+        val merged = filterRepo.findAll().filter { it.text == "old:dup" }
+        assertTrue(merged.any { !it.enabled && it.lastModified == 140_000L })
+        assertTrue(merged.size in 3..4) // 3 注入 + 至多 1 规范化保存
     }
 
     @Test

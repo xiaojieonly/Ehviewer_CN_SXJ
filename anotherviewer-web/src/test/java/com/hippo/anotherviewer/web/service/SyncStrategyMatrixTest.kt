@@ -715,8 +715,10 @@ class SyncStrategyMatrixTest {
             val e = inv.getArgument<FilterEntity>(0); store["${e.type}:${e.text}"] = e; e
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
-        `when`(repo.findByTypeAndText(anyInt(), anyString())).thenAnswer { inv ->
-            store.values.firstOrNull { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+        `when`(repo.findByTypeAndTextIgnoreCaseOrderByLastModifiedDesc(anyInt(), anyString())).thenAnswer { inv ->
+            store.values
+                .filter { it.type == inv.getArgument<Int>(0) && it.text == inv.getArgument<String>(1) }
+                .sortedByDescending { it.lastModified }
         }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
