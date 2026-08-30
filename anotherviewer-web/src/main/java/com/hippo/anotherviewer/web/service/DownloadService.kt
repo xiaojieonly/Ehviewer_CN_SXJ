@@ -50,7 +50,9 @@ class DownloadService(
     private val imageCacheService: ImageCacheService,
     private val sessionManager: SiteSessionManager,
     private val galleryLookup: GalleryLookupService,
-    private val serverConfigService: ServerConfigService
+    private val serverConfigService: ServerConfigService,
+    private val availability: EhAvailabilityService,
+    private val downloadDirIndex: DownloadDirIndex,
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
 
@@ -248,6 +250,18 @@ class DownloadService(
         val entity = downloadRepository.findById(id).orElse(null) ?: return false
         if (entity.state == 1 || entity.state == 2) return false
 
+        // EH DOWN 熔断（docs/plan-2026-08-30-eh-circuit-breaker.md §3.2）：
+        // 启动检查——DOWN 时直接置 FAILED（用户手动 start 可重试），绝不静默
+        // 挂起在 pending/paused（pending 不自动重试会永远卡住）。
+        if (availability.isBlocked()) {
+            logger.warn("Download start blocked for gid={}: EH unavailable; marking FAILED", entity.gid)
+            updateEntity(id) {
+                it.state = 4
+                it.error = "EH_UNAVAILABLE: EH 平台当前不可达"
+            }
+            return false
+        }
+
         // Rows migrated from another host carry the old machine's absolute
         // paths; resolve against the current root and write the usable path
         // back so the row self-heals on every (re)start.
@@ -305,6 +319,7 @@ class DownloadService(
             }
         }
         tasks.remove(id)
+        downloadDirIndex.invalidate(entity.gid)
         return true
     }
 
@@ -322,6 +337,7 @@ class DownloadService(
             downloadRepository.deleteById(id)
         }
         tasks.remove(id)
+        downloadDirIndex.invalidate(entity.gid)
         return true
     }
 
@@ -458,9 +474,9 @@ class DownloadService(
 
     fun getActiveDownloadCount(): Int = tasks.size
 
-    fun getCompletedDownloadCount(): Long = downloadRepository.findByState(3).size.toLong()
+    fun getCompletedDownloadCount(): Long = downloadRepository.countByState(3)
 
-    fun getFailedDownloadCount(): Long = downloadRepository.findByState(4).size.toLong()
+    fun getFailedDownloadCount(): Long = downloadRepository.countByState(4)
 
     fun getActiveDownloads(): List<DownloadItem> {
         return tasks.keys.mapNotNull { id ->
@@ -483,6 +499,8 @@ class DownloadService(
         } finally {
             task.pageExecutor.shutdown()
             tasks.remove(task.id, task)
+            // 任务终态（完成/失败/取消/暂停）后索引可能过期：失效强制下一次访问重扫。
+            downloadDirIndex.invalidate(task.gid)
             task.finished.countDown()
         }
     }

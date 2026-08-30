@@ -8,7 +8,9 @@ import jakarta.validation.constraints.Size
 data class GalleryListResponse(
     val success: Boolean,
     val data: List<GalleryItemDto>,
-    val total: Int
+    val total: Int,
+    /** Optional failure cause (e.g. "EH_UNAVAILABLE" while EH is down); null on success. */
+    val cause: String? = null
 )
 
 data class GalleryItemDto(
@@ -35,7 +37,9 @@ data class GalleryItemDto(
 data class TopListResponse(
     val success: Boolean,
     val data: List<TopListFeedItemDto>,
-    val total: Int
+    val total: Int,
+    /** Optional failure cause (e.g. "EH_UNAVAILABLE" while EH is down); null on success. */
+    val cause: String? = null
 )
 
 /**
@@ -83,7 +87,9 @@ data class GalleryDetailDto(
     val tags: List<TagDto>,
     val imageUrl: String?,
     /** 站点真实评论（GalleryDetail.comments）；本地详情（history）路径为空。 */
-    val comments: List<CommentItem> = emptyList()
+    val comments: List<CommentItem> = emptyList(),
+    /** 可选失败原因（如 "EH_UNAVAILABLE"）；正常路径为 null，不破坏旧客户端。 */
+    val cause: String? = null
 )
 
 data class TagDto(

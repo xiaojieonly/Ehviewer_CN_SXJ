@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
+import org.springframework.data.domain.PageImpl
 import java.io.IOException
 
 /**
@@ -33,12 +34,13 @@ import java.io.IOException
  */
 class GalleryFeedServiceTest {
 
-    private data class Harness(val service: GalleryService, val client: OkHttpClient)
+    private data class Harness(val service: GalleryService, val client: OkHttpClient, val availability: EhAvailabilityService)
 
     private fun harness(): Harness {
         val sessionManager = mock(SiteSessionManager::class.java)
         val client = OkHttpClient()
         `when`(sessionManager.okHttpClient).thenReturn(client)
+        val availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
         return Harness(
             GalleryService(
                 mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java),
@@ -47,9 +49,13 @@ class GalleryFeedServiceTest {
                 mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
                 sessionManager,
                 mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
-                com.hippo.anotherviewer.web.config.SiteCoreConfigProperties()
+                com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
+                mock(GalleryLookupService::class.java),
+                availability,
+                mock(DownloadDirIndex::class.java),
             ),
-            client
+            client,
+            availability
         )
     }
 
@@ -292,6 +298,94 @@ class GalleryFeedServiceTest {
             assertFalse(response.success)
             assertTrue(response.data.isEmpty())
             assertEquals(0, response.total)
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // EH DOWN 熔断：list 端点秒回 success=false + cause，不触网（§3.2）
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `search with keyword returns success=false and cause EH_UNAVAILABLE while blocked`() {
+        val (service, _, availability) = harness()
+        availability.recordFailure("connect timed out")
+
+        mockStatic(SiteEngine::class.java).use { engine ->
+            val response = service.searchGallery("alpha", null, 0, 20)
+
+            assertFalse(response.success)
+            assertTrue(response.data.isEmpty())
+            assertEquals(0, response.total)
+            assertEquals("EH_UNAVAILABLE", response.cause)
+            engine.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `blank keyword with local history is served locally while blocked`() {
+        val historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
+        `when`(historyRepository.findHistoryPaged(any())).thenReturn(
+            PageImpl(
+                listOf(com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply {
+                    gid = 1L
+                    token = "t1"
+                    title = "Local"
+                }),
+                org.springframework.data.domain.PageRequest.of(0, 20),
+                1,
+            )
+        )
+        val sessionManager = mock(SiteSessionManager::class.java)
+        `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
+        val availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
+        availability.recordFailure("connect timed out")
+        val service = GalleryService(
+            historyRepository,
+            mock(com.hippo.anotherviewer.web.repository.QuickSearchRepository::class.java),
+            mock(com.hippo.anotherviewer.web.repository.GalleryTagsRepository::class.java),
+            mock(com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository::class.java),
+            sessionManager,
+            mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
+            com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
+            mock(GalleryLookupService::class.java),
+            availability,
+            mock(DownloadDirIndex::class.java),
+        )
+
+        val response = service.searchGallery(null, null, 0, 20)
+
+        assertTrue(response.success)
+        assertEquals(1, response.data.size)
+        assertEquals("Local", response.data[0].title)
+    }
+
+    @Test
+    fun `feed returns success=false and cause EH_UNAVAILABLE while blocked`() {
+        val (service, _, availability) = harness()
+        availability.recordFailure("connect timed out")
+
+        mockStatic(SiteEngine::class.java).use { engine ->
+            val response = service.feedGallery("subscription", 0, 20)
+
+            assertFalse(response.success)
+            assertTrue(response.data.isEmpty())
+            assertEquals("EH_UNAVAILABLE", response.cause)
+            engine.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `topListFeed returns success=false and cause EH_UNAVAILABLE while blocked`() {
+        val (service, _, availability) = harness()
+        availability.recordFailure("connect timed out")
+
+        mockStatic(SiteEngine::class.java).use { engine ->
+            val response = service.topListFeed()
+
+            assertFalse(response.success)
+            assertTrue(response.data.isEmpty())
+            assertEquals("EH_UNAVAILABLE", response.cause)
+            engine.verifyNoInteractions()
         }
     }
 }

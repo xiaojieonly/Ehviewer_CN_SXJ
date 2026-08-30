@@ -31,14 +31,18 @@ class HistoryModePassthroughTest {
     @BeforeEach
     fun setUp() {
         historyRepository = inMemoryHistoryRepo()
+        val sessionManager = mock(SiteSessionManager::class.java)
         galleryService = GalleryService(
             historyRepository,
             mock(QuickSearchRepository::class.java),
             mock(GalleryTagsRepository::class.java),
             mock(LocalFavoriteInfoRepository::class.java),
-            mock(SiteSessionManager::class.java),
+            sessionManager,
             mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java),
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
+            mock(GalleryLookupService::class.java),
+            EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000),
+            mock(DownloadDirIndex::class.java),
         )
         historyService = HistoryService(historyRepository)
     }

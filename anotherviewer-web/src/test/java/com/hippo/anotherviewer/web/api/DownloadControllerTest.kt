@@ -10,7 +10,9 @@ import com.hippo.anotherviewer.web.entity.DownloadInfoEntity
 import com.hippo.anotherviewer.web.entity.DownloadLabelEntity
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
+import com.hippo.anotherviewer.web.service.DownloadDirIndex
 import com.hippo.anotherviewer.web.service.DownloadService
+import com.hippo.anotherviewer.web.service.EhAvailabilityService
 import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.ServerConfigService
@@ -61,7 +63,9 @@ class DownloadControllerTest {
             mock(ImageCacheService::class.java),
             mock(SiteSessionManager::class.java),
             mock(GalleryLookupService::class.java),
-            serverConfigService
+            serverConfigService,
+            mock(EhAvailabilityService::class.java),
+            mock(DownloadDirIndex::class.java)
         )
         mockMvc = MockMvcBuilders.standaloneSetup(DownloadController(downloadService))
             .setControllerAdvice(GlobalExceptionHandler())

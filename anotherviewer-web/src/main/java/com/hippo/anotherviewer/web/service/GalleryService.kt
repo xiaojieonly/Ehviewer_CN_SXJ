@@ -28,9 +28,17 @@ class GalleryService(
     private val sessionManager: SiteSessionManager,
     private val downloadRepository: com.hippo.anotherviewer.web.repository.DownloadInfoRepository,
     private val config: com.hippo.anotherviewer.web.config.SiteCoreConfigProperties,
+    private val galleryLookupService: GalleryLookupService,
+    private val availability: EhAvailabilityService,
+    private val downloadDirIndex: DownloadDirIndex,
 ) {
     private val logger = LoggerFactory.getLogger(GalleryService::class.java)
     private val client get() = sessionManager.okHttpClient
+
+    private companion object {
+        /** Failure cause carried by blocked list/detail responses. */
+        const val EH_UNAVAILABLE_CAUSE = "EH_UNAVAILABLE"
+    }
 
     /**
      * Real Gallery Site search via the core list parser (SiteEngine.getGalleryList).
@@ -85,6 +93,11 @@ class GalleryService(
             // （Android 首页 = 站点根路径最新画廊，无需登录）。回退失败按 E2E-6 语义 success=false。
             val local = searchLocalHistory(keyword, category, page, pageSize)
             if (local.data.isNotEmpty()) return local
+            if (availability.isBlocked()) {
+                // EH DOWN：跳过站点兜底（秒回，不触网），首页本地链路不受影响。
+                logger.debug("Gallery latest-list fallback skipped: EH unavailable (empty keyword, no local history)")
+                return ehBlockedListResponse()
+            }
             return try {
                 val url = buildSearchUrl(
                     "", category, page, sort, pageMin, pageMax, minRating,
@@ -101,6 +114,12 @@ class GalleryService(
                 logger.warn("Gallery Site latest list failed (empty keyword)", e)
                 GalleryListResponse(success = false, data = emptyList(), total = 0)
             }
+        }
+
+        if (availability.isBlocked()) {
+            // EH DOWN：所有自动搜索直接短路（毫秒级），不发起上游请求。
+            logger.debug("Gallery search skipped for keyword={}: EH unavailable", keyword)
+            return ehBlockedListResponse()
         }
 
         return try {
@@ -138,6 +157,10 @@ class GalleryService(
      * `success=false` with empty data.
      */
     fun feedGallery(mode: String, page: Int, pageSize: Int): GalleryListResponse {
+        if (availability.isBlocked()) {
+            logger.debug("Gallery feed skipped for mode={}: EH unavailable", mode)
+            return ehBlockedListResponse()
+        }
         return try {
             val siteMode = feedMode(mode)
             val url = buildFeedUrl(mode, page)
@@ -158,6 +181,10 @@ class GalleryService(
      * all time (the core parser allocates 10 slots, trailing ones stay null).
      */
     fun topListFeed(): TopListResponse {
+        if (availability.isBlocked()) {
+            logger.debug("Gallery top list skipped: EH unavailable")
+            return TopListResponse(success = false, data = emptyList(), total = 0, cause = EH_UNAVAILABLE_CAUSE)
+        }
         return try {
             val detail = SiteEngine.getTopList(null, client, SiteUrl.getTopListUrl())
             val info = detail.galleryTopListInfo
@@ -284,34 +311,81 @@ class GalleryService(
 
     /**
      * Gallery detail, resolved in order:
-     *  1. local history row (with site-detail enrichment when page count is missing),
-     *  2. on-site fetch when the gid is not in local history and a [token] is supplied
-     *     (feed / search entries carry it) — the fetched detail is also written back
-     *     to history so the reader and subsequent visits work.
-     * Returns null only when neither source can resolve the gallery.
+     *  1. local download row (complete local source incl. pages — zero upstream),
+     *  2. local history row (local DTO built immediately; site-detail enrichment
+     *     is attempted only while EH is reachable, otherwise skipped entirely),
+     *  3. on-site fetch when the gid is not local and a [token] is supplied
+     *     (feed / search entries carry it) — but never while EH is DOWN,
+     *  4. local favorite row (local DTO, no upstream — EH-down safe),
+     *  5. null.
      */
     fun getGalleryDetail(gid: Long, token: String? = null): GalleryDetailDto? {
-        val history = historyRepository.findByGid(gid)
-        if (history != null) {
-            return enrichHistoryDetail(gid, history)
-        }
-        // 统一阅读器（2026-08-24）：本地推送下载行直接作为 detail 来源——
-        // pages 取行内 total（<=0 时数落盘文件），零 EH 依赖，阅读器必须能开。
+        // 1. 本地推送下载行直接作为 detail 来源——pages 取行内 total
+        //    （<=0 时数落盘文件），零 EH 依赖，阅读器必须能开。
         val download = downloadRepository.findByGid(gid)
         if (download != null) {
             return downloadDetailDto(download)
         }
-        if (token.isNullOrBlank()) return null
-        return try {
-            val detail = SiteEngine.getGalleryDetail(
-                null, client, SiteUrl.getGalleryDetailUrl(gid, token)
-            )
-            addToHistory(gid, token, detail.title, 0)
-            detail.toDetailDto()
-        } catch (e: Exception) {
-            logger.warn("Gallery Site detail fetch failed for gid={}: {}", gid, e.message)
-            null
+
+        // 2. 历史行：本地 dto 立即构造；仅站点可达时尝试上游补强（评论等真实字段）。
+        val history = historyRepository.findByGid(gid)
+        if (history != null) {
+            return enrichHistoryDetail(gid, history)
         }
+
+        // 3. token 非空且站点可达 → 上游直取 + 落历史。DOWNLOAD 时跳过，绝不等待网络。
+        if (!token.isNullOrBlank() && !availability.isBlocked()) {
+            return try {
+                val detail = SiteEngine.getGalleryDetail(
+                    null, client, SiteUrl.getGalleryDetailUrl(gid, token)
+                )
+                addToHistory(gid, token, detail.title, 0)
+                detail.toDetailDto()
+            } catch (e: Exception) {
+                logger.warn("Gallery Site detail fetch failed for gid={}: {}", gid, e.message)
+                null
+            }
+        }
+
+        // 4. 收藏行：无历史/下载的收藏条目在 EH DOWN 时仍可打开详情（本地 token/标题/缩略图）。
+        val favorite = localFavoriteInfoRepository.findByGid(gid)
+        if (favorite != null) {
+            return favoriteDetailDto(favorite)
+        }
+
+        return null
+    }
+
+    /** 本地收藏行 → detail DTO（EH 断网收藏详情可开；pages 尝试索引/上游解析，失败回落收藏行值）。 */
+    private fun favoriteDetailDto(favorite: com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity): GalleryDetailDto {
+        val pages = try {
+            galleryLookupService.resolvePageCount(favorite.gid) ?: favorite.pages
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve page count for favorite gid={}: {}", favorite.gid, e.message)
+            favorite.pages
+        }
+        return GalleryDetailDto(
+            gid = favorite.gid,
+            token = favorite.token,
+            galleryUrl = SiteUrl.getGalleryDetailUrl(favorite.gid, favorite.token),
+            title = favorite.title,
+            titleJpn = favorite.titleJpn,
+            thumb = favorite.thumb,
+            category = favorite.category,
+            posted = favorite.posted,
+            uploader = favorite.uploader,
+            rating = favorite.rating,
+            rated = favorite.rated,
+            simpleLanguage = favorite.simpleLanguage,
+            simpleTags = favorite.simpleTags?.split(",")?.map { it.trim() } ?: emptyList(),
+            thumbWidth = favorite.thumbWidth,
+            thumbHeight = favorite.thumbHeight,
+            pages = pages,
+            favoriteSlot = favorite.favoriteSlot,
+            favoriteName = favorite.favoriteName,
+            tags = emptyList(),
+            imageUrl = favorite.thumb
+        )
     }
 
     /**
@@ -345,15 +419,14 @@ class GalleryService(
         )
     }
 
-    private fun countPushedPages(gid: Long): Int =
-        java.io.File(config.download.path, gid.toString())
-            .listFiles { f -> f.name.matches(Regex("^\\d{4}\\..+")) }
-            ?.size ?: 0
+    private fun countPushedPages(gid: Long): Int = downloadDirIndex.pageCount(gid)
 
     /**
-     * Local history → detail DTO. The site detail is always attempted so the
-     * response carries the real comments (and fills any missing fields); an
-     * unreachable site keeps the history-based dto (E2E-6 semantics).
+     * Local history → detail DTO. The site detail is attempted only while EH is
+     * reachable so the response carries the real comments (and fills missing
+     * fields); an unreachable site keeps the history-based dto (E2E-6
+     * semantics) — while DOWN the enrichment is skipped entirely (no upstream
+     * wait; P-C fix).
      */
     private fun enrichHistoryDetail(gid: Long, history: HistoryInfoEntity): GalleryDetailDto {
         val tags = galleryTagsRepository.findByGid(gid)
@@ -379,6 +452,10 @@ class GalleryService(
             tags = tags.map { TagDto(it.tagNamespace, it.tag) },
             imageUrl = history.thumb
         )
+        if (availability.isBlocked()) {
+            logger.debug("Site detail enrichment skipped for gid={}: EH unavailable", gid)
+            return dto
+        }
         return try {
             val detail = SiteEngine.getGalleryDetail(
                 null, client, SiteUrl.getGalleryDetailUrl(history.gid, history.token)
@@ -492,6 +569,14 @@ class GalleryService(
     fun deleteQuickSearch(id: Long) {
         quickSearchRepository.deleteById(id)
     }
+
+    /** Blocked list response: success=false, cause=EH_UNAVAILABLE, no upstream hit. */
+    private fun ehBlockedListResponse() = GalleryListResponse(
+        success = false,
+        data = emptyList(),
+        total = 0,
+        cause = EH_UNAVAILABLE_CAUSE
+    )
 
     private fun TopListItem.toDto() = TopListFeedItemDto(
         gid = gid,

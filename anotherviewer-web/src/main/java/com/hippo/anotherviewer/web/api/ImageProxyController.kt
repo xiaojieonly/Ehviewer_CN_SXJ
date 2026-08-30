@@ -8,6 +8,9 @@ import com.hippo.anotherviewer.web.dto.JobSubmitResponse
 import com.hippo.anotherviewer.web.dto.JobType
 import com.hippo.anotherviewer.web.util.ResponseTooLargeException
 import com.hippo.anotherviewer.web.util.bytesBounded
+import com.hippo.anotherviewer.web.service.DownloadDirIndex
+import com.hippo.anotherviewer.web.service.EhAvailabilityService
+import com.hippo.anotherviewer.web.service.EhUnavailableException
 import com.hippo.anotherviewer.web.service.Job
 import com.hippo.anotherviewer.web.service.JobService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
@@ -49,14 +52,14 @@ class ImageProxyController(
     // 静默产生孤儿 JobStore/配置实例，测试需要替身时显式传入。
     private val config: SiteCoreConfigProperties,
     private val jobService: JobService,
+    private val availability: EhAvailabilityService,
+    private val downloadDirIndex: DownloadDirIndex,
 ) {
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
 
     companion object {
         private const val MAX_CONCURRENT_PAGE_FETCHES = 4
         private const val CACHE_MAX_AGE = "max-age=86400"
-        /** App 推送布局（downloads/<gid>/%04d.<ext>）的探测扩展名顺序。 */
-        private val PUSHED_EXTENSIONS = listOf("jpg", "jpeg", "png", "gif", "webp")
         private val IMAGE_MIME_BY_EXT = mapOf(
             "jpg" to MediaType.IMAGE_JPEG_VALUE,
             "jpeg" to MediaType.IMAGE_JPEG_VALUE,
@@ -99,6 +102,12 @@ class ImageProxyController(
         val target = url.toHttpUrlOrNull()
         if (target == null || !SiteProxyController.isGallerySiteHost(target.host)) {
             return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
+        }
+
+        // EH DOWN 熔断：cache miss 直接秒回 404 EH_UNAVAILABLE，不发起任何上游请求。
+        if (availability.isBlocked()) {
+            logger.debug("Image proxy miss skipped for url={}: EH unavailable", url)
+            return errorEnvelope(HttpStatus.NOT_FOUND, EhUnavailableException.CODE, EhUnavailableException.USER_MESSAGE)
         }
 
         return try {
@@ -198,6 +207,13 @@ class ImageProxyController(
             return serveFile(pushedFile, range)
         }
 
+        // EH DOWN 熔断：cache miss + pushed miss 后、进入 fetch 前秒回
+        // 404 EH_UNAVAILABLE（不占用 semaphore、不发起上游、不触发 prefetch）。
+        if (availability.isBlocked()) {
+            logger.debug("Page stream fetch skipped for gid={} page={}: EH unavailable", galleryId, page)
+            return errorEnvelope(HttpStatus.NOT_FOUND, EhUnavailableException.CODE, EhUnavailableException.USER_MESSAGE)
+        }
+
         // 2. Cache miss — fetch from Gallery Site via the shared session client.
         //    Concurrent requests for the same (galleryId, page) share ONE upstream
         //    fetch (srcset 1x/2x + dual-page mode issue several identical requests);
@@ -250,18 +266,16 @@ class ImageProxyController(
 
     /**
      * Probes the App-pushed download layout `downloads/<gid>/%04d.<ext>` for a
-     * 0-based [page] (files are 1-based, hence page+1), trying the supported
-     * extensions in order (jpg/jpeg/png/gif/webp). Returns null when no file
-     * is present so the caller falls through to the upstream EH fetch.
+     * 0-based [page] (files are 1-based, hence page+1), via the in-memory
+     * [DownloadDirIndex] — no disk scan per request. The indexed entry is
+     * still validated (`isFile && length > 0`) against the actual file system
+     * before it is served. Returns null so the caller falls through to the
+     * upstream EH fetch (or, while DOWN, the EH_UNAVAILABLE 404).
      */
     private fun findPushedPageFile(galleryId: Long, page: Int): File? {
-        val dir = File(config.download.path, "$galleryId")
-        if (!dir.isDirectory) return null
-        for (ext in PUSHED_EXTENSIONS) {
-            val file = File(dir, "%04d.$ext".format(page + 1))
-            if (file.isFile && file.length() > 0) return file
-        }
-        return null
+        val ref = downloadDirIndex.findPage(galleryId, page) ?: return null
+        val file = File(File(config.download.path, galleryId.toString()), ref.fileName())
+        return if (file.isFile && file.length() > 0) file else null
     }
 
     private fun fetchAndServe(galleryId: Long, page: Int, range: String?): ResponseEntity<*> {
