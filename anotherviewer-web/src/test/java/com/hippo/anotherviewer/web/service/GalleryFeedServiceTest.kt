@@ -40,7 +40,7 @@ class GalleryFeedServiceTest {
         val sessionManager = mock(SiteSessionManager::class.java)
         val client = OkHttpClient()
         `when`(sessionManager.okHttpClient).thenReturn(client)
-        val availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
+        val availability = EhAvailabilityService("https://e-hentai.org", 5000)
         return Harness(
             GalleryService(
                 mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java),
@@ -337,7 +337,7 @@ class GalleryFeedServiceTest {
         )
         val sessionManager = mock(SiteSessionManager::class.java)
         `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
-        val availability = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
+        val availability = EhAvailabilityService("https://e-hentai.org", 5000)
         availability.recordFailure("connect timed out")
         val service = GalleryService(
             historyRepository,

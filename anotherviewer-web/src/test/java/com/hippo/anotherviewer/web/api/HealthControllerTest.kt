@@ -41,9 +41,7 @@ class HealthControllerTest {
         config = SiteCoreConfigProperties()
         config.download.cachePath = tempDir.absolutePath
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java),
-            "https://e-hentai.org",
-            5000,
+            "https://e-hentai.org", 5000,
             probe = { true }
         )
         controller = HealthController(dataSource, config, availability)
@@ -191,7 +189,7 @@ class HealthControllerTest {
         upDatabase()
         val probes = AtomicInteger(0)
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { probes.incrementAndGet(); true }
         )
         controller = HealthController(dataSource, config, availability)
@@ -205,7 +203,7 @@ class HealthControllerTest {
     fun `galleryApi is DOWN when probe fails but overall stays UP`() {
         upDatabase()
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { false }
         )
         controller = HealthController(dataSource, config, availability)
@@ -223,7 +221,7 @@ class HealthControllerTest {
         upDatabase()
         val probes = AtomicInteger(0)
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { probes.incrementAndGet(); true }
         )
         controller = HealthController(dataSource, config, availability)

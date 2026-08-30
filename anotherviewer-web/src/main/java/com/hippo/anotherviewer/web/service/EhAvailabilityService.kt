@@ -1,9 +1,13 @@
 package com.hippo.anotherviewer.web.service
 
-import okhttp3.Request
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -41,7 +45,6 @@ data class AvailabilityStatus(
  */
 @Service
 class EhAvailabilityService(
-    private val sessionManager: SiteSessionManager,
     @Value("\${anotherviewer.availability.probe-url:https://e-hentai.org}")
     private val probeUrl: String,
     @Value("\${anotherviewer.availability.probe-timeout-ms:5000}")
@@ -49,6 +52,20 @@ class EhAvailabilityService(
     private val probe: (() -> Boolean)? = null,
 ) {
     private val logger = LoggerFactory.getLogger(EhAvailabilityService::class.java)
+
+    /**
+     * 独立 JDK HttpClient（非共享 session client）：
+     * 共享 client 挂 CurlSiteExecutor（系统 curl，--max-time 60）与 30s
+     * connect 超时，探测会被卡 60s（部署机实测）。探测只是 Reachability
+     * 判定，不需要 cookie/UA 指纹，JDK client 的 connect+request 超时
+     * 精确等于 probe-timeout-ms（默认 5s），下游短路语义不受影响。
+     */
+    private val httpClient: HttpClient = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofMillis(probeTimeoutMs))
+        // NEVER：3xx 原样返回（本服务以 200..399 计可达），跟随重定向
+        // 反而引入额外往返与无 Location 响应的异常路径。
+        .followRedirects(HttpClient.Redirect.NEVER)
+        .build()
 
     enum class State { UNKNOWN, UP, DOWN }
 
@@ -128,38 +145,36 @@ class EhAvailabilityService(
     )
 
     /**
-     * The real probe: HEAD [probeUrl] (default https://e-hentai.org) through
-     * the shared session client, bounded by anotherviewer.availability.probe-timeout-ms
-     * (default 5000). Any 2xx/3xx counts as reachable; 404/5xx/403/exceptions
-     * count as DOWN. On failure [lastReason] is set so [probeNow] records the
-     * actual cause.
+     * The real probe: HEAD [probeUrl] (default https://e-hentai.org) through a
+     * dedicated JDK [HttpClient], bounded by
+     * anotherviewer.availability.probe-timeout-ms (default 5000). Any 2xx/3xx
+     * counts as reachable; 4xx/5xx/exceptions count as DOWN. On failure
+     * [lastReason] is set so [probeNow] records the actual cause.
      *
-     * The shared client carries the CurlSiteExecutor (system curl) — no Java
-     * TLS — and OkHttp times out typically at 30s; the per-call
-     * `call.timeout()` override is what bounds the probe so a dead network
-     * never hangs a user-facing action for 30-60s.
+     * Never routes through the shared OkHttp session client: it carries the
+     * CurlSiteExecutor (system curl, --max-time 60) and 30s connect timeouts —
+     * a dead network would pin a manual probe for up to 60s (observed on the
+     * deployed box 2026-08-30). A reachability probe needs no cookies nor
+     * fingerprint, so the JDK client's exact `probe-timeout-ms` bounds it.
      */
     internal fun probeHttp(): Boolean {
         return try {
-            val request = Request.Builder()
-                .url(probeUrl)
-                // Same browser fingerprint as the app's site requests.
+            val request = HttpRequest.newBuilder()
+                .uri(URI.create(probeUrl))
+                .timeout(Duration.ofMillis(probeTimeoutMs))
                 .header(
                     "User-Agent",
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
                 )
-                .method("HEAD", null)
+                .method("HEAD", HttpRequest.BodyPublishers.noBody())
                 .build()
-            val call = sessionManager.okHttpClient.newCall(request)
-            call.timeout().timeout(probeTimeoutMs, TimeUnit.MILLISECONDS)
-            call.execute().use { response ->
-                if (response.code in 200..399) {
-                    logger.debug("EH availability probe OK (HTTP {})", response.code)
-                    true
-                } else {
-                    lastReason = "probe HTTP ${response.code}"
-                    false
-                }
+            val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
+            if (response.statusCode() in 200..399) {
+                logger.debug("EH availability probe OK (HTTP {})", response.statusCode())
+                true
+            } else {
+                lastReason = "probe HTTP ${response.statusCode()}"
+                false
             }
         } catch (e: Exception) {
             lastReason = e.message?.takeIf { it.isNotBlank() } ?: "probe failed"

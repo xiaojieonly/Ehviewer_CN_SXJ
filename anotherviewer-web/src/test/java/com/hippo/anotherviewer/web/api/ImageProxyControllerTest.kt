@@ -77,7 +77,7 @@ class ImageProxyControllerTest {
     }
 
     private fun probeFalseService(): EhAvailabilityService =
-        EhAvailabilityService(mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000, probe = { false })
+        EhAvailabilityService("https://e-hentai.org", 5000, probe = { false })
 
     @BeforeEach
     fun setUp() {

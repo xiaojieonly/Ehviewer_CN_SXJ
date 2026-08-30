@@ -28,7 +28,7 @@ class SiteAvailabilityControllerTest {
     @BeforeEach
     fun setUp() {
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { true }
         )
         mockMvc = MockMvcBuilders.standaloneSetup(SiteAvailabilityController(availability))
@@ -40,7 +40,7 @@ class SiteAvailabilityControllerTest {
     fun `GET returns UNKNOWN before any probe without triggering one`() {
         val probes = AtomicInteger(0)
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { probes.incrementAndGet(); true }
         )
         mockMvc = MockMvcBuilders.standaloneSetup(SiteAvailabilityController(availability)).build()
@@ -70,7 +70,7 @@ class SiteAvailabilityControllerTest {
     fun `POST probes once and exposes UP with lastProbeAt`() {
         val probes = AtomicInteger(0)
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { probes.incrementAndGet(); true }
         )
         mockMvc = MockMvcBuilders.standaloneSetup(SiteAvailabilityController(availability)).build()
@@ -87,7 +87,7 @@ class SiteAvailabilityControllerTest {
     fun `POST a failing probe keeps DOWN and the subsequent GET stays DOWN without re-probing`() {
         val probes = AtomicInteger(0)
         availability = EhAvailabilityService(
-            mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000,
+            "https://e-hentai.org", 5000,
             probe = { probes.incrementAndGet(); false }
         )
         mockMvc = MockMvcBuilders.standaloneSetup(SiteAvailabilityController(availability)).build()

@@ -1,21 +1,18 @@
 package com.hippo.anotherviewer.web.service
 
-import com.hippo.anotherviewer.web.any
-import okhttp3.Call
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.MediaType.Companion.toMediaType
+import com.sun.net.httpserver.HttpExchange
+import com.sun.net.httpserver.HttpServer
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.junit.jupiter.api.TestInstance
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -29,34 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EhAvailabilityServiceTest {
 
     private fun service(probe: () -> Boolean = { true }): EhAvailabilityService =
-        EhAvailabilityService(mock(SiteSessionManager::class.java), "https://e-hentai.org", 5000, probe = probe)
-
-    /** probeHttp 真实路径的替身客户端：返回固定 HTTP 状态码或抛异常。 */
-    private data class ProbeHarness(val service: EhAvailabilityService, val call: Call)
-
-    private fun httpHarness(code: Int): ProbeHarness {
-        val sessionManager = mock(SiteSessionManager::class.java)
-        val client = mock(okhttp3.OkHttpClient::class.java)
-        `when`(sessionManager.okHttpClient).thenReturn(client)
-        val call = mock(Call::class.java)
-        `when`(client.newCall(any(Request::class.java))).thenReturn(call)
-        // Call.timeout() returns okio.Timeout; the service only holds it, never calls it.
-        `when`(call.timeout()).thenReturn(mock(okio.Timeout::class.java))
-        val request = Request.Builder().url("https://e-hentai.org").method("HEAD", null).build()
-        `when`(call.execute()).thenReturn(
-            Response.Builder()
-                .request(request)
-                .protocol(Protocol.HTTP_1_1)
-                .code(code)
-                .message("OK")
-                .body(ByteArray(0).toResponseBody("text/plain".toMediaType()))
-                .build()
-        )
-        return ProbeHarness(
-            EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000),
-            call
-        )
-    }
+        EhAvailabilityService("https://e-hentai.org", 5000, probe = probe)
 
     // ── state machine ──────────────────────────────────────────
 
@@ -146,40 +116,57 @@ class EhAvailabilityServiceTest {
         assertEquals("UP", s.status().state)
     }
 
-    // ── probeHttp (real HTTP path) ─────────────────────────────
+    // ── probeHttp (real HTTP path via JDK HttpServer) ─────────
+
+    private fun echoServer(status: Int): Pair<HttpServer, String> {
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/") { exchange: HttpExchange ->
+            exchange.sendResponseHeaders(status, -1)
+            exchange.close()
+        }
+        server.start()
+        return server to "http://127.0.0.1:${server.address.port}/"
+    }
+
+    @AfterEach
+    fun stopServers() {
+        servers.forEach { it.stop(0) }
+        servers.clear()
+    }
+
+    private val servers = mutableListOf<HttpServer>()
 
     @Test
     fun `probeHttp treats 2xx and 3xx as reachable`() {
         // probeHttp 是原始 HTTP 探测（仅更新 lastReason）；状态转换由 probeNow 完成。
-        val h = httpHarness(200)
-        assertTrue(h.service.probeHttp())
+        val (s2xx, u2) = echoServer(200)
+        servers.add(s2xx)
+        val ok = EhAvailabilityService(u2, 5000)
+        assertTrue(ok.probeHttp())
 
-        val redirect = httpHarness(302)
-        assertTrue(redirect.service.probeHttp())
+        val (s3xx, u3) = echoServer(302)
+        servers.add(s3xx)
+        val redirect = EhAvailabilityService(u3, 5000)
+        assertTrue(redirect.probeHttp())
     }
 
     @Test
     fun `probeHttp treats 404 as a DOWN failure with the status reason`() {
-        val h = httpHarness(404)
-        assertFalse(h.service.probeHttp())
-        assertEquals("probe HTTP 404", h.service.status().lastReason)
+        val (server, url) = echoServer(404)
+        servers.add(server)
+        val h = EhAvailabilityService(url, 5000)
+        assertFalse(h.probeHttp())
+        assertEquals("probe HTTP 404", h.status().lastReason)
         // 经 probeNow 落库为 DOWN（模拟一个失败探测完整链路）。
-        assertFalse(h.service.probeNow())
-        assertEquals("DOWN", h.service.status().state)
+        assertFalse(h.probeNow())
+        assertEquals("DOWN", h.status().state)
     }
 
     @Test
     fun `probeHttp failure reason comes from the exception message`() {
-        val sessionManager = mock(SiteSessionManager::class.java)
-        val client = mock(okhttp3.OkHttpClient::class.java)
-        `when`(sessionManager.okHttpClient).thenReturn(client)
-        val call = mock(Call::class.java)
-        `when`(client.newCall(any(Request::class.java))).thenReturn(call)
-        `when`(call.timeout()).thenReturn(mock(okio.Timeout::class.java))
-        `when`(call.execute()).thenThrow(IOException("UnknownHostException: e-hentai.org"))
-
-        val s = EhAvailabilityService(sessionManager, "https://e-hentai.org", 5000)
+        // 不可解析的 host（DNS 失败）→ 异常路径 → lastReason 来自 exception。
+        val s = EhAvailabilityService("https://eh-unreachable-zzz.invalid", 2000)
         assertFalse(s.probeHttp())
-        assertEquals("UnknownHostException: e-hentai.org", s.status().lastReason)
+        assertTrue(s.status().lastReason!!.isNotBlank())
     }
 }
