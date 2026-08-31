@@ -190,6 +190,7 @@
     <!-- Update -->
     <string name="new_version">新版本</string>
     <string name="update">更新</string>
+    <string name="update_dialog_sponsor">賞飯給作者</string>
     <string name="update_fail">檢查更新失敗</string>
     <string name="update_to">更新至</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>

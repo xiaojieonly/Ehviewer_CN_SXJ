@@ -219,6 +219,7 @@
     <!-- Update -->
     <string name="new_version">New version</string>
     <string name="update">Update</string>
+    <string name="update_dialog_sponsor">Treat the author</string>
     <string name="update_fail">Check for updates failed</string>
     <string name="update_to">Update to</string>
     <string name="no_updates_available">Already the latest version</string>
