@@ -61,18 +61,23 @@ public class AboutFragment extends BasePreferenceFragmentCompat
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
-
-        addPreferencesFromResource(R.xml.about_settings);
+        setPreferencesFromResource(R.xml.about_settings, null);
 
         Preference author = findPreference(KEY_AUTHOR);
+        if (author != null) {
+            author.setSummary(getString(R.string.settings_about_author_summary).replace('$', '@'));
+            author.setOnPreferenceClickListener(this);
+        }
+
         Preference donate = findPreference(KEY_DONATE);
+        if (donate != null) {
+            donate.setOnPreferenceClickListener(this);
+        }
+
         Preference checkForUpdate = findPreference(KEY_CHECK_FOR_UPDATES);
-
-        author.setSummary(getString(R.string.settings_about_author_summary).replace('$', '@'));
-
-        author.setOnPreferenceClickListener(this);
-        donate.setOnPreferenceClickListener(this);
-        checkForUpdate.setOnPreferenceClickListener(this);
+        if (checkForUpdate != null) {
+            checkForUpdate.setOnPreferenceClickListener(this);
+        }
     }
 
     @Override

@@ -408,6 +408,11 @@
     <string name="download_search_gallery">Buscar galería</string>
     <string name="download_search_hint">Ingrese clave de búsqueda</string>
     <string name="download_service_label">Servicio de descarga EhViewer</string>
+    <string name="archiver_download_service_label">Descarga de archivos EhViewer</string>
+    <string name="archiver_download_pause">Pausar</string>
+    <string name="archiver_download_resume">Reanudar</string>
+    <string name="archiver_download_paused">En pausa</string>
+    <string name="archiver_download_restart_no_range">El servidor no admite reanudar; se reinicia la descarga</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s restantes</string>
     <string name="remember_download_label">Recordar etiqueta de descarga</string>
@@ -574,6 +579,8 @@
     <string name="settings_download_download_origin_image_summary">¡Es peligroso! Puede obtener error 509</string>
     <string name="settings_download_download_order_by_asc">Orden de descarga ascendente</string>
     <string name="settings_download_download_order_by_asc_summary">Descargar en secuencia al descargar todas las galerías</string>
+    <string name="settings_download_sync_while_reading">Descarga sincronizada al leer</string>
+    <string name="settings_download_sync_while_reading_summary">Al navegar por una galería no descargada, guarda automáticamente las imágenes vistas en el directorio de descarga</string>
     <string name="settings_download_restore_download_items">Restaurar los elementos de descarga</string>
     <string name="settings_download_restore_download_items_summary">Restaurar todos los elementos de descarga en la ruta de descarga</string>
     <string name="settings_download_restoring">Restaurando…</string>
@@ -914,6 +921,14 @@
     <string name="wifi_send_bookmark">Migrar marcadores</string>
     <string name="wifi_send_favorite">Migrar favoritos</string>
     <string name="wifi_send_download">Migrar datos de descarga</string>
+    <string name="wifi_send_download_location">Migrar directorio de descargas</string>
+    <string name="wifi_download_dir_empty">No se encontraron carpetas de galería migrables</string>
+    <string name="wifi_download_dir_no_location">No se ha configurado el directorio de descargas en este dispositivo</string>
+    <string name="wifi_download_dir_migrating">Migrando %1$s (%2$d/%3$d archivos)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): omitir %4$d, transferir %5$d</string>
+    <string name="wifi_download_dir_file_done">Archivo recibido: %s</string>
+    <string name="wifi_download_dir_files_progress">Se recibieron %d archivos</string>
+    <string name="wifi_download_dir_file_failed">Error de suma de comprobación del archivo, descartado</string>
     <string name="wifi_send_done">Migración de datos completada</string>
     <string name="wifi_send_start">Iniciar migración %s</string>
     <string name="wifi_send_stop">Detener migración %s</string>

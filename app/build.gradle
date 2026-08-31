@@ -31,7 +31,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
         versionCode 111
-        versionName "2.0.1.6"
+        versionName "2.0.2.3"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
@@ -61,7 +61,7 @@ android {
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
         }
         debug {
-            applicationIdSuffix ".debug"
+            applicationIdSuffix ".debug1"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
         }
     }
@@ -88,6 +88,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig = true
     }
 
 }
@@ -100,7 +101,7 @@ dependencies {
 //    测试工具
 //    debugCompileOnly 'com.gu.android:toolargetool:0.3.0'
 
-    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'com.google.android.material:material:1.14.0'
 
     // app使用情况数据收集
     // Import the BoM for the Firebase platform
@@ -108,8 +109,8 @@ dependencies {
 
     // Add the dependencies for the Crashlytics and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation 'com.google.firebase:firebase-crashlytics:20.0.3'
-    implementation 'com.google.firebase:firebase-analytics:23.0.0'
+    implementation 'com.google.firebase:firebase-crashlytics:20.1.0'
+    implementation 'com.google.firebase:firebase-analytics:23.2.0'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -167,8 +168,9 @@ dependencies {
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
-    // https://mvnrepository.com/artifact/org.jsoup/jsoup
-    implementation 'org.jsoup:jsoup:1.18.1'
+    // 1.18.x 在部分 Android 运行环境上出现 NoClassDefFoundError(org.jsoup.parser.Tag)
+    // 回退到 Android 侧更稳定的版本，避免运行时缺类
+    implementation 'org.jsoup:jsoup:1.15.4'
 
     // Glide 图片加载库
 //    implementation 'com.github.bumptech.glide:glide:5.0.5'

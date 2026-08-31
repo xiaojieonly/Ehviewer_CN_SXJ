@@ -91,6 +91,14 @@
         android:summary="@string/settings_download_download_order_by_asc_summary"
         android:title="@string/settings_download_download_order_by_asc" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="sync_download_while_reading"
+        android:summary="@string/settings_download_sync_while_reading_summary"
+        android:title="@string/settings_download_sync_while_reading"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
     <com.hippo.ehviewer.preference.RestoreDownloadPreference
         android:key="restore_download_items"
         android:summary="@string/settings_download_restore_download_items_summary"

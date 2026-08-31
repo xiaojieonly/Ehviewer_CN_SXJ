@@ -1,21 +1,12 @@
 package com.hippo.ehviewer.ui.dialog;
 
-import static com.hippo.ehviewer.client.EhConfig.ARCHIVER_PATH;
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_LONG;
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_SHORT;
 
 import android.app.Dialog;
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,7 +17,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
@@ -35,33 +25,20 @@ import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.ArchiverData;
 import com.hippo.ehviewer.client.data.GalleryDetail;
-import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
-import com.hippo.ehviewer.dao.DownloadInfo;
-import com.hippo.ehviewer.spider.SpiderDen;
-import com.hippo.ehviewer.spider.SpiderQueen;
+import com.hippo.ehviewer.download.ArchiverDownloadCompleter;
+import com.hippo.ehviewer.download.ArchiverDownloader;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.ehviewer.util.GZIPUtils;
 import com.hippo.scene.SceneFragment;
-import com.hippo.unifile.UniFile;
-import com.hippo.util.FileUtils;
-
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
 
 public class ArchiverDownloadDialog implements
         DialogInterface.OnDismissListener, EhClient.Callback<ArchiverData> {
     final private GalleryDetail galleryDetail;
     final private Context context;
     final private GalleryDetailScene detailScene;
-    private final DownloadReceiver downloadReceiver;
-
     private Dialog dialog;
-
     private TextView currentFunds;
     private TextView originalCost;
     private TextView originalSize;
@@ -69,21 +46,14 @@ public class ArchiverDownloadDialog implements
     private TextView resampleSize;
     private Button resampleDownload;
     private Button originalDownload;
-
     private ProgressBar progressBar;
     private LinearLayout body;
-
-    private long myDownloadId;
-
-
     private ArchiverData data = new ArchiverData();
-
 
     public ArchiverDownloadDialog(GalleryDetail galleryDetail, GalleryDetailScene detailScene) {
         this.galleryDetail = galleryDetail;
         this.detailScene = detailScene;
         this.context = detailScene.getEHContext();
-        downloadReceiver = new DownloadReceiver(galleryDetail);
     }
 
     public void showDialog() {
@@ -92,6 +62,7 @@ public class ArchiverDownloadDialog implements
                 .setView(R.layout.dialog_archiver)
                 .setOnDismissListener(this)
                 .show();
+
         currentFunds = dialog.findViewById(R.id.dialog_archiver_current_funds);
         originalCost = dialog.findViewById(R.id.dialog_archiver_original_cost);
         originalSize = dialog.findViewById(R.id.dialog_archiver_original_size);
@@ -106,7 +77,9 @@ public class ArchiverDownloadDialog implements
         EhRequest mRequest = new EhRequest().setMethod(EhClient.METHOD_ARCHIVER)
                 .setArgs(galleryDetail.archiveUrl, galleryDetail.gid, galleryDetail.token)
                 .setCallback(this);
+
         assert mRequest != null;
+
         EhApplication.getEhClient(context).execute(mRequest);
     }
 
@@ -124,18 +97,20 @@ public class ArchiverDownloadDialog implements
                 dltype = "res";
                 dlcheck = "Download Resample Archive";
             }
+
             if (url == null) {
                 return;
             }
             MainActivity activity = detailScene.getActivity2();
-            if (null != context && null != activity && galleryDetail != null) {
 
+            if (null != context && null != activity && galleryDetail != null) {
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_DOWNLOAD_ARCHIVER);
                 request.setArgs(url, galleryDetail.archiveUrl, dltype, dlcheck);
                 request.setCallback(new DownloadArchiverListener(context, activity.getStageId(), detailScene.getTag(), this));
                 EhApplication.getEhClient(context).execute(request);
             }
+
         } finally {
             progressBar.setVisibility(View.VISIBLE);
             body.setVisibility(View.INVISIBLE);
@@ -144,7 +119,7 @@ public class ArchiverDownloadDialog implements
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-
+        // 下载在应用内继续；完成由 ArchiverDownloadCompleter 处理
     }
 
     @Override
@@ -162,8 +137,10 @@ public class ArchiverDownloadDialog implements
         String rC = context.getString(R.string.archiver_dialog_cost, data.resampleCost);
         originalCost.setText(oC);
         resampleCost.setText(rC);
+
         String oS = context.getString(R.string.archiver_dialog_size, data.originalSize);
         String rS = context.getString(R.string.archiver_dialog_size, data.resampleSize);
+
         originalSize.setText(oS);
         resampleSize.setText(rS);
         progressBar.setVisibility(View.GONE);
@@ -172,7 +149,6 @@ public class ArchiverDownloadDialog implements
 
     @Override
     public void onFailure(Exception e) {
-
     }
 
     @Override
@@ -180,15 +156,12 @@ public class ArchiverDownloadDialog implements
 
     }
 
-
     private class DownloadArchiverListener extends EhCallback<GalleryDetailScene, String> {
-        final ArchiverDownloadDialog archiverDownloadDialog;
         final Context context;
 
         public DownloadArchiverListener(Context context, int stageId, String sceneTag, ArchiverDownloadDialog archiverDownloadDialog) {
             super(context, stageId, sceneTag);
             this.context = context;
-            this.archiverDownloadDialog = archiverDownloadDialog;
         }
 
         @Override
@@ -196,20 +169,22 @@ public class ArchiverDownloadDialog implements
             if (dialog != null && !dialog.isShowing()) {
                 return;
             }
+
             if (downloadUrl == null || downloadUrl.trim().isEmpty()) {
-                Toast.makeText(context,R.string.download_state_failed,Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
                 return;
             }
+
             progressBar.setVisibility(View.INVISIBLE);
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
-//            String fileName = galleryDetail.title.replaceAll("/","");
-            String fileName = createFileName(galleryDetail.title, galleryDetail.gid);
+            String fileName = ArchiverDownloadCompleter.createFileName(galleryDetail.title, galleryDetail.gid);
             if (fileName.isEmpty()) {
                 Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
                 return;
             }
+
             Uri downloadUri = Uri.parse(downloadUrl);
             String scheme = downloadUri.getScheme();
             if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
@@ -217,37 +192,15 @@ public class ArchiverDownloadDialog implements
                 Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
                 return;
             }
-            DownloadManager.Request request;
-            try {
-                request = new DownloadManager.Request(downloadUri);
-            } catch (IllegalArgumentException e) {
-                Log.e("ArchiverDownloadDialog", "Invalid download URL: " + downloadUrl, e);
-                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
-            request.setAllowedOverRoaming(true);
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-            request.setTitle(galleryDetail.title);
-            request.setDescription(context.getString(R.string.download_archive_started));
-            request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+fileName + ".zip");
-            request.allowScanningByMediaScanner();
 
-            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            if (downloadManager == null) {
+            ArchiverDownloader downloader = ArchiverDownloader.getInstance(context);
+            if (downloader == null) {
                 Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
                 return;
             }
 
-//            downloadManager.query(new DownloadManager.Query().setFilterByStatus(DownloadManager.STATUS_PAUSED));
-
-            myDownloadId = downloadManager.enqueue(request);
-            Settings.putArchiverDownloadId(galleryDetail.gid,myDownloadId);
-            Settings.putArchiverDownload(myDownloadId,galleryDetail);
+            downloader.start(context, galleryDetail, downloadUrl, fileName);
             detailScene.bindArchiverProgress(galleryDetail);
-
-            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         }
 
         @Override
@@ -270,220 +223,5 @@ public class ArchiverDownloadDialog implements
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryDetailScene;
         }
-    }
-
-    private class DownloadReceiver extends BroadcastReceiver {
-        private final static String TAG = "DownloadReceiver";
-
-        private final GalleryDetail galleryDetail;
-
-        public DownloadReceiver(GalleryDetail galleryDetail) {
-            this.galleryDetail = galleryDetail;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-                long downloadId = intent.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-                if (myDownloadId != downloadId) {
-                    return;
-                }
-                android.app.DownloadManager downloadManager = (android.app.DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-                //检查下载状态
-                checkDownloadStatus(downloadId, downloadManager);
-            }
-        }
-
-        private void checkDownloadStatus(long downloadId, android.app.DownloadManager downloadManager) {
-            android.app.DownloadManager.Query query = new android.app.DownloadManager.Query();
-            query.setFilterById(downloadId);//筛选下载任务，传入任务ID，可变参数
-            Cursor c = null;
-            try {
-                c = downloadManager.query(query);
-                if (c != null && c.moveToFirst()) {
-                    int status = c.getInt(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS));
-                    switch (status) {
-                        case android.app.DownloadManager.STATUS_PAUSED:
-                            Log.i(TAG, ">>>下载暂停");
-                            break;
-                        case android.app.DownloadManager.STATUS_PENDING:
-                            Log.i(TAG, ">>>下载延迟");
-                            break;
-                        case android.app.DownloadManager.STATUS_SUCCESSFUL:
-                            Log.i(TAG, ">>>下载完成");
-                            unzipAndImportFile(c);
-                            break;
-                        case android.app.DownloadManager.STATUS_FAILED:
-                            Log.i(TAG, ">>>下载失败");
-                            break;
-                        case android.app.DownloadManager.STATUS_RUNNING:
-                        default:
-                            Log.i(TAG, ">>>正在下载");// 此处无法监听到
-                            break;
-                    }
-                }
-            } catch (IllegalArgumentException | URISyntaxException | NullPointerException e) {
-                Log.e(TAG, e.getMessage(), e);
-            } finally {
-                if (c != null) {
-                    c.close();
-                }
-            }
-        }
-
-        private void unzipAndImportFile(Cursor cursor) throws IllegalArgumentException, URISyntaxException {
-            String path = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
-            Uri uri = Uri.parse(path);
-            File tempDir = AppConfig.getExternalTempDir();
-            if (tempDir == null) {
-                return;
-            }
-            long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
-//            String fileName = galleryDetail.title.replaceAll("/","");
-            String fileName = createFileName(galleryDetail.title, galleryDetail.gid);
-            String tempFilePath = tempDir.getPath() + "/" + fileName;
-            
-            // Handle content:// URI by copying to temp file first
-            new Thread(() -> {
-                String zipFilePath;
-                File tempZipFile = null;
-                try {
-                    if ("file".equals(uri.getScheme())) {
-                        // Direct file URI, can use directly
-                        File zipFile = new File(uri.getPath());
-                        zipFilePath = zipFile.getPath();
-                    } else {
-                        // Content URI, need to copy to temp file first
-                        tempZipFile = new File(tempDir, fileName + ".zip");
-                        UniFile sourceFile = UniFile.fromUri(context, uri);
-                        if (sourceFile == null) {
-                            Log.e(TAG, "Cannot access source file: " + uri);
-                            return;
-                        }
-                        UniFile destFile = UniFile.fromFile(tempZipFile);
-                        if (destFile == null) {
-                            Log.e(TAG, "Cannot create temp zip file");
-                            return;
-                        }
-                        if (!FileUtils.copyFile(sourceFile, destFile, false)) {
-                            Log.e(TAG, "Failed to copy zip file to temp location");
-                            return;
-                        }
-                        zipFilePath = tempZipFile.getPath();
-                    }
-                    
-                    boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
-                    if (!result) {
-                        return;
-                    }
-                    importGallery(tempFilePath, downloadId);
-                } catch (Exception e) {
-                    Log.e(TAG, "Error in unzipAndImportFile", e);
-                } finally {
-                    // Clean up temporary zip file if it was created
-                    if (tempZipFile != null && tempZipFile.exists()) {
-                        tempZipFile.delete();
-                    }
-                }
-            }).start();
-        }
-
-        private void importGallery(String tempFilePath, long downloadId) {
-            if (tempFilePath.isEmpty() || context == null) {
-                return;
-            }
-
-            File tempFile = new File(tempFilePath);
-
-            File[] tempPictures = tempFile.listFiles();
-            if (tempPictures == null) {
-                return;
-            }
-            Arrays.sort(tempPictures, (file1, file2) -> {
-                String f1N = file1.getName();
-                String f2N = file2.getName();
-                return f1N.compareTo(f2N);
-            });
-
-            SpiderDen spiderDen = new SpiderDen(galleryDetail);
-            spiderDen.setMode(SpiderQueen.MODE_DOWNLOAD);
-            UniFile downloadDir = spiderDen.getDownloadDir();
-
-            if (downloadDir == null) {
-                return;
-            }
-            try {
-                for (int i = 0; i < tempPictures.length; i++) {
-                    File picture = tempPictures[i];
-
-                    String fileName = picture.getName();
-                    String[] nameArr = fileName.split("\\.");
-                    String newName = SpiderDen.generateImageFilename(i, "." + nameArr[nameArr.length - 1]);
-                    
-                    // Use UniFile API instead of File
-                    UniFile destFile = downloadDir.findFile(newName);
-                    if (destFile != null && destFile.exists()) {
-                        if (!destFile.delete()) {
-                            continue;
-                        }
-                    }
-                    
-                    // Create the destination file
-                    destFile = downloadDir.createFile(newName);
-                    if (destFile == null) {
-                        Log.e(TAG, "Failed to create file: " + newName);
-                        continue;
-                    }
-                    
-                    // Copy from File to UniFile
-                    UniFile sourceFile = UniFile.fromFile(picture);
-
-                    if (!FileUtils.copyFile(sourceFile, destFile, false)) {
-                        Log.e(TAG, "Failed to copy file: " + picture.getName() + " to " + newName);
-                        // Try to delete the created file if copy failed
-                        destFile.delete();
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error in importGallery", e);
-            }
-            boolean deleteTemp = tempFile.delete();
-            if (!deleteTemp) {
-                tempFile.deleteOnExit();
-            }
-            String finalFileName = tempFile.getName();
-            new Handler(Looper.getMainLooper()).post(() -> {
-                String labelName = context.getString(R.string.download_label_archiver);
-                com.hippo.ehviewer.download.DownloadManager manager = EhApplication.getDownloadManager(context);
-                manager.addLabel(labelName);
-                manager.addDownload(galleryDetail, labelName, DownloadInfo.STATE_FINISH);
-                Toast.makeText(context,context.getString(R.string.stat_download_done_line_succeeded, finalFileName),Toast.LENGTH_LONG).show();
-                if (downloadReceiver != null) {
-                    context.unregisterReceiver(downloadReceiver);
-                }
-                GalleryInfo info = Settings.getArchiverDownload(downloadId);
-                if (info==null){
-                    return;
-                }
-                Settings.deleteArchiverDownloadId(info.gid);
-                Settings.deleteArchiverDownload(downloadId);
-            });
-        }
-    }
-
-    /**
-     * 统一净化归档文件名，避免 DownloadManager 因非法路径抛错。
-     */
-    private static String createFileName(String name, long gid) {
-        String result = name == null ? "" : com.hippo.lib.yorozuya.FileUtils.sanitizeFilename(name);
-        final int MAX_FILENAME_LENGTH = 120;
-        if (result.length() > MAX_FILENAME_LENGTH) {
-            result = result.substring(0, MAX_FILENAME_LENGTH);
-        }
-        if (result.isEmpty()) {
-            result = gid > 0 ? "archiver_" + gid : "archiver";
-        }
-        return result;
     }
 }

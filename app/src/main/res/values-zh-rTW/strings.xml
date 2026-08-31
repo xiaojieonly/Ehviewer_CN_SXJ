@@ -384,6 +384,11 @@
     <string name="download_reset_reading_progress">重置閱讀進度</string>
     <string name="reset_reading_progress_message">重置所有已下載圖庫的閱讀進度？</string>
     <string name="download_service_label">EhViewer 下載服務</string>
+    <string name="archiver_download_service_label">EhViewer 檔案下載</string>
+    <string name="archiver_download_pause">暫停</string>
+    <string name="archiver_download_resume">繼續</string>
+    <string name="archiver_download_paused">已暫停</string>
+    <string name="archiver_download_restart_no_range">伺服器不支援斷點續傳，將重新下載</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s，剩餘 %2$s</string>
     <string name="remember_download_label">記住下載標籤</string>
@@ -600,6 +605,8 @@
     <string name="settings_download_download_list_pagination_summary">分頁功能僅在列表長度大於 500 時生效</string>
     <string name="settings_download_download_order_by_asc">以升序下載</string>
     <string name="settings_download_download_order_by_asc_summary">當下載全部圖庫時照順序下載</string>
+    <string name="settings_download_sync_while_reading">觀看時同步下載</string>
+    <string name="settings_download_sync_while_reading_summary">在瀏覽未下載圖庫時，自動將瀏覽到的圖片保存到下載目錄</string>
     <string name="settings_download_media_scan">允許其他程式進行媒體掃描</string>
     <string name="settings_download_media_scan_summary_on">請別讓別人看到你的相簿</string>
     <string name="settings_download_media_scan_summary_off">大部分相簿軟體將會忽略顯示下載路徑中的影像</string>
@@ -890,6 +897,14 @@
     <string name="wifi_send_bookmark">遷移書籤</string>
     <string name="wifi_send_favorite">遷移收藏</string>
     <string name="wifi_send_download">遷移下載資料</string>
+    <string name="wifi_send_download_location">遷移下載目錄</string>
+    <string name="wifi_download_dir_empty">未找到可遷移的畫廊資料夾</string>
+    <string name="wifi_download_dir_no_location">本機未設定下載目錄</string>
+    <string name="wifi_download_dir_migrating">正在遷移 %1$s（%2$d/%3$d 個檔案）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：略過 %4$d，待傳 %5$d</string>
+    <string name="wifi_download_dir_file_done">已接收檔案：%s</string>
+    <string name="wifi_download_dir_files_progress">已接收 %d 個檔案</string>
+    <string name="wifi_download_dir_file_failed">檔案校驗失敗，已丟棄</string>
     <string name="wifi_send_done">遷移資料完成</string>
     <string name="wifi_send_start">開始遷移%s</string>
     <string name="wifi_send_stop">停止遷移%s</string>

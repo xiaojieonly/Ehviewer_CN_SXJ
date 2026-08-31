@@ -407,6 +407,11 @@
     <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
     <string name="reset_reading_progress_message">Réinitialiser les progrès de lecture de toutes les galeries téléchargées ?</string>
     <string name="download_service_label">Service du téléchargement EhViewer</string>
+    <string name="archiver_download_service_label">Téléchargement d\'archives EhViewer</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Reprendre</string>
+    <string name="archiver_download_paused">En pause</string>
+    <string name="archiver_download_restart_no_range">Le serveur ne prend pas en charge la reprise ; le téléchargement redémarre</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, encore %2$s</string>
     <string name="remember_download_label">Enregistrer le label de téléchargement</string>
@@ -569,6 +574,8 @@
     <string name="settings_download_download_list_pagination_summary">La fonction de pagination ne prendra effet que lorsque la longueur de la liste est supérieure à 500</string>
     <string name="settings_download_download_order_by_asc">Ordre de téléchargement croissant</string>
     <string name="settings_download_download_order_by_asc_summary">Télécharger dans l\'ordre lors du téléchargement de toutes les galeries</string>
+    <string name="settings_download_sync_while_reading">Téléchargement synchronisé pendant la lecture</string>
+    <string name="settings_download_sync_while_reading_summary">Lors de la navigation dans une galerie non téléchargée, enregistre automatiquement les images consultées dans le répertoire de téléchargement</string>
     <string name="settings_download_restore_download_items">Rétablir les galeries téléchargées</string>
     <string name="settings_download_restore_download_items_summary">Rétablir tous objets déjà téléchargés dans la destination de téléchargement</string>
     <string name="settings_download_restoring">Rétablissement en cours</string>
@@ -614,6 +621,14 @@
     <string name="settings_advanced_wifi_sander_summary">Migration de données via point d\'accès Wi-Fi</string>
     <string name="settings_advanced_wifi_client">Réception de données de migration Wi-Fi</string>
     <string name="settings_advanced_wifi_client_summary">Recevoir les données de migration depuis les points d\'accès Wi-Fi</string>
+    <string name="wifi_send_download_location">Migrer le répertoire de téléchargement</string>
+    <string name="wifi_download_dir_empty">Aucun dossier de galerie migrable trouvé</string>
+    <string name="wifi_download_dir_no_location">Le répertoire de téléchargement n\'est pas défini sur cet appareil</string>
+    <string name="wifi_download_dir_migrating">Migration de %1$s (%2$d/%3$d fichiers)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d) : ignorer %4$d, transférer %5$d</string>
+    <string name="wifi_download_dir_file_done">Fichier reçu : %s</string>
+    <string name="wifi_download_dir_files_progress">%d fichiers reçus</string>
+    <string name="wifi_download_dir_file_failed">Échec de la somme de contrôle du fichier, fichier ignoré</string>
 
     <string name="settings_about">À propos de l\'application</string>
     <string name="settings_about_declaration_summary">EhViewer ne s\'affilie à E-Hentai de aucune manière.</string>

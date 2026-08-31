@@ -76,10 +76,14 @@ class Image private constructor(
                                 inSampleSize = simpleSize
                             }
                             val bitmap = BitmapFactory.decodeStream(source, null, option)
+                            if (bitmap == null) {
+                                throw IllegalArgumentException("BitmapFactory.decodeStream 回退解码返回空")
+                            }
                             mObtainedDrawable =
-                                bitmap?.toDrawable(EhApplication.getInstance().resources)
+                                bitmap.toDrawable(EhApplication.getInstance().resources)
                         } else {
                             mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
+                                ?: throw IllegalArgumentException("BitmapDrawable.createFromStream 回退解码返回空")
                         }
                     } catch (fallbackException: Exception) {
                         Analytics.recordException(fallbackException)
@@ -93,16 +97,20 @@ class Image private constructor(
                         inSampleSize = simpleSize
                     }
                     val bitmap = BitmapFactory.decodeStream(source, null, option)
+                    if (bitmap == null) {
+                        throw IllegalArgumentException("BitmapFactory.decodeStream 返回空")
+                    }
                     mObtainedDrawable =
                         BitmapDrawable(EhApplication.getInstance().resources, bitmap)
                 } else {
                     mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
+                        ?: throw IllegalArgumentException("BitmapDrawable.createFromStream 返回空")
                 }
             }
         }
         if (mObtainedDrawable == null) {
-            mObtainedDrawable = drawable!!
-//            throw IllegalArgumentException("数据解码出错")
+            mObtainedDrawable = drawable
+                ?: throw IllegalArgumentException("数据解码出错")
         }
     }
 

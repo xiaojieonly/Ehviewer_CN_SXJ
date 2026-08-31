@@ -260,6 +260,11 @@
         <item name="android:windowExitAnimation">@anim/pop_exit</item>
     </style>
 
+    <style name="CoverImageDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/cover_enter</item>
+        <item name="android:windowExitAnimation">@anim/cover_exit</item>
+    </style>
+
     <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
         <item name="android:background">@color/black_overlay</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>

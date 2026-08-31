@@ -75,6 +75,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class EhDB {
 
@@ -750,10 +751,13 @@ public class EhDB {
         List<QuickSearch> allList = dao.queryBuilder().orderAsc(QuickSearchDao.Properties.Time).list();
         for (int i = 0; i < quickSearchList.size(); i++) {
             QuickSearch newSearch = quickSearchList.get(i);
+            if (newSearch == null) {
+                continue;
+            }
             boolean insert = true;
             for (int j = 0; j < allList.size(); j++) {
                 QuickSearch exist = allList.get(j);
-                if (exist.keyword.equals(newSearch.keyword)) {
+                if (exist != null && Objects.equals(exist.keyword, newSearch.keyword)) {
                     insert = false;
                     break;
                 }

@@ -391,6 +391,7 @@
         <item>@string/wifi_send_bookmark</item>
         <item>@string/wifi_send_favorite</item>
         <item>@string/wifi_send_download</item>
+        <item>@string/wifi_send_download_location</item>
     </string-array>
 
     <string-array name="update_metadata">
