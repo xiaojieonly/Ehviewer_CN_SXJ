@@ -55,6 +55,14 @@
         <span v-if="item.total > 0" class="download-item__pages">
           {{ item.done }}/{{ item.total }} pages
         </span>
+        <!-- W5/W7: 阅读进度角标（下载行），与 GalleryCard 的显示语义一致。 -->
+        <span
+          v-if="showReadProgressBadge"
+          class="download-item__read-progress"
+          data-testid="read-progress-badge"
+        >
+          {{ readProgressLabel }}
+        </span>
       </div>
 
       <!-- percent (left) + speed/ETA (right) — both text_super_small 12sp -->
@@ -162,6 +170,8 @@
 import { computed, ref } from 'vue'
 import type { DownloadItem } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
+import { maskedImageSrc, maskedTitle } from '@/utils/privacyMask'
+import { usePreferencesStore } from '@/stores/preferences'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 
@@ -207,7 +217,9 @@ const emit = defineEmits<{
   (e: 'read', gid: number): void
 }>()
 
-const title = computed(() => props.item.title || props.item.titleJpn || 'Untitled')
+const title = computed(() =>
+  maskedTitle(props.item.title || props.item.titleJpn || 'Untitled', props.item.gid),
+)
 
 /** Thumbnail failure/absence flag — swaps the row to the icon placeholder so
     a broken `<img>` never leaks its `alt` (the title) into the grey box and
@@ -225,7 +237,10 @@ const hasThumb = computed(() => Boolean(props.item.thumb) && !thumbFailed.value)
 const thumbSrc = computed<string | null>(() => {
   const thumb = props.item.thumb
   if (!thumb) return null
-  return /^https?:\/\//i.test(thumb) ? `/api/v1/image/proxy?url=${encodeURIComponent(thumb)}` : thumb
+  const proxied =
+    /^https?:\/\//i.test(thumb) ? `/api/v1/image/proxy?url=${encodeURIComponent(thumb)}` : thumb
+  // 隐私打码开启时换成占位图（真实缩略图不发请求）。
+  return maskedImageSrc(proxied)
 })
 
 function onThumbError(): void {
@@ -234,6 +249,23 @@ function onThumbError(): void {
 
 /** Numeric `SiteConfig` category bit → chip key (undefined renders no chip). */
 const categoryKey = computed(() => CATEGORY_BY_BIT[props.item.category])
+
+/* ---- W5/W7 (plan-2026-09-02): 阅读进度角标 ----
+   showReadProgress 开且 readProgress > 0 才显示；格式对齐 Android
+   GalleryAdapterNew：N/MP（有总页数）或 NP（页数未知）。字段缺失
+   （旧服务器 undefined）时隐藏，与 GalleryCard 语义一致。 */
+const preferencesStore = usePreferencesStore()
+
+const readProgressLabel = computed(() => {
+  const progress = props.item.readProgress
+  if (typeof progress !== 'number' || !Number.isFinite(progress) || progress <= 0) return ''
+  const current = progress + 1
+  return props.item.total > 0 ? `${current}/${props.item.total}P` : `${current}P`
+})
+
+const showReadProgressBadge = computed(
+  () => preferencesStore.prefs?.general?.showReadProgress === true && readProgressLabel.value !== '',
+)
 
 /* ---- multi-select (Android custom choice mode) ---- */
 
@@ -493,6 +525,15 @@ const statsText = computed(() => {
 
 .download-item__pages {
   margin-left: auto;
+  font-size: var(--text-super-small); /* 12sp */
+  color: var(--text-color-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* W5/W7: 阅读进度角标 — 12sp secondary，跟在下载进度文案之后。 */
+.download-item__read-progress {
+  flex-shrink: 0;
   font-size: var(--text-super-small); /* 12sp */
   color: var(--text-color-secondary);
   font-variant-numeric: tabular-nums;

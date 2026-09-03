@@ -12,6 +12,7 @@ import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
 import { usePreferencesStore } from '@/stores/preferences'
 import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
+import { PRIVACY_PLACEHOLDER_SRC, setPrivacyMaskEnabled } from '@/utils/privacyMask'
 import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo } from '@/types/components'
 
@@ -67,6 +68,8 @@ function seedPrefs(general: Record<string, unknown>): void {
 
 beforeEach(() => {
   setActivePinia(createPinia())
+  // 打码是模块级状态，会跨用例泄漏——统一复位。
+  setPrivacyMaskEnabled(false)
 })
 
 describe('GalleryCard (list mode)', () => {
@@ -110,6 +113,18 @@ describe('GalleryCard (list mode)', () => {
     expect(wrapper.findComponent(CategoryTriangle).exists()).toBe(false)
     expect(wrapper.find('.gallery-card__lang').exists()).toBe(false)
     expect(wrapper.find('.gallery-card__grid-title').exists()).toBe(false)
+  })
+
+  it('隐私打码：标题与日文标题隐藏、序列号替代，缩略图换占位图', () => {
+    setPrivacyMaskEnabled(true)
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__title').text()).toBe('#12345')
+    expect(wrapper.find('.gallery-card__title-jpn').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__thumb img').attributes('src')).toBe(
+      PRIVACY_PLACEHOLDER_SRC,
+    )
   })
 })
 
@@ -713,5 +728,74 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
       await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
       expect(document.body.querySelector('.card-context-menu')).toBeNull()
     })
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * W5 additions (plan-2026-09-02 §5.3 W5 / §8 前端) — 阅读进度角标：
+ * showReadProgress 开关 + readProgress 值共同驱动显隐，格式 N/MP / NP，
+ * 列表形态顶替页数文案（Android GalleryAdapterNew 同槽位替换语义），
+ * 网格形态挂瓦片右下角。
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+describe('GalleryCard W5 — 阅读进度角标', () => {
+  it('shows N/MP in list mode when showReadProgress is on and readProgress > 0', () => {
+    seedPrefs({ showReadProgress: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 3, pages: 24 }), mode: 'list' },
+    })
+    const badge = wrapper.find('[data-testid="read-progress-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('4/24P')
+    // 顶替页数文案（Android 同一 TextView 替换语义），不与 24P 重复。
+    expect(wrapper.findAll('.gallery-card__pages')).toHaveLength(1)
+  })
+
+  it('formats NP when the page count is unknown (pages ≤ 0)', () => {
+    seedPrefs({ showReadProgress: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 3, pages: 0 }), mode: 'list' },
+    })
+    expect(wrapper.find('[data-testid="read-progress-badge"]').text()).toBe('4P')
+  })
+
+  it('hides the badge when showReadProgress is off (plain page count stays)', () => {
+    seedPrefs({ showReadProgress: false })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 3, pages: 24 }), mode: 'list' },
+    })
+    expect(wrapper.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__pages').text()).toBe('24P')
+  })
+
+  it('hides the badge when readProgress is 0 or missing (legacy server)', () => {
+    seedPrefs({ showReadProgress: true })
+    const zero = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 0, pages: 24 }), mode: 'list' },
+    })
+    expect(zero.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+    expect(zero.find('.gallery-card__pages').text()).toBe('24P')
+    const legacy = mount(GalleryCard, {
+      props: { gallery: makeGallery({ pages: 24 }), mode: 'list' },
+    })
+    expect(legacy.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+  })
+
+  it('hides the badge when prefs are unloaded', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 3, pages: 24 }), mode: 'list' },
+    })
+    expect(wrapper.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+  })
+
+  it('rides the grid tile bottom-right corner in grid mode', () => {
+    seedPrefs({ showReadProgress: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ readProgress: 9, pages: 24 }), mode: 'grid' },
+    })
+    const badge = wrapper.find('[data-testid="read-progress-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.classes()).toContain('gallery-card__progress')
+    expect(badge.text()).toBe('10/24P')
   })
 })

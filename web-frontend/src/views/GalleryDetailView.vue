@@ -31,7 +31,7 @@
             <img
               v-if="gallery.thumb"
               :src="coverSrc"
-              :alt="`Cover of ${gallery.title}`"
+              :alt="displayTitle"
               width="128"
               height="192"
               loading="eager"
@@ -40,8 +40,8 @@
           </div>
 
           <div class="detail-header__info">
-            <h1 class="detail-header__title">{{ gallery.title }}</h1>
-            <p v-if="gallery.titleJpn" class="detail-header__title-jpn">
+            <h1 class="detail-header__title">{{ displayTitle }}</h1>
+            <p v-if="gallery.titleJpn && !privacyMaskEnabled" class="detail-header__title-jpn">
               {{ gallery.titleJpn }}
             </p>
 
@@ -227,6 +227,7 @@ import { downloadApi } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
 import type { GalleryDetail } from '@/types'
 import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
+import { maskedImageSrc, maskedTitle, privacyMaskEnabled } from '@/utils/privacyMask'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
@@ -278,9 +279,15 @@ const entryToken = computed(() => (typeof route.query.token === 'string' ? route
  * R4-9: the cover `thumb` may point at the unresolvable Gallery Site host
  * (`e-hentai.org` family); rewrite those through the server's same-origin
  * image proxy so the cover actually loads. Non-site URLs pass through.
+ * 隐私打码开启时换成占位图（真实封面不发请求）。
  */
 const coverSrc = computed(() =>
-  gallery.value ? rewriteSiteAssetUrl(gallery.value.thumb) : '',
+  gallery.value ? maskedImageSrc(rewriteSiteAssetUrl(gallery.value.thumb)) : '',
+)
+
+/** 隐私打码：标题 → 内容序列号（alt 文本同步打码，坏图不泄题）。 */
+const displayTitle = computed(() =>
+  gallery.value ? maskedTitle(gallery.value.title, gallery.value.gid) : '',
 )
 
 /** Numeric `SiteConfig` category bit → `GalleryCategory` key. */

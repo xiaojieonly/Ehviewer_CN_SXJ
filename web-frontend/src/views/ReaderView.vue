@@ -14,7 +14,7 @@
       v-else
       ref="readerRef"
       :gid="gid"
-      :title="title"
+      :title="displayTitle"
       :total-pages="totalPages"
       :current-page="currentPage"
       :direction="direction"
@@ -76,13 +76,18 @@
  * - F1: the visit is written to server history on entry, throttled mid-reading
  *   (≥10 pages or ≥30 s since the last write), and flushed once on
  *   leave/pagehide — so web reading lands in History and syncs back to the
- *   app. Failures degrade to console.warn.
+ *   app. Failures degrade to console.warn. W4 (plan-2026-09-02): the payload
+ *   carries `page: currentPage`; the initial page restores 深链 >
+ *   `detail.readProgress` > localStorage `readProgress:{gid}` > 0 (the
+ *   localStorage layer only backs the degraded / tokenless state, where the
+ *   server write path is unavailable).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isEhUnavailableError } from '@/api/client'
 import { markDown } from '@/stores/availability'
 import { galleryApi } from '@/api/gallery'
+import type { GalleryDetail } from '@/types'
 
 /** 画廊存在但未知页数（导入 .db 的 total=0 行且上游无法解析）：进入
  *  unknownPageCounts 模式，翻页由 PageMode 逐页请求驱动，不降级卡 1 页。 */
@@ -98,6 +103,7 @@ import { useKeyboardNav } from '@/composables/useKeyboardNav'
 import { useEnhancedImage } from '@/composables/useEnhancedImage'
 import { usePreferencesStore } from '@/stores/preferences'
 import { DEFAULT_READER_PREFERENCES } from '@/api/preferences'
+import { maskedTitle } from '@/utils/privacyMask'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
 import ImageReader from '@/components/reader/ImageReader.vue'
 import {
@@ -127,6 +133,9 @@ const degraded = ref(false)
 /** 未知页数模式（import .db total=0）：totalPages=0，翻页由 PageMode 逐页驱动。 */
 const unknownPageCounts = ref(false)
 const title = ref('')
+/** 隐私打码：工具栏/标签页标题以内容序列号显示（title 本体保持真实值，
+ *  历史回写 payload 仍用原文，见 pushHistory）。 */
+const displayTitle = computed(() => maskedTitle(title.value, gid.value))
 /** Gallery site token from the detail response — required by history writeback. */
 const galleryToken = ref('')
 const totalPages = ref(0)
@@ -465,6 +474,80 @@ watch(currentPage, () => {
  * are idempotent but not free — hence the throttle. Failures degrade to
  * console.warn; reading is never disturbed by a history outage.
  */
+/* ------------------------------------------------------------------ */
+/* W4 — reading progress (plan-2026-09-02 §5.3 W4)                     */
+/* ------------------------------------------------------------------ */
+
+/** 降级态进度 localStorage 键前缀（W4④）：完整键 `readProgress:{gid}`，
+ *  值为十进制页码字符串（0 起页索引）。 */
+const READ_PROGRESS_KEY_PREFIX = 'readProgress:'
+
+function readProgressKey(id: number): string {
+  return `${READ_PROGRESS_KEY_PREFIX}${id}`
+}
+
+/** 读取本机降级进度；无记录 / 损坏 / 负数返回 -1（调用方以 <0 判缺失）。 */
+function loadLocalProgress(id: number): number {
+  try {
+    const raw = localStorage.getItem(readProgressKey(id))
+    if (raw === null) return -1
+    const page = Number(raw)
+    return Number.isFinite(page) && page >= 0 ? Math.floor(page) : -1
+  } catch {
+    // Storage unavailable — degrade to "no local progress".
+    return -1
+  }
+}
+
+/** 写入本机降级进度（degraded || 无 token 时替代 REST 回写，W4④）。 */
+function saveLocalProgress(id: number, page: number): void {
+  try {
+    localStorage.setItem(readProgressKey(id), String(page))
+  } catch {
+    // Storage unavailable / full — reading continues unimpaired.
+  }
+}
+
+/**
+ * W4① 恢复优先级：深链路由参数 > detail.readProgress > 0。
+ *
+ * detail 来源缺失时（旧服务器不下发字段 / detail 拉取失败 / 无 token 无法
+ * 同步）以 localStorage 键 `readProgress:{gid}` 兜底（W4④，D2 降级态语义）。
+ * 服务器已带进度（含显式 REST 写 0 的「重读」）时不读本地——
+ * detail.readProgress 是同步链路的唯一权威来源（D2）。
+ */
+function resolveStartPage(
+  rawDeepLink: unknown,
+  serverProgress: number | null | undefined,
+): number {
+  const linked = Number(rawDeepLink)
+  if (Number.isFinite(linked)) return Math.max(0, Math.floor(linked))
+  if (
+    typeof serverProgress === 'number' &&
+    Number.isFinite(serverProgress) &&
+    serverProgress > 0
+  ) {
+    return Math.floor(serverProgress)
+  }
+  const local = loadLocalProgress(gid.value)
+  if (
+    local >= 0 &&
+    (!galleryToken.value || serverProgress === undefined || serverProgress === null)
+  ) {
+    return local
+  }
+  return 0
+}
+
+/**
+ * W4①/② 已知页数钳 [0, pages-1]；页数未知（totalPages=0：降级壳 /
+ * unknownPageCounts 模式）只钳下界——`Math.max(0, pages-1)` 会把恢复出的
+ * 进度压平成 0（plan §10.7），故不做上界钳制。
+ */
+function clampStartPage(page: number, knownPages: number): number {
+  return knownPages > 0 ? Math.min(Math.max(page, 0), knownPages - 1) : Math.max(page, 0)
+}
+
 const HISTORY_WRITE_PAGE_STRIDE = 10
 const HISTORY_WRITE_MIN_INTERVAL_MS = 30_000
 
@@ -474,16 +557,24 @@ let lastHistoryPage = -1
 let lastHistoryAt = 0
 
 function pushHistory(): void {
-  // 统一阅读器：降级态（无 detail token）不做回写——同步脏标记防 leave-flush 误发。
+  // 统一阅读器：降级态（无 detail token）不回写服务器——改写本机
+  // localStorage 键 readProgress:{gid} 兜底（W4④；load 入口 / 翻页节流 /
+  // leave-pagehide flush 均经此处落盘），同步脏标记防 leave-flush 误发。
   if (degraded.value || !galleryToken.value) {
     lastHistoryPage = currentPage.value
     lastHistoryAt = Date.now()
+    saveLocalProgress(gid.value, currentPage.value)
     return
   }
   lastHistoryPage = currentPage.value
   lastHistoryAt = Date.now()
   galleryApi
-    .addHistory(gid.value, { token: galleryToken.value, title: title.value })
+    .addHistory(gid.value, {
+      token: galleryToken.value,
+      title: title.value,
+      // W4③: 翻页位置随回写落库（含 0——显式重读语义，D5）。
+      page: currentPage.value,
+    })
     .catch((error) => {
       console.warn(`[reader] history writeback failed (gid=${gid.value})`, error)
     })
@@ -543,8 +634,11 @@ async function load() {
   // P-B：入口 token 透传——token 只从 route.query 一次取（页面自翻页替换路由
   // 参数时保持原 token 不变；route.params.page 的 watch 不重置它）。
   const token = typeof route.query.token === 'string' ? route.query.token : undefined
+  // W4①/②/④：hoist 出 catch 路径——unknownPageCounts / 降级态恢复同样要读
+  // detail.readProgress（UPC 时 detail 已返回；降级时为 undefined → 本地兜底）。
+  let detail: GalleryDetail | undefined
   try {
-    const detail = await galleryApi.getDetail(gid.value, token)
+    detail = await galleryApi.getDetail(gid.value, token)
     if (seq !== loadSeq) return
     const pages = Number(detail?.pages)
     if (!Number.isFinite(pages) || pages <= 0) {
@@ -557,13 +651,14 @@ async function load() {
     galleryToken.value = detail.token || ''
     totalPages.value = pages
 
-    const start = Number(route.params.page)
-    currentPage.value = Number.isFinite(start)
-      ? Math.min(Math.max(start, 0), pages - 1)
-      : 0
+    // W4①: 初始页 = 深链路由参数 > detail.readProgress > 0，钳 [0, pages-1]。
+    currentPage.value = clampStartPage(
+      resolveStartPage(route.params.page, detail.readProgress),
+      pages,
+    )
 
     loadState.value = 'ready'
-    document.title = title.value
+    document.title = displayTitle.value
     subscribeEnhanced()
     // F1: entering the reader records the visit immediately (server upserts
     // the history row and refreshes its timestamp).
@@ -575,24 +670,32 @@ async function load() {
     if (isEhUnavailableError(error)) markDown()
     if (error instanceof UnknownPageCounts) {
       // 画廊存在（title 已知）但页数未定：进入「未知页数」阅读模式——
-      // 从第 1 页起，翻页由 PageMode 逐页请求驱动，失败给出页内提示而非卡死。
+      // 翻页由 PageMode 逐页请求驱动，失败给出页内提示而非卡死。
       title.value = error.title
       totalPages.value = 0 // 0 = 未知（CodeBlock: PageMode 据此允许任意翻页）
-      currentPage.value = 0
+      // W4②: 页数未知——恢复已存进度（深链 > readProgress > 本地 > 0），
+      // 不做上界钳制（totalPages=0，§10.7）。
+      currentPage.value = clampStartPage(
+        resolveStartPage(route.params.page, detail?.readProgress),
+        0,
+      )
       unknownPageCounts.value = true
       loadState.value = 'ready'
-      document.title = title.value
+      document.title = displayTitle.value
       return
     }
     // 统一阅读器（2026-08-24）：detail 拉不到（EH 不可达 / 无本地元数据）也必须
     // 打开阅读器壳——单页失败由 PageMode 的错误覆盖层呈现（含重试）。
-    // total 置 1 让阅读器停在可交互状态；历史回写跳过（无 token）。
+    // total 置 1 让阅读器停在可交互状态；历史回写跳过（无 token），改写
+    // localStorage 兜底（W4④）。
     title.value = `Gallery ${gid.value}`
     totalPages.value = 1
-    currentPage.value = 0
+    // W4④: 降级态恢复——detail 缺失，localStorage 同 ① 优先级兜底；
+    // totalPages=1 是假值，不做上界钳制（否则恢复恒为 0）。
+    currentPage.value = clampStartPage(resolveStartPage(route.params.page, undefined), 0)
     degraded.value = true
     loadState.value = 'ready'
-    document.title = title.value
+    document.title = displayTitle.value
   }
 }
 

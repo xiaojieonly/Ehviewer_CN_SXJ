@@ -4,6 +4,7 @@ import AdminAdvanced from '../admin/AdminAdvanced.vue'
 import { AppSelect, AppSwitch, PrefRow, SectionHeader } from '@/components/form'
 import { backupApi } from '@/api/backup'
 import { jobsApi, type Job } from '@/api/jobs'
+import { setPrivacyMaskEnabled } from '@/utils/privacyMask'
 
 vi.mock('@/api/backup', () => ({
   backupApi: {
@@ -46,6 +47,8 @@ describe('AdminAdvanced (高级)', () => {
     // 挂载时会读取 R4-2 restore 运行态——缺省置 false，避免未 mock 的
     // vi.fn() 返回 undefined 破坏 onMounted 链。
     vi.mocked(backupApi.getBackupState).mockResolvedValue({ restorePending: false })
+    // 打码是模块级状态，会跨用例泄漏——统一复位。
+    setPrivacyMaskEnabled(false)
   })
 
   afterEach(() => {
@@ -55,10 +58,11 @@ describe('AdminAdvanced (高级)', () => {
 
   it('renders shared primitives and no native select', async () => {
     wrapper = mount(AdminAdvanced)
-    expect(wrapper.findAllComponents(SectionHeader).map((h) => h.props('title'))).toEqual(['通用', '同步策略', '数据'])
+    expect(wrapper.findAllComponents(SectionHeader).map((h) => h.props('title'))).toEqual(['通用', '隐私', '同步策略', '数据'])
     expect(wrapper.findAllComponents(PrefRow).map((r) => r.props('title'))).toEqual([
       '界面语言',
       '保存解析错误日志',
+      '内容打码模式',
       '冲突仲裁策略',
       '自动同步间隔（秒）',
       '导出数据',
@@ -103,6 +107,20 @@ describe('AdminAdvanced (高级)', () => {
     await sw.trigger('click')
     expect(sw.attributes('aria-checked')).toBe('true')
     expect(JSON.parse(localStorage.getItem(UI_KEY)!).saveParseErrors).toBe(true)
+  })
+
+  it('toggles the privacy-mask switch and persists to localStorage', async () => {
+    wrapper = mount(AdminAdvanced)
+    const maskSwitch = wrapper
+      .findAllComponents(AppSwitch)
+      .find((s) => s.attributes('aria-label') === '内容打码模式')
+    expect(maskSwitch).toBeTruthy()
+    expect(maskSwitch!.attributes('aria-checked')).toBe('false')
+    await maskSwitch!.trigger('click')
+    expect(maskSwitch!.attributes('aria-checked')).toBe('true')
+    expect(localStorage.getItem('anotherviewer-privacy-mask')).toBe('1')
+    await maskSwitch!.trigger('click')
+    expect(localStorage.getItem('anotherviewer-privacy-mask')).toBeNull()
   })
 
   it('clears local data after confirmation, keeping auth keys', async () => {

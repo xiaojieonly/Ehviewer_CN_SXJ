@@ -254,7 +254,7 @@
                 </template>
                 <template v-else>
                   <li v-for="dl in maintenanceDownloads" :key="`d-${dl.id}`" class="dialog__list-item">
-                    <span class="dialog__item-name">{{ dl.title || `#${dl.gid}` }}</span>
+                    <span class="dialog__item-name">{{ maskedTitle(dl.title || `#${dl.gid}`, dl.gid) }}</span>
                     <span class="dialog__item-meta">{{ reasonLabel(dl.reason) }}</span>
                   </li>
                 </template>
@@ -309,6 +309,7 @@ import {
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 import { buildMaintenanceCsv, csvFileName } from '@/utils/maintenanceCsv'
+import { maskedTitle } from '@/utils/privacyMask'
 import {
   DOWNLOAD_PAGE_SIZES,
   DOWNLOAD_SORT_OPTIONS,

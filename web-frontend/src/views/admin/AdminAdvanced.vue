@@ -61,6 +61,24 @@
         </PrefCard>
       </section>
 
+      <!-- ═══ 隐私（打码模式）════════════════════════════════════════════ -->
+      <section>
+        <SectionHeader title="隐私" />
+        <PrefCard>
+          <PrefRow
+            icon="sec-primary"
+            title="内容打码模式"
+            summary="标题以内容序列号 #gid 显示，图片替换为占位符——便于截图协作"
+          >
+            <AppSwitch
+              :model-value="privacyMaskEnabled"
+              aria-label="内容打码模式"
+              @update:model-value="togglePrivacyMask"
+            />
+          </PrefRow>
+        </PrefCard>
+      </section>
+
       <!-- ═══ 同步策略（Wave-2 / ADR-0003）═══════════════════════════════ -->
       <section>
         <SectionHeader title="同步策略" />
@@ -168,6 +186,7 @@ import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/compon
 import { syncApi, type SyncPolicy } from '@/api/sync'
 import { backupApi } from '@/api/backup'
 import { jobsApi, type Job } from '@/api/jobs'
+import { privacyMaskEnabled, setPrivacyMaskEnabled } from '@/utils/privacyMask'
 
 /* ------------------------------ local settings ---------------------------- */
 
@@ -223,6 +242,11 @@ function onLanguageValue(value: string | number): void {
 function toggleParseErrors(): void {
   ui.saveParseErrors = !ui.saveParseErrors
   persistUi()
+}
+
+/** 隐私打码：状态与持久化都在 privacyMask 模块内，这里只转发开关。 */
+function togglePrivacyMask(): void {
+  setPrivacyMaskEnabled(!privacyMaskEnabled.value)
 }
 
 /* ------------------------- sync policy (ADR-0003) ------------------------- */

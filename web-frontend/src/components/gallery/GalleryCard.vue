@@ -23,7 +23,9 @@
       </div>
       <div class="gallery-card__body">
         <h3 class="gallery-card__title">{{ displayTitle }}</h3>
-        <p v-if="gallery.titleJpn" class="gallery-card__title-jpn">{{ gallery.titleJpn }}</p>
+        <p v-if="gallery.titleJpn && !privacyMaskEnabled" class="gallery-card__title-jpn">
+          {{ gallery.titleJpn }}
+        </p>
         <!-- Info switches (B-2): uploader / posted render only when the
              corresponding `general.show*` preference is on (default off). -->
         <p v-if="showUploader && gallery.uploader" class="gallery-card__uploader">
@@ -35,7 +37,17 @@
         </div>
         <div class="gallery-card__meta-row">
           <CategoryChip v-if="categoryKey" :category="categoryKey" />
-          <span v-if="gallery.pages > 0" class="gallery-card__pages">{{ gallery.pages }}P</span>
+          <!-- W5 (plan-2026-09-02): showReadProgress 开且 readProgress > 0 时，
+               进度角标顶替页数文案（Android GalleryAdapterNew 同一 TextView
+               的替换语义）：N/MP（有页数）或 NP（页数未知）。 -->
+          <span
+            v-if="showReadProgressBadge"
+            class="gallery-card__pages"
+            data-testid="read-progress-badge"
+          >
+            {{ readProgressLabel }}
+          </span>
+          <span v-else-if="gallery.pages > 0" class="gallery-card__pages">{{ gallery.pages }}P</span>
           <span v-for="tag in gallery.simpleTags" :key="tag" class="gallery-card__tag">
             {{ tag }}
           </span>
@@ -81,6 +93,15 @@
         />
         <span v-if="gallery.simpleLanguage" class="gallery-card__lang">
           {{ gallery.simpleLanguage }}
+        </span>
+        <!-- W5: grid 形态的阅读进度角标（列表形态放在 meta 行，见上）——
+             右下角镜像左下角的语言徽标。 -->
+        <span
+          v-if="showReadProgressBadge"
+          class="gallery-card__progress"
+          data-testid="read-progress-badge"
+        >
+          {{ readProgressLabel }}
         </span>
         <slot name="overlay" />
         <!-- F-UX6 (PC form only): hover / focus-within quick actions. -->
@@ -190,6 +211,10 @@ export function parseFavoriteSlotNames(raw: unknown): string[] {
  * - B-4 `favoriteSlotNames` derives the 10 favorite folder names from
  *   `general.favoriteSlotNames` (`|`-separated), empty slots falling back to
  *   {@link DEFAULT_FAVORITE_SLOT_NAMES}.
+ * - W5 (plan-2026-09-02) `general.showReadProgress` + `gallery.readProgress > 0`
+ *   show the reading-progress badge (`N/MP` with a known page count, `NP`
+ *   otherwise), replacing the pages text in list form and riding the tile's
+ *   bottom-right corner in grid form (Android `GalleryAdapterNew`).
  *
  * The preference keys are read defensively (optional chaining + defaults):
  * they are being added to the preferences schema by a parallel work stream,
@@ -208,6 +233,7 @@ import type { GeneralPreferences } from '@/api/preferences'
 import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
 import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
+import { maskedImageSrc, privacyMaskEnabled } from '@/utils/privacyMask'
 import AppCard from '@/components/atoms/AppCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
@@ -258,8 +284,25 @@ const generalPrefs = computed<(GeneralPreferences & GeneralPrefsExtras) | undefi
 const showUploader = computed(() => generalPrefs.value?.showUploader === true)
 const showPostedTime = computed(() => generalPrefs.value?.showPostedTime === true)
 
-/** R4-6: galleries without a title render as `#<gid>`. */
+/**
+ * W5 (plan-2026-09-02) — 阅读进度角标：`general.showReadProgress` 开启且
+ * `gallery.readProgress > 0` 才显示；格式对齐 Android `GalleryAdapterNew`
+ * （`startPage+1/pagesP`），页数未知（pages ≤ 0）退化为 `NP`。字段缺失
+ * （旧服务器 undefined / null / 0）一律隐藏。
+ */
+const readProgressLabel = computed(() => {
+  const progress = props.gallery.readProgress
+  if (typeof progress !== 'number' || !Number.isFinite(progress) || progress <= 0) return ''
+  const current = progress + 1
+  return props.gallery.pages > 0 ? `${current}/${props.gallery.pages}P` : `${current}P`
+})
+const showReadProgressBadge = computed(
+  () => generalPrefs.value?.showReadProgress === true && readProgressLabel.value !== '',
+)
+
+/** R4-6: galleries without a title render as `#<gid>`; 打码开启时一律序列号。 */
 const displayTitle = computed(() => {
+  if (privacyMaskEnabled.value) return `#${props.gallery.gid}`
   const title = props.gallery.title
   return title && title.trim().length > 0 ? title : `#${props.gallery.gid}`
 })
@@ -309,8 +352,9 @@ const hasThumb = computed(() => Boolean(props.gallery.thumb) && !thumbFailed.val
  * R4-9: the raw `thumb` may point at the unresolvable Gallery Site host
  * (`e-hentai.org` family); rewrite those through the server's same-origin
  * image proxy so the thumbnail actually loads. Non-site URLs pass through.
+ * 隐私打码开启时换成占位图（真实缩略图不发请求）。
  */
-const thumbSrc = computed(() => rewriteSiteAssetUrl(props.gallery.thumb))
+const thumbSrc = computed(() => maskedImageSrc(rewriteSiteAssetUrl(props.gallery.thumb)))
 
 function onImgLoad(): void {
   imgLoaded.value = true
@@ -729,6 +773,19 @@ onBeforeUnmount(() => {
   left: 4px;
   bottom: 4px;
   font-size: clamp(9px, 10px, 11px); /* 10sp — roadmap spec value, no token */
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-white);
+  text-shadow: 0 1px 2px var(--black-overlay);
+}
+
+/* W5: grid-form read-progress badge — mirrors the language badge on the
+   opposite (bottom-right) corner of the tile. */
+.gallery-card__progress {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  font-size: clamp(9px, 10px, 11px);
   font-weight: 700;
   line-height: 1;
   color: var(--color-white);

@@ -68,6 +68,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { useSwipeGesture } from '@/composables/useSwipeGesture'
+import { maskedImageSrc } from '@/utils/privacyMask'
 
 /** Android `Settings.READING_DIRECTION_*`: LTR / RTL / vertical (scroll). */
 export type ReadingDirection = 'ltr' | 'rtl' | 'vertical'
@@ -98,9 +99,12 @@ export const AUTO_PLAY_INTERVALS_MS: readonly number[] = [2000, 3000, 5000, 8000
 /**
  * Responsive reader image URL — `streamGalleryImage` endpoint (0-based page)
  * with the `?w=` width hint (container width × DPR at the call site).
+ *
+ * 隐私打码开启时返回中性占位图——单点拦截，PageMode / ScrollMode /
+ * DualPageMode 的 src 与 srcset（自本函数拼出）全部生效。
  */
 export function pageImageUrl(gid: number, page: number, widthPx: number): string {
-  return `/api/v1/image/${gid}/${page}?w=${Math.max(1, Math.round(widthPx))}`
+  return maskedImageSrc(`/api/v1/image/${gid}/${page}?w=${Math.max(1, Math.round(widthPx))}`)
 }
 
 /**
