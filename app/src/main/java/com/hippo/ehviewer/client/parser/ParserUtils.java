@@ -20,6 +20,7 @@ import com.hippo.lib.yorozuya.NumberUtils;
 import com.hippo.lib.yorozuya.StringUtils;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -27,9 +28,31 @@ import java.util.Locale;
 public class ParserUtils {
 
     public static final DateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+    private static final DateFormat sDateOnlyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
     public static synchronized String formatDate(long time) {
         return sDateFormat.format(new Date(time));
+    }
+
+    public static synchronized long parseDate(String date) {
+        if (date == null || date.isEmpty()) {
+            return 0L;
+        }
+        try {
+            Date parsed = sDateFormat.parse(date);
+            if (parsed != null) {
+                return parsed.getTime();
+            }
+        } catch (ParseException ignored) {
+        }
+        try {
+            Date parsed = sDateOnlyFormat.parse(date);
+            if (parsed != null) {
+                return parsed.getTime();
+            }
+        } catch (ParseException ignored) {
+        }
+        return 0L;
     }
 
     public static String trim(String str) {

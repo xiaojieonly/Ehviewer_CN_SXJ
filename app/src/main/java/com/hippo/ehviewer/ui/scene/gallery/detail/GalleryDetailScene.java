@@ -1657,6 +1657,60 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         torrentDownloadController.showTorrentList(mContext, mGalleryDetail.torrentUrl, EhApplication.getOkHttpClient(mContext));
     }
 
+    private void showUploaderActionDialog() {
+        Context context = getEHContext();
+        String uploader = getUploader();
+        if (context == null || uploader == null) {
+            return;
+        }
+
+        boolean subscribed = Settings.isSubscribedUploader(uploader);
+        CharSequence[] items = new CharSequence[] {
+                getString(subscribed ? R.string.unsubscribe_the_uploader : R.string.subscribe_the_uploader),
+                getString(R.string.block_the_uploader)
+        };
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.uploader_action_title)
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        if (subscribed) {
+                            unsubscribeUploader(uploader);
+                        } else {
+                            subscribeUploader(uploader);
+                        }
+                    } else if (which == 1) {
+                        showFilterUploaderDialog();
+                    }
+                })
+                .show();
+    }
+
+    private void unsubscribeUploader(String uploader) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        if (tagDialog == null) {
+            tagDialog = new GalleryListSceneDialog(this);
+        }
+        tagDialog.unsubscribeUploader(uploader);
+    }
+
+    private void subscribeUploader(String uploader) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        if (!Settings.isLogin()) {
+            showTip(R.string.settings_eh_identity_cookies_tourist, LENGTH_SHORT);
+            return;
+        }
+        if (tagDialog == null) {
+            tagDialog = new GalleryListSceneDialog(this);
+        }
+        tagDialog.subscribeUploader(uploader);
+    }
+
     private void showFilterUploaderDialog() {
         Context context = getEHContext();
         String uploader = getUploader();
@@ -1727,7 +1781,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         if (mUploader == v) {
-            showFilterUploaderDialog();
+            showUploaderActionDialog();
+            return true;
         } else if (mDownload == v) {
 //            GalleryInfo galleryInfo = getGalleryInfo();
 //            if (galleryInfo != null) {
