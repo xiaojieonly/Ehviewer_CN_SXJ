@@ -865,6 +865,7 @@
     <string name="sort_by_fav_time">เวลาที่เพิ่มในรายการโปรด</string>
     <!--  订阅服务  -->
     <string name="subscription_watched">ดูแล้ว</string>
+    <string name="subscription_unwatched">เลิกติดตาม</string>
     <string name="subscription_hidden">ซ่อน</string>
     <string name="delete_subscription_title">ลบแท็ก</string>
     <string name="can_not_use_this_tag">แท็กไม่สามารถใช้งานได้</string>

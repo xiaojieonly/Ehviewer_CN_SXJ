@@ -806,6 +806,7 @@
     <string name="torrent_exist">ファイルは既に存在します: %s</string>
     <!--  订阅服务  -->
     <string name="subscription_watched">閲覧済み</string>
+    <string name="subscription_unwatched">ウォッチ解除</string>
     <string name="subscription_hidden">非表示</string>
     <string name="delete_subscription_title">タグを削除</string>
     <string name="can_not_use_this_tag">タグは利用できません</string>

@@ -879,6 +879,7 @@
 
     <!--  ??服?  -->
     <string name="subscription_watched">구독 중</string>
+    <string name="subscription_unwatched">구독 취소</string>
     <string name="subscription_hidden">구독 해제</string>
     <string name="delete_subscription_title">태그 삭제</string>
     <string name="can_not_use_this_tag">태그를 사용할 수 없음</string>

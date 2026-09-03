@@ -930,6 +930,7 @@
 
     <!--  订阅服务  -->
     <string name="subscription_watched">已觀看</string>
+    <string name="subscription_unwatched">取消訂閱</string>
     <string name="subscription_hidden">已隱藏</string>
     <string name="delete_subscription_title">移除標籤</string>
     <string name="can_not_use_this_tag">標籤不可用</string>

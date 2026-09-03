@@ -961,6 +961,7 @@
 
     <!--  订阅服务  -->
     <string name="subscription_watched">Watched</string>
+    <string name="subscription_unwatched">Unsubscribe</string>
     <string name="subscription_hidden">Hidden</string>
     <string name="delete_subscription_title">Remove Tag</string>
     <string name="can_not_use_this_tag">Tags are not available</string>

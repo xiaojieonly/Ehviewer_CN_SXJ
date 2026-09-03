@@ -17,6 +17,7 @@ import com.hippo.ehviewer.client.EhRequest
 import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.userTag.TagPushParam
+import com.hippo.ehviewer.client.data.userTag.UserTag
 import com.hippo.ehviewer.client.data.userTag.UserTagList
 import com.hippo.ehviewer.dao.Filter
 import com.hippo.ehviewer.ui.MainActivity
@@ -67,15 +68,22 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
             ) { _: DialogInterface?, _: Int -> copyTag(tagName) }
                 .show()
         } else {
+            val watchedTag = EhApplication.getUserTagList(context)?.findByTagName(tagName)
             builder.setNeutralButton(
                 R.string.copy_tag
             ) { _: DialogInterface?, _: Int -> copyTag(tagName) }
-                .setNegativeButton(
+            if (watchedTag != null && watchedTag.watched) {
+                builder.setNegativeButton(
+                    R.string.subscription_unwatched
+                ) { _: DialogInterface?, _: Int -> deleteWatchedTag(watchedTag) }
+            } else {
+                builder.setNegativeButton(
                     R.string.subscription_watched
                 ) { _: DialogInterface?, _: Int -> requestTag(tagName, true) }
-                .setPositiveButton(
-                    R.string.subscription_hidden
-                ) { _: DialogInterface?, _: Int -> requestTag(tagName, false) }
+            }
+            builder.setPositiveButton(
+                R.string.subscription_hidden
+            ) { _: DialogInterface?, _: Int -> requestTag(tagName, false) }
                 .show()
         }
     }
@@ -120,8 +128,10 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
         }
         val activity = baseScene.activity2 ?: return
 
+        val actionLabel =
+            if (tagState) R.string.subscription_watched else R.string.subscription_hidden
         val callback =
-            SubscriptionDetailListener(context, activity.stageId, baseScene.tag, tagState)
+            SubscriptionDetailListener(context, activity.stageId, baseScene.tag, actionLabel)
 
         val param = TagPushParam()
 
@@ -140,11 +150,27 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
         EhApplication.getEhClient(context).execute(mRequest)
     }
 
+    private fun deleteWatchedTag(userTag: UserTag) {
+        val url = EhUrl.getMyTag()
+        if (null == context) {
+            return
+        }
+        val activity = baseScene.activity2 ?: return
+        val callback = SubscriptionDetailListener(
+            context, activity.stageId, baseScene.tag, R.string.subscription_unwatched
+        )
+        val mRequest = EhRequest()
+            .setMethod(EhClient.METHOD_DELETE_WATCHED)
+            .setArgs(url, userTag)
+            .setCallback(callback)
+        EhApplication.getEhClient(context).execute(mRequest)
+    }
+
     private inner class SubscriptionDetailListener(
         context: Context,
         stageId: Int,
         sceneTag: String?,
-        private val tagState: Boolean
+        @StringRes private val actionLabel: Int
     ) :
         EhCallback<GalleryListScene?, UserTagList?>(context, stageId, sceneTag) {
         override fun isInstance(scene: SceneFragment): Boolean {
@@ -152,12 +178,14 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
         }
 
         override fun onSuccess(result: UserTagList?) {
+            if (result != null) {
+                EhApplication.saveUserTagList(context!!, result)
+            }
             baseScene.setTagList(result)
-            val state =
-                if (tagState) context!!.getString(R.string.subscription_watched) else context!!.getString(
-                    R.string.subscription_hidden
-                )
-            val msg = context.getString(R.string.subscription_success, state)
+            val msg = context!!.getString(
+                R.string.subscription_success,
+                context.getString(actionLabel)
+            )
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
 
