@@ -16,6 +16,11 @@ export interface DownloadItem {
   downloadDir: string | null
   /** Failure/cancel reason; present only when the task is failed (state 4). */
   error?: string | null
+  /**
+   * 阅读进度（0 起页索引，plan-2026-09-02 W7）。服务器从历史行批量带出
+   * （S10）；旧服务器不下发 → undefined，运行时按缺失容错（角标隐藏）。
+   */
+  readProgress?: number
 }
 
 export interface DownloadLabel {

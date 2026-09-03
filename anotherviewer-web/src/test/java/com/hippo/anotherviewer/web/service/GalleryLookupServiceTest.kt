@@ -177,6 +177,85 @@ class GalleryLookupServiceTest {
     }
 
     // ------------------------------------------------------------------
+    // P1: getDetailCached（详情富化路径的缓存直读）
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `getDetailCached fetches upstream once and serves the second call from cache`() {
+        val (service, client) = harness()
+        val detailCalls = AtomicInteger(0)
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<GalleryDetail> {
+                SiteEngine.getGalleryDetail(any(), any(), anyString())
+            }.thenAnswer {
+                detailCalls.incrementAndGet()
+                twoPageDetail()
+            }
+
+            val first = service.getDetailCached(GID, DETAIL_TOKEN)
+            val second = service.getDetailCached(GID, DETAIL_TOKEN)
+
+            assertEquals(2, first!!.pages)
+            assertEquals(first, second)
+            assertEquals(1, detailCalls.get())
+            engine.verify {
+                SiteEngine.getGalleryDetail(null, client, SiteUrl.getGalleryDetailUrl(GID, DETAIL_TOKEN))
+            }
+        }
+    }
+
+    @Test
+    fun `getDetailCached shares the gid cache with fetchPageCount and fetchImageUrl`() {
+        val (service, _) = harness()
+        val detailCalls = AtomicInteger(0)
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<GalleryDetail> {
+                SiteEngine.getGalleryDetail(any(), any(), anyString())
+            }.thenAnswer {
+                detailCalls.incrementAndGet()
+                twoPageDetail()
+            }
+            engine.`when`<GalleryPageParser.Result> {
+                SiteEngine.getGalleryPage(any(), any(), anyString(), anyLong(), anyString())
+            }.thenReturn(pageResult())
+
+            assertEquals(2, service.getDetailCached(GID, DETAIL_TOKEN)!!.pages)
+            assertEquals(2, service.fetchPageCount(GID, DETAIL_TOKEN))
+
+            assertEquals(1, detailCalls.get())
+        }
+    }
+
+    @Test
+    fun `getDetailCached returns null on upstream failure without caching`() {
+        val (service, _) = harness()
+        val detailCalls = AtomicInteger(0)
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<GalleryDetail> {
+                SiteEngine.getGalleryDetail(any(), any(), anyString())
+            }.thenAnswer {
+                detailCalls.incrementAndGet()
+                throw RuntimeException("site broken")
+            }
+
+            assertNull(service.getDetailCached(GID, DETAIL_TOKEN))
+            assertNull(service.getDetailCached(GID, DETAIL_TOKEN))
+            // 失败不落缓存：两次都是真实上游尝试。
+            assertEquals(2, detailCalls.get())
+        }
+    }
+
+    @Test
+    fun `getDetailCached returns null for a blank token without any site call`() {
+        val (service, _) = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            assertNull(service.getDetailCached(GID, ""))
+            assertNull(service.getDetailCached(GID, null))
+            engine.verifyNoInteractions()
+        }
+    }
+
+    // ------------------------------------------------------------------
     // findToken / resolvePageCount (local rows only, no site traffic)
     // ------------------------------------------------------------------
 

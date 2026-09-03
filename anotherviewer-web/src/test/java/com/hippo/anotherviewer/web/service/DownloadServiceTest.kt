@@ -28,6 +28,7 @@ class DownloadServiceTest {
     private lateinit var labelRepository: DownloadLabelRepository
     private lateinit var availability: EhAvailabilityService
     private lateinit var downloadDirIndex: DownloadDirIndex
+    private lateinit var historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository
     private lateinit var service: DownloadService
 
     @BeforeEach
@@ -36,6 +37,7 @@ class DownloadServiceTest {
         labelRepository = mock(DownloadLabelRepository::class.java)
         availability = mock(EhAvailabilityService::class.java)
         downloadDirIndex = mock(DownloadDirIndex::class.java)
+        historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
         val sessionManager = mock(SiteSessionManager::class.java)
         service = DownloadService(
             downloadRepository,
@@ -48,6 +50,7 @@ class DownloadServiceTest {
             mock(ServerConfigService::class.java),
             availability,
             downloadDirIndex,
+            historyRepository,
         )
     }
 
@@ -63,6 +66,31 @@ class DownloadServiceTest {
         verify(downloadRepository).countByState(4)
         verify(downloadRepository, never()).findByState(3)
         verify(downloadRepository, never()).findByState(4)
+    }
+
+    @Test
+    fun `listDownloads fills readProgress with one batched history query (S10)`() {
+        val row = DownloadInfoEntity().apply {
+            id = 1L; gid = 42L; token = "tok42"; title = "T"; total = 10; done = 5
+        }
+        val rowNoHistory = DownloadInfoEntity().apply {
+            id = 2L; gid = 43L; token = "tok43"; title = "T2"
+        }
+        `when`(downloadRepository.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable::class.java)))
+            .thenReturn(org.springframework.data.domain.PageImpl(listOf(row, rowNoHistory)))
+        `when`(historyRepository.findByGidIn(listOf(42L, 43L))).thenReturn(
+            listOf(com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply {
+                gid = 42L; token = "tok42"; page = 7
+            })
+        )
+
+        val response = service.listDownloads()
+
+        val byGid = response.downloads.associateBy { it.gid }
+        assertEquals(7, byGid[42L]!!.readProgress)
+        // 无历史行 → 0（未读），与其他列表端点语义一致。
+        assertEquals(0, byGid[43L]!!.readProgress)
+        verify(historyRepository).findByGidIn(listOf(42L, 43L))
     }
 
     @Test

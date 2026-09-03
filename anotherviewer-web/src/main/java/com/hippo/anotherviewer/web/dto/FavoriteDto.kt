@@ -22,7 +22,10 @@ data class FavoriteItem(
     // F-UX5: 条目真实收藏槽位（Android 契约：-2 未收藏 / -1 默认夹 / 0-9 自定义夹）。
     // 列表响应附加字段（openapi FavoriteItem 未限制 additionalProperties），
     // 供收藏页 ♥ 徽章渲染真值；旧客户端忽略该字段不受影响。
-    val favoriteSlot: Int = -2
+    val favoriteSlot: Int = -2,
+    // 阅读进度（0 起页索引，来自同 gid 历史行；无历史行为 null），
+    // 收藏页卡片角标用；缺省/0 时前端不显示角标。
+    val readProgress: Int? = null
 )
 
 data class FavoriteAddRequest(

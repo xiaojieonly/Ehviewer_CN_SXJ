@@ -142,6 +142,12 @@ export interface AddHistoryPayload {
   token: string
   /** Optional display title persisted with the history entry. */
   title?: string
+  /**
+   * 阅读进度（0 起页索引，plan-2026-09-02 W4③）。缺省 = 不改写已存进度
+   * （旧调用方兼容）；显式传 0 = 有意重读，服务器原样落库（D5：REST 直写
+   * 即权威值，sync 合并侧才做 max 防旧端清零）。
+   */
+  page?: number
 }
 
 export const galleryApi = {

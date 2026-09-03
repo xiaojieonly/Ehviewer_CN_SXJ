@@ -121,6 +121,26 @@ class GalleryLookupService(
     }
 
     /**
+     * P1: 详情页富化专用的缓存直读（WebUI 详情补强路径）。
+     *
+     * gid 键查询 [detailCache]（10min TTL 沿用）→ 命中零上游；miss 时经共享
+     * client 拉 `SiteEngine.getGalleryDetail` 并回填缓存。上游失败返回 null
+     * （调用方回落本地 DTO，语义与原 enrichHistoryDetail 的 try/catch 一致），
+     * 评论随 detail 带回。可用性门禁由调用方负责（DOWN 时调用方直接跳过补强）。
+     */
+    fun getDetailCached(gid: Long, token: String?): GalleryDetail? {
+        detailCache.getIfPresent(gid)?.let { return it }
+        if (token.isNullOrBlank()) return null
+        return try {
+            val detail = SiteEngine.getGalleryDetail(null, client, SiteUrl.getGalleryDetailUrl(gid, token))
+            detailCache.put(gid, detail)
+            detail
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * Gallery detail (page count + per-page preview URLs), cached per gid.
      * On cache miss the detail page is fetched through the shared client.
      * While EH is DOWN the entry point short-circuits with

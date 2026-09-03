@@ -169,6 +169,11 @@
           "type": "integer",
           "description": "Search mode context in which the gallery was viewed (maps to ListUrlBuilder search mode constants)"
         },
+        "page": {
+          "type": "integer",
+          "description": "0-based reading position (page index; SpiderInfo.startPage semantics). Additive and intentionally NOT required: legacy App pushes carry no page. Row-wins merge takes max(existing, incoming) so an old push without this field never resets stored progress.",
+          "minimum": 0
+        },
         "time": {
           "type": "integer",
           "description": "Epoch milliseconds when the gallery was last viewed",

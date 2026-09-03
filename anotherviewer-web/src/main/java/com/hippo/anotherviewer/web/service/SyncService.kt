@@ -898,6 +898,10 @@ class SyncService(
         entity.favoriteName = dto.favoriteName
         entity.pages = dto.pages
         entity.mode = dto.mode
+        // D3: sync 合并里 page 取 max 的唯一落点（行胜路径）。旧 App push 不带
+        // page（默认 0）→ max(存量, 0) 存量不丢；墓碑/行负路径不经过本函数，
+        // 不碰 page。
+        entity.page = maxOf(entity.page, dto.page)
         entity.time = dto.time
         entity.lastModified = dto.lastModified
         entity.deleted = dto.deleted
@@ -1056,7 +1060,7 @@ class SyncService(
         simpleTags = simpleTags, thumbWidth = thumbWidth, thumbHeight = thumbHeight,
         spanSize = spanSize, spanIndex = spanIndex, spanGroupIndex = spanGroupIndex,
         favoriteSlot = favoriteSlot, favoriteName = favoriteName, pages = pages,
-        mode = mode, time = time, lastModified = lastModified, deviceId = writerDeviceId,
+        mode = mode, page = page, time = time, lastModified = lastModified, deviceId = writerDeviceId,
         deleted = deleted,
     )
 

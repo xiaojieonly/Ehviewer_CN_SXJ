@@ -31,7 +31,9 @@ data class GalleryItemDto(
     val thumbHeight: Int,
     val pages: Int,
     val favoriteSlot: Int,
-    val favoriteName: String?
+    val favoriteName: String?,
+    /** 阅读进度（0 起页索引，来自 history 行 page）；无对应历史行为 0，卡片角标据此隐藏。 */
+    val readProgress: Int? = null
 )
 
 data class TopListResponse(
@@ -89,7 +91,9 @@ data class GalleryDetailDto(
     /** 站点真实评论（GalleryDetail.comments）；本地详情（history）路径为空。 */
     val comments: List<CommentItem> = emptyList(),
     /** 可选失败原因（如 "EH_UNAVAILABLE"）；正常路径为 null，不破坏旧客户端。 */
-    val cause: String? = null
+    val cause: String? = null,
+    /** 阅读进度（0 起页索引，来自 history 行 page）；无对应历史行（如上游直取路径）为 null，前端按 0 处理。 */
+    val readProgress: Int? = null
 )
 
 data class TagDto(

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import DownloadView, { buildDetailRoute, buildReaderRoute } from '../DownloadView.vue'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem } from '@/api/download'
@@ -150,6 +151,8 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
   let wrapper: VueWrapper
 
   beforeEach(() => {
+    // DownloadItem (W5/W7) 读取偏好 store（showReadProgress）→ 需要 pinia。
+    setActivePinia(createPinia())
     localStorage.clear()
     pushMock.mockClear()
     vi.mocked(downloadApi.list).mockResolvedValue({ downloads: [], labels: [], total: 0 })

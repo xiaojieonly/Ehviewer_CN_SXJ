@@ -240,6 +240,8 @@ public class SiteDB {
                 addColumn(db, "BOOKMARKS", "SPAN_GROUP_INDEX", "INTEGER NOT NULL DEFAULT 0");
                 addColumn(db, "BOOKMARKS", "FAVORITE_SLOT", "INTEGER NOT NULL DEFAULT 0");
                 addColumn(db, "BOOKMARKS", "FAVORITE_NAME", "TEXT");
+            case 8: // 8 to 9, add reading-progress PAGE column to HISTORY
+                addColumn(db, "HISTORY", "PAGE", "INTEGER NOT NULL DEFAULT 0");
         }
     }
 
@@ -898,6 +900,31 @@ public class SiteDB {
         return sDaoSession.getHistoryDao().queryBuilder().orderDesc(HistoryDao.Properties.Time).listLazy();
     }
 
+    /** Loads one history record by gid, or {@code null} when absent. */
+    @Nullable
+    public static synchronized HistoryInfo loadHistoryInfo(long gid) {
+        return sDaoSession.getHistoryDao().load(gid);
+    }
+
+    /**
+     * Bridges the reading progress into the HISTORY row (plan D2): stores
+     * {@code page} and refreshes {@code time} so the "currently reading"
+     * row stays at the top of the history list and the sync push ledger
+     * (keyed on {@code time}) re-pushes it next cycle. Skips silently when
+     * the row does not exist yet — history rows are created by the detail
+     * scene on visit, so reading always has a row to update.
+     */
+    public static synchronized void updateHistoryPage(long gid, int page) {
+        HistoryDao dao = sDaoSession.getHistoryDao();
+        HistoryInfo info = dao.load(gid);
+        if (info == null) {
+            return;
+        }
+        info.page = page;
+        info.time = System.currentTimeMillis();
+        dao.update(info);
+    }
+
     public static synchronized void putHistoryInfo(GalleryInfo galleryInfo) {
         HistoryDao dao = sDaoSession.getHistoryDao();
         HistoryInfo info = dao.load(galleryInfo.gid);
@@ -1007,6 +1034,7 @@ public class SiteDB {
             existing.favoriteSlot = incoming.favoriteSlot;
             existing.favoriteName = incoming.favoriteName;
             existing.mode = incoming.mode;
+            existing.page = incoming.page;
             existing.time = incoming.time;
             dao.update(existing);
         }

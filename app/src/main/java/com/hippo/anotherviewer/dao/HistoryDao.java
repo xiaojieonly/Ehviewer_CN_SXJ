@@ -44,6 +44,7 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
         public final static Property SpanGroupIndex = new Property(19, int.class, "spanGroupIndex", false, "SPAN_GROUP_INDEX");
         public final static Property FavoriteSlot = new Property(20, int.class, "favoriteSlot", false, "FAVORITE_SLOT");
         public final static Property FavoriteName = new Property(21, String.class, "favoriteName", false, "FAVORITE_NAME");
+        public final static Property Page = new Property(22, int.class, "page", false, "PAGE");
     };
 
 
@@ -80,7 +81,8 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
                 "\"SPAN_INDEX\" INTEGER NOT NULL ," + // 18: spanIndex
                 "\"SPAN_GROUP_INDEX\" INTEGER NOT NULL ," + // 19: spanGroupIndex
                 "\"FAVORITE_SLOT\" INTEGER NOT NULL ," + // 20: favoriteSlot
-                "\"FAVORITE_NAME\" TEXT);"); // 21: favoriteName
+                "\"FAVORITE_NAME\" TEXT," + // 21: favoriteName
+                "\"PAGE\" INTEGER NOT NULL );"); // 22: page
     }
 
     /** Drops the underlying database table. */
@@ -150,6 +152,7 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
         if (favoriteName != null) {
             stmt.bindString(22, favoriteName);
         }
+        stmt.bindLong(23, entity.getPage());
     }
 
     @Override
@@ -213,6 +216,7 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
         if (favoriteName != null) {
             stmt.bindString(22, favoriteName);
         }
+        stmt.bindLong(23, entity.getPage());
     }
 
     @Override
@@ -244,7 +248,8 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
             cursor.getInt(offset + 18), // spanIndex
             cursor.getInt(offset + 19), // spanGroupIndex
             cursor.getInt(offset + 20), // favoriteSlot
-            cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21) // favoriteName
+            cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21), // favoriteName
+            cursor.getInt(offset + 22) // page
         );
         return entity;
     }
@@ -273,6 +278,7 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
         entity.setSpanGroupIndex(cursor.getInt(offset + 19));
         entity.setFavoriteSlot(cursor.getInt(offset + 20));
         entity.setFavoriteName(cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21));
+        entity.setPage(cursor.getInt(offset + 22));
      }
     
     @Override

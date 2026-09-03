@@ -31,7 +31,9 @@ data class DownloadItem(
     // Exposes DownloadInfoEntity.error (human-readable failure/cancel reason).
     // Defaults to null so serialization is unchanged until DownloadService
     // maps the column into the DTO.
-    val error: String? = null
+    val error: String? = null,
+    /** 阅读进度（0 起页索引，来自 history 行 page）；无对应历史行为 0，卡片角标据此隐藏。 */
+    val readProgress: Int? = null
 )
 
 data class DownloadLabel(

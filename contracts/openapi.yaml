@@ -2978,6 +2978,14 @@ components:
         favoriteName:
           type: string
           nullable: true
+        readProgress:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: >-
+            0-based last-read page index from the history row (reading
+            progress, additive). Absent/null when no progress is known
+            (legacy servers or upstream-fetched rows without local history).
 
     TopListResponse:
       type: object
@@ -3078,6 +3086,14 @@ components:
         favoriteName:
           type: string
           nullable: true
+        readProgress:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: >-
+            0-based last-read page index from the history row (reading
+            progress, additive). Absent/null when no progress is known
+            (legacy servers or upstream-fetched rows without local history).
         tags:
           type: array
           items:
@@ -3111,6 +3127,14 @@ components:
         title:
           type: string
           nullable: true
+        page:
+          type: integer
+          minimum: 0
+          description: >-
+            0-based reading position to persist with the history row
+            (additive). Optional: when absent the server keeps the stored
+            progress (legacy clients push no page); an explicit 0 is written
+            as-is and means "re-reading from the start".
 
     QuickSearchListResponse:
       type: object
@@ -3198,6 +3222,11 @@ components:
         posted:
           type: string
           nullable: true
+        readProgress:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: 阅读进度（0 起页索引，来自同 gid 历史行）；无历史行为 null，0/null 不显示角标
 
     FavoriteAddRequest:
       type: object
@@ -3259,6 +3288,12 @@ components:
         time:
           type: integer
           format: int64
+        page:
+          type: integer
+          minimum: 0
+          description: >-
+            0-based last-read page index (reading progress; additive, optional
+            for legacy servers that do not persist progress yet).
 
     # ----------------------------------------------------------
     # Download

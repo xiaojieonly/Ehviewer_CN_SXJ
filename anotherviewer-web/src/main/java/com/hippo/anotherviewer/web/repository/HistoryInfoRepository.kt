@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param
 
 interface HistoryInfoRepository : JpaRepository<HistoryInfoEntity, Long> {
     fun findByGid(gid: Long): HistoryInfoEntity?
+    /** S7: 列表端点（history/favorites/downloads）批量取阅读进度，避免逐行 findByGid 的 N+1。 */
+    fun findByGidIn(gids: Collection<Long>): List<HistoryInfoEntity>
     fun findAllByOrderByTimeDesc(): List<HistoryInfoEntity>
     fun findAllByUsernameIsNull(): List<HistoryInfoEntity>
     fun countByUsername(username: String): Long

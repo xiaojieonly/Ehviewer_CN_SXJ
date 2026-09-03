@@ -30,6 +30,13 @@ class HistoryInfoEntity : GalleryInfoBase() {
     @Column(nullable = false)
     var mode: Int = 0
 
+    /** 阅读进度（0 起的页索引，对齐 app 端 HistoryInfo.page / SpiderInfo.startPage）；
+     * sync 合并取 max 防旧设备回退。columnDefinition 必须带 default 0：
+     * SQLite 拒绝对存量表 ADD COLUMN NOT NULL 无默认值（ddl-auto 补列实测
+     * 2026-09-03 生产库被拒），带 default 后存量库/新库两条路径都成立。 */
+    @Column(nullable = false, columnDefinition = "integer not null default 0")
+    var page: Int = 0
+
     /** 软删墓碑: 硬删改软删后行保留, 供增量 pull 传播删除 */
     @Column(nullable = false)
     var deleted: Boolean = false

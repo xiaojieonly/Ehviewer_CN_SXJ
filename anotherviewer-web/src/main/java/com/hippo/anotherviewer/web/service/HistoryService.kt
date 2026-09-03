@@ -68,10 +68,21 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
 
     fun addHistory(gid: Long, token: String, title: String?, titleJpn: String?,
                    thumb: String?, category: Int, rating: Float, mode: Int = 0) {
+        addHistory(gid, token, title, titleJpn, thumb, category, rating, mode, null)
+    }
+
+    /**
+     * Upsert 一条历史。[page] 非 null 时写入阅读进度（0 起页索引）。
+     * 进度只在调用方明确携带时改写——内部路径（站点详情拉取落历史等）
+     * 传 null 保持已存值，避免被 0 清掉。
+     */
+    fun addHistory(gid: Long, token: String, title: String?, titleJpn: String?,
+                   thumb: String?, category: Int, rating: Float, mode: Int = 0, page: Int? = null) {
         val existing = historyRepository.findByGid(gid)
         if (existing != null) {
             existing.time = System.currentTimeMillis()
             existing.mode = mode
+            if (page != null) existing.page = page.coerceAtLeast(0)
             historyRepository.save(existing)
         } else {
             val entity = HistoryInfoEntity().apply {
@@ -83,6 +94,7 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
                 this.category = category
                 this.rating = rating
                 this.mode = mode
+                this.page = page?.coerceAtLeast(0) ?: 0
                 this.time = System.currentTimeMillis()
             }
             historyRepository.save(entity)
@@ -102,6 +114,7 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
         category = category,
         rating = rating,
         mode = mode,
+        page = page,
         time = time
     )
 

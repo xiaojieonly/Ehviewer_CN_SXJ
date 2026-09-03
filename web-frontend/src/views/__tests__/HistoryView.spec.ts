@@ -203,6 +203,37 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     expect(pushMock).toHaveBeenCalledWith({ path: '/gallery/9', query: {} })
   })
 
+  /* ---------------- W6 阅读进度透传（plan-2026-09-02） ---------------- */
+
+  it('passes the history row page through as readProgress (badge shows N+1P)', async () => {
+    // 历史行无页数（pages=0）→ 角标退化为 NP 格式。
+    seedPrefs({ listMode: 'list', showReadProgress: true })
+    await mountHistory([makeHistoryItem({ gid: 11, page: 5 })])
+    const badge = wrapper.find('[data-testid="read-progress-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('6P')
+  })
+
+  it('shows the badge on grid cells too', async () => {
+    seedPrefs({ listMode: 'grid', showReadProgress: true })
+    await mountHistory([makeHistoryItem({ gid: 14, page: 2 })])
+    const badge = wrapper.find('[data-testid="read-progress-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('3P')
+  })
+
+  it('hides the read-progress badge when the row carries no page (legacy server)', async () => {
+    seedPrefs({ listMode: 'list', showReadProgress: true })
+    await mountHistory([makeHistoryItem({ gid: 12 })])
+    expect(wrapper.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+  })
+
+  it('hides the read-progress badge when showReadProgress is off', async () => {
+    seedPrefs({ listMode: 'list', showReadProgress: false })
+    await mountHistory([makeHistoryItem({ gid: 13, page: 5 })])
+    expect(wrapper.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+  })
+
   /* ---------------- search + filter slots (A5d, 互斥) ---------------- */
 
   it('loads the unfiltered history without q/regex params', async () => {

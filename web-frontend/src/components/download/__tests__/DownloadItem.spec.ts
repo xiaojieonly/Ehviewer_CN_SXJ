@@ -1,7 +1,13 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import DownloadItem from '../DownloadItem.vue'
 import type { DownloadItem as DownloadItemType } from '@/api/download'
+
+// W5/W7: 行组件读取偏好 store（showReadProgress）→ 全局提供 pinia。
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 
 /** Build a download fixture; `overrides` patches individual fields. */
 function makeDownload(overrides: Partial<DownloadItemType> = {}): DownloadItemType {
@@ -199,5 +205,61 @@ describe('DownloadItem (multi-select: contextmenu / long-press / toggle)', () =>
     expect(wrapper.find('.download-item__check--on').exists()).toBe(true)
     expect(wrapper.find('.download-item').classes()).toContain('download-item--selected')
     expect(wrapper.find('.download-item').attributes('aria-selected')).toBe('true')
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * W5/W7 additions (plan-2026-09-02 §5.3 W7 / §8) — 下载行阅读进度角标：
+ * 与 GalleryCard 同语义（showReadProgress 开 + readProgress > 0 才显示，
+ * 格式 N/MP / NP）。W7 的映射点：/download/list 行 DTO 直接进本组件，
+ * readProgress 随 DownloadItem 透传。
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+import { usePreferencesStore } from '@/stores/preferences'
+import { DEFAULT_PREFERENCES } from '@/api/preferences'
+
+function seedGeneral(showReadProgress: boolean): void {
+  const store = usePreferencesStore()
+  store.prefs = {
+    ...DEFAULT_PREFERENCES,
+    general: { ...DEFAULT_PREFERENCES.general, showReadProgress },
+  }
+}
+
+describe('DownloadItem W5/W7 — 阅读进度角标', () => {
+  it('shows N/MP when showReadProgress is on and readProgress > 0', () => {
+    seedGeneral(true)
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ readProgress: 3, total: 30 }) },
+    })
+    const badge = wrapper.find('[data-testid="read-progress-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('4/30P')
+    // 下载进度文案（30/30 pages）不受影响。
+    expect(wrapper.find('.download-item__pages').text()).toBe('30/30 pages')
+  })
+
+  it('formats NP when the total page count is unknown', () => {
+    seedGeneral(true)
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ readProgress: 2, total: 0 }) },
+    })
+    expect(wrapper.find('[data-testid="read-progress-badge"]').text()).toBe('3P')
+  })
+
+  it('hides the badge when showReadProgress is off', () => {
+    seedGeneral(false)
+    const wrapper = mount(DownloadItem, {
+      props: { item: makeDownload({ readProgress: 3, total: 30 }) },
+    })
+    expect(wrapper.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+  })
+
+  it('hides the badge when readProgress is missing (legacy server) or 0', () => {
+    seedGeneral(true)
+    const missing = mount(DownloadItem, { props: { item: makeDownload() } })
+    expect(missing.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
+    const zero = mount(DownloadItem, { props: { item: makeDownload({ readProgress: 0 }) } })
+    expect(zero.find('[data-testid="read-progress-badge"]').exists()).toBe(false)
   })
 })

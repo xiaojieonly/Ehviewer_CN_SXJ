@@ -96,6 +96,17 @@ function flipTo(wrapper: VueWrapper, page: number): void {
   )
 }
 
+/**
+ * W4 (plan-2026-09-02): the reader now restores the initial page from the
+ * persisted `readProgress:{gid}` localStorage key, so every test must start
+ * from a clean storage — otherwise a prior test's flush (e.g. the
+ * unknown-page-counts test flipping to page 1 before unmount) leaks into the
+ * next mount's restore.
+ */
+beforeEach(() => {
+  localStorage.clear()
+})
+
 describe('ReaderView F1 — history writeback (POST /gallery/history/{gid})', () => {
   let wrapper: VueWrapper | undefined
   let warnSpy: ReturnType<typeof vi.spyOn>
@@ -125,13 +136,14 @@ describe('ReaderView F1 — history writeback (POST /gallery/history/{gid})', ()
     vi.useRealTimers()
   })
 
-  it('records the visit exactly once with token+title when entering the reader', async () => {
+  it('records the visit exactly once with token+title+page when entering the reader', async () => {
     wrapper = await mountReader()
     await flushPromises()
     expect(galleryApi.addHistory).toHaveBeenCalledTimes(1)
     expect(galleryApi.addHistory).toHaveBeenCalledWith(123456, {
       token: 'a1b2c3d4e5',
       title: 'Sample Gallery',
+      page: 0,
     })
   })
 
@@ -174,6 +186,7 @@ describe('ReaderView F1 — history writeback (POST /gallery/history/{gid})', ()
     expect(galleryApi.addHistory).toHaveBeenLastCalledWith(123456, {
       token: 'a1b2c3d4e5',
       title: 'Sample Gallery',
+      page: 10,
     })
   })
 
@@ -795,5 +808,227 @@ describe('ReaderView — 阅读设置统一（服务器基底 + 本地覆盖 + v
     expect(store.prefs?.reader.pageMode).toBe('single')
     const stored = JSON.parse(localStorage.getItem(READER_SETTINGS_KEY)!)
     expect(stored.pageMode).toBe('single')
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * W4 additions (plan-2026-09-02 §5.3 W4 / §8 前端) — 阅读进度恢复与回写：
+ * 初始页优先级（深链 > detail.readProgress > 0）、未知页数不钳上界、
+ * 回写 payload 携带 page、降级态 localStorage 读写。
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+describe('ReaderView W4 — 阅读进度恢复（初始页优先级）', () => {
+  let wrapper: VueWrapper | undefined
+
+  async function mountReader(overrides: Record<string, unknown> = {}): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture(overrides))
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    vi.mocked(galleryApi.getDetail).mockReset()
+    vi.mocked(galleryApi.addHistory).mockReset()
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.clear()
+    vi.restoreAllMocks()
+  })
+
+  it('restores the initial page from detail.readProgress when no deep link', async () => {
+    wrapper = await mountReader({ readProgress: 12 })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('12')
+  })
+
+  it('starts at 0 when readProgress is absent (legacy-server tolerance)', async () => {
+    wrapper = await mountReader()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('0')
+  })
+
+  it('treats an explicit readProgress 0 as "start from the beginning"', async () => {
+    wrapper = await mountReader({ readProgress: 0 })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('0')
+  })
+
+  it('gives the deep-link route param priority over readProgress', async () => {
+    routeParams.page = '30'
+    wrapper = await mountReader({ readProgress: 12 })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('30')
+  })
+
+  it('clamps a restored readProgress to the last known page', async () => {
+    wrapper = await mountReader({ readProgress: 100 })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('49')
+  })
+
+  it('restores unknown-page-count progress without an upper clamp (§10.7)', async () => {
+    // 导入 .db（pages=0）→ unknownPageCounts 模式：readProgress=7 恢复到第 7
+    // 页——若误用 Math.max(0, totalPages-1) 钳上界，进度会被压平成 0。
+    wrapper = await mountReader({ pages: 0, readProgress: 7, title: 'Imported Gallery' })
+    const stub = wrapper.find('.image-reader-stub')
+    expect(stub.attributes('data-total')).toBe('0')
+    expect(stub.text()).toBe('7')
+  })
+
+  it('backs unknown-page-count restore with localStorage when the server has none', async () => {
+    localStorage.setItem('readProgress:123456', '9')
+    wrapper = await mountReader({ pages: 0, title: 'Imported Gallery' })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('9')
+  })
+
+  it('prefers server progress (incl. explicit 0) over stale localStorage for token galleries', async () => {
+    localStorage.setItem('readProgress:123456', '9')
+    wrapper = await mountReader({ readProgress: 0 })
+    // D2: detail.readProgress 是唯一权威来源——显式 REST 写 0 的重读语义
+    // 不被本机陈旧进度覆盖。
+    expect(wrapper.find('.image-reader-stub').text()).toBe('0')
+  })
+
+  it('prefers server progress over localStorage when both exist', async () => {
+    localStorage.setItem('readProgress:123456', '3')
+    wrapper = await mountReader({ readProgress: 20 })
+    expect(wrapper.find('.image-reader-stub').text()).toBe('20')
+  })
+})
+
+describe('ReaderView W4 — 回写 payload 携带 page（防抖策略不变）', () => {
+  let wrapper: VueWrapper | undefined
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    vi.mocked(galleryApi.addHistory).mockReset()
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    localStorage.clear()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.clear()
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  async function mountReader(overrides: Record<string, unknown> = {}): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture(overrides))
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  it('includes page in the entry writeback payload', async () => {
+    wrapper = await mountReader({ readProgress: 4 })
+    expect(galleryApi.addHistory).toHaveBeenCalledTimes(1)
+    expect(galleryApi.addHistory).toHaveBeenCalledWith(123456, {
+      token: 'a1b2c3d4e5',
+      title: 'Sample Gallery',
+      page: 4,
+    })
+    // 回写走 REST——不写本机 localStorage。
+    expect(localStorage.getItem('readProgress:123456')).toBeNull()
+  })
+
+  it('carries the flipped page in throttled mid-reading writebacks', async () => {
+    vi.useFakeTimers()
+    wrapper = await mountReader({ readProgress: 4 })
+    flipTo(wrapper, 14) // 14-4 = 10 ≥ stride
+    await flushPromises()
+    expect(galleryApi.addHistory).toHaveBeenCalledTimes(2)
+    expect(galleryApi.addHistory).toHaveBeenLastCalledWith(123456, {
+      token: 'a1b2c3d4e5',
+      title: 'Sample Gallery',
+      page: 14,
+    })
+  })
+})
+
+describe('ReaderView W4 — 降级态 localStorage 读写（readProgress:{gid}）', () => {
+  const PROGRESS_KEY = 'readProgress:123456'
+  let wrapper: VueWrapper | undefined
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+    vi.mocked(galleryApi.getDetail).mockReset()
+    vi.mocked(galleryApi.addHistory).mockReset()
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    localStorage.clear()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.clear()
+    vi.restoreAllMocks()
+  })
+
+  async function mountDegraded(): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockRejectedValue(new Error('site unreachable'))
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  it('restores the degraded position from localStorage (same priority as readProgress)', async () => {
+    localStorage.setItem(PROGRESS_KEY, '8')
+    wrapper = await mountDegraded()
+    // 降级壳恢复本机进度；totalPages=1 是假值，不做上界钳制。
+    expect(wrapper.find('.image-reader-stub').text()).toBe('8')
+    expect(wrapper.find('[data-testid="reader-degraded-banner"]').exists()).toBe(true)
+    // 降级态不碰服务器。
+    expect(galleryApi.addHistory).not.toHaveBeenCalled()
+  })
+
+  it('gives the deep link priority over the localStorage fallback in degraded mode', async () => {
+    routeParams.page = '2'
+    localStorage.setItem(PROGRESS_KEY, '8')
+    wrapper = await mountDegraded()
+    expect(wrapper.find('.image-reader-stub').text()).toBe('2')
+  })
+
+  it('writes the position back to localStorage on unmount flush', async () => {
+    wrapper = await mountDegraded()
+    expect(localStorage.getItem(PROGRESS_KEY)).toBeNull()
+    // 降级壳里翻页信号被钳到 0（totalPages=1 假值）——离开时 flush 把
+    // 当前位置写进 localStorage（W4④：flush/leave 时写入）。
+    flipTo(wrapper, 5)
+    await flushPromises()
+    wrapper.unmount()
+    wrapper = undefined
+    expect(localStorage.getItem(PROGRESS_KEY)).toBe('0')
+  })
+
+  it('rewrites the restored value on leave so the session position persists', async () => {
+    localStorage.setItem(PROGRESS_KEY, '8')
+    wrapper = await mountDegraded()
+    // 未做任何翻页：leave flush 以恢复值重写（8 !== lastHistoryPage(-1)）。
+    wrapper.unmount()
+    wrapper = undefined
+    expect(localStorage.getItem(PROGRESS_KEY)).toBe('8')
+  })
+
+  it('flushes the degraded position via pagehide', async () => {
+    localStorage.setItem(PROGRESS_KEY, '8')
+    wrapper = await mountDegraded()
+    window.dispatchEvent(new Event('pagehide'))
+    await flushPromises()
+    expect(localStorage.getItem(PROGRESS_KEY)).toBe('8')
   })
 })

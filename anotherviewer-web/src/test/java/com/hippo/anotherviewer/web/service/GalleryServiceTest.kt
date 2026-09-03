@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
@@ -170,20 +171,48 @@ class GalleryServiceTest {
         `when`(h.downloads.findByGid(GID)).thenReturn(null)
         `when`(h.history.findByGid(GID)).thenReturn(historyRow())
         `when`(h.historyTags.findByGid(GID)).thenReturn(emptyList<GalleryTagsEntity>())
+        // P1: 补强改走 GalleryLookupService.getDetailCached（内部 detailCache）；
+        // 上游失败 → null → 本地 DTO 原样返回（E2E-6 语义不变）。
+        `when`(h.galleryLookup.getDetailCached(GID, TOKEN)).thenThrow(RuntimeException("site still broken"))
 
-        mockStatic(SiteEngine::class.java).use { engine ->
-            engine.`when`<GalleryDetail> {
-                SiteEngine.getGalleryDetail(any(), any(), anyString())
-            }.thenThrow(RuntimeException("site still broken"))
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
 
-            val detail = h.service.getGalleryDetail(GID, TOKEN)
+        assertNotNull(detail)
+        assertEquals("History title", detail!!.title)
+        verify(h.galleryLookup).getDetailCached(GID, TOKEN)
+    }
 
-            assertNotNull(detail)
-            assertEquals("History title", detail!!.title)
-            engine.verify {
-                SiteEngine.getGalleryDetail(any(), any(), anyString())
-            }
-        }
+    @Test
+    fun `history enrichment uses the cached detail with comments`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(null)
+        `when`(h.history.findByGid(GID)).thenReturn(historyRow())
+        `when`(h.historyTags.findByGid(GID)).thenReturn(emptyList<GalleryTagsEntity>())
+        // P1: 二次点击零上游——detail 由 getDetailCached 提供（含站点真实评论）。
+        `when`(h.galleryLookup.getDetailCached(GID, TOKEN)).thenReturn(GalleryDetail().apply {
+            token = TOKEN
+            title = "Site title"
+            pages = 42
+            comments = com.hippo.anotherviewer.client.data.GalleryCommentList(
+                arrayOf(
+                    com.hippo.anotherviewer.client.data.GalleryComment().apply {
+                        id = 1L
+                        user = "uploader"
+                        comment = "nice"
+                        time = 0L
+                    }
+                ),
+                false
+            )
+        })
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals("History title", detail!!.title) // 本地标题优先，站点仅补缺
+        assertEquals(5, detail.pages)
+        assertEquals(1, detail.comments.size)
+        verify(h.galleryLookup).getDetailCached(GID, TOKEN)
     }
 
     @Test
@@ -290,6 +319,282 @@ class GalleryServiceTest {
             assertEquals(0, response.total)
             assertEquals("EH_UNAVAILABLE", response.cause)
             engine.verifyNoInteractions()
+        }
+    }
+
+    // ── S5: detail 四路构建器 readProgress ──────────────────────
+
+    @Test
+    fun `download detail carries the stored read progress`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(downloadRow())
+        `when`(h.history.findByGid(GID)).thenReturn(historyRow().apply { page = 21 })
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals(21, detail!!.readProgress)
+    }
+
+    @Test
+    fun `history detail carries the row page without a second lookup`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(null)
+        `when`(h.history.findByGid(GID)).thenReturn(historyRow().apply { page = 13 })
+        `when`(h.historyTags.findByGid(GID)).thenReturn(emptyList<GalleryTagsEntity>())
+        h.availability.recordFailure("connect timed out") // blocked → 纯本地 DTO
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals(13, detail!!.readProgress)
+    }
+
+    @Test
+    fun `favorite detail reports zero progress when no history row exists`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(null)
+        `when`(h.history.findByGid(GID)).thenReturn(null)
+        `when`(h.favorites.findByGid(GID)).thenReturn(favoriteRow())
+        `when`(h.galleryLookup.resolvePageCount(GID)).thenReturn(null)
+        h.availability.recordFailure("connect timed out")
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals("Favorite title", detail!!.title)
+        // 收藏分支仅在无历史行时走到（历史分支优先），readProgressOf = 0。
+        assertEquals(0, detail.readProgress)
+    }
+
+    @Test
+    fun `upstream detail path leaves readProgress null (no history row existed)`() {
+        val h = harness()
+        stubNoLocalRows(h)
+
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<GalleryDetail> {
+                SiteEngine.getGalleryDetail(any(), any(), anyString())
+            }.thenReturn(GalleryDetail().apply {
+                token = TOKEN
+                title = "Site title"
+                pages = 42
+            })
+
+            val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+            // S5⑤: 上游拉取路径必无历史行（进度恒 0），DTO 缺省 null 即可。
+            assertNotNull(detail)
+            assertEquals("Site title", detail!!.title)
+            assertNull(detail.readProgress)
+        }
+    }
+
+    @Test
+    fun `history detail keeps readProgress through upstream enrichment`() {
+        val h = harness()
+        `when`(h.downloads.findByGid(GID)).thenReturn(null)
+        `when`(h.history.findByGid(GID)).thenReturn(historyRow().apply { page = 13; pages = 0 })
+        `when`(h.historyTags.findByGid(GID)).thenReturn(emptyList<GalleryTagsEntity>())
+        `when`(h.galleryLookup.getDetailCached(GID, TOKEN)).thenReturn(GalleryDetail().apply {
+            token = TOKEN
+            title = "Site title"
+            pages = 42
+        })
+
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+
+        assertNotNull(detail)
+        assertEquals("History title", detail!!.title) // 本地标题优先
+        assertEquals(42, detail.pages) // 本地 pages=0 → 站点补缺
+        assertEquals(13, detail.readProgress) // enrichment copy() 不得丢进度
+    }
+
+    // ── S5⑥⑦: 列表 readProgress 填充 ───────────────────────────
+
+    @Test
+    fun `getHistory fills readProgress from the rows`() {
+        val h = harness()
+        val rows = listOf(historyRow().apply { gid = 1; page = 3 }, historyRow().apply { gid = 2; page = 0 })
+        `when`(h.history.findAllByOrderByTimeDesc()).thenReturn(rows)
+
+        val response = h.service.getHistory(0, 20)
+
+        assertTrue(response.success)
+        assertEquals(listOf(3, 0), response.data.map { it.readProgress })
+    }
+
+    @Test
+    fun `getLocalFavorites fills readProgress in one batched query`() {
+        val h = harness()
+        val fav1 = favoriteRow().apply { gid = 1 }
+        val fav2 = favoriteRow().apply { gid = 2 }
+        `when`(h.favorites.findAllByOrderByTimeDesc()).thenReturn(listOf(fav1, fav2))
+        `when`(h.history.findByGidIn(listOf(1L, 2L))).thenReturn(
+            listOf(historyRow().apply { gid = 1; page = 8 })
+        )
+
+        val response = h.service.getLocalFavorites()
+
+        assertTrue(response.success)
+        val byGid = response.data.associateBy { it.gid }
+        assertEquals(8, byGid[1L]!!.readProgress)
+        // 无历史行 → 0（未读），与详情路径 readProgressOf 语义一致。
+        assertEquals(0, byGid[2L]!!.readProgress)
+        verify(h.history).findByGidIn(listOf(1L, 2L)) // 单次批量，非逐行 N+1
+    }
+
+    // ── P2: toplist / search 站点结果缓存 ───────────────────────
+
+    @Test
+    fun `second toplist call within ttl does not touch the site`() {
+        val h = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<com.hippo.anotherviewer.client.data.SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenReturn(com.hippo.anotherviewer.client.data.SiteTopListDetail().apply {
+                galleryTopListInfo = com.hippo.anotherviewer.client.data.topList.TopListInfo().apply {
+                    yesterdayTopList = com.hippo.anotherviewer.client.data.topList.TopListItemArray().apply {
+                        itemArray = arrayOf(
+                            com.hippo.anotherviewer.client.data.topList.TopListItem().apply {
+                                gid = "1"; token = "t1"; value = "Alpha"
+                            }
+                        )
+                    }
+                }
+            })
+
+            val first = h.service.topListFeed()
+            val second = h.service.topListFeed()
+
+            assertTrue(first.success)
+            assertTrue(second.success)
+            assertEquals(first.data, second.data)
+            // 只打了一次上游（P2: 5min TTL 缓存命中）。
+            engine.verify { SiteEngine.getTopList(any(), any(), any()) }
+        }
+    }
+
+    @Test
+    fun `toplist cache is still served while EH is blocked`() {
+        val h = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<com.hippo.anotherviewer.client.data.SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenReturn(com.hippo.anotherviewer.client.data.SiteTopListDetail().apply {
+                galleryTopListInfo = com.hippo.anotherviewer.client.data.topList.TopListInfo().apply {
+                    yesterdayTopList = com.hippo.anotherviewer.client.data.topList.TopListItemArray().apply {
+                        itemArray = arrayOf(
+                            com.hippo.anotherviewer.client.data.topList.TopListItem().apply {
+                                gid = "1"; token = "t1"; value = "Alpha"
+                            }
+                        )
+                    }
+                }
+            })
+
+            assertTrue(h.service.topListFeed().success)
+            h.availability.recordFailure("connect timed out")
+
+            // P2: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
+            val stale = h.service.topListFeed()
+            assertTrue(stale.success)
+            assertEquals(1, stale.total)
+        }
+    }
+
+    @Test
+    fun `toplist empty result is not cached`() {
+        val h = harness()
+        val upstreamCalls = java.util.concurrent.atomic.AtomicInteger(0)
+        mockStatic(SiteEngine::class.java).use { engine ->
+            // 第一次：上游可达但空 → success=true 且非空才缓存，空结果不落缓存。
+            engine.`when`<com.hippo.anotherviewer.client.data.SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenAnswer {
+                upstreamCalls.incrementAndGet()
+                com.hippo.anotherviewer.client.data.SiteTopListDetail()
+            }
+
+            assertTrue(h.service.topListFeed().success)
+            assertTrue(h.service.topListFeed().data.isEmpty())
+            // 两次都打到了上游（若空结果被缓存则第二次不再触网）。
+            assertEquals(2, upstreamCalls.get())
+        }
+    }
+
+    @Test
+    fun `second identical search does not touch the site within ttl`() {
+        val h = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<com.hippo.anotherviewer.client.parser.GalleryListParser.Result> {
+                SiteEngine.getGalleryList(any(), any(), anyString(), anyInt())
+            }.thenReturn(com.hippo.anotherviewer.client.parser.GalleryListParser.Result().apply {
+                pages = 1
+                galleryInfoList = listOf(
+                    com.hippo.anotherviewer.client.data.GalleryInfo().apply {
+                        gid = 5L; token = "t5"; title = "Result"
+                    }
+                )
+            })
+
+            val first = h.service.searchGallery("alpha", null, 0, 20)
+            val second = h.service.searchGallery("alpha", null, 0, 20)
+
+            assertTrue(first.success)
+            assertTrue(second.success)
+            assertEquals(first.data, second.data)
+            engine.verify { SiteEngine.getGalleryList(any(), any(), anyString(), anyInt()) }
+        }
+    }
+
+    @Test
+    fun `search cache is still served while EH is blocked`() {
+        val h = harness()
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<com.hippo.anotherviewer.client.parser.GalleryListParser.Result> {
+                SiteEngine.getGalleryList(any(), any(), anyString(), anyInt())
+            }.thenReturn(com.hippo.anotherviewer.client.parser.GalleryListParser.Result().apply {
+                pages = 1
+                galleryInfoList = listOf(
+                    com.hippo.anotherviewer.client.data.GalleryInfo().apply {
+                        gid = 5L; token = "t5"; title = "Result"
+                    }
+                )
+            })
+
+            val first = h.service.searchGallery("alpha", null, 0, 20)
+            assertTrue(first.success)
+            h.availability.recordFailure("connect timed out")
+
+            // P2: DOWN 期间同 URL 命中缓存，返回陈旧成功结果而非 EH_UNAVAILABLE。
+            val stale = h.service.searchGallery("alpha", null, 0, 20)
+            assertTrue(stale.success)
+            assertEquals(first.data, stale.data)
+        }
+    }
+
+    @Test
+    fun `search empty result is not cached`() {
+        val h = harness()
+        val upstreamCalls = java.util.concurrent.atomic.AtomicInteger(0)
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<com.hippo.anotherviewer.client.parser.GalleryListParser.Result> {
+                SiteEngine.getGalleryList(any(), any(), anyString(), anyInt())
+            }.thenAnswer {
+                upstreamCalls.incrementAndGet()
+                com.hippo.anotherviewer.client.parser.GalleryListParser.Result()
+            }
+
+            val first = h.service.searchGallery("alpha", null, 0, 20)
+            val second = h.service.searchGallery("alpha", null, 0, 20)
+
+            assertTrue(first.success)
+            assertTrue(first.data.isEmpty())
+            assertTrue(second.success)
+            assertTrue(second.data.isEmpty())
+            // 空结果两次都触网（未缓存）。
+            assertEquals(2, upstreamCalls.get())
         }
     }
 }

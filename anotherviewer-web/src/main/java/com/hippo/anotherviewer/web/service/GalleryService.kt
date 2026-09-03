@@ -1,5 +1,7 @@
 package com.hippo.anotherviewer.web.service
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.hippo.anotherviewer.client.SiteConfig
 import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.client.SiteUrl
@@ -18,6 +20,7 @@ import com.hippo.anotherviewer.widget.AdvanceSearchTable
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import java.util.concurrent.TimeUnit
 
 @Service
 class GalleryService(
@@ -38,7 +41,27 @@ class GalleryService(
     private companion object {
         /** Failure cause carried by blocked list/detail responses. */
         const val EH_UNAVAILABLE_CAUSE = "EH_UNAVAILABLE"
+
+        /** P2: toplist 缓存固定 key（该端点无参数，单槽即可）。 */
+        const val TOPLIST_CACHE_KEY = "toplist"
     }
+
+    /**
+     * P2: toplist 结果缓存（5min）。查询在 availability.isBlocked() 之前，
+     * DOWN 期间命中缓存照常返回陈旧内容；只缓存 success=true 且非空的结果。
+     */
+    private val topListCache: Cache<String, TopListResponse> = Caffeine.newBuilder()
+        .expireAfterWrite(5, TimeUnit.MINUTES)
+        .build()
+
+    /**
+     * P2: 站点搜索结果缓存（2min），key = buildSearchUrl 产物。查询在
+     * availability.isBlocked() 之前（DOWN 命中缓存照常返回陈旧内容）；
+     * 空关键词的本地历史快路径不经此缓存，仅站点请求路径（含空关键词兜底）使用。
+     */
+    private val searchCache: Cache<String, GalleryListResponse> = Caffeine.newBuilder()
+        .expireAfterWrite(2, TimeUnit.MINUTES)
+        .build()
 
     /**
      * Real Gallery Site search via the core list parser (SiteEngine.getGalleryList).
@@ -93,11 +116,6 @@ class GalleryService(
             // （Android 首页 = 站点根路径最新画廊，无需登录）。回退失败按 E2E-6 语义 success=false。
             val local = searchLocalHistory(keyword, category, page, pageSize)
             if (local.data.isNotEmpty()) return local
-            if (availability.isBlocked()) {
-                // EH DOWN：跳过站点兜底（秒回，不触网），首页本地链路不受影响。
-                logger.debug("Gallery latest-list fallback skipped: EH unavailable (empty keyword, no local history)")
-                return ehBlockedListResponse()
-            }
             return try {
                 val url = buildSearchUrl(
                     "", category, page, sort, pageMin, pageMax, minRating,
@@ -106,20 +124,24 @@ class GalleryService(
                     searchExpunged, disableLanguageFilter, disableUploaderFilter,
                     disableTagFilter
                 )
+                // P2: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
+                searchCache.getIfPresent(url)?.let { return it }
+                if (availability.isBlocked()) {
+                    // EH DOWN：跳过站点兜底（秒回，不触网），首页本地链路不受影响。
+                    logger.debug("Gallery latest-list fallback skipped: EH unavailable (empty keyword, no local history)")
+                    return ehBlockedListResponse()
+                }
                 val result = SiteEngine.getGalleryList(null, client, url, ListUrlBuilder.MODE_NORMAL)
                 val items = result.galleryInfoList.map { it.toDto() }
                 val total = if (result.pages > 0) result.pages * 25 else items.size
-                GalleryListResponse(success = true, data = items, total = total)
+                val response = GalleryListResponse(success = true, data = items, total = total)
+                // P2: 只缓存 success=true 且非空的结果。
+                if (items.isNotEmpty()) searchCache.put(url, response)
+                response
             } catch (e: Exception) {
                 logger.warn("Gallery Site latest list failed (empty keyword)", e)
                 GalleryListResponse(success = false, data = emptyList(), total = 0)
             }
-        }
-
-        if (availability.isBlocked()) {
-            // EH DOWN：所有自动搜索直接短路（毫秒级），不发起上游请求。
-            logger.debug("Gallery search skipped for keyword={}: EH unavailable", keyword)
-            return ehBlockedListResponse()
         }
 
         return try {
@@ -130,16 +152,26 @@ class GalleryService(
                 searchExpunged, disableLanguageFilter, disableUploaderFilter,
                 disableTagFilter
             )
+            // P2: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
+            searchCache.getIfPresent(url)?.let { return it }
+            if (availability.isBlocked()) {
+                // EH DOWN：所有自动搜索直接短路（毫秒级），不发起上游请求。
+                logger.debug("Gallery search skipped for keyword={}: EH unavailable", keyword)
+                return ehBlockedListResponse()
+            }
             val result = SiteEngine.getGalleryList(null, client, url, ListUrlBuilder.MODE_NORMAL)
             val items = result.galleryInfoList.map { it.toDto() }
             // EH lists 25 results per page; `result.pages` is the number of
             // result pages when the pager was parseable.
             val total = if (result.pages > 0) result.pages * 25 else items.size
-            GalleryListResponse(
+            val response = GalleryListResponse(
                 success = true,
                 data = items,
                 total = total
             )
+            // P2: 只缓存 success=true 且非空的结果；失败/空结果照旧直返，不缓存。
+            if (items.isNotEmpty()) searchCache.put(url, response)
+            response
         } catch (e: Exception) {
             logger.warn("Gallery Site search failed for keyword={}", keyword, e)
             GalleryListResponse(success = false, data = emptyList(), total = 0)
@@ -181,6 +213,8 @@ class GalleryService(
      * all time (the core parser allocates 10 slots, trailing ones stay null).
      */
     fun topListFeed(): TopListResponse {
+        // P2: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
+        topListCache.getIfPresent(TOPLIST_CACHE_KEY)?.let { return it }
         if (availability.isBlocked()) {
             logger.debug("Gallery top list skipped: EH unavailable")
             return TopListResponse(success = false, data = emptyList(), total = 0, cause = EH_UNAVAILABLE_CAUSE)
@@ -192,7 +226,10 @@ class GalleryService(
                 info.get(i)?.itemArray?.takeIf { it.isNotEmpty() }
             }
             val items = selected?.filterNotNull()?.map { it.toDto() } ?: emptyList()
-            TopListResponse(success = true, data = items, total = items.size)
+            val response = TopListResponse(success = true, data = items, total = items.size)
+            // P2: 只缓存 success=true 且非空的结果。
+            if (items.isNotEmpty()) topListCache.put(TOPLIST_CACHE_KEY, response)
+            response
         } catch (e: Exception) {
             logger.warn("Gallery Site top list failed: {}", e.message)
             TopListResponse(success = false, data = emptyList(), total = 0)
@@ -384,7 +421,8 @@ class GalleryService(
             favoriteSlot = favorite.favoriteSlot,
             favoriteName = favorite.favoriteName,
             tags = emptyList(),
-            imageUrl = favorite.thumb
+            imageUrl = favorite.thumb,
+            readProgress = readProgressOf(favorite.gid)
         )
     }
 
@@ -416,7 +454,8 @@ class GalleryService(
             favoriteSlot = download.favoriteSlot,
             favoriteName = download.favoriteName,
             tags = emptyList(),
-            imageUrl = download.thumb
+            imageUrl = download.thumb,
+            readProgress = readProgressOf(download.gid)
         )
     }
 
@@ -448,6 +487,10 @@ class GalleryService(
      * fields); an unreachable site keeps the history-based dto (E2E-6
      * semantics) — while DOWN the enrichment is skipped entirely (no upstream
      * wait; P-C fix).
+     *
+     * P1: 上游补强改走 [GalleryLookupService.getDetailCached]（gid 键 detailCache
+     * 10min 复用），二次点击同一画廊零上游请求。readProgress 直接取行内 page
+     * （行已在手，勿重复查询），enrichment 的 copy() 原样保留。
      */
     private fun enrichHistoryDetail(gid: Long, history: HistoryInfoEntity): GalleryDetailDto {
         val tags = galleryTagsRepository.findByGid(gid)
@@ -471,16 +514,16 @@ class GalleryService(
             favoriteSlot = history.favoriteSlot,
             favoriteName = history.favoriteName,
             tags = tags.map { TagDto(it.tagNamespace, it.tag) },
-            imageUrl = history.thumb
+            imageUrl = history.thumb,
+            readProgress = history.page
         )
         if (availability.isBlocked()) {
             logger.debug("Site detail enrichment skipped for gid={}: EH unavailable", gid)
             return dto
         }
         return try {
-            val detail = SiteEngine.getGalleryDetail(
-                null, client, SiteUrl.getGalleryDetailUrl(history.gid, history.token)
-            )
+            val detail = galleryLookupService.getDetailCached(history.gid, history.token)
+                ?: return dto
             dto.copy(
                 title = dto.title ?: detail.title,
                 titleJpn = dto.titleJpn ?: detail.titleJpn,
@@ -500,12 +543,18 @@ class GalleryService(
         }
     }
 
-    fun addToHistory(gid: Long, token: String, title: String?, mode: Int) {
+    /** S5: 已存阅读进度（0 起页索引）；无历史行视为 0（未读）。 */
+    private fun readProgressOf(gid: Long): Int = historyRepository.findByGid(gid)?.page ?: 0
+
+    fun addToHistory(gid: Long, token: String, title: String?, mode: Int, page: Int? = null) {
         val existing = historyRepository.findByGid(gid)
         if (existing != null) {
             existing.time = System.currentTimeMillis()
             // R4-4: mode 透传写入 history 行（缺省 0 即回退默认值，与实体列默认一致）。
             existing.mode = mode
+            // S5①: page 仅在调用方明确携带（非 null）时改写——REST 缺省（null）
+            // 保持已存进度不被清零，显式传 0 表示重读写 0（判空区分，不是判 0）。
+            if (page != null) existing.page = page.coerceAtLeast(0)
             historyRepository.save(existing)
         } else {
             val entity = HistoryInfoEntity().apply {
@@ -513,6 +562,7 @@ class GalleryService(
                 this.token = token
                 this.title = title
                 this.mode = mode
+                this.page = page?.coerceAtLeast(0) ?: 0
                 this.time = System.currentTimeMillis()
             }
             historyRepository.save(entity)
@@ -525,16 +575,19 @@ class GalleryService(
         val paged = all.drop(page * pageSize).take(pageSize)
         return GalleryListResponse(
             success = true,
-            data = paged.map { it.toDto() },
+            data = paged.map { it.toDto().copy(readProgress = it.page) },
             total = total
         )
     }
 
     fun getLocalFavorites(): GalleryListResponse {
         val all = localFavoriteInfoRepository.findAllByOrderByTimeDesc()
+        // S5⑦: 批量取历史行填 readProgress（S7 findByGidIn），避免逐行 N+1。
+        val progressByGid = historyRepository.findByGidIn(all.map { it.gid })
+            .associateBy({ it.gid }) { it.page }
         return GalleryListResponse(
             success = true,
-            data = all.map { it.toDto() },
+            data = all.map { it.toDto().copy(readProgress = progressByGid[it.gid] ?: 0) },
             total = all.size
         )
     }

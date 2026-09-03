@@ -873,6 +873,7 @@ public final class WebUiSyncEngine {
             WebUiSyncModels.SyncHistory hist = new WebUiSyncModels.SyncHistory();
             copyGalleryToDto(hi, hist);
             hist.mode = hi.mode;
+            hist.page = hi.page;
             hist.time = hi.time;
             hist.lastModified = hi.time;
             hist.deviceId = deviceId;
@@ -1108,6 +1109,7 @@ public final class WebUiSyncEngine {
             HistoryInfo info = new HistoryInfo();
             copyDtoToGallery(hist, info);
             info.mode = hist.mode;
+            info.page = hist.page;
             info.time = hist.time;
             mStore.applySyncedHistory(info);
             // Ledger the pulled view time. applySyncedHistory keeps a newer

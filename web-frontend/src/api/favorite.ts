@@ -16,6 +16,11 @@ export interface FavoriteItem {
    * 为 undefined——调用方以 `?? <页签号>` 兜底。
    */
   favoriteSlot?: number
+  /**
+   * 阅读进度（0 起页索引，来自同 gid 历史行）。旧服务器不下发该字段时为
+   * undefined——卡片角标按 `readProgress > 0` 门控，缺省自然隐藏。
+   */
+  readProgress?: number
 }
 
 export interface FavoriteListResponse {

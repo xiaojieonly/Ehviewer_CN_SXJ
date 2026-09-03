@@ -78,7 +78,9 @@ import com.hippo.anotherviewer.AppConfig;
 import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
+import com.hippo.anotherviewer.SiteDB;
 import com.hippo.anotherviewer.dao.DownloadInfo;
+import com.hippo.anotherviewer.dao.HistoryInfo;
 import com.hippo.anotherviewer.event.GalleryActivityEvent;
 import com.hippo.anotherviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.anotherviewer.gallery.DirGalleryProvider;
@@ -99,6 +101,7 @@ import com.hippo.lib.glgallery.SimpleAdapter;
 import com.hippo.lib.glview.view.GLRootView;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.util.SystemUiHelper;
 import com.hippo.widget.ColorView;
 import com.hippo.lib.yorozuya.AnimationUtils;
@@ -410,10 +413,18 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
         mGalleryProvider.start();
 
-        // Get start page
+        // Get start page: a deep-linked page wins; otherwise take the best of
+        // the local .spm progress and the synced HISTORY row progress (plan D2,
+        // same double-source max as SpiderQueen's download-dir + cache).
         int startPage;
         if (savedInstanceState == null) {
-            startPage = mPage >= 0 ? mPage : mGalleryProvider.getStartPage();
+            if (mPage >= 0) {
+                startPage = mPage;
+            } else {
+                int providerPage = mGalleryProvider.getStartPage();
+                int syncedPage = mGalleryInfo != null ? loadSyncedHistoryPage(mGalleryInfo.gid) : 0;
+                startPage = Math.max(providerPage, syncedPage);
+            }
         } else {
             startPage = mCurrentIndex;
         }
@@ -859,10 +870,41 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
     }
 
+    /**
+     * Reading progress persisted in the HISTORY row (plan D2): the value that
+     * rides the WebUI sync push/pull and is written by this very activity on
+     * every page turn. Synchronous single primary-key lookup on the open
+     * path, same style as GalleryDetailScene's direct SiteDB access; 0 when
+     * the row does not exist (gallery never opened from the detail scene).
+     */
+    private static int loadSyncedHistoryPage(long gid) {
+        HistoryInfo info = SiteDB.loadHistoryInfo(gid);
+        return info != null ? info.page : 0;
+    }
+
     @Override
     public void onUpdateCurrentIndex(int index) {
         if (null != mGalleryProvider) {
             mGalleryProvider.putStartPage(index);
+        }
+
+        // Bridge the reading progress into the HISTORY row (plan D2): store
+        // the page and refresh time so the sync push ledger (keyed on time)
+        // re-pushes the row and it stays at the top of the history list.
+        // Single choke point shared by every provider (download/online/
+        // archive/WebUI proxy). Off the UI thread, mirroring
+        // SpiderQueen.putStartPage's .spm write; skipped when the row does
+        // not exist (SiteDB.updateHistoryPage no-ops then).
+        if (mGalleryInfo != null) {
+            final long gid = mGalleryInfo.gid;
+            final int page = index;
+            IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
+                try {
+                    SiteDB.updateHistoryPage(gid, page);
+                } catch (Throwable e) {
+                    ExceptionUtils.throwIfFatal(e);
+                }
+            });
         }
 
         NotifyTask task = mNotifyTaskPool.pop();

@@ -332,8 +332,8 @@ class SyncServiceTest {
     private fun fav(gid: Long, lastModified: Long = 1_000, deleted: Boolean = false, title: String = "Fav $gid") =
         SyncFavoriteDto(gid = gid, token = "tok$gid", title = title, lastModified = lastModified, deleted = deleted)
 
-    private fun hist(gid: Long, time: Long = 0, lastModified: Long = 1_000, deleted: Boolean = false, title: String = "Hist $gid") =
-        SyncHistoryDto(gid = gid, token = "tok$gid", title = title, time = time, lastModified = lastModified, deleted = deleted)
+    private fun hist(gid: Long, time: Long = 0, lastModified: Long = 1_000, deleted: Boolean = false, title: String = "Hist $gid", page: Int = 0) =
+        SyncHistoryDto(gid = gid, token = "tok$gid", title = title, time = time, lastModified = lastModified, deleted = deleted, page = page)
 
     private fun dl(gid: Long, lastModified: Long = 1_000, deleted: Boolean = false, state: Int = 0, finished: Int = 0, label: String? = null, title: String = "Dl $gid") =
         SyncDownloadDto(gid = gid, token = "tok$gid", title = title, state = state, finished = finished, label = label, lastModified = lastModified, deleted = deleted)
@@ -363,13 +363,14 @@ class SyncServiceTest {
         }.let { favoriteRepo.save(it) }
     }
 
-    private fun seedHistory(gid: Long, lastModified: Long, time: Long = 0, username: String? = "A", title: String = "Hist $gid") {
+    private fun seedHistory(gid: Long, lastModified: Long, time: Long = 0, username: String? = "A", title: String = "Hist $gid", page: Int = 0) {
         HistoryInfoEntity().apply {
             this.gid = gid
             this.token = "tok$gid"
             this.title = title
             this.time = time
             this.lastModified = lastModified
+            this.page = page
             this.username = username
         }.let { historyRepo.save(it) }
     }
@@ -975,6 +976,66 @@ class SyncServiceTest {
 
         assertEquals(300, historyRepo.findByGid(53)!!.time)
         verify(historyRepo, never()).save(any(HistoryInfoEntity::class.java))
+    }
+
+    // ==================== S8/S9: history page（阅读进度）同步 ====================
+
+    @Test
+    fun `history push carries page into the stored row`() {
+        val response = push("A", history = listOf(hist(60, lastModified = 2_000, page = 42)))
+
+        val stored = historyRepo.findByGid(60)!!
+        assertEquals(42, stored.page)
+        assertTrue(response.conflicts >= 0)
+    }
+
+    @Test
+    fun `push without page (legacy app) never zeroes the stored progress on row win`() {
+        seedHistory(gid = 61, lastModified = 1_000, page = 42)
+
+        // 行胜（LWW beyond skew）：旧端 push 不带 page（默认 0）→ max(42, 0) = 42 不丢。
+        push("A", history = listOf(hist(61, time = 50, lastModified = 6_001, title = "New")))
+
+        assertEquals(42, historyRepo.findByGid(61)!!.page)
+        assertEquals("New", historyRepo.findByGid(61)!!.title)
+    }
+
+    @Test
+    fun `incoming lower page loses to the stored progress on row win`() {
+        seedHistory(gid = 62, lastModified = 1_000, page = 42)
+
+        // 行胜但 incoming.page 更低 → 取 max，进度不回退（D3 方案 A）。
+        push("A", history = listOf(hist(62, time = 50, lastModified = 6_001, page = 3)))
+
+        assertEquals(42, historyRepo.findByGid(62)!!.page)
+    }
+
+    @Test
+    fun `incoming higher page wins on row win`() {
+        seedHistory(gid = 63, lastModified = 1_000, page = 3)
+
+        push("A", history = listOf(hist(63, time = 50, lastModified = 6_001, page = 42)))
+
+        assertEquals(42, historyRepo.findByGid(63)!!.page)
+    }
+
+    @Test
+    fun `row loss leaves page untouched`() {
+        seedHistory(gid = 64, lastModified = 6_000, page = 42)
+        push("A", history = listOf(hist(64, time = 50, lastModified = 500, page = 3)))
+
+        // 行负（existing 远新于 incoming）：整行忽略（含 page），D3 明确不做行负抬升。
+        assertEquals(42, historyRepo.findByGid(64)!!.page)
+        assertEquals(6_000L, historyRepo.findByGid(64)!!.lastModified)
+    }
+
+    @Test
+    fun `history pull carries the stored page`() {
+        seedHistory(gid = 65, lastModified = 2_000, page = 42)
+
+        val pulled = service.pull(0, "A", "android-test").entities.history.single { it.gid == 65L }
+
+        assertEquals(42, pulled.page)
     }
 
     // ==================== per-user isolation & ownership ====================

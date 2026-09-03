@@ -18,6 +18,12 @@ export interface GalleryInfo {
   favoriteName: string
   /** Server-generated gallery detail URL (share/copy link). */
   galleryUrl?: string
+  /**
+   * 阅读进度（0 起页索引，plan-2026-09-02 D1/D2）。服务器从历史行带出
+   * （GalleryDetail extends GalleryInfo 自动获得）；旧服务器 / 上游直取路径
+   * 不下发该字段 → undefined，运行时必须容错（§6 兼容矩阵）。
+   */
+  readProgress?: number
 }
 
 export interface GalleryDetail extends GalleryInfo {

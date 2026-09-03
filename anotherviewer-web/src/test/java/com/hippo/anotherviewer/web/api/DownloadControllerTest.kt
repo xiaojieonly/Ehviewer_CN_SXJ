@@ -70,7 +70,8 @@ class DownloadControllerTest {
             mock(GalleryLookupService::class.java),
             serverConfigService,
             mock(EhAvailabilityService::class.java),
-            mock(DownloadDirIndex::class.java)
+            mock(DownloadDirIndex::class.java),
+            mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
         )
         zipImportService = mock(DownloadZipImportService::class.java)
         mockMvc = MockMvcBuilders.standaloneSetup(DownloadController(downloadService, zipImportService))

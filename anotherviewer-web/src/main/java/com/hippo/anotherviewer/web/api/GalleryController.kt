@@ -114,7 +114,8 @@ class GalleryController(private val galleryService: GalleryService) {
         if (gid <= 0) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "gid must be a positive number")
         }
-        galleryService.addToHistory(gid, body.token, body.title, body.mode)
+        // S6: page 透传（可空）——缺省（null）不改写已存进度，显式 0 重读写 0。
+        galleryService.addToHistory(gid, body.token, body.title, body.mode, body.page)
         return ResponseEntity.ok(mapOf("success" to true))
     }
 

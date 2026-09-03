@@ -6,6 +6,7 @@ import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -32,12 +33,14 @@ import org.mockito.Mockito.verify
 class FavoriteServiceTest {
 
     private lateinit var repository: LocalFavoriteInfoRepository
+    private lateinit var historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository
     private lateinit var service: FavoriteService
 
     @BeforeEach
     fun setUp() {
         repository = mock(LocalFavoriteInfoRepository::class.java)
-        service = FavoriteService(repository)
+        historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
+        service = FavoriteService(repository, historyRepository)
     }
 
     private fun savedEntity(): LocalFavoriteInfoEntity {
@@ -118,6 +121,25 @@ class FavoriteServiceTest {
 
         assertEquals(listOf(0, -1), response.favorites.map { it.favoriteSlot })
         assertEquals(5, service.listFavorites(5, 1, 20).favorites.single().favoriteSlot)
+    }
+
+    @Test
+    fun `listFavorites items carry readProgress from history rows`() {
+        // 阅读进度角标数据源：同 gid 历史行的 page 批量填充（findByGidIn 单次），
+        // 无历史行的条目为 null。
+        `when`(repository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(favEntity(1, 0), favEntity(2, -1)))
+        val history1 = com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply {
+            gid = 1L
+            page = 37
+        }
+        `when`(historyRepository.findByGidIn(listOf(1L, 2L))).thenReturn(listOf(history1))
+
+        val response = service.listFavorites(-1, 1, 20)
+
+        assertEquals(37, response.favorites.first { it.gid == 1L }.readProgress)
+        assertNull(response.favorites.first { it.gid == 2L }.readProgress)
+        verify(historyRepository).findByGidIn(listOf(1L, 2L))
     }
 
     @Test

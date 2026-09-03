@@ -10,6 +10,11 @@ export interface HistoryItem {
   rating: number
   mode: number
   time: number
+  /**
+   * 阅读进度（0 起页索引，plan-2026-09-02 W2）。旧服务器不下发 →
+   * undefined（可选字段，调用方按缺失容错，不得假定 0 以外的缺省语义）。
+   */
+  page?: number
 }
 
 export interface HistoryListResponse {

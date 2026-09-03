@@ -51,19 +51,20 @@ class CurlSiteExecutor(
             return chain.proceed(request)
         }
 
+        val maxTimeSec = resolveMaxTimeSec(request)
         val outFile = File.createTempFile("curl-site", ".bin")
         val metaFile = File.createTempFile("curl-meta", ".txt")
         val headerFile = File.createTempFile("curl-hdr", ".txt")
         var bodyFile: File? = null
         try {
             bodyFile = writeBodyToTemp(request)
-            val cmd = buildCommand(request, outFile, headerFile, bodyFile)
+            val cmd = buildCommand(request, outFile, headerFile, bodyFile, maxTimeSec)
             // curl's -w template writes to stdout; capture it into metaFile.
             val process = ProcessBuilder(cmd)
                 .redirectOutput(metaFile)
                 .redirectErrorStream(true)
                 .start()
-            val finished = process.waitFor(maxTimeoutSec, TimeUnit.SECONDS)
+            val finished = process.waitFor(maxTimeSec, TimeUnit.SECONDS)
             if (!finished) {
                 process.destroyForcibly()
                 throw java.io.IOException("curl timed out for ${request.url}")
@@ -110,13 +111,33 @@ class CurlSiteExecutor(
         }
         return file
     }
-    private fun buildCommand(request: Request, outFile: File, headerFile: File, bodyFile: File?): List<String> {
+
+    /**
+     * P4: per-request curl `--max-time`（秒）。请求方可用 OkHttp request tag
+     * （[Int] 类型）携带覆盖值，钳 1..[maxTimeoutSec]；无 tag（如阅读器页图）
+     * 维持 [maxTimeoutSec]（默认 60s）。tag 只是 OkHttp 的元数据，不进线路，
+     * 无需在任何方向剥离。
+     */
+    internal fun resolveMaxTimeSec(request: Request): Long {
+        // 注意 tag 类型用 Integer（javaObjectType）：OkHttp Builder.tag 会
+        // type.cast(value)，原始类型 int.class 对装箱值会 CCE。
+        val tagged = request.tag(Int::class.javaObjectType) ?: return maxTimeoutSec
+        return tagged.coerceIn(1, maxTimeoutSec.toInt()).toLong()
+    }
+
+    internal fun buildCommand(
+        request: Request,
+        outFile: File,
+        headerFile: File,
+        bodyFile: File?,
+        maxTimeSec: Long = resolveMaxTimeSec(request),
+    ): List<String> {
         val cmd = mutableListOf(
             "curl", "-sS", "--compressed",
             "-o", outFile.absolutePath,
             "-D", headerFile.absolutePath,
             "-w", RESPONSE_TEMPLATE,
-            "--max-time", maxTimeoutSec.toString(),
+            "--max-time", maxTimeSec.toString(),
             "-A", request.header("User-Agent") ?: "Mozilla/5.0",
         )
 

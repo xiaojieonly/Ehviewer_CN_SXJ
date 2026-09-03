@@ -66,6 +66,8 @@ public final class WebUiSyncModels {
 
     public static class SyncHistory extends GalleryBase {
         public int mode;
+        /** 0-based reading progress; server merges with max(existing, incoming) on row-win. */
+        public int page;
         public long time;
     }
 

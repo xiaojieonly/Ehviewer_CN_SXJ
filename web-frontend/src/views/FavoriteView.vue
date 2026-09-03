@@ -258,6 +258,9 @@ function toGalleryInfo(item: FavoriteItem): GalleryInfo {
     pages: 0,
     favoriteSlot: slot,
     favoriteName: slotBadgeName(slot),
+    // 阅读进度透传（同 gid 历史行 page）：GalleryCard 角标按 showReadProgress
+    // + readProgress > 0 门控；旧服务器缺省 undefined 自然隐藏。
+    readProgress: item.readProgress,
   }
 }
 

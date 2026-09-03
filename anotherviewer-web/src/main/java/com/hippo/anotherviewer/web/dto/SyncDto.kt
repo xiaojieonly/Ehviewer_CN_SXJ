@@ -89,6 +89,8 @@ data class SyncHistoryDto(
     val favoriteName: String? = null,
     val pages: Int = 0,
     val mode: Int = 0,
+    /** 阅读进度（0 起页索引）；旧 App push 不带该字段（默认 0），行胜合并取 max 防回退。 */
+    val page: Int = 0,
     val time: Long = 0,
     val lastModified: Long = 0,
     val deviceId: String = "",

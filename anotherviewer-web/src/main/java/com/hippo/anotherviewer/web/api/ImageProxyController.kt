@@ -19,6 +19,7 @@ import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Semaphore
 
 /**
  * Image delivery endpoints.
@@ -62,6 +64,10 @@ class ImageProxyController(
     companion object {
         private const val MAX_CONCURRENT_PAGE_FETCHES = 4
         private const val CACHE_MAX_AGE = "max-age=86400"
+        /** P3: /proxy 全局并发 curl 上限（25 卡首开 → 6 并发批次排队）。 */
+        private const val MAX_CONCURRENT_PROXY_FETCHES = 6
+        /** P4: 缩略图 per-request curl --max-time（秒）；上游挂着时快速失败，不占满默认 60s。 */
+        private const val PROXY_FETCH_TIMEOUT_SEC = 10
         private val IMAGE_MIME_BY_EXT = mapOf(
             "jpg" to MediaType.IMAGE_JPEG_VALUE,
             "jpeg" to MediaType.IMAGE_JPEG_VALUE,
@@ -82,6 +88,16 @@ class ImageProxyController(
     private val pageFetchers = ConcurrentHashMap<String, CompletableFuture<ResponseEntity<*>>>()
     /** Per-gallery concurrency cap so one reader cannot saturate EH. */
     private val gallerySemaphores = ConcurrentHashMap<Long, java.util.concurrent.Semaphore>()
+
+    /**
+     * P3: in-flight thumbnail fetches keyed by URL — concurrent `/proxy` misses
+     * for the SAME url share one upstream fetch (first page of 25 cards used to
+     * trip 25 concurrent curl processes + 75 temp files). Distinct urls are
+     * capped by the global [proxyFetchSemaphore]; excess requests queue on the
+     * semaphore instead of erroring (thumbnails have no client retry logic).
+     */
+    private val proxyFetchers = ConcurrentHashMap<String, CompletableFuture<ResponseEntity<*>>>()
+    private val proxyFetchSemaphore = Semaphore(MAX_CONCURRENT_PROXY_FETCHES)
 
     // ── legacy endpoints (kept intact) ───────────────────────────
 
@@ -112,38 +128,85 @@ class ImageProxyController(
             return errorEnvelope(HttpStatus.NOT_FOUND, EhUnavailableException.CODE, EhUnavailableException.USER_MESSAGE)
         }
 
-        return try {
-            // EH validates the Referer of thumbnail-origin requests strictly:
-            // an origin without the trailing slash (SiteUrl.REFERER_*) is
-            // rejected with 403 on s.exhentai.org. Send the slash form.
-            val request = SiteRequestBuilder(target.toString(), siteReferer()).build()
-            okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    return errorEnvelope(
-                        HttpStatus.NOT_FOUND,
-                        "NOT_FOUND",
-                        "site did not serve the image (HTTP ${response.code})"
-                    )
-                }
-                val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
-                // MASTER-2026-08-22 S2：上游响应有界读取，超限 502（防恶意/异常大图打爆堆）。
-                val bytes = try {
-                    response.body?.bytesBounded(config.proxy.maxResponseBytes)
-                } catch (e: ResponseTooLargeException) {
-                    logger.warn("Image proxy fetch-on-miss aborted: upstream body exceeds {} bytes for url={}", e.maxBytes, url)
-                    return errorEnvelope(HttpStatus.BAD_GATEWAY, "UPSTREAM_TOO_LARGE", "Upstream image exceeds size limit")
-                }
-                if (bytes == null || bytes.isEmpty()) {
-                    return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "site returned an empty image body")
-                }
-                imageCacheService.cacheImage(url, bytes)
-                ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, contentType)
-                    .body(bytes)
+        // P3: 同 URL 并发请求共享一次上游 fetch。已在途 → 直接等它的结果
+        // （失败以 completeExceptionally 收场，等的人统一回落 404 envelope）。
+        val existing = proxyFetchers[url]
+        if (existing != null) {
+            return try {
+                existing.join()
+            } catch (e: Exception) {
+                logger.warn("In-flight image proxy fetch failed for url={}", url, e)
+                proxyUnavailableEnvelope()
             }
+        }
+
+        // P3: 全局并发上限——acquire 阻塞在请求线程上（排队成 6 并发批次），
+        // 成功注册的 future 独占本次 fetch；竞态败者释放多占的额度改等胜者。
+        proxyFetchSemaphore.acquire()
+        val future = CompletableFuture.supplyAsync { fetchProxyImage(target, url) }
+        val raced = proxyFetchers.putIfAbsent(url, future)
+        if (raced != null) {
+            proxyFetchSemaphore.release()
+            return try {
+                raced.join()
+            } catch (e: Exception) {
+                logger.warn("In-flight image proxy fetch failed for url={}", url, e)
+                proxyUnavailableEnvelope()
+            }
+        }
+        try {
+            return future.join()
         } catch (e: Exception) {
-            logger.warn("Image proxy fetch-on-miss failed for url={}", url, e)
-            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "gallery site unreachable")
+            logger.warn("Image proxy fetch failed for url={}", url, e)
+            return proxyUnavailableEnvelope()
+        } finally {
+            proxyFetchers.remove(url, future)
+            proxyFetchSemaphore.release()
+        }
+    }
+
+    /** P3: /proxy 上游失败时等价于旧 catch 路径的 404 envelope。 */
+    private fun proxyUnavailableEnvelope(): ResponseEntity<*> =
+        errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "gallery site unreachable")
+
+    /**
+     * P3: /proxy 的单次上游抓取（自原 proxyImage miss 路径抽出，语义不变）。
+     * 由 [proxyFetchers] 注册方经 CompletableFuture 执行；网络层异常向上抛出
+     * （future completeExceptionally，等价旧 catch 路径，join 方统一记日志），
+     * HTTP 层错误仍以 envelope 返回。
+     */
+    private fun fetchProxyImage(target: HttpUrl, url: String): ResponseEntity<*> {
+        // EH validates the Referer of thumbnail-origin requests strictly:
+        // an origin without the trailing slash (SiteUrl.REFERER_*) is
+        // rejected with 403 on s.exhentai.org. Send the slash form.
+        val request = SiteRequestBuilder(target.toString(), siteReferer()).build()
+        // P4: 缩略图打 10s per-request 超时 tag（curl --max-time）；tag 不进
+        // 线路（CurlSiteExecutor 只读不剥离），阅读器页图路径维持默认 60s。
+        // tag 类型用 Integer（javaObjectType）——原始类型 int.class 会 CCE。
+        val tagged = request.newBuilder().tag(Int::class.javaObjectType, PROXY_FETCH_TIMEOUT_SEC).build()
+        okHttpClient.newCall(tagged).execute().use { response ->
+            if (!response.isSuccessful) {
+                return errorEnvelope(
+                    HttpStatus.NOT_FOUND,
+                    "NOT_FOUND",
+                    "site did not serve the image (HTTP ${response.code})"
+                )
+            }
+            val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
+            // MASTER-2026-08-22 S2：上游响应有界读取，超限 502（防恶意/异常大图打爆堆）。
+            val bytes = try {
+                response.body?.bytesBounded(config.proxy.maxResponseBytes)
+            } catch (e: ResponseTooLargeException) {
+                logger.warn("Image proxy fetch-on-miss aborted: upstream body exceeds {} bytes for url={}", e.maxBytes, url)
+                return errorEnvelope(HttpStatus.BAD_GATEWAY, "UPSTREAM_TOO_LARGE", "Upstream image exceeds size limit")
+            }
+            if (bytes == null || bytes.isEmpty()) {
+                return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "site returned an empty image body")
+            }
+            imageCacheService.cacheImage(url, bytes)
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, contentType)
+                .body(bytes)
         }
     }
 

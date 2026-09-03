@@ -53,6 +53,8 @@ class DownloadService(
     private val serverConfigService: ServerConfigService,
     private val availability: EhAvailabilityService,
     private val downloadDirIndex: DownloadDirIndex,
+    // S10: 批量取 history 行 page 填下载列表 readProgress（findByGidIn，避免 N+1）。
+    private val historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository,
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
 
@@ -139,8 +141,11 @@ class DownloadService(
                 downloadRepository.countByLabel(labelFilter)
             else -> downloadRepository.findAll(pageable).content to downloadRepository.count()
         }
+        // S10: 对最终 rows（含 regexPage 路径）批量取历史行填 readProgress。
+        val progressByGid = historyRepository.findByGidIn(rows.map { it.gid })
+            .associateBy({ it.gid }) { it.page }
         return DownloadListResponse(
-            downloads = rows.map { it.toItem() },
+            downloads = rows.map { it.toItem(progressByGid[it.gid] ?: 0) },
             labels = labels.map { DownloadLabel(it.id, it.label, it.time) },
             total = totalCount.toInt()
         )
@@ -805,7 +810,8 @@ class DownloadService(
         }
     }
 
-    private fun DownloadInfoEntity.toItem() = DownloadItem(
+    /** [readProgress] 由 [listDownloads] 经 history 行批量填入；单行读（getDownloadInfo）保持 null。 */
+    private fun DownloadInfoEntity.toItem(readProgress: Int? = null) = DownloadItem(
         id = id,
         gid = gid,
         token = token,
@@ -819,7 +825,8 @@ class DownloadService(
         label = label,
         // The server's absolute download path is never exposed to clients.
         downloadDir = null,
-        error = error
+        error = error,
+        readProgress = readProgress
     )
 
     override fun destroy() {

@@ -13,6 +13,8 @@ public class HistoryInfo extends GalleryInfo {
 
 	public int mode;
 	public long time;
+	/** 0-based reading progress (last viewed page index), synced with the server. */
+	public int page;
 
 	public static final Creator<HistoryInfo> CREATOR = new Creator<HistoryInfo>() {
 		@Override
@@ -38,7 +40,7 @@ public class HistoryInfo extends GalleryInfo {
 	public HistoryInfo(long gid, String token, String title, String titleJpn, String thumb, int category, String posted,
 			String uploader, float rating, String simpleLanguage, int mode, long time, boolean rated,
 			String[] simpleTags, int pages, int thumbWidth, int thumbHeight, int spanSize, int spanIndex,
-			int spanGroupIndex, int favoriteSlot, String favoriteName) {
+			int spanGroupIndex, int favoriteSlot, String favoriteName, int page) {
 		this.gid = gid;
 		this.token = token;
 		this.title = title;
@@ -61,6 +63,7 @@ public class HistoryInfo extends GalleryInfo {
 		this.spanGroupIndex = spanGroupIndex;
 		this.favoriteSlot = favoriteSlot;
 		this.favoriteName = favoriteName;
+		this.page = page;
 	}
 
 	public long getGid() {
@@ -159,6 +162,14 @@ public class HistoryInfo extends GalleryInfo {
 		this.time = time;
 	}
 
+	public int getPage() {
+		return page;
+	}
+
+	public void setPage(int page) {
+		this.page = page;
+	}
+
 	public boolean getRated() {
 		return rated;
 	}
@@ -249,12 +260,14 @@ public class HistoryInfo extends GalleryInfo {
 		super.writeToParcel(dest, flags);
 		dest.writeInt(this.mode);
 		dest.writeLong(this.time);
+		dest.writeInt(this.page);
 	}
 
 	protected HistoryInfo(Parcel in) {
 		super(in);
 		this.mode = in.readInt();
 		this.time = in.readLong();
+		this.page = in.readInt();
 	}
 
 	public HistoryInfo(GalleryInfo galleryInfo) {

@@ -129,6 +129,58 @@ class HistoryServiceTest {
         verify(historyRepository).save(existing)
     }
 
+    // ── S3: addHistory page 语义——null 保持已存值，非 null 原样写入（0=重读） ──
+
+    @Test
+    fun `addHistory with page persists it on a new row`() {
+        `when`(historyRepository.findByGid(11L)).thenReturn(null)
+
+        historyService.addHistory(11L, "t11", "Title 11", null, null, 1, 5.0f, page = 37)
+
+        verify(historyRepository).save(argThatK { it.gid == 11L && it.page == 37 })
+    }
+
+    @Test
+    fun `addHistory without page keeps the stored progress`() {
+        val existing = entity(12L, 1000).apply { page = 42 }
+        `when`(historyRepository.findByGid(12L)).thenReturn(existing)
+
+        historyService.addHistory(12L, "t12", "Title 12", null, null, 1, 5.0f)
+
+        assertEquals(42, existing.page)
+        verify(historyRepository).save(existing)
+    }
+
+    @Test
+    fun `addHistory with explicit page 0 rewrites the stored progress to zero`() {
+        val existing = entity(13L, 1000).apply { page = 42 }
+        `when`(historyRepository.findByGid(13L)).thenReturn(existing)
+
+        historyService.addHistory(13L, "t13", "Title 13", null, null, 1, 5.0f, page = 0)
+
+        assertEquals(0, existing.page)
+        verify(historyRepository).save(existing)
+    }
+
+    @Test
+    fun `addHistory clamps a negative page to zero`() {
+        `when`(historyRepository.findByGid(14L)).thenReturn(null)
+
+        historyService.addHistory(14L, "t14", "Title 14", null, null, 1, 5.0f, page = -3)
+
+        verify(historyRepository).save(argThatK { it.gid == 14L && it.page == 0 })
+    }
+
+    @Test
+    fun `toItem returns the entity page in list response`() {
+        val e = entity(15L, 1000).apply { page = 9 }
+        `when`(historyRepository.findAllByOrderByTimeDesc()).thenReturn(listOf(e))
+
+        val response = historyService.listHistory()
+
+        assertEquals(9, response.history.single().page)
+    }
+
     @Test
     fun `toItem returns the entity mode in list response`() {
         val e = entity(5L, 5000).apply { mode = 5 }

@@ -247,6 +247,9 @@ function toGalleryInfo(item: HistoryItem): GalleryInfo {
     thumbWidth: 0,
     thumbHeight: 0,
     pages: 0,
+    // W6 (plan-2026-09-02): 阅读进度随历史行透传（0 起页索引）。旧服务器
+    // 不下发 page → undefined，GalleryCard 角标按缺失隐藏。
+    readProgress: item.page,
     favoriteSlot: -2,
     favoriteName: '',
   }

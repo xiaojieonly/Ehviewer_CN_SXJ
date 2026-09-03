@@ -7,7 +7,10 @@ import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import org.springframework.stereotype.Service
 
 @Service
-class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepository) {
+class FavoriteService(
+    private val favoriteRepository: LocalFavoriteInfoRepository,
+    private val historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository,
+) {
 
     /**
      * List favorites with 1-based pagination (contract: `page` starts at 1)
@@ -58,6 +61,9 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
         val total = filtered.size
         val totalPages = (total + pageSize - 1) / pageSize
         val paged = filtered.drop((startPage - 1) * pageSize).take(pageSize)
+        // 阅读进度批量查（findByGidIn 防 N+1）：同 gid 历史行的 page 即当前进度。
+        val progressByGid = historyRepository.findByGidIn(paged.map { it.gid })
+            .associate { it.gid to it.page }
         val items = paged.map { entity ->
             FavoriteItem(
                 gid = entity.gid,
@@ -71,7 +77,8 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
                 posted = entity.posted,
                 // F-UX5: 条目真实 slot 随行下发——收藏页的 ♥ 徽章据此渲染真值，
                 // 不再退化为当前页签号。
-                favoriteSlot = entity.favoriteSlot
+                favoriteSlot = entity.favoriteSlot,
+                readProgress = progressByGid[entity.gid]
             )
         }
         return FavoriteListResponse(items, totalPages, startPage)

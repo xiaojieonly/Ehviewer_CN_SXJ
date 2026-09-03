@@ -44,7 +44,7 @@ class GalleryControllerTest {
 
         assertEquals(200, response.statusCode.value())
         assertEquals(mapOf("success" to true), response.body)
-        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0, null)
     }
 
     @Test
@@ -52,7 +52,7 @@ class GalleryControllerTest {
         val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5"))
 
         assertEquals(200, response.statusCode.value())
-        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", null, 0)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", null, 0, null)
     }
 
     @Test
@@ -60,7 +60,7 @@ class GalleryControllerTest {
         val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5", "Some Gallery", mode = 5))
 
         assertEquals(200, response.statusCode.value())
-        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 5)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 5, null)
     }
 
     @Test
@@ -71,7 +71,7 @@ class GalleryControllerTest {
         val body = response.body as com.hippo.anotherviewer.web.config.ApiErrorEnvelope
         assertEquals("VALIDATION_ERROR", body.error.code)
         assertTrue(body.error.traceId.isNotBlank())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
     }
 
     @Test
@@ -86,7 +86,7 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.message").isNotEmpty)
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
     }
 
     @Test
@@ -101,7 +101,7 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.error.message").value("Malformed request body"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
     }
 
     @Test
@@ -114,7 +114,7 @@ class GalleryControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
     }
 
     @Test
@@ -127,7 +127,7 @@ class GalleryControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
     }
 
     @Test
@@ -141,7 +141,51 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.error.message").value("Malformed request body"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt(), any())
+    }
+
+    // ---------------------------------------------------------------------
+    // S6: page 透传——JSON 缺省（null）与显式 0 语义不同，靠判空区分
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `addToHistory without page forwards null (keep stored progress)`() {
+        val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5", "Some Gallery"))
+
+        assertEquals(200, response.statusCode.value())
+        // 缺省 page → null → 服务层不改写已存进度。
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0, null)
+    }
+
+    @Test
+    fun `addToHistory with explicit page 0 forwards zero (reread)`() {
+        val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5", "Some Gallery", page = 0))
+
+        assertEquals(200, response.statusCode.value())
+        // 显式 0 = 重读写 0，与缺省 null 可区分（不是判 0）。
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0, 0)
+    }
+
+    @Test
+    fun `addToHistory forwards explicit page through the json body`() {
+        mockMvc.perform(
+            post("/api/v1/gallery/history/123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"token":"a1b2c3d4e5","title":"Some Gallery","page":37}""")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0, 37)
+    }
+
+    @Test
+    fun `addToHistory json without page deserializes to null page`() {
+        mockMvc.perform(
+            post("/api/v1/gallery/history/123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"token":"a1b2c3d4e5","title":"Some Gallery"}""")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0, null)
     }
 
     // ---------------------------------------------------------------------
