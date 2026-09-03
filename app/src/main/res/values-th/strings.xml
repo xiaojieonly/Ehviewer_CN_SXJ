@@ -569,6 +569,7 @@
     <string name="settings_read_reading_direction_left_to_right">ซ้าย -> ขวา</string>
     <string name="settings_read_reading_direction_right_to_Left">ขวา -> ซ้าย</string>
     <string name="settings_read_reading_direction_top_to_bottom">บน -> ล่าง</string>
+    <string name="settings_read_reading_direction_one_hand_mode">โหมดมือเดียว</string>
     <string name="settings_read_page_scaling">ขนาดของหน้า</string>
     <string name="settings_read_page_scaling_actual_size">เท่าขนาด</string>
     <string name="settings_read_page_scaling_fit_to_width">พอดีกับขนาดแนวกว้าง</string>
