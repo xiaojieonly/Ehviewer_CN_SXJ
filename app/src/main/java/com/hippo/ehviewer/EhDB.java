@@ -174,6 +174,13 @@ public class EhDB {
                     Log.w("EhDB", "Failed to add ARCHIVE_URI column, might already exist", e);
                     Analytics.recordException(e);
                 }
+            case 7: // 7 to 8, add LOCATION column to Gallery_Tags
+                try {
+                    db.execSQL("ALTER TABLE \"Gallery_Tags\" ADD COLUMN \"LOCATION\" TEXT");
+                } catch (Exception e) {
+                    Log.w("EhDB", "Failed to add LOCATION column, might already exist", e);
+                    Analytics.recordException(e);
+                }
         }
     }
 
