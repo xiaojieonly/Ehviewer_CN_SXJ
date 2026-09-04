@@ -101,6 +101,10 @@ class ServerConfigService(
         // Gallery Site 站点选择（Settings.gallery_site）：0=e-hentai, 1=exhentai。
         const val KEY_SITE_GALLERY = "site.gallery_site"
 
+        // 内容打码模式（2026-09-04）：服务端权威开关——开启时 PrivacyMaskFilter
+        // 对内容类 JSON 响应统一脱敏（Agent 等无头客户端也拿到脱敏数据）。
+        const val KEY_PRIVACY_MASK = "privacy.mask_enabled"
+
         val defaults = mapOf(
             // LAN personal deployment: auth is off by default; the operator
             // opts in via ANOTHERVIEWER_REQUIRE_AUTH or a DB value.
@@ -115,6 +119,7 @@ class ServerConfigService(
             KEY_SYNC_CLIENT_TIER to "1",
             KEY_SYNC_AUTO_SYNC_INTERVAL_SEC to "900",
             KEY_SITE_GALLERY to "0",
+            KEY_PRIVACY_MASK to "false",
         )
     }
 }

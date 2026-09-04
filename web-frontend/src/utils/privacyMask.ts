@@ -1,5 +1,5 @@
 /**
- * 隐私打码模式（管理面板-高级 开关，plan-2026-09-04）.
+ * 内容打码模式（管理面板-高级 开关，2026-09-04）。
  *
  * 勾选后整个 WebUI 进入"可截图"形态：标题 → 内容序列号 `#<gid>`
  * （`maskedTitle`）；图片则 **照常发起真实请求**（缩略图/页图链路、
@@ -7,9 +7,10 @@
  * `styles/privacy-mask.css`（`<html>.privacy-mask` 作用域）隐藏并在
  * 内容容器垫上占位图 —— 即"访问完整存在，前端只见替代品"。
  *
- * 状态是模块级 `ref`（非 Pinia）：展示组件需在任意调用上下文可读可依赖；
- * 持久化沿 theme 惯例落 localStorage，开关变化同步到 `<html>` 类。
- * 「清除本地数据」（anotherviewer- 前缀全清）会一并重置本开关，符合语义。
+ * **状态的服务端权威**：开关同时持久化到服务器（`/privacy/mask`，
+ * main.ts 启动时拉取）——开启时后端 PrivacyMaskFilter 对 API 响应统一
+ * 脱敏，Agent 等无头客户端同样只能拿到脱敏数据。localStorage 仅作
+ * 重载时的乐观引导缓存。
  */
 import { ref, watch } from 'vue'
 
@@ -34,7 +35,8 @@ function applyHtmlClass(enabled: boolean): void {
   }
 }
 
-/** 勾选/取消勾选（AdminAdvanced）；同步持久化，刷新后保持。 */
+/** 勾选/取消勾选（AdminAdvanced）；乐观更新本地状态与引导缓存，
+ *  权威持久化在服务端（/privacy/mask），启动时以服务端值为准。 */
 export function setPrivacyMaskEnabled(enabled: boolean): void {
   privacyMaskEnabled.value = enabled
   try {

@@ -186,6 +186,7 @@ import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/compon
 import { syncApi, type SyncPolicy } from '@/api/sync'
 import { backupApi } from '@/api/backup'
 import { jobsApi, type Job } from '@/api/jobs'
+import { privacyApi } from '@/api/privacy'
 import { privacyMaskEnabled, setPrivacyMaskEnabled } from '@/utils/privacyMask'
 
 /* ------------------------------ local settings ---------------------------- */
@@ -244,9 +245,16 @@ function toggleParseErrors(): void {
   persistUi()
 }
 
-/** 隐私打码：状态与持久化都在 privacyMask 模块内，这里只转发开关。 */
+/** 内容打码：乐观切换本地展示层，权威持久化在服务端（对 Agent 等
+ *  无头客户端同样生效）；失败回滚并提示。 */
 function togglePrivacyMask(): void {
-  setPrivacyMaskEnabled(!privacyMaskEnabled.value)
+  const next = !privacyMaskEnabled.value
+  setPrivacyMaskEnabled(next)
+  privacyApi.setMask(next).catch((error) => {
+    console.error('[AdminAdvanced] failed to persist privacy mask', error)
+    setPrivacyMaskEnabled(!next)
+    showSnack('打码状态保存失败', 5000)
+  })
 }
 
 /* ------------------------- sync policy (ADR-0003) ------------------------- */

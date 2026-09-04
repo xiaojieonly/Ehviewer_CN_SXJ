@@ -61,28 +61,3 @@ describe('EhUnavailableError — EH 熔断（plan-2026-08-30 §3.2/§4.1）', ()
     expect(isEhUnavailableError(noEnvelope)).toBe(false)
   })
 })
-
-describe('request interceptor — 隐私打码标记头（2026-09-04）', () => {
-  it('打码开：请求携带 X-Privacy-Mask: 1（服务端据此脱敏响应）；关：不携带', async () => {
-    const client = (await import('@/api/client')).default
-    const { setPrivacyMaskEnabled } = await import('@/utils/privacyMask')
-    const original = client.defaults.adapter
-    let seenHeaders: any = null
-    client.defaults.adapter = async (config) => {
-      seenHeaders = config.headers
-      return { data: {}, status: 200, statusText: 'OK', headers: {}, config } as any
-    }
-    try {
-      setPrivacyMaskEnabled(true)
-      await client.get('/probe')
-      expect(seenHeaders.get('X-Privacy-Mask')).toBe('1')
-
-      setPrivacyMaskEnabled(false)
-      await client.get('/probe')
-      expect(seenHeaders.get('X-Privacy-Mask')).toBeUndefined()
-    } finally {
-      client.defaults.adapter = original
-      setPrivacyMaskEnabled(false)
-    }
-  })
-})

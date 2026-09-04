@@ -4,6 +4,7 @@ import AdminAdvanced from '../admin/AdminAdvanced.vue'
 import { AppSelect, AppSwitch, PrefRow, SectionHeader } from '@/components/form'
 import { backupApi } from '@/api/backup'
 import { jobsApi, type Job } from '@/api/jobs'
+import { privacyApi } from '@/api/privacy'
 import { setPrivacyMaskEnabled } from '@/utils/privacyMask'
 
 vi.mock('@/api/backup', () => ({
@@ -11,6 +12,13 @@ vi.mock('@/api/backup', () => ({
     exportBackup: vi.fn(),
     restoreBackup: vi.fn(),
     getBackupState: vi.fn(),
+  },
+}))
+
+vi.mock('@/api/privacy', () => ({
+  privacyApi: {
+    getMask: vi.fn().mockResolvedValue({ enabled: false }),
+    setMask: vi.fn().mockResolvedValue({ enabled: false }),
   },
 }))
 
@@ -109,20 +117,25 @@ describe('AdminAdvanced (高级)', () => {
     expect(JSON.parse(localStorage.getItem(UI_KEY)!).saveParseErrors).toBe(true)
   })
 
-  it('toggles the privacy-mask switch and persists to localStorage', async () => {
+  it('toggles the privacy-mask switch and persists to the server', async () => {
+    // afterEach 的 restoreAllMocks 会剥掉模块工厂里的实现——用例内重新打桩
+    vi.mocked(privacyApi.setMask).mockResolvedValue({ enabled: false })
     wrapper = mount(AdminAdvanced)
     const maskSwitch = wrapper
       .findAllComponents(AppSwitch)
       .find((s) => s.attributes('aria-label') === '内容打码模式')
     expect(maskSwitch).toBeTruthy()
     expect(maskSwitch!.attributes('aria-checked')).toBe('false')
+
     await maskSwitch!.trigger('click')
-    expect(maskSwitch!.attributes('aria-checked')).toBe('true')
-    expect(localStorage.getItem('anotherviewer-privacy-mask')).toBe('1')
-    // 开关同步 <html> 类，驱动全局遮蔽样式（图片照常请求）。
+    // 权威状态在服务端（对 Agent 等无头客户端同样生效）；本地乐观同步 <html> 类
+    expect(privacyApi.setMask).toHaveBeenCalledWith(true)
     expect(document.documentElement.classList.contains('privacy-mask')).toBe(true)
+    await flushPromises()
+    expect(maskSwitch!.attributes('aria-checked')).toBe('true')
+
     await maskSwitch!.trigger('click')
-    expect(localStorage.getItem('anotherviewer-privacy-mask')).toBeNull()
+    expect(privacyApi.setMask).toHaveBeenLastCalledWith(false)
     expect(document.documentElement.classList.contains('privacy-mask')).toBe(false)
   })
 

@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.dto.MaintenanceFileIssue
 import com.hippo.anotherviewer.web.dto.MaintenancePreviewResponse
 import com.hippo.anotherviewer.web.api.MaintenanceController
 import com.hippo.anotherviewer.web.service.DownloadMaintenanceService
+import com.hippo.anotherviewer.web.service.ServerConfigService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
@@ -89,8 +90,9 @@ class PrivacyMaskFilterTest {
     // ── 过滤器接线（MockMvc 集成） ──────────────────────────────
 
     @Test
-    fun `preview response is redacted only with the mask header`() {
-        val service: DownloadMaintenanceService = mock(DownloadMaintenanceService::class.java)
+    fun `preview response is redacted when mask flag on, full when off (no client header needed)`() {
+        val service = mock(DownloadMaintenanceService::class.java)
+        val serverConfig = mock(ServerConfigService::class.java)
         `when`(service.preview()).thenReturn(
             MaintenancePreviewResponse(
                 redundantFiles = listOf(MaintenanceFileIssue("1382450-[まだとんだし", 1024)),
@@ -99,22 +101,35 @@ class PrivacyMaskFilterTest {
                 )
             )
         )
+        // 第一次请求（打码开）→ 脱敏；第二次（关）→ 全量
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK))
+            .thenReturn(true)
+            .thenReturn(false)
         val mockMvc: MockMvc = MockMvcBuilders
             .standaloneSetup(MaintenanceController(service))
             // addFilters 是 <T extends B> 泛型方法，Kotlin 链上推不出 T，需显式
-            .addFilters<StandaloneMockMvcBuilder>(PrivacyMaskFilter(objectMapper))
+            .addFilters<StandaloneMockMvcBuilder>(PrivacyMaskFilter(objectMapper, serverConfig))
             .build()
 
-        // 无头（App / 关码）：全量
+        // 打码开：Agent 等无头客户端同样拿到脱敏数据（不带任何自定义头）
+        mockMvc.perform(get("/api/v1/download/maintenance/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.redundantFiles[0].path").value("1382450-[ま"))
+            .andExpect(jsonPath("$.invalidDownloads[0].title").value("#600"))
+
+        // 打码关：全量（关码 = 维护作业需要完整路径/标题）
         mockMvc.perform(get("/api/v1/download/maintenance/preview"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.redundantFiles[0].path").value("1382450-[まだとんだし"))
             .andExpect(jsonPath("$.invalidDownloads[0].title").value("Real Title"))
+    }
 
-        // 带头（WebUI 开码）：路径前 10 字符、标题 → #gid
-        mockMvc.perform(get("/api/v1/download/maintenance/preview").header("X-Privacy-Mask", "1"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.redundantFiles[0].path").value("1382450-[ま"))
-            .andExpect(jsonPath("$.invalidDownloads[0].title").value("#600"))
+    @Test
+    fun `isMaskedTitle recognizes serial form only`() {
+        assertTrue(PrivacyMaskFilter.isMaskedTitle("#42"))
+        assertTrue(PrivacyMaskFilter.isMaskedTitle("#123456"))
+        assertFalse(PrivacyMaskFilter.isMaskedTitle("(C99) Real Title"))
+        assertFalse(PrivacyMaskFilter.isMaskedTitle("#tag not serial"))
+        assertFalse(PrivacyMaskFilter.isMaskedTitle(null))
     }
 }

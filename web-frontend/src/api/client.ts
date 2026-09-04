@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { markDown, EH_UNAVAILABLE_MESSAGE } from '@/stores/availability'
-import { privacyMaskEnabled } from '@/utils/privacyMask'
 
 const client = axios.create({
   baseURL: '/api/v1',
@@ -14,11 +13,6 @@ client.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-  }
-  // 隐私打码（2026-09-04）：附带标记头，服务端对 JSON 响应做统一脱敏——
-  // 风控读的是 API 输出，只遮前端渲染不够。App 不带此头、始终全量。
-  if (privacyMaskEnabled.value) {
-    config.headers['X-Privacy-Mask'] = '1'
   }
   return config
 })

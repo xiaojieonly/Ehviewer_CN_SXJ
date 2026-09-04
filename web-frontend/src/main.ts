@@ -17,6 +17,17 @@ app.use(router)
 import { useThemeStore } from './stores/theme'
 useThemeStore(pinia)
 
+// 内容打码模式：服务端状态为权威（开码时后端对 API 响应统一脱敏，
+// 对 Agent 等无头客户端同样生效）。启动即拉取，覆盖本地缓存值。
+import { privacyApi } from './api/privacy'
+import { setPrivacyMaskEnabled } from './utils/privacyMask'
+privacyApi
+  .getMask()
+  .then(({ enabled }) => setPrivacyMaskEnabled(enabled))
+  .catch(() => {
+    // 拉取失败保持本地缓存值（下次重试）
+  })
+
 app.mount('#app')
 
 // PWA service worker — production only (see register-sw.ts)
