@@ -27,8 +27,12 @@
           {{ gallery.titleJpn }}
         </p>
         <!-- Info switches (B-2): uploader / posted render only when the
-             corresponding `general.show*` preference is on (default off). -->
-        <p v-if="showUploader && gallery.uploader" class="gallery-card__uploader">
+             corresponding `general.show*` preference is on (default off).
+             隐私打码：上传者属敏感内容，一律隐藏。 -->
+        <p
+          v-if="showUploader && gallery.uploader && !privacyMaskEnabled"
+          class="gallery-card__uploader"
+        >
           {{ gallery.uploader }}
         </p>
         <div class="gallery-card__rating-row">
@@ -48,9 +52,12 @@
             {{ readProgressLabel }}
           </span>
           <span v-else-if="gallery.pages > 0" class="gallery-card__pages">{{ gallery.pages }}P</span>
-          <span v-for="tag in gallery.simpleTags" :key="tag" class="gallery-card__tag">
-            {{ tag }}
-          </span>
+          <!-- 隐私打码：标签是内容关键词，一律隐藏（风控安全）。 -->
+          <template v-if="!privacyMaskEnabled">
+            <span v-for="tag in gallery.simpleTags" :key="tag" class="gallery-card__tag">
+              {{ tag }}
+            </span>
+          </template>
         </div>
       </div>
       <!-- F-UX6 (PC form only): hover / focus-within quick actions. -->

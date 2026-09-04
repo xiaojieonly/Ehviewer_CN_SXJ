@@ -45,8 +45,9 @@
               {{ gallery.titleJpn }}
             </p>
 
+            <!-- 隐私打码：上传者属敏感内容，一律隐藏。 -->
             <button
-              v-if="gallery.uploader"
+              v-if="gallery.uploader && !privacyMaskEnabled"
               type="button"
               class="detail-header__uploader"
               :title="`Galleries by ${gallery.uploader}`"
@@ -142,9 +143,10 @@
           </button>
         </section>
 
-        <!-- ③ Tags — namespace-grouped rows (`gallery_detail_tags.xml`) -->
+        <!-- ③ Tags — namespace-grouped rows (`gallery_detail_tags.xml`).
+             隐私打码：标签是内容关键词，一律不出（回退到空态占位）。 -->
         <section class="detail-tags" aria-label="Gallery tags">
-          <template v-if="tagGroups.length > 0">
+          <template v-if="tagGroups.length > 0 && !privacyMaskEnabled">
             <div v-for="group in tagGroups" :key="group.namespace" class="tag-row">
               <span class="tag-row__ns" :title="group.namespace">{{ group.namespace }}</span>
               <div class="tag-row__tags">
@@ -161,29 +163,33 @@
           <p v-else class="detail-tags__empty">No tags</p>
         </section>
 
-        <!-- ④ Comments (`gallery_detail_comments.xml`) -->
+        <!-- ④ Comments (`gallery_detail_comments.xml`).
+             隐私打码：评论文本是内容，整段不出（回退到空态占位）。 -->
         <section class="detail-comments" aria-label="Gallery comments">
-          <p v-if="commentsStatus" class="detail-comments__status">{{ commentsStatus }}</p>
-          <!-- F6: 加载失败不再伪装「No comments」——错误占位 + 重试入口。 -->
-          <div v-if="commentsError" class="detail-comments__failed" role="alert">
-            <span class="detail-comments__failed-text">评论加载失败</span>
-            <button
-              type="button"
-              class="detail-comments__retry"
-              data-testid="comments-retry"
-              @click="reloadComments"
-            >
-              重试
-            </button>
-          </div>
-          <CommentList
-            :comments="comments"
-            :loading="commentsLoading"
-            :posting="posting"
-            :voting-id="votingId"
-            @submit="onSubmitComment"
-            @vote="onVoteComment"
-          />
+          <template v-if="!privacyMaskEnabled">
+            <p v-if="commentsStatus" class="detail-comments__status">{{ commentsStatus }}</p>
+            <!-- F6: 加载失败不再伪装「No comments」——错误占位 + 重试入口。 -->
+            <div v-if="commentsError" class="detail-comments__failed" role="alert">
+              <span class="detail-comments__failed-text">评论加载失败</span>
+              <button
+                type="button"
+                class="detail-comments__retry"
+                data-testid="comments-retry"
+                @click="reloadComments"
+              >
+                重试
+              </button>
+            </div>
+            <CommentList
+              :comments="comments"
+              :loading="commentsLoading"
+              :posting="posting"
+              :voting-id="votingId"
+              @submit="onSubmitComment"
+              @vote="onVoteComment"
+            />
+          </template>
+          <p v-else class="detail-comments__status">No comments</p>
         </section>
       </div>
     </main>
@@ -468,10 +474,15 @@ async function toggleFavorite() {
 async function share() {
   const g = gallery.value
   if (!g) return
-  const url = g.galleryUrl ?? `https://e-hentai.org/g/${g.gid}/${g.token}/`
+  // 隐私打码：站点真实地址（含 token）绝不离开本页——只分享本站 ID 链接
+  // + 序号标题，与 GalleryCard.copyLink 同一地址语义。
+  const url = privacyMaskEnabled.value
+    ? `${window.location.origin}/gallery/${g.gid}`
+    : (g.galleryUrl ?? `https://e-hentai.org/g/${g.gid}/${g.token}/`)
+  const title = maskedTitle(g.title, g.gid)
   if (typeof navigator.share === 'function') {
     try {
-      await navigator.share({ title: g.title, url })
+      await navigator.share({ title, url })
     } catch {
       /* User dismissed the share sheet — not an error. */
     }

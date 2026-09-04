@@ -7,6 +7,7 @@ import { galleryApi } from '@/api/gallery'
 import { commentApi } from '@/api/comment'
 import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
+import { setPrivacyMaskEnabled } from '@/utils/privacyMask'
 import type { CommentItem } from '@/api/comment'
 import type { GalleryDetail } from '@/types'
 
@@ -160,6 +161,35 @@ async function mountDetail(overrides: Partial<GalleryDetail> = {}): Promise<VueW
   await flushPromises()
   return wrapper
 }
+
+describe('GalleryDetailView (隐私打码 plan-2026-09-04)', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    vi.clearAllMocks()
+    // 打码是模块级状态——复位，避免泄漏到后续 describe。
+    setPrivacyMaskEnabled(false)
+  })
+
+  it('打码开启：上传者/标签/评论一概不渲染，回退空态占位', async () => {
+    setPrivacyMaskEnabled(true)
+    const w = await mountDetail({
+      uploader: 'someone',
+      tags: [
+        { namespace: 'artist', tag: 'someone' },
+        { namespace: 'female', tag: 'big' },
+      ],
+      simpleTags: ['someone'],
+    })
+
+    expect(w.find('.detail-header__uploader').exists()).toBe(false)
+    expect(w.find('.tag-row').exists()).toBe(false)
+    expect(w.text()).toContain('No tags')
+    expect(w.find('.detail-comments').text()).toContain('No comments')
+    // 真实内容关键词/上传者名绝不出现在页面文本中。
+    expect(w.text()).not.toContain('someone')
+    expect(w.text()).not.toContain('artist')
+  })
+})
 
 describe('GalleryDetailView (T-F2) — download button state machine', () => {
   let d: Deferred<boolean>

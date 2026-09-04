@@ -115,13 +115,17 @@ describe('GalleryCard (list mode)', () => {
     expect(wrapper.find('.gallery-card__grid-title').exists()).toBe(false)
   })
 
-  it('隐私打码：标题/日文标题以序列号替代，缩略图 src 保持真实（仅 CSS 遮蔽渲染）', () => {
+  it('隐私打码：标题/日文标题以序列号替代，标签与上传者隐藏，缩略图 src 保持真实', () => {
+    seedPrefs({ showUploader: true })
     setPrivacyMaskEnabled(true)
     const wrapper = mount(GalleryCard, {
       props: { gallery: makeGallery(), mode: 'list' },
     })
     expect(wrapper.find('.gallery-card__title').text()).toBe('#12345')
     expect(wrapper.find('.gallery-card__title-jpn').exists()).toBe(false)
+    // 标签是内容关键词、上传者是敏感信息——打码下一律不渲染。
+    expect(wrapper.find('.gallery-card__tag').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(false)
     // 打码不换 src：真实请求照发（访问/缓存链路完整），像素由
     // <html>.privacy-mask 全局样式隐藏。
     expect(wrapper.find('.gallery-card__thumb img').attributes('src')).toBe(
