@@ -610,6 +610,9 @@
     <string name="settings_eh_thumb_size_large">Large</string>
     <string name="settings_eh_thumb_size_middle">Middle</string>
     <string name="settings_eh_thumb_size_small">Small</string>
+    <string name="settings_eh_thumb_size_custom">Custom</string>
+    <string name="settings_eh_thumb_size_custom_size">Custom thumb size</string>
+    <string name="settings_eh_thumb_size_custom_size_summary">Currently %d dp</string>
     <string name="settings_eh_thumb_resolution">Thumb resolution</string>
     <string name="settings_eh_thumb_resolution_summary">Currently %s. Certain resolutions might cause getting thumb failed</string>
     <string name="settings_eh_thumb_resolution_auto">Auto</string>

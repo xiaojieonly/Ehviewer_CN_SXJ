@@ -33,6 +33,10 @@ import com.hippo.ehviewer.client.EhTagDatabase;
 public class EhFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceChangeListener {
 
+    private static final int THUMB_SIZE_CUSTOM = 3;
+
+    private Preference mThumbSizeCustom;
+
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.eh_settings);
@@ -44,6 +48,7 @@ public class EhFragment extends BasePreferenceFragmentCompat
         Preference listMode = findPreference(Settings.KEY_LIST_MODE);
         Preference detailSize = findPreference(Settings.KEY_DETAIL_SIZE);
         Preference thumbSize = findPreference(Settings.KEY_THUMB_SIZE);
+        mThumbSizeCustom = findPreference(Settings.KEY_THUMB_SIZE_CUSTOM);
         Preference historyInfoSize = findPreference(Settings.KEY_HISTORY_INFO_SIZE);
         Preference showTagTranslations = findPreference(Settings.KEY_SHOW_TAG_TRANSLATIONS);
         Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
@@ -65,6 +70,11 @@ public class EhFragment extends BasePreferenceFragmentCompat
         historyInfoSize.setOnPreferenceChangeListener(this);
         showTagTranslations.setOnPreferenceChangeListener(this);
         showGalleryComment.setOnPreferenceChangeListener(this);
+
+        if (mThumbSizeCustom != null) {
+            mThumbSizeCustom.setOnPreferenceChangeListener(this);
+            updateThumbSizeCustomState(Settings.getThumbSize() == THUMB_SIZE_CUSTOM);
+        }
 
         if (!EhTagDatabase.isPossible(getActivity())) {
             getPreferenceScreen().removePreference(showTagTranslations);
@@ -91,6 +101,13 @@ public class EhFragment extends BasePreferenceFragmentCompat
             getActivity().setResult(Activity.RESULT_OK);
             return true;
         } else if (Settings.KEY_THUMB_SIZE.equals(key)) {
+            updateThumbSizeCustomState(Integer.toString(THUMB_SIZE_CUSTOM).equals(newValue.toString()));
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
+        } else if (Settings.KEY_THUMB_SIZE_CUSTOM.equals(key)) {
+            if (newValue instanceof Integer) {
+                updateThumbSizeCustomSummary((Integer) newValue);
+            }
             getActivity().setResult(Activity.RESULT_OK);
             return true;
         } else if (Settings.KEY_SHOW_TAG_TRANSLATIONS.equals(key)) {
@@ -122,6 +139,19 @@ public class EhFragment extends BasePreferenceFragmentCompat
             return true;
         }
         return true;
+    }
+
+    private void updateThumbSizeCustomState(boolean enabled) {
+        if (mThumbSizeCustom != null) {
+            mThumbSizeCustom.setEnabled(enabled);
+            updateThumbSizeCustomSummary(Settings.getThumbSizeCustom());
+        }
+    }
+
+    private void updateThumbSizeCustomSummary(int value) {
+        if (mThumbSizeCustom != null) {
+            mThumbSizeCustom.setSummary(getString(R.string.settings_eh_thumb_size_custom_size_summary, value));
+        }
     }
 
     private String getSystemThemeSummary() {

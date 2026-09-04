@@ -23,6 +23,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -42,6 +43,7 @@ import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.NumberUtils;
 
@@ -469,20 +471,29 @@ public class Settings {
     public static final String KEY_THUMB_SIZE = "thumb_size";
     private static final int DEFAULT_THUMB_SIZE = 1;
 
+    public static final String KEY_THUMB_SIZE_CUSTOM = "thumb_size_custom";
+    public static final int DEFAULT_THUMB_SIZE_CUSTOM = 200;
+    private static final int MIN_THUMB_SIZE_CUSTOM = 40;
+
     public static int getThumbSize() {
         return getIntFromStr(KEY_THUMB_SIZE, DEFAULT_THUMB_SIZE);
     }
 
-    @DimenRes
-    public static int getThumbSizeResId() {
+    public static int getThumbSizeCustom() {
+        return Math.max(getInt(KEY_THUMB_SIZE_CUSTOM, DEFAULT_THUMB_SIZE_CUSTOM), MIN_THUMB_SIZE_CUSTOM);
+    }
+
+    public static int getThumbSizePx(Resources resources) {
         switch (getThumbSize()) {
             case 0:
-                return R.dimen.gallery_grid_column_width_large;
+                return resources.getDimensionPixelOffset(R.dimen.gallery_grid_column_width_large);
             default:
             case 1:
-                return R.dimen.gallery_grid_column_width_middle;
+                return resources.getDimensionPixelOffset(R.dimen.gallery_grid_column_width_middle);
             case 2:
-                return R.dimen.gallery_grid_column_width_small;
+                return resources.getDimensionPixelOffset(R.dimen.gallery_grid_column_width_small);
+            case 3:
+                return LayoutUtils.dp2pix(sContext, getThumbSizeCustom());
         }
     }
 
