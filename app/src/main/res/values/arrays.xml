@@ -203,6 +203,18 @@
         <item>17</item>
     </string-array>
 
+    <string-array name="server_log_level_entries" translatable="false">
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>ERROR</item>
+    </string-array>
+
+    <string-array name="server_log_level_values" translatable="false">
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>ERROR</item>
+    </string-array>
+
     <string-array name="image_resolution_entries" translatable="false">
         <item>@string/settings_download_image_resolution_auto</item>
         <item>780x</item>
