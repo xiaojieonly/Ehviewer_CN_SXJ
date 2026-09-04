@@ -47,7 +47,7 @@ class EhAvailabilityService(
     private val webProxyManager: WebProxyManager,
     @Value("\${anotherviewer.availability.probe-url:https://e-hentai.org}")
     private val probeUrl: String,
-    @Value("\${anotherviewer.availability.probe-timeout-ms:5000}")
+    @Value("\${anotherviewer.availability.probe-timeout-ms:12000}")
     private val probeTimeoutMs: Long,
     private val probe: (() -> Boolean)? = null,
 ) {
@@ -58,7 +58,7 @@ class EhAvailabilityService(
      * 复用 [WebProxyManager] 的 selector/authenticator（与站点流量一致的
      * 代理链——SOCKS5 127.0.0.1:20170 等），但**不带** CurlSiteExecutor
      * （系统 curl --max-time 60 与 30s connect 是 60s 元凶）：本 client 固定
-     * connect/read/write = probe-timeout-ms（默认 5s），探测只做可达性判定，
+     * connect/read/write = probe-timeout-ms（默认 12s），探测只做可达性判定，
      * 无需 cookie/UA 指纹；三超时合围保证死网络不挂动作。
      * 懒构建：纯状态机/注入 probe 的测试不触发网络件（null proxy 不爆炸）。
      */
@@ -157,7 +157,7 @@ class EhAvailabilityService(
     /**
      * The real probe: HEAD [probeUrl] (default https://e-hentai.org) through the
      * dedicated [probeClient] (proxy-chain aware), bounded by
-     * anotherviewer.availability.probe-timeout-ms (default 5000). Any 2xx/3xx
+     * anotherviewer.availability.probe-timeout-ms (default 12000). Any 2xx/3xx
      * counts as reachable; 4xx/5xx/exceptions count as DOWN. On failure
      * [lastReason] is set so [probeNow] records the actual cause.
      *

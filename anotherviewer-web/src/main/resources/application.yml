@@ -38,7 +38,7 @@ anotherviewer:
     # 探测目标（仅手动 probeNow 使用；默认 EH 根路径）。
     probe-url: https://e-hentai.org
     # 单次探测超时（connect/read 合计；DOWN 期间用户手动恢复只需 ≤ 该值等待）。
-    probe-timeout-ms: 5000
+    probe-timeout-ms: 12000
   processing:
     concurrency: 1
     task-ttl-ms: 600000

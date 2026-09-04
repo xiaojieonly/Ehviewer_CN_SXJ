@@ -233,7 +233,7 @@ import type { GeneralPreferences } from '@/api/preferences'
 import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
 import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
-import { maskedImageSrc, privacyMaskEnabled } from '@/utils/privacyMask'
+import { privacyMaskEnabled } from '@/utils/privacyMask'
 import AppCard from '@/components/atoms/AppCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
@@ -352,9 +352,9 @@ const hasThumb = computed(() => Boolean(props.gallery.thumb) && !thumbFailed.val
  * R4-9: the raw `thumb` may point at the unresolvable Gallery Site host
  * (`e-hentai.org` family); rewrite those through the server's same-origin
  * image proxy so the thumbnail actually loads. Non-site URLs pass through.
- * 隐私打码开启时换成占位图（真实缩略图不发请求）。
+ * 隐私打码不改 src——真实请求照发，像素由全局遮蔽样式隐藏。
  */
-const thumbSrc = computed(() => maskedImageSrc(rewriteSiteAssetUrl(props.gallery.thumb)))
+const thumbSrc = computed(() => rewriteSiteAssetUrl(props.gallery.thumb))
 
 function onImgLoad(): void {
   imgLoaded.value = true

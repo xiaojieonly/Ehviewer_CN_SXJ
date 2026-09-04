@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -27,18 +28,35 @@ data class PageRef(
  * (files 1-based, standard image extensions in jpg/jpeg/png/gif/webp priority).
  *
  * - Built once at startup ([loadAll]) with a single `listFiles` per numeric
- *   gid directory — callers (GalleryService.countPushedPages,
- *   ImageProxyController.findPushedPageFile) never rescan the disk per request.
+ *   gid directory. Indexed lookups self-validate against the CACHED directory
+ *   ([DirEntry.dir]) without ever touching the root listing — an index hit
+ *   costs zero disk traversal, so the hot path (GalleryService.countPushedPages,
+ *   ImageProxyController.findPushedPageFile) never pays a per-request
+ *   `root.listFiles()` even on trees with thousands of gid directories.
  * - Stale entries are refreshed lazily: a lookup compares the recorded
- *   directory mtime with `dir.lastModified()` and re-scans only the changed
- *   directory (push/delete writes bump the dir mtime). [invalidate] drops an
- *   entry on download lifecycle events for immediate consistency.
+ *   directory mtime with `entry.dir.lastModified()` and re-scans only the
+ *   changed directory (push/delete writes bump the dir mtime). [invalidate]
+ *   drops an entry on download lifecycle events for immediate consistency.
+ * - External changes (whole gid dirs copied/uploaded/deleted) are sensed via
+ *   the root-listing fingerprint check in [ensureFresh], throttled to once
+ *   per `anotherviewer.download.dir-index-refresh-ms` (default 30s): such a
+ *   change is picked up at the first request after the TTL elapses, i.e. the
+ *   awareness latency is ≤ TTL. Interval ≤ 0 checks on every request (legacy
+ *   behavior, used by tests). Per-gid healing does NOT wait for the TTL:
+ *   index misses and failed self-validation (rename/delete/mtime) go straight
+ *   to [findDir]/[scanDir].
  *
  * Shared concurrently; safe for the WebUI single-user model.
  */
 @Service
 class DownloadDirIndex(
     private val config: SiteCoreConfigProperties,
+    /**
+     * 根指纹检查的节流间隔 ms；≤0 = 每次都检（旧行为，测试用）。
+     * Kotlin 默认 0 仅供非 Spring 构造（既有测试）保持旧语义。
+     */
+    @Value("\${anotherviewer.download.dir-index-refresh-ms:30000}")
+    private val refreshIntervalMs: Long = 0,
 ) {
     private val logger = LoggerFactory.getLogger(DownloadDirIndex::class.java)
 
@@ -47,6 +65,8 @@ class DownloadDirIndex(
 
     private class DirEntry(
         val gid: Long,
+        /** Cached directory handle: hit-path self-validation avoids findDir (a root listFiles). */
+        val dir: File,
         val dirMtime: Long,
         /** 1-based page → located page ref (best extension priority wins). */
         val pageFiles: Map<Int, PageRef>,
@@ -62,6 +82,10 @@ class DownloadDirIndex(
     @Volatile
     private var lastDirFingerprint: Set<String>? = null
 
+    /** 上次根目录检查（指纹或全量扫描）的时间戳；按 [refreshIntervalMs] 节流。 */
+    @Volatile
+    private var lastCheckAtMs: Long = 0L
+
     @PostConstruct
     fun loadAll() {
         refresh()
@@ -73,6 +97,9 @@ class DownloadDirIndex(
      * 列表变化时调用——复制/上传新缓存无需重启。
      */
     fun refresh() {
+        // 全量重建本身就是一次根检查：重置节流时钟，启动后首个请求不必再做
+        // 一次指纹 listFiles（TTL 的“上次检查”以最后一次扫描为准）。
+        lastCheckAtMs = System.currentTimeMillis()
         if (!root.isDirectory) {
             logger.info("DownloadDirIndex refresh: downloads root missing at {}", root.absolutePath)
             lastDirFingerprint = null
@@ -111,11 +138,17 @@ class DownloadDirIndex(
 
     /**
      * 自动感知（无需重启）：根目录列表指纹与上次不同（用户复制/上传/删除
-     * 缓存目录）→ 全量重建。所有查询入口先调用；触发只在指纹差异时发生
-     * （幂等，无变化零开销）。refresh 与并发查询用 synchronized 串行化——
+     * 缓存目录）→ 全量重建。所有查询入口先调用；触发只在指纹差异时发生。
+     * 按 [refreshIntervalMs] 节流：间隔内的调用直接返回，不做根 `listFiles()`
+     * （命中路径 per-request 零磁盘遍历的另一半），到点才检查一次——外部
+     * 改动的感知延迟由此从实时退化为 ≤TTL（默认 30s）。间隔 ≤0 = 每次都检
+     * （旧行为，测试用）。refresh 与并发查询用 synchronized 串行化——
      * 避免两个请求同时全量扫描。
      */
     private fun ensureFresh() {
+        val now = System.currentTimeMillis()
+        if (refreshIntervalMs > 0 && now - lastCheckAtMs < refreshIntervalMs) return
+        lastCheckAtMs = now
         val dirs = root.listFiles()
             ?.filter { it.isDirectory && DownloadDirs.isOursDir(it.name) }
             .orEmpty()
@@ -184,6 +217,7 @@ class DownloadDirIndex(
         }
         val entry = DirEntry(
             gid = gid,
+            dir = dir,
             dirMtime = mtime,
             pageFiles = pages.mapValues { (pageNo, p) ->
                 PageRef(gid = gid, page = pageNo, ext = p.ext, size = p.size, fileName = p.fileName)
@@ -194,25 +228,33 @@ class DownloadDirIndex(
     }
 
     /**
-     * Current entry for [gid], refetching when the directory is absent from
-     * the index (created after startup, e.g. by an App push) or when its mtime
-     * changed (files pushed/removed since the last scan). Directory naming is
-     * `{gid}` (legacy) or `{gid}-{title}` (Android-aligned, 2026-08-30); both
-     * are located by parsing the leading gid from the directory name.
+     * Current entry for [gid]. Index hits self-validate against the CACHED
+     * [DirEntry.dir] (exists + mtime unchanged) — zero disk traversal on the
+     * root. Only an index miss or failed self-validation (directory renamed
+     * or removed, files pushed/removed since the last scan) falls back to
+     * [findDir] + [scanDir]: rename/delete self-healing re-locates the
+     * directory by parsing the leading gid and rebuilds the entry. Directory
+     * naming is `{gid}` (legacy) or `{gid}-{title}` (Android-aligned,
+     * 2026-08-30); both resolve through the same path.
      */
     private fun lookup(gid: Long): DirEntry? {
-        val dir = findDir(gid)
+        // 索引命中零磁盘遍历：直接自验缓存的 dir，不走 findDir()（其根
+        // listFiles() 正是本任务要消除的每请求热路径）。
         index[gid]?.let { entry ->
-            if (dir.isDirectory && dir.lastModified() == entry.dirMtime) return entry
+            if (entry.dir.isDirectory && entry.dir.lastModified() == entry.dirMtime) return entry
         }
-        return scanDir(gid, dir)
+        // miss 或自验失败：重找目录（rename → 新路径；删除 → {gid} 占位，
+        // 由 scanDir 摘除索引）并按需重扫。
+        return scanDir(gid, findDir(gid))
     }
 
     /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */
     fun dirFor(gid: Long): File? {
         ensureFresh()
-        val dir = findDir(gid)
-        return if (dir.isDirectory) dir else null
+        // 索引直读：命中直接返回缓存 dir（零 findDir/根 listFiles）；miss
+        // 或目录已消失才回落 findDir。null = 目录不存在，语义不变。
+        return index[gid]?.dir?.takeIf { it.isDirectory }
+            ?: findDir(gid).takeIf { it.isDirectory }
     }
 
     /** Locate the directory for [gid] under the root (legacy `{gid}` or `{gid}-{title}`). */

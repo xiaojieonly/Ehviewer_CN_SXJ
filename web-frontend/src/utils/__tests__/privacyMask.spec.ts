@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import {
-  privacyMaskEnabled,
-  setPrivacyMaskEnabled,
-  maskedTitle,
-  maskedImageSrc,
-  PRIVACY_PLACEHOLDER_SRC,
-} from '../privacyMask'
+import { privacyMaskEnabled, setPrivacyMaskEnabled, maskedTitle } from '../privacyMask'
 
 describe('privacyMask (隐私打码)', () => {
   beforeEach(() => {
@@ -28,26 +22,19 @@ describe('privacyMask (隐私打码)', () => {
     expect(privacyMaskEnabled.value).toBe(false)
   })
 
+  it('同步 <html> 的 privacy-mask 类——驱动全局遮蔽样式（图片照常请求，仅渲染替代）', () => {
+    setPrivacyMaskEnabled(true)
+    expect(document.documentElement.classList.contains('privacy-mask')).toBe(true)
+
+    setPrivacyMaskEnabled(false)
+    expect(document.documentElement.classList.contains('privacy-mask')).toBe(false)
+  })
+
   it('maskedTitle: 开启时返回内容序列号 #gid，关闭时原样透传', () => {
     expect(maskedTitle('Some Title', 12345)).toBe('Some Title')
 
     setPrivacyMaskEnabled(true)
     expect(maskedTitle('Some Title', 12345)).toBe('#12345')
     expect(maskedTitle('', 7)).toBe('#7')
-  })
-
-  it('maskedImageSrc: 开启时一律占位图，关闭时透传（null → 空）', () => {
-    const real = '/api/v1/image/1/0?w=800'
-    expect(maskedImageSrc(real)).toBe(real)
-    expect(maskedImageSrc(null)).toBe('')
-
-    setPrivacyMaskEnabled(true)
-    expect(maskedImageSrc(real)).toBe(PRIVACY_PLACEHOLDER_SRC)
-    expect(maskedImageSrc('https://e-hentai.org/t/a.jpg')).toBe(PRIVACY_PLACEHOLDER_SRC)
-    expect(maskedImageSrc(null)).toBe(PRIVACY_PLACEHOLDER_SRC)
-  })
-
-  it('占位图是内联 SVG data URI（不发真实图片请求）', () => {
-    expect(PRIVACY_PLACEHOLDER_SRC.startsWith('data:image/svg+xml,')).toBe(true)
   })
 })

@@ -119,8 +119,11 @@ describe('AdminAdvanced (高级)', () => {
     await maskSwitch!.trigger('click')
     expect(maskSwitch!.attributes('aria-checked')).toBe('true')
     expect(localStorage.getItem('anotherviewer-privacy-mask')).toBe('1')
+    // 开关同步 <html> 类，驱动全局遮蔽样式（图片照常请求）。
+    expect(document.documentElement.classList.contains('privacy-mask')).toBe(true)
     await maskSwitch!.trigger('click')
     expect(localStorage.getItem('anotherviewer-privacy-mask')).toBeNull()
+    expect(document.documentElement.classList.contains('privacy-mask')).toBe(false)
   })
 
   it('clears local data after confirmation, keeping auth keys', async () => {

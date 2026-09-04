@@ -4,6 +4,8 @@ import App from './App.vue'
 import router from './router'
 import './styles/tokens.css'
 import './assets/styles/global.css'
+// 隐私打码全局遮蔽（<html>.privacy-mask 作用域；开关见 utils/privacyMask.ts）
+import './styles/privacy-mask.css'
 
 const app = createApp(App)
 const pinia = createPinia()

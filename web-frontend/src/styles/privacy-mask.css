@@ -1,0 +1,30 @@
+/*
+ * 隐私打码的全局遮蔽样式（开关在 utils/privacyMask.ts，同步到 <html> 的
+ * `privacy-mask` 类；main.ts 常驻引入）.
+ *
+ * 原则：真实图片 **照常请求**（缩略图/页图链路、服务端缓存预热与访问
+ * 统计完整保留），只在渲染层替代——
+ *   1. img 全部透明化（`!important` 压过卡片/阅读器的 `is-loaded` 淡入，
+ *      否则加载完成后原图会显形）；不透明度置零保持盒子占位，真实页图的
+ *      长宽比与滚动几何完全不变；
+ *   2. 内容图片容器垫上「灰底 + 中性图形」占位（主题色变量自适应深浅）；
+ *      容器内的 UI 覆盖层（分类三角、语言/进度角标等）画在背景之上，
+ *      不受影响。
+ */
+
+html.privacy-mask img {
+  opacity: 0 !important;
+}
+
+html.privacy-mask .gallery-card__thumb,
+html.privacy-mask .gallery-card__tile,
+html.privacy-mask .detail-header__thumb,
+html.privacy-mask .download-item__thumb,
+html.privacy-mask .scroll-mode__page,
+html.privacy-mask .dual-page__slot,
+html.privacy-mask .page-mode__frame {
+  background:
+    var(--color-divider)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='8.5' cy='7' r='2.5' fill='%2378909c'/%3E%3Cpath d='M2 19L9 10l4.5 5.5L16.5 12l5.5 7z' fill='%2378909c'/%3E%3C/svg%3E")
+    center / 44px 44px no-repeat;
+}

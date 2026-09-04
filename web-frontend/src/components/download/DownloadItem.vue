@@ -170,7 +170,7 @@
 import { computed, ref } from 'vue'
 import type { DownloadItem } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
-import { maskedImageSrc, maskedTitle } from '@/utils/privacyMask'
+import { maskedTitle } from '@/utils/privacyMask'
 import { usePreferencesStore } from '@/stores/preferences'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
@@ -237,10 +237,8 @@ const hasThumb = computed(() => Boolean(props.item.thumb) && !thumbFailed.value)
 const thumbSrc = computed<string | null>(() => {
   const thumb = props.item.thumb
   if (!thumb) return null
-  const proxied =
-    /^https?:\/\//i.test(thumb) ? `/api/v1/image/proxy?url=${encodeURIComponent(thumb)}` : thumb
-  // 隐私打码开启时换成占位图（真实缩略图不发请求）。
-  return maskedImageSrc(proxied)
+  // 隐私打码不改 src——真实请求照发，像素由全局遮蔽样式隐藏。
+  return /^https?:\/\//i.test(thumb) ? `/api/v1/image/proxy?url=${encodeURIComponent(thumb)}` : thumb
 })
 
 function onThumbError(): void {

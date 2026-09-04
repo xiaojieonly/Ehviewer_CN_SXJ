@@ -64,6 +64,19 @@ class GalleryService(
         .build()
 
     /**
+     * P1: 站点 feed 结果缓存（2min），key = "$mode:$page:$pageSize"。查询在
+     * availability.isBlocked() 之前（DOWN 命中缓存照常返回陈旧内容，同
+     * topListCache/searchCache 先例）；仅 success=true 且非空的结果落缓存。
+     * 已知取舍：缓存的是富化后的 GalleryListResponse（含 favoriteName/
+     * readProgress），2 分钟内收藏/进度角标变化不 reflected——与 searchCache
+     * 的既有取舍一致，不引入新的不一致类别。
+     */
+    private val feedCache: Cache<String, GalleryListResponse> = Caffeine.newBuilder()
+        .expireAfterWrite(2, TimeUnit.MINUTES)
+        .maximumSize(64)
+        .build()
+
+    /**
      * Real Gallery Site search via the core list parser (SiteEngine.getGalleryList).
      * The history-based in-memory filter is kept only as a fallback for empty
      * keywords, where there is nothing to search upstream for.
@@ -189,6 +202,9 @@ class GalleryService(
      * `success=false` with empty data.
      */
     fun feedGallery(mode: String, page: Int, pageSize: Int): GalleryListResponse {
+        // P1: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
+        val cacheKey = "$mode:$page:$pageSize"
+        feedCache.getIfPresent(cacheKey)?.let { return it }
         if (availability.isBlocked()) {
             logger.debug("Gallery feed skipped for mode={}: EH unavailable", mode)
             return ehBlockedListResponse()
@@ -199,7 +215,10 @@ class GalleryService(
             val result = SiteEngine.getGalleryList(null, client, url, siteMode)
             val items = result.galleryInfoList.map { it.toDto() }
             val total = if (result.pages > 0) result.pages * 25 else items.size
-            GalleryListResponse(success = true, data = items, total = total)
+            val response = GalleryListResponse(success = true, data = items, total = total)
+            // P1: 只缓存 success=true 且非空的结果；失败/空结果照旧直返，不缓存。
+            if (items.isNotEmpty()) feedCache.put(cacheKey, response)
+            response
         } catch (e: Exception) {
             logger.warn("Gallery Site feed failed for mode={}: {}", mode, e.message)
             GalleryListResponse(success = false, data = emptyList(), total = 0)
@@ -352,7 +371,9 @@ class GalleryService(
      *  2. local history row (local DTO built immediately; site-detail enrichment
      *     is attempted only while EH is reachable, otherwise skipped entirely),
      *  3. on-site fetch when the gid is not local and a [token] is supplied
-     *     (feed / search entries carry it) — but never while EH is DOWN,
+     *     (feed / search entries carry it) — but never while EH is DOWN
+     *     (P1: resolved via [GalleryLookupService.getDetailCached], sharing the
+     *     10min per-gid detail cache with the history enrichment path),
      *  4. local favorite row (local DTO, no upstream — EH-down safe),
      *  5. null.
      */
@@ -371,17 +392,16 @@ class GalleryService(
         }
 
         // 3. token 非空且站点可达 → 上游直取 + 落历史。DOWNLOAD 时跳过，绝不等待网络。
+        //    P1: 改走 getDetailCached（gid 键 detailCache 10min 复用）——二次打开
+        //    零上游请求，且与 enrichHistoryDetail 共享同一缓存条目。上游失败吞异常
+        //    返回 null（失败原因不再细分记日志，与既有 enrichment 路径一致）。
         if (!token.isNullOrBlank() && !availability.isBlocked()) {
-            return try {
-                val detail = SiteEngine.getGalleryDetail(
-                    null, client, SiteUrl.getGalleryDetailUrl(gid, token)
-                )
-                addToHistory(gid, token, detail.title, 0)
-                detail.toDetailDto()
-            } catch (e: Exception) {
-                logger.warn("Gallery Site detail fetch failed for gid={}: {}", gid, e.message)
-                null
+            val detail = galleryLookupService.getDetailCached(gid, token) ?: run {
+                logger.warn("Gallery Site detail fetch failed for gid={}", gid)
+                return null
             }
+            addToHistory(gid, token, detail.title, 0)
+            return detail.toDetailDto()
         }
 
         // 4. 收藏行：无历史/下载的收藏条目在 EH DOWN 时仍可打开详情（本地 token/标题/缩略图）。
