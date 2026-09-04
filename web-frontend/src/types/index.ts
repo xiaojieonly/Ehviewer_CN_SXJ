@@ -110,11 +110,12 @@ export interface GalleryListResponse {
 
 /** One ranked entry of the toplist feed (GET /gallery/feed?mode=toplist). */
 export interface TopListItem {
-  gid: number
-  token: string
-  tag: string
-  value: number
-  href: string
+  /** 站点解析通常为 null；打码模式下由服务端回填（href 提取的 gid）。 */
+  gid: number | string | null
+  token: string | null
+  tag: string | null
+  value: string | null
+  href: string | null
 }
 
 /** Response envelope of the toplist feed — data rows differ from GalleryInfo. */

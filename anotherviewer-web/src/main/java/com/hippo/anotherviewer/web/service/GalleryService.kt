@@ -34,6 +34,7 @@ class GalleryService(
     private val galleryLookupService: GalleryLookupService,
     private val availability: EhAvailabilityService,
     private val downloadDirIndex: DownloadDirIndex,
+    private val serverConfig: ServerConfigService,
 ) {
     private val logger = LoggerFactory.getLogger(GalleryService::class.java)
     private val client get() = sessionManager.okHttpClient
@@ -233,7 +234,8 @@ class GalleryService(
      */
     fun topListFeed(): TopListResponse {
         // P2: 缓存查询在 isBlocked() 之前——DOWN 期间命中缓存照常返回陈旧内容。
-        topListCache.getIfPresent(TOPLIST_CACHE_KEY)?.let { return it }
+        // 缓存存原始解析结果；打码脱敏在出口（redactTopList）做，开关即时生效。
+        topListCache.getIfPresent(TOPLIST_CACHE_KEY)?.let { return redactTopList(it) }
         if (availability.isBlocked()) {
             logger.debug("Gallery top list skipped: EH unavailable")
             return TopListResponse(success = false, data = emptyList(), total = 0, cause = EH_UNAVAILABLE_CAUSE)
@@ -248,11 +250,29 @@ class GalleryService(
             val response = TopListResponse(success = true, data = items, total = items.size)
             // P2: 只缓存 success=true 且非空的结果。
             if (items.isNotEmpty()) topListCache.put(TOPLIST_CACHE_KEY, response)
-            response
+            redactTopList(response)
         } catch (e: Exception) {
             logger.warn("Gallery Site top list failed: {}", e.message)
             TopListResponse(success = false, data = emptyList(), total = 0)
         }
+    }
+
+    /**
+     * 排行榜打码（2026-09-04 用户裁决）：开码时不输出解析出的实际标题——
+     * value → `#gid`（gid 取自 href 的 /g/<gid>/ 段），href（含 token 的
+     * 站点地址）清空。关码原样返回。缓存放原始数据，脱敏在出口做，切换
+     * 开关即时生效（最多一次请求的延迟）。
+     */
+    private fun redactTopList(response: TopListResponse): TopListResponse {
+        if (!serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK)) return response
+        val gidRegex = Regex("/g/(\\d+)")
+        return response.copy(
+            data = response.data.map { item ->
+                val gid = item.gid
+                    ?: item.href?.let { href -> gidRegex.find(href)?.groupValues?.get(1) }
+                item.copy(gid = gid, href = "", value = gid?.let { "#$it" } ?: "")
+            }
+        )
     }
 
     /** Feed-mode → core ListUrlBuilder mode mapping (only valid modes reach here). */

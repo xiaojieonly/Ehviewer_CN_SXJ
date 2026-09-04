@@ -84,7 +84,7 @@ function toplistItem(overrides: Partial<TopListItem> = {}): TopListItem {
     gid: 1,
     token: 'abc123',
     tag: 'parody:one piece',
-    value: 1000,
+    value: '1000',
     href: 'https://e-hentai.org/g/1/abc123/',
     ...overrides,
   }
@@ -240,8 +240,8 @@ describe('HomeView (首页)', () => {
     vi.mocked(galleryApi.feed).mockResolvedValue({
       success: true,
       data: [
-        toplistItem({ tag: 'parody:one piece', value: 999 }),
-        toplistItem({ gid: 2, token: 'def456', tag: 'language:chinese', value: 42 }),
+        toplistItem({ tag: 'parody:one piece', value: '999' }),
+        toplistItem({ gid: 2, token: 'def456', tag: 'language:chinese', value: '42' }),
       ],
       total: 2,
     })

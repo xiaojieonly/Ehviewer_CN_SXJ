@@ -76,7 +76,7 @@ class GalleryServiceTest {
             galleryLookup,
             availability,
             mock(DownloadDirIndex::class.java),
-        )
+            mock(ServerConfigService::class.java),        )
         return Harness(service, availability, downloads, history, historyTags, favorites, galleryLookup)
     }
 

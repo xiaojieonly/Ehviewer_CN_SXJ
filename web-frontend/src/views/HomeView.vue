@@ -89,19 +89,22 @@
       <!-- Toplist feed: lightweight ranked rows (rank + tag + value).
            Feed mode replaces the virtualized gallery grid entirely. -->
       <div v-if="feedMode === 'toplist'" class="home__toplist">
-        <a
+        <!-- 打码模式下后端把 value 替换为 #gid、href 清空——行退化为不可点的
+             div（href 为空时不渲染 <a>，避免点击原地刷新）。 -->
+        <component
+          :is="item.href ? 'a' : 'div'"
           v-for="(item, index) in topList"
-          :key="item.gid"
+          :key="item.gid ?? index"
           class="home__toplist-row"
-          :href="item.href"
-          target="_blank"
-          rel="noopener"
+          :href="item.href || undefined"
+          :target="item.href ? '_blank' : undefined"
+          :rel="item.href ? 'noopener' : undefined"
           :data-testid="`toplist-row-${index}`"
         >
           <span class="home__toplist-rank">{{ index + 1 }}</span>
           <span class="home__toplist-tag">{{ item.tag }}</span>
           <span class="home__toplist-value">{{ item.value }}</span>
-        </a>
+        </component>
       </div>
       <!-- Virtualized gallery list: only the rows intersecting the viewport
            (+ overscan) are mounted; the spacers above/below preserve the full
@@ -255,7 +258,7 @@ const contentLayoutRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 let requestSeq = 0
 
 /** Append-with-dedupe by gid — bumped galleries can reappear across pages. */
-function appendDeduped<T extends { gid: number }>(
+function appendDeduped<T extends { gid: number | string | null }>(
   existing: T[],
   fresh: T[],
 ): { items: T[]; noMore: boolean } {
@@ -269,7 +272,7 @@ function appendDeduped<T extends { gid: number }>(
  * page/total/fetched/no-more bookkeeping for both the search and feed paths.
  * Returns the resulting list so the caller can assign its ref.
  */
-function commitPage<T extends { gid: number }>(
+function commitPage<T extends { gid: number | string | null }>(
   current: T[],
   next: T[],
   target: number,

@@ -34,9 +34,9 @@ import java.io.IOException
  */
 class GalleryFeedServiceTest {
 
-    private data class Harness(val service: GalleryService, val client: OkHttpClient, val availability: EhAvailabilityService)
+    private data class Harness(val service: GalleryService, val client: OkHttpClient, val availability: EhAvailabilityService, val serverConfig: ServerConfigService)
 
-    private fun harness(): Harness {
+    private fun harness(serverConfig: ServerConfigService = mock(ServerConfigService::class.java)): Harness {
         val sessionManager = mock(SiteSessionManager::class.java)
         val client = OkHttpClient()
         `when`(sessionManager.okHttpClient).thenReturn(client)
@@ -53,9 +53,11 @@ class GalleryFeedServiceTest {
                 mock(GalleryLookupService::class.java),
                 availability,
                 mock(DownloadDirIndex::class.java),
+                serverConfig,
             ),
             client,
-            availability
+            availability,
+            serverConfig
         )
     }
 
@@ -350,7 +352,7 @@ class GalleryFeedServiceTest {
             mock(GalleryLookupService::class.java),
             availability,
             mock(DownloadDirIndex::class.java),
-        )
+            mock(ServerConfigService::class.java),        )
 
         val response = service.searchGallery(null, null, 0, 20)
 
@@ -371,6 +373,56 @@ class GalleryFeedServiceTest {
             assertTrue(response.data.isEmpty())
             assertEquals("EH_UNAVAILABLE", response.cause)
             engine.verifyNoInteractions()
+        }
+    }
+
+    @Test
+    fun `toplist is redacted to gid ids when mask flag on (no parsed titles out)`() {
+        val serverConfig = mock(ServerConfigService::class.java)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK)).thenReturn(true)
+        val (service, _, _, _) = harness(serverConfig)
+        // 生产解析器形态：gid/token/tag 均为 null，value = 锚文本（完整标题），
+        // href = 站点地址（含 token）。
+        val raw = TopListItem().apply {
+            this.gid = null
+            this.value = "Real Explicit Title"
+            this.href = "https://e-hentai.org/g/1382450/tok/"
+        }
+        val detail = detailWith(listOf(arrayOf(raw), arrayOfNulls(0), arrayOfNulls(0), arrayOfNulls(0)))
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenReturn(detail)
+
+            val response = service.topListFeed()
+
+            assertTrue(response.success)
+            assertEquals("#1382450", response.data[0].value)
+            assertEquals("1382450", response.data[0].gid)
+            assertEquals("", response.data[0].href)
+        }
+    }
+
+    @Test
+    fun `toplist keeps raw values when mask flag off`() {
+        val serverConfig = mock(ServerConfigService::class.java)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK)).thenReturn(false)
+        val (service, _, _, _) = harness(serverConfig)
+        val raw = TopListItem().apply {
+            this.gid = null
+            this.value = "Real Explicit Title"
+            this.href = "https://e-hentai.org/g/1382450/tok/"
+        }
+        val detail = detailWith(listOf(arrayOf(raw), arrayOfNulls(0), arrayOfNulls(0), arrayOfNulls(0)))
+        mockStatic(SiteEngine::class.java).use { engine ->
+            engine.`when`<SiteTopListDetail> {
+                SiteEngine.getTopList(any(), any(), any())
+            }.thenReturn(detail)
+
+            val response = service.topListFeed()
+
+            assertEquals("Real Explicit Title", response.data[0].value)
+            assertEquals("https://e-hentai.org/g/1382450/tok/", response.data[0].href)
         }
     }
 

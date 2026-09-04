@@ -45,8 +45,8 @@ class GallerySearchUrlTest {
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
             EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
-            mock(DownloadDirIndex::class.java)
-        )
+            mock(DownloadDirIndex::class.java),
+            mock(ServerConfigService::class.java),        )
     }
 
     /** All-default shortcut so each case only spells the param under test. */
@@ -321,8 +321,8 @@ class GallerySearchUrlTest {
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
             EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
-            mock(DownloadDirIndex::class.java)
-        )
+            mock(DownloadDirIndex::class.java),
+            mock(ServerConfigService::class.java),        )
 
         val response = service.searchGallery(null, null, 0, 20)
 
@@ -346,8 +346,8 @@ class GallerySearchUrlTest {
             com.hippo.anotherviewer.web.config.SiteCoreConfigProperties(),
             mock(GalleryLookupService::class.java),
             EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
-            mock(DownloadDirIndex::class.java)
-        )
+            mock(DownloadDirIndex::class.java),
+            mock(ServerConfigService::class.java),        )
 
         // 历史为空 → 回退站点最新列表；沙箱内站点不可达 → E2E-6 语义 success=false（证明确实触网回退）。
         val response = service.searchGallery(null, null, 0, 20)

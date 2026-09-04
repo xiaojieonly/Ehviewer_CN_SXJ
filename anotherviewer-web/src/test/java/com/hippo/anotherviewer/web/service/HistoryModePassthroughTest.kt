@@ -43,7 +43,7 @@ class HistoryModePassthroughTest {
             mock(GalleryLookupService::class.java),
             EhAvailabilityService(mock(com.hippo.anotherviewer.web.service.WebProxyManager::class.java), "https://e-hentai.org", 5000),
             mock(DownloadDirIndex::class.java),
-        )
+            mock(ServerConfigService::class.java),        )
         historyService = HistoryService(historyRepository)
     }
 
