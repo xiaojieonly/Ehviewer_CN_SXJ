@@ -3,7 +3,7 @@ import {
   privacyMaskEnabled,
   setPrivacyMaskEnabled,
   maskedTitle,
-  maskedFileLabel,
+  maskedPath,
 } from '../privacyMask'
 
 describe('privacyMask (隐私打码)', () => {
@@ -43,12 +43,12 @@ describe('privacyMask (隐私打码)', () => {
     expect(maskedTitle('', 7)).toBe('#7')
   })
 
-  it('maskedFileLabel: 开启时文件名/路径以序号 ID 替代，关闭时原样透传', () => {
-    const p = '12345/EH67890/00042.jpg'
-    expect(maskedFileLabel(p, 3)).toBe(p)
+  it('maskedPath: 打码开时路径只出前 10 字符，关闭时完整透传', () => {
+    const p = '1382450-[まだとんだし'
+    expect(maskedPath(p)).toBe(p)
 
     setPrivacyMaskEnabled(true)
-    expect(maskedFileLabel(p, 3)).toBe('#3')
-    expect(maskedFileLabel(p, 'row-7')).toBe('#row-7')
+    expect(maskedPath(p)).toBe('1382450-[ま')
+    expect(maskedPath('short')).toBe('short')
   })
 })

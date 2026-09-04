@@ -59,10 +59,10 @@ export function maskedTitle(title: string, gid: number): string {
 }
 
 /**
- * 文件名/路径展示：开启时一律以序号 ID `#<id>` 替代，杜绝真实文件名出现在
- * 界面上（维护对话框等；`id` 通常传列表序号）。配置编辑类输入框属于功能
- * 字段，不经过本助手。
+ * 路径/文件名展示：打码开启时只出前 10 个字符（傻快方案，2026-09-04 用户
+ * 裁决——风控看的是界面展示的列表内容，网络层完整传输无风险），关闭时
+ * 原样透传（维护作业需要完整路径）。
  */
-export function maskedFileLabel(label: string, id: number | string): string {
-  return privacyMaskEnabled.value ? `#${id}` : label
+export function maskedPath(path: string, max = 10): string {
+  return privacyMaskEnabled.value ? path.slice(0, max) : path
 }

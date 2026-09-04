@@ -18,10 +18,11 @@ vi.mock('@/api/download', () => ({
   },
 }))
 
-/** W2-DL F2 维护扫描夹具：1 个冗余文件 + 1 条无效下载。 */
+/** W2-DL F2 维护扫描夹具：1 个冗余文件 + 1 条无效下载。路径 >10 字符，
+    覆盖打码截断（前 10 字符）与完整展示两种形态。 */
 function maintenancePreview(): MaintenancePreviewResponse {
   return {
-    redundantFiles: [{ path: '777', sizeBytes: 1024 * 1024 }],
+    redundantFiles: [{ path: '1382450-[mada-tone', sizeBytes: 1024 * 1024 }],
     invalidDownloads: [{ id: 9, gid: 600, title: 'Broken Gallery', reason: 'content_dir_missing' }],
   }
 }
@@ -195,7 +196,7 @@ describe('AdminDownload (下载设置)', () => {
     await flushPromises()
     const dialog = w.find('[aria-label="清理冗余文件"].dialog')
     expect(dialog.exists()).toBe(true)
-    expect(dialog.text()).toContain('777')
+    expect(dialog.text()).toContain('1382450-[mada-tone')
     expect(dialog.text()).toContain('共 1 项将被删除')
 
     // 第二段：确认执行 → cleanMaintenance(kind) + 完成反馈 toast。
@@ -206,7 +207,7 @@ describe('AdminDownload (下载设置)', () => {
     expect(w.find('.dialog-scrim').exists()).toBe(false)
   })
 
-  it('隐私打码：冗余文件路径以序号 ID 替代，真实文件名不出现在弹窗', async () => {
+  it('隐私打码：冗余文件路径只出前 10 字符；打码关（上一用例）时完整展示', async () => {
     setPrivacyMaskEnabled(true)
     const w = await mountView()
 
@@ -214,8 +215,8 @@ describe('AdminDownload (下载设置)', () => {
     await flushPromises()
     const dialog = w.find('[aria-label="清理冗余文件"].dialog')
     expect(dialog.exists()).toBe(true)
-    expect(dialog.text()).not.toContain('777')
-    expect(dialog.text()).toContain('#1')
+    expect(dialog.text()).toContain('1382450-[m')
+    expect(dialog.text()).not.toContain('1382450-[mada-tone')
     expect(dialog.text()).toContain('共 1 项将被删除')
   })
 

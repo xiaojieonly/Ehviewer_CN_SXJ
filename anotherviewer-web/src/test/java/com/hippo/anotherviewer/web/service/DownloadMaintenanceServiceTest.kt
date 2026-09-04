@@ -65,21 +65,7 @@ class DownloadMaintenanceServiceTest {
         val preview = service.preview()
 
         // 999 行引用（保留）；999-Disk Only Title 是与该行同 gid 的第二副本 → 冗余。
-        // 预览响应路径截断为前 10 字符（防风控傻快方案）。
-        assertEquals(listOf("999-Disk O"), preview.redundantFiles.map { it.path })
-    }
-
-    @Test
-    fun `preview paths are truncated to 10 chars while clean still deletes full entries`() {
-        // >10 字符的条目在预览里只见前缀；clean 内部重扫用完整路径，删除不受影响。
-        `when`(repository.findAll()).thenReturn(emptyList())
-        val junk = withContent(File(root, "a-very-long-directory-name"))
-
-        assertEquals(listOf("a-very-lon"), service.preview().redundantFiles.map { it.path })
-
-        val result = service.clean(MaintenanceKind.REDUNDANT_FILES)
-        assertEquals(1, result.removedFiles)
-        assertFalse(junk.exists())
+        assertEquals(listOf("999-Disk Only Title"), preview.redundantFiles.map { it.path })
     }
 
     @Test

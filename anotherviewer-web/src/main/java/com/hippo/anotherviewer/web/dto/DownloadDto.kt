@@ -118,7 +118,7 @@ data class FilterSlotsResponse(
 // ── 下载维护（W2-DL F2）：冗余文件 / 无效下载，dry-run 预览 + 执行两段式 ──
 
 /** 冗余文件条目：downloads 根目录下无任何下载行引用的条目（path 相对根目录）。
- *  预览响应里 path 只出前 10 个字符（防风控傻快方案，见 DownloadMaintenanceService.preview）。 */
+ *  路径完整传输——风控看的是界面展示，展示侧由前端按打码开关截断（傻快方案）。 */
 data class MaintenanceFileIssue(
     val path: String,
     val sizeBytes: Long,

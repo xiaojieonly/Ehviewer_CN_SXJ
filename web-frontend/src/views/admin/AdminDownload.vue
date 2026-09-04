@@ -249,8 +249,9 @@
                 <template v-if="maintenanceKind === 'REDUNDANT_FILES'">
                   <!-- key 带序号：路径截断（防风控）后可能重复，不能单独作 key -->
                   <li v-for="(file, fi) in maintenanceFiles" :key="`f-${fi}-${file.path}`" class="dialog__list-item">
-                    <!-- 隐私打码：文件名以序号 ID 替代，不泄露真实路径 -->
-                    <span class="dialog__item-name">{{ maskedFileLabel(file.path, fi + 1) }}</span>
+                    <!-- 打码开：路径只出前 10 字符（傻快防风控）；关：完整路径。
+                         key 带序号：截断后前缀可能重复，不能单独作 key -->
+                    <span class="dialog__item-name">{{ maskedPath(file.path) }}</span>
                     <span class="dialog__item-meta">{{ formatBytes(file.sizeBytes) }}</span>
                   </li>
                 </template>
@@ -311,7 +312,7 @@ import {
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 import { buildMaintenanceCsv, csvFileName } from '@/utils/maintenanceCsv'
-import { maskedFileLabel, maskedTitle } from '@/utils/privacyMask'
+import { maskedPath, maskedTitle } from '@/utils/privacyMask'
 import {
   DOWNLOAD_PAGE_SIZES,
   DOWNLOAD_SORT_OPTIONS,
