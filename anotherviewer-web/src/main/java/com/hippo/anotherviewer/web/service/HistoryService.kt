@@ -1,5 +1,6 @@
 package com.hippo.anotherviewer.web.service
 
+import com.hippo.anotherviewer.web.config.PrivacyMaskFilter
 import com.hippo.anotherviewer.web.dto.HistoryItem
 import com.hippo.anotherviewer.web.dto.HistoryListResponse
 import com.hippo.anotherviewer.web.entity.HistoryInfoEntity
@@ -88,7 +89,9 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
             val entity = HistoryInfoEntity().apply {
                 this.gid = gid
                 this.token = token
-                this.title = title
+                // 打码期间首次浏览的画廊，前端只能送来脱敏标题（#gid）——
+                // 拒绝入库（置空，列表侧本就按 #gid 兜底渲染），防污染存量。
+                this.title = title?.takeIf { !PrivacyMaskFilter.isMaskedTitle(it) }
                 this.titleJpn = titleJpn
                 this.thumb = thumb
                 this.category = category

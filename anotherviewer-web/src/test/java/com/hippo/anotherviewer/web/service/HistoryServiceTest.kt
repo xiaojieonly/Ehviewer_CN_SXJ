@@ -129,6 +129,24 @@ class HistoryServiceTest {
         verify(historyRepository).save(existing)
     }
 
+    @Test
+    fun `addHistory rejects masked serial title on insert (PrivacyMask 脱敏防污染)`() {
+        `when`(historyRepository.findByGid(12L)).thenReturn(null)
+
+        historyService.addHistory(12L, "t12", "#12", null, null, 1, 5.0f)
+
+        verify(historyRepository).save(argThatK { it.gid == 12L && it.title == null })
+    }
+
+    @Test
+    fun `addHistory keeps real title on insert`() {
+        `when`(historyRepository.findByGid(13L)).thenReturn(null)
+
+        historyService.addHistory(13L, "t13", "(C99) Real Title", null, null, 1, 5.0f)
+
+        verify(historyRepository).save(argThatK { it.gid == 13L && it.title == "(C99) Real Title" })
+    }
+
     // ── S3: addHistory page 语义——null 保持已存值，非 null 原样写入（0=重读） ──
 
     @Test
