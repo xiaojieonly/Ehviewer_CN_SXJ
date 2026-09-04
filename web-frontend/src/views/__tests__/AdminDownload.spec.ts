@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminDownload from '../admin/AdminDownload.vue'
 import { settingsApi, type Settings } from '@/api/settings'
 import { downloadApi } from '@/api/download'
+import { setPrivacyMaskEnabled } from '@/utils/privacyMask'
 import type { MaintenancePreviewResponse } from '@/api/download'
 import { AppSelect, AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
@@ -48,6 +49,8 @@ describe('AdminDownload (下载设置)', () => {
 
   beforeEach(() => {
     localStorage.clear()
+    // 打码是模块级状态，会跨用例泄漏——统一复位。
+    setPrivacyMaskEnabled(false)
     vi.mocked(settingsApi.get).mockResolvedValue(fullSettings())
     vi.mocked(settingsApi.update).mockResolvedValue(true)
     vi.mocked(downloadApi.previewMaintenance).mockResolvedValue(maintenancePreview())
@@ -201,6 +204,19 @@ describe('AdminDownload (下载设置)', () => {
     expect(downloadApi.cleanMaintenance).toHaveBeenCalledWith('REDUNDANT_FILES')
     expect(w.text()).toContain('已清理 1 个冗余条目，释放 1.0 MB')
     expect(w.find('.dialog-scrim').exists()).toBe(false)
+  })
+
+  it('隐私打码：冗余文件路径以序号 ID 替代，真实文件名不出现在弹窗', async () => {
+    setPrivacyMaskEnabled(true)
+    const w = await mountView()
+
+    await w.find('[aria-label="清理冗余文件"]').trigger('click')
+    await flushPromises()
+    const dialog = w.find('[aria-label="清理冗余文件"].dialog')
+    expect(dialog.exists()).toBe(true)
+    expect(dialog.text()).not.toContain('777')
+    expect(dialog.text()).toContain('#1')
+    expect(dialog.text()).toContain('共 1 项将被删除')
   })
 
   it('previews invalid downloads and sends the INVALID_DOWNLOADS kind on confirm', async () => {

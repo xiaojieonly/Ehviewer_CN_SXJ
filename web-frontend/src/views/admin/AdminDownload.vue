@@ -247,8 +247,9 @@
             <template v-else>
               <ul class="dialog__list">
                 <template v-if="maintenanceKind === 'REDUNDANT_FILES'">
-                  <li v-for="file in maintenanceFiles" :key="`f-${file.path}`" class="dialog__list-item">
-                    <span class="dialog__item-name">{{ file.path }}</span>
+                  <li v-for="(file, fi) in maintenanceFiles" :key="`f-${file.path}`" class="dialog__list-item">
+                    <!-- 隐私打码：文件名以序号 ID 替代，不泄露真实路径 -->
+                    <span class="dialog__item-name">{{ maskedFileLabel(file.path, fi + 1) }}</span>
                     <span class="dialog__item-meta">{{ formatBytes(file.sizeBytes) }}</span>
                   </li>
                 </template>
@@ -309,7 +310,7 @@ import {
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 import { buildMaintenanceCsv, csvFileName } from '@/utils/maintenanceCsv'
-import { maskedTitle } from '@/utils/privacyMask'
+import { maskedFileLabel, maskedTitle } from '@/utils/privacyMask'
 import {
   DOWNLOAD_PAGE_SIZES,
   DOWNLOAD_SORT_OPTIONS,

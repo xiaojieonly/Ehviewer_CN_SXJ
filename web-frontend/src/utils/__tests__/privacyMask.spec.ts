@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { privacyMaskEnabled, setPrivacyMaskEnabled, maskedTitle } from '../privacyMask'
+import {
+  privacyMaskEnabled,
+  setPrivacyMaskEnabled,
+  maskedTitle,
+  maskedFileLabel,
+} from '../privacyMask'
 
 describe('privacyMask (隐私打码)', () => {
   beforeEach(() => {
@@ -36,5 +41,14 @@ describe('privacyMask (隐私打码)', () => {
     setPrivacyMaskEnabled(true)
     expect(maskedTitle('Some Title', 12345)).toBe('#12345')
     expect(maskedTitle('', 7)).toBe('#7')
+  })
+
+  it('maskedFileLabel: 开启时文件名/路径以序号 ID 替代，关闭时原样透传', () => {
+    const p = '12345/EH67890/00042.jpg'
+    expect(maskedFileLabel(p, 3)).toBe(p)
+
+    setPrivacyMaskEnabled(true)
+    expect(maskedFileLabel(p, 3)).toBe('#3')
+    expect(maskedFileLabel(p, 'row-7')).toBe('#row-7')
   })
 })

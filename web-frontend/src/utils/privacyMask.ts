@@ -57,3 +57,12 @@ watch(privacyMaskEnabled, applyHtmlClass, { flush: 'sync' })
 export function maskedTitle(title: string, gid: number): string {
   return privacyMaskEnabled.value ? `#${gid}` : title
 }
+
+/**
+ * 文件名/路径展示：开启时一律以序号 ID `#<id>` 替代，杜绝真实文件名出现在
+ * 界面上（维护对话框等；`id` 通常传列表序号）。配置编辑类输入框属于功能
+ * 字段，不经过本助手。
+ */
+export function maskedFileLabel(label: string, id: number | string): string {
+  return privacyMaskEnabled.value ? `#${id}` : label
+}
