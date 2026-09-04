@@ -247,7 +247,8 @@
             <template v-else>
               <ul class="dialog__list">
                 <template v-if="maintenanceKind === 'REDUNDANT_FILES'">
-                  <li v-for="(file, fi) in maintenanceFiles" :key="`f-${file.path}`" class="dialog__list-item">
+                  <!-- key 带序号：路径截断（防风控）后可能重复，不能单独作 key -->
+                  <li v-for="(file, fi) in maintenanceFiles" :key="`f-${fi}-${file.path}`" class="dialog__list-item">
                     <!-- 隐私打码：文件名以序号 ID 替代，不泄露真实路径 -->
                     <span class="dialog__item-name">{{ maskedFileLabel(file.path, fi + 1) }}</span>
                     <span class="dialog__item-meta">{{ formatBytes(file.sizeBytes) }}</span>

@@ -47,7 +47,12 @@ class DownloadMaintenanceService(
     fun preview(): MaintenancePreviewResponse {
         val rows = downloadRepository.findAll()
         return MaintenancePreviewResponse(
-            redundantFiles = scanRedundant(rows),
+            // 防风控/防泄漏（傻快方案，2026-09-04 用户裁决）：预览响应里的
+            // 路径一律只出前 10 个字符。clean() 执行前会用 scanRedundant()
+            // 重新扫描、拿内部完整路径删除，不消费预览响应里的路径——截断
+            // 不影响两段式语义。代价：CSV 导出的路径同为前缀，无法直接定位
+            // 原文件（需要全路径时用 mask 关不掉，这是该方案的取舍）。
+            redundantFiles = scanRedundant(rows).map { it.copy(path = it.path.take(PATH_PREVIEW_MAX)) },
             invalidDownloads = scanInvalid(rows)
         )
     }
@@ -207,5 +212,8 @@ class DownloadMaintenanceService(
         const val STATE_FINISHED = 3
         const val REASON_DIR_MISSING = "content_dir_missing"
         const val REASON_NO_USABLE_FILES = "no_usable_page_files"
+
+        /** 预览响应里路径的最大输出长度（防风控傻快方案，见 [preview]）。 */
+        const val PATH_PREVIEW_MAX = 10
     }
 }
