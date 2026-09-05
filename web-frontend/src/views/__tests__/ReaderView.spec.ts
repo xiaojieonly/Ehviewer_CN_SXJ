@@ -7,16 +7,17 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { DEFAULT_PREFERENCES, DEFAULT_READER_PREFERENCES } from '@/api/preferences'
 import { spreadIndexOf, firstPageOfSpread } from '@/components/reader/PageMode.vue'
 
-const { pushMock, replaceMock, routeParams, routeQuery } = vi.hoisted(() => ({
+const { pushMock, replaceMock, backMock, routeParams, routeQuery } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
+  backMock: vi.fn(),
   routeParams: { gid: '123456', page: undefined as string | undefined },
   routeQuery: { token: undefined as string | undefined },
 }))
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: routeParams, query: routeQuery }),
-  useRouter: () => ({ push: pushMock, replace: replaceMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock, back: backMock }),
 }))
 
 vi.mock('@/api/gallery', () => ({
@@ -53,9 +54,18 @@ vi.mock('@/components/reader/ImageReader.vue', () => ({
       'brightness',
       'zoom',
     ],
-    emits: ['update:current-page'],
+    emits: ['update:current-page', 'back'],
+    setup(
+      _props: unknown,
+      { emit }: { emit: (event: 'back', ...args: unknown[]) => void },
+    ) {
+      return {
+        // Space → toggleChrome；Esc → handleBack（设置面板开着先关面板，
+        // 否则向上抛 back 由 ReaderView 退出）。
+        handleBack: () => emit('back'),
+      }
+    },
     methods: {
-      // ReaderView calls readerRef.toggleChrome() on Space/Esc.
       toggleChrome() {},
     },
     template:
@@ -287,9 +297,33 @@ describe('ReaderView 统一阅读器 — detail 失败仍打开（degraded open�
     replaceMock.mockReset()
     replaceMock.mockResolvedValue(undefined)
     pushMock.mockReset()
+    backMock.mockReset()
+    window.history.replaceState(null, '')
     vi.mocked(galleryApi.getDetail).mockReset()
     vi.mocked(galleryApi.addHistory).mockReset()
     vi.mocked(galleryApi.addHistory).mockResolvedValue(undefined as never)
+  })
+
+  it('Esc exits the reader — history back when a back entry exists, deep link falls back to the detail page', async () => {
+    vi.mocked(galleryApi.getDetail).mockRejectedValue(new Error('site unreachable'))
+    const wrapper = mount(ReaderView)
+    await flushPromises()
+
+    // 有来处（如下载列表）→ router.back()（Android finish() 语义），不压栈。
+    window.history.replaceState({ back: '/downloads' }, '')
+    pressKey('Escape')
+    await flushPromises()
+    expect(backMock).toHaveBeenCalledTimes(1)
+    expect(pushMock).not.toHaveBeenCalled()
+
+    // 深链直开阅读器（无 back 条目）→ 兜底 push 详情页（同详情页 C5）。
+    window.history.replaceState(null, '')
+    pressKey('Escape')
+    await flushPromises()
+    expect(pushMock).toHaveBeenCalledWith('/gallery/123456')
+
+    // 别让本实例的 pagehide 监听泄进后续用例（覆写它们的进度写入）。
+    wrapper.unmount()
   })
 
   it('opens the reader shell with a degraded banner when detail fetch fails', async () => {

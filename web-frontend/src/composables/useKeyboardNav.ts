@@ -7,6 +7,11 @@ export interface KeyNavCallbacks {
   onLast?: () => void
   onToggleToolbar?: () => void
   /**
+   * Escape = 系统返回语义（对齐 Android 端返回键退出阅读器）：有子面板先
+   * 关面板，否则退出阅读器。Space（翻页关闭时）仍走 onToggleToolbar。
+   */
+  onBack?: () => void
+  /**
    * Zoom one step; leave undefined in modes without zoom semantics
    * (scroll/dual) so +/- is not claimed at all — the key then keeps its
    * native (no-op) behavior instead of silently mutating an unused value.
@@ -77,7 +82,11 @@ export function useKeyboardNav(callbacks: KeyNavCallbacks) {
         break
       case 'Escape':
         e.preventDefault()
-        callbacks.onToggleToolbar?.()
+        if (callbacks.onBack) {
+          callbacks.onBack()
+        } else {
+          callbacks.onToggleToolbar?.()
+        }
         break
       case '+':
       case '=':

@@ -365,11 +365,17 @@ function prevPage(): boolean {
 }
 
 function goBack() {
-  router.push(`/gallery/${gid.value}`)
+  // Android finish() 语义：回到来处（下载列表/详情页…），不向后退栈压新
+  // 记录；深链直开阅读器（无来处）才兜底 push 详情页（同详情页 C5）。
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push(`/gallery/${gid.value}`)
+  }
 }
 
 /* ------------------------------------------------------------------ */
-/* Keyboard — ←/→ mirror under RTL, Space/Esc toggle chrome            */
+/* Keyboard — ←/→ mirror under RTL, Space toggles chrome, Esc = back    */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -402,6 +408,11 @@ useKeyboardNav({
   },
   onToggleToolbar: () => {
     readerRef.value?.toggleChrome()
+  },
+  // Esc = 系统返回语义（对齐 Android 端返回键）：ImageReader 先收起设置
+  // 面板，没面板才真正退出（history back 优先）。
+  onBack: () => {
+    readerRef.value?.handleBack()
   },
   // A7: +/- 仅单页模式注册——scroll/dual 下回调缺席（getter 按当前模式
   // 解析），useKeyboardNav 不认领按键，也不再无声改一个看不见的 zoom 值。

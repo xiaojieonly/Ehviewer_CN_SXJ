@@ -42,13 +42,14 @@ describe('useKeyboardNav (T-F2)', () => {
     vi.restoreAllMocks()
   })
 
-  function makeCbs(): Required<Pick<KeyNavCallbacks, 'onPrev' | 'onNext' | 'onFirst' | 'onLast' | 'onToggleToolbar' | 'onZoomIn' | 'onZoomOut'>> {
+  function makeCbs(): Required<Pick<KeyNavCallbacks, 'onPrev' | 'onNext' | 'onFirst' | 'onLast' | 'onToggleToolbar' | 'onBack' | 'onZoomIn' | 'onZoomOut'>> {
     return {
       onPrev: vi.fn(),
       onNext: vi.fn(),
       onFirst: vi.fn(),
       onLast: vi.fn(),
       onToggleToolbar: vi.fn(),
+      onBack: vi.fn(),
       onZoomIn: vi.fn(),
       onZoomOut: vi.fn(),
     }
@@ -67,7 +68,7 @@ describe('useKeyboardNav (T-F2)', () => {
     expect(cbs.onNext).toHaveBeenCalledTimes(2)
   })
 
-  it('maps Home/End to onFirst/onLast and Escape to onToggleToolbar', () => {
+  it('maps Home/End to onFirst/onLast and Escape to onBack (fallback: toggleToolbar)', () => {
     const cbs = makeCbs()
     mountNav(cbs)
 
@@ -77,6 +78,17 @@ describe('useKeyboardNav (T-F2)', () => {
 
     expect(cbs.onFirst).toHaveBeenCalledTimes(1)
     expect(cbs.onLast).toHaveBeenCalledTimes(1)
+    // Esc = 系统返回语义：有 onBack 走 onBack（Android 返回键退出）。
+    expect(cbs.onBack).toHaveBeenCalledTimes(1)
+    expect(cbs.onToggleToolbar).not.toHaveBeenCalled()
+  })
+
+  it('falls back Escape to onToggleToolbar when onBack is absent', () => {
+    const cbs = makeCbs()
+    delete (cbs as Partial<typeof cbs>).onBack
+    mountNav(cbs)
+
+    expect(press('Escape')).toBe(true)
     expect(cbs.onToggleToolbar).toHaveBeenCalledTimes(1)
   })
 

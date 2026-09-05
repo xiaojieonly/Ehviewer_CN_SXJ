@@ -118,6 +118,15 @@
 
     <!-- Brightness mask — the activity_gallery.xml `mask` ColorView -->
     <div class="image-reader__mask" :style="{ opacity: maskOpacity }" aria-hidden="true" />
+
+    <!-- Android 返回手势的边缘指示条（触屏边缘向内拖动退出阅读器） -->
+    <div
+      v-if="edgeBack.side"
+      class="image-reader__edge-back"
+      :class="`image-reader__edge-back--${edgeBack.side}`"
+      :style="{ width: `${edgeBack.progress * 28}px` }"
+      aria-hidden="true"
+    />
   </div>
 </template>
 
@@ -146,6 +155,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { useEdgeBackGesture } from '@/composables/useEdgeBackGesture'
 import { usePreferencesStore } from '@/stores/preferences'
 
 const preferencesStore = usePreferencesStore()
@@ -218,6 +228,26 @@ const settingsVisible = ref(false)
 const seeking = ref(false)
 /** Bumped to remount ReaderStatusBar and restart its idle countdown. */
 const statusBarEpoch = ref(0)
+
+/* ------------------------------------------------------------------ */
+/* Back / exit — Android 系统返回语义                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Esc（键盘）与触屏边缘向内滑动（useEdgeBackGesture）共用的返回入口，
+ * 语义对齐 Android 端「返回键退出阅读器」：设置面板开着先关面板，否则
+ * 向上抛 back 由父级退出（history back 优先）。
+ */
+function handleBack() {
+  if (settingsVisible.value) {
+    closeSettings()
+    return
+  }
+  emit('back')
+}
+
+// 触屏边缘手势只挂在页面区（rootRef），落在 chrome 上的触点不受影响。
+const { state: edgeBack } = useEdgeBackGesture(rootRef, { onBack: handleBack })
 
 /* ------------------------------------------------------------------ */
 /* Chrome toggling + GalleryHeader idle interplay                      */
@@ -409,7 +439,7 @@ watch(
   },
 )
 
-defineExpose({ toggleChrome })
+defineExpose({ toggleChrome, handleBack })
 </script>
 
 <style scoped>
@@ -512,5 +542,25 @@ defineExpose({ toggleChrome })
   .image-reader__seekbar--hidden {
     transition-duration: 1ms;
   }
+}
+
+/* Android 系统返回手势的边缘指示条：跟随向内拖动进度变宽变实，松手
+   未达阈值即随 state 重置消失。纯视觉层，不拦截任何触点。 */
+.image-reader__edge-back {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.image-reader__edge-back--left {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 150, 136, 0.55), transparent);
+}
+
+.image-reader__edge-back--right {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 150, 136, 0.55), transparent);
 }
 </style>
