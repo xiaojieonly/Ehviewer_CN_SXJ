@@ -211,7 +211,7 @@
  * legacy localStorage persistence is migrated once on first load (B-1): the
  * stored value is written into preferences and the key then removed.
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
 import { galleryApi, type FeedMode } from '@/api/gallery'
@@ -914,10 +914,24 @@ onMounted(() => {
  * keyword）不在此处重载——若 keyword watcher 会执行该搜索（词变化）就交给它；
  * 若词未变（watcher 会跳过）则此处仍以普通搜索语义重载，避免「离开 feed
  * 却什么都没发生」。
+ *
+ * KeepAlive（App.vue 列表缓存）：fullPath 变化即换实例（App 按 key 区分），
+ * 这两个 route watcher 在存活期内的真实导航中只会于「本实例已被停用」的
+ * 窗口触发——停用态一律跳过，防止后台误改缓存实例的状态；重新激活时
+ * fullPath 必等于本实例的 key，状态天然一致，无需补跑。
  */
+let viewActive = true
+onActivated(() => {
+  viewActive = true
+})
+onDeactivated(() => {
+  viewActive = false
+})
+
 watch(
   () => route.query.feed,
   () => {
+    if (!viewActive) return
     const keywordParam = route.query.keyword
     if (typeof keywordParam === 'string' && keywordParam.trim() !== appliedKeyword.value) return
     topList.value = []
@@ -937,6 +951,7 @@ watch(
 watch(
   () => route.query.keyword,
   (next) => {
+    if (!viewActive) return
     const q = typeof next === 'string' ? next.trim() : ''
     if (!q || q === appliedKeyword.value) return
     commitKeyword(q)

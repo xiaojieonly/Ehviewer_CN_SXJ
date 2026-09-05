@@ -27,14 +27,18 @@
     </button>
 
     <main class="app-content" :class="{ 'app-content--full': !showChrome }">
-      <router-view />
+      <router-view v-slot="{ Component, route }">
+        <KeepAlive :include="CACHED_VIEWS" :max="8">
+          <component :is="Component" :key="cachedViewKey(Component, route)" />
+        </KeepAlive>
+      </router-view>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, type Component } from 'vue'
+import { useRoute, useRouter, type RouteLocationNormalized } from 'vue-router'
 import NavigationDrawer, { DEFAULT_NAV_ITEMS, NAV_TARGET_PATHS } from '@/components/layout/NavigationDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -57,6 +61,23 @@ const navItems = DEFAULT_NAV_ITEMS
  * produce the duplicated "double sidebar" quirk).
  */
 const CHROME_HIDDEN_ROUTES = new Set(['Login', 'Reader', 'Search', 'SmbBackup'])
+
+/**
+ * KeepAlive 列表缓存（Android Scene 栈等价）：从阅读器/详情返回列表时，
+ * 已加载的分页与滚动位置原位还原，不重新加载。详情/阅读器刻意不缓存
+ * （每次进入都要新鲜数据——收藏态、阅读进度）。:max 防缓存膨胀。
+ */
+const CACHED_VIEWS = ['HomeView', 'DownloadView', 'FavoriteView', 'HistoryView', 'SearchView']
+
+/**
+ * 仅缓存视图按 fullPath 分实例（`/` 与 `/?feed=popular` 是两个独立列表，
+ * 互不串状态）；阅读器读 route.params.page 但从不回写 URL，其余视图不
+ * 缓存，不 key 也不会被 KeepAlive 停用。
+ */
+function cachedViewKey(Component: Component | null | undefined, route: RouteLocationNormalized): string | undefined {
+  const name = (Component as { type?: { __name?: string } } | null | undefined)?.type?.__name
+  return name && CACHED_VIEWS.includes(name) ? route.fullPath : undefined
+}
 
 const showChrome = computed(() => !CHROME_HIDDEN_ROUTES.has(route.name as string))
 const showHamburger = computed(() => showChrome.value)

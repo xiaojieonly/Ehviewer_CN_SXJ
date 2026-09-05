@@ -159,7 +159,7 @@ export type ContentLayoutState = ContentState | 'error'
  * `refresh`. The header parks open while `refreshing` is true and collapses
  * when it returns to false (v-model:refreshing).
  */
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onActivated, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import FastScroller from './FastScroller.vue'
 import type { ContentLayoutEmits, ContentLayoutSlots } from '@/types/components'
@@ -225,6 +225,97 @@ const scrollEl = computed<HTMLElement | null>(() => {
   if (!props.fastScroll) return plainScrollRef.value
   return fastScrollerRef.value?.containerRef ?? null
 })
+
+/* ------------------------------------------------------------------ */
+/* Scroll memory — KeepAlive 列表视图的滚动位置还原                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Android Scene 栈等价（配合 App.vue 的 KeepAlive）：列表被缓存停用时 DOM
+ * 脱离文档，scrollTop 会丢失——按路由 fullPath 记住离开时的位置，重新激活
+ * （从详情/阅读器返回）时还原，用户回到「离开的地方」。
+ * 模块级存储：与实例生命周期解耦，LRU 限界。
+ */
+const scrollMemory = new Map<string, number>()
+const SCROLL_MEMORY_MAX = 24
+
+/**
+ * 缓存 key 用 location 而非 useRoute()——history 模式下 `pathname + search
+ * + hash` 与 route.fullPath 等价，且不把 vue-router 变成 ContentLayout 的
+ * 硬依赖（大量组件级 spec 不 mock router）。
+ */
+function currentPathKey(): string {
+  return location.pathname + location.search + location.hash
+}
+/** 每个 fullPath 离开时到滚动事件为止的最终位置（trailing 节流）。 */
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
+function rememberScroll(): void {
+  const el = scrollEl.value
+  // DOM 已脱离文档（KeepAlive 隐藏容器/已卸载）时 scrollTop 恒 0，不能覆盖
+  // 之前存好的位置。
+  if (!el || !el.isConnected) return
+  const key = currentPathKey()
+  scrollMemory.delete(key)
+  scrollMemory.set(key, el.scrollTop)
+  if (scrollMemory.size > SCROLL_MEMORY_MAX) {
+    const oldest = scrollMemory.keys().next().value
+    if (oldest !== undefined) scrollMemory.delete(oldest)
+  }
+}
+
+function onScrollSave(): void {
+  if (saveTimer !== null) return
+  saveTimer = setTimeout(() => {
+    saveTimer = null
+    rememberScroll()
+  }, 200)
+}
+
+watch(scrollEl, (el, prev) => {
+  if (prev) prev.removeEventListener('scroll', onScrollSave)
+  if (el) el.addEventListener('scroll', onScrollSave, { passive: true })
+})
+
+onMounted(() => {
+  const el = scrollEl.value
+  if (el) el.addEventListener('scroll', onScrollSave, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  if (saveTimer !== null) clearTimeout(saveTimer)
+  const el = scrollEl.value
+  if (el) el.removeEventListener('scroll', onScrollSave)
+})
+
+/**
+ * KeepAlive 树内的组件初次挂载也会触发一次 onActivated——跳过它，只在
+ * 「停用后重新激活」（从详情/阅读器返回）时还原。
+ */
+let firstActivation = true
+onActivated(() => {
+  if (firstActivation) {
+    firstActivation = false
+    return
+  }
+  nextTick(() => restoreScroll())
+})
+
+/**
+ * 还原离开时的滚动位置。FastScroller/虚拟列表在 DOM 重插后还要再走一次
+ * 测量，内容高度未就绪时写入会被夹到 0——等 scrollHeight 就绪再落位，
+ * rAF 有界重试（约 0.5s）。
+ */
+function restoreScroll(attempt = 0): void {
+  const saved = scrollMemory.get(currentPathKey())
+  const el = scrollEl.value
+  if (saved === undefined || !el) return
+  if (el.scrollHeight <= 0) {
+    if (attempt < 30) requestAnimationFrame(() => restoreScroll(attempt + 1))
+    return
+  }
+  el.scrollTop = saved
+}
 
 /* ------------------------------- pull-to-refresh ------------------------ */
 
