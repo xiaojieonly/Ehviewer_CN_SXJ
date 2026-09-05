@@ -1018,6 +1018,14 @@ onUnmounted(() => {
   display: none;
 }
 
+/* 汉堡可见视口（<720px，或横屏矮视口）：顶部标签行避让浮动汉堡；
+   列表内容全宽，从汉堡下穿过（FAB 语义）。 */
+@media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
+  .label-tabs {
+    padding-left: var(--hamburger-clearance);
+  }
+}
+
 .label-tabs__tab {
   position: relative;
   flex: 0 0 auto;

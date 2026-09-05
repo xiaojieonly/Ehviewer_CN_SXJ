@@ -1027,6 +1027,14 @@ onBeforeUnmount(() => {
   pointer-events: auto;
 }
 
+/* 汉堡可见视口（<720px，或横屏矮视口）：浮动搜索条避让左上角汉堡；
+   列表内容全宽，从汉堡下穿过（FAB 语义）。 */
+@media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
+  .home__searchbar {
+    padding-left: var(--hamburger-clearance);
+  }
+}
+
 .home__content {
   flex: 1 1 auto;
   min-height: 0;

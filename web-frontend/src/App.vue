@@ -26,10 +26,7 @@
       </svg>
     </button>
 
-    <main
-      class="app-content"
-      :class="{ 'app-content--full': !showChrome || isFocusedScene }"
-    >
+    <main class="app-content">
       <router-view v-slot="{ Component, route }">
         <KeepAlive :include="CACHED_VIEWS" :max="8">
           <component :is="Component" :key="cachedViewKey(Component, route)" />
@@ -150,14 +147,10 @@ watch(
 }
 
 /* Hamburger-visible viewports (<720px, plus landscape-short phones that are
-   wide but under 480px tall): reserve a fixed slot under the floating
-   hamburger (40px + 8px left edge + 8px gap, plus safe-area inset) so view
-   headers / controls never collide with it. */
-@media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
-  .app-content {
-    padding-left: calc(48px + var(--safe-area-left));
-  }
-}
+   wide but under 480px tall): the floating hamburger no longer reserves a
+   whole content column. Each view's fixed top chrome row dodges it via
+   `--hamburger-clearance` (tokens.css); the list scrolls under the
+   hamburger FAB-style at full width. */
 
 /* Wide, tall-enough viewports: drawer panel is position:static (in-flow), so
    use flex to lay it out side-by-side with the content column.
@@ -172,16 +165,7 @@ watch(
     flex: 1 1 auto;
     min-width: 0;
     overflow-y: auto;
-    padding-left: 0;
   }
-}
-
-/* Full-width content when the hamburger slot must not apply: chrome-less
-   routes (login / reader) and the focused gallery-detail scene (own back
-   header, hamburger hidden). */
-.app-content--full {
-  margin-left: 0 !important;
-  padding-left: 0 !important;
 }
 
 /* Floating hamburger — narrow viewports only (drawer is modal <720px). */

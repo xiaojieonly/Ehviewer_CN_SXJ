@@ -165,6 +165,14 @@ watch(
     padding: 0 var(--keyline-margin);
   }
 
+  /* 汉堡可见视口（<720px，或横屏矮视口）：顶部标签条避让浮动汉堡。
+     720-959px 宽高视口汉堡已隐藏（常驻抽屉），无需避让。 */
+  @media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
+    .settings-layout__sidebar {
+      padding-left: var(--hamburger-clearance);
+    }
+  }
+
   .settings-layout__nav {
     position: relative;
     display: flex;

@@ -669,6 +669,13 @@
    See contracts/responsive-strategy.md for full rationale
    ========================================================================== */
 :root {
+  /* Left clearance for a view's top chrome row (floating search bar / page
+     heading / label tabs / settings·admin top bar) on viewports where the
+     shell hamburger floats above them: 40px button + 8px edge + 8px gap.
+     Lists do NOT reserve this — content scrolls under the hamburger
+     (FAB semantics); only the fixed top row avoids it. */
+  --hamburger-clearance: calc(48px + var(--safe-area-left) + 8px);
+
   /* Android sw600dp qualifier → tablet portrait */
   --breakpoint-sm: 600px;
   /* Android sw720dp qualifier → large tablet / landscape */

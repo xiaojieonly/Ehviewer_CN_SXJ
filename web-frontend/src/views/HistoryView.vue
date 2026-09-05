@@ -534,6 +534,14 @@ onMounted(() => {
   font-variant-numeric: tabular-nums;
 }
 
+/* 汉堡可见视口（<720px，或横屏矮视口）：顶部标题行避让浮动汉堡；
+   列表内容全宽，从汉堡下穿过（FAB 语义）。 */
+@media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
+  .history-view__heading {
+    padding-left: var(--hamburger-clearance);
+  }
+}
+
 /* ------------------------------------------------- server-side search ---- */
 .search-bar {
   display: flex;
