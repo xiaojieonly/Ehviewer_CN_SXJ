@@ -34,13 +34,15 @@ class FavoriteServiceTest {
 
     private lateinit var repository: LocalFavoriteInfoRepository
     private lateinit var historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository
+    private lateinit var downloadRepository: com.hippo.anotherviewer.web.repository.DownloadInfoRepository
     private lateinit var service: FavoriteService
 
     @BeforeEach
     fun setUp() {
         repository = mock(LocalFavoriteInfoRepository::class.java)
         historyRepository = mock(com.hippo.anotherviewer.web.repository.HistoryInfoRepository::class.java)
-        service = FavoriteService(repository, historyRepository)
+        downloadRepository = mock(com.hippo.anotherviewer.web.repository.DownloadInfoRepository::class.java)
+        service = FavoriteService(repository, historyRepository, downloadRepository, HistoryService(historyRepository))
     }
 
     private fun savedEntity(): LocalFavoriteInfoEntity {
@@ -96,6 +98,90 @@ class FavoriteServiceTest {
         assertFalse(service.addFavorite(42L, "token", "Title", 1))
 
         verify(repository, never()).save(any(LocalFavoriteInfoEntity::class.java))
+    }
+
+    // ── 任务 D：favoriteSlot 回写来源历史行（详情页收藏态数据源） ──
+
+    @Test
+    fun `addFavorite writes the slot back to the existing history row`() {
+        // 详情读取链（GalleryService 历史分支）优先历史行，不回写则重进详情
+        // favoriteSlot 恒 -2。回写值须与收藏行一致（含夹紧后的 slot）。
+        `when`(repository.findByGid(42L)).thenReturn(null)
+        `when`(historyRepository.findByGid(42L))
+            .thenReturn(com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply { gid = 42L })
+
+        service.addFavorite(42L, "token", "Title", 512, slot = 999)
+
+        val captor = ArgumentCaptor.forClass(com.hippo.anotherviewer.web.entity.HistoryInfoEntity::class.java)
+        verify(historyRepository).save(captureK<com.hippo.anotherviewer.web.entity.HistoryInfoEntity>(captor))
+        assertEquals(9, captor.value.favoriteSlot) // 999 夹紧到 9，与收藏行一致
+    }
+
+    @Test
+    fun `removeFavorite resets the history row favoriteSlot to -2`() {
+        // 对称清除：取消收藏后重进详情不残留收藏态（置回未收藏）。
+        `when`(repository.findByGid(42L)).thenReturn(LocalFavoriteInfoEntity())
+        `when`(historyRepository.findByGid(42L))
+            .thenReturn(com.hippo.anotherviewer.web.entity.HistoryInfoEntity().apply { gid = 42L; favoriteSlot = 3 })
+
+        assertTrue(service.removeFavorite(42L))
+
+        val captor = ArgumentCaptor.forClass(com.hippo.anotherviewer.web.entity.HistoryInfoEntity::class.java)
+        verify(historyRepository).save(captureK<com.hippo.anotherviewer.web.entity.HistoryInfoEntity>(captor))
+        assertEquals(-2, captor.value.favoriteSlot)
+    }
+
+    @Test
+    fun `addFavorite without a history row does not create one`() {
+        // 收藏不凭空造历史：无历史行仅记日志，historyRepository.save 不发生。
+        `when`(repository.findByGid(42L)).thenReturn(null)
+        `when`(historyRepository.findByGid(42L)).thenReturn(null)
+
+        assertTrue(service.addFavorite(42L, "token", "Title", 512))
+
+        verify(historyRepository, never()).save(any(com.hippo.anotherviewer.web.entity.HistoryInfoEntity::class.java))
+        verify(repository).save(any(LocalFavoriteInfoEntity::class.java)) // 收藏行本身照常落库
+    }
+
+    @Test
+    fun `addFavorite writes the slot back to an existing download row`() {
+        // 详情读取链 download 分支优先于 history 分支：已下载画廊的详情/下载
+        // 列表以 download 行为 favoriteSlot 来源，同样必须回写。
+        `when`(repository.findByGid(42L)).thenReturn(null)
+        `when`(historyRepository.findByGid(42L)).thenReturn(null)
+        `when`(downloadRepository.findByGid(42L))
+            .thenReturn(com.hippo.anotherviewer.web.entity.DownloadInfoEntity().apply { gid = 42L })
+
+        service.addFavorite(42L, "token", "Title", 512, slot = 999)
+
+        val captor = ArgumentCaptor.forClass(com.hippo.anotherviewer.web.entity.DownloadInfoEntity::class.java)
+        verify(downloadRepository).save(captureK<com.hippo.anotherviewer.web.entity.DownloadInfoEntity>(captor))
+        assertEquals(9, captor.value.favoriteSlot) // 999 夹紧到 9，与收藏行一致
+    }
+
+    @Test
+    fun `removeFavorite resets the download row favoriteSlot to -2`() {
+        `when`(repository.findByGid(42L)).thenReturn(LocalFavoriteInfoEntity())
+        `when`(historyRepository.findByGid(42L)).thenReturn(null)
+        `when`(downloadRepository.findByGid(42L))
+            .thenReturn(com.hippo.anotherviewer.web.entity.DownloadInfoEntity().apply { gid = 42L; favoriteSlot = 3 })
+
+        assertTrue(service.removeFavorite(42L))
+
+        val captor = ArgumentCaptor.forClass(com.hippo.anotherviewer.web.entity.DownloadInfoEntity::class.java)
+        verify(downloadRepository).save(captureK<com.hippo.anotherviewer.web.entity.DownloadInfoEntity>(captor))
+        assertEquals(-2, captor.value.favoriteSlot)
+    }
+
+    @Test
+    fun `addFavorite without download row does not touch download repository`() {
+        `when`(repository.findByGid(42L)).thenReturn(null)
+        `when`(historyRepository.findByGid(42L)).thenReturn(null)
+        `when`(downloadRepository.findByGid(42L)).thenReturn(null)
+
+        assertTrue(service.addFavorite(42L, "token", "Title", 512))
+
+        verify(downloadRepository, never()).save(any(com.hippo.anotherviewer.web.entity.DownloadInfoEntity::class.java))
     }
 
     @Test

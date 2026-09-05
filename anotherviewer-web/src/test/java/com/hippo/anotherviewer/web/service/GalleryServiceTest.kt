@@ -416,6 +416,27 @@ class GalleryServiceTest {
         assertEquals(13, detail.readProgress) // enrichment copy() 不得丢进度
     }
 
+    @Test
+    fun `favorite add is visible in the detail favoriteSlot through the history branch`() {
+        // 任务 D（收藏按钮只加不减）端到端：addFavorite 成功回写历史行后，
+        // 重进详情走历史分支（enrichHistoryDetail:554 favoriteSlot=history.favoriteSlot），
+        // 按钮呈已收藏态；enrichment copy() 不覆盖 favoriteSlot。
+        val h = harness()
+        val history = historyRow().apply { favoriteSlot = -2 }
+        `when`(h.downloads.findByGid(GID)).thenReturn(null)
+        `when`(h.history.findByGid(GID)).thenReturn(history)
+        `when`(h.historyTags.findByGid(GID)).thenReturn(emptyList<GalleryTagsEntity>())
+        `when`(h.favorites.findByGid(GID)).thenReturn(null)
+        val favoriteService = FavoriteService(h.favorites, h.history, h.downloads, HistoryService(h.history))
+
+        assertTrue(favoriteService.addFavorite(GID, TOKEN, "Favorite title", 512, slot = 3))
+
+        // 详情历史分支读到的 favoriteSlot 与收藏行一致（≥0，非恒 -2）。
+        val detail = h.service.getGalleryDetail(GID, TOKEN)
+        assertNotNull(detail)
+        assertEquals(3, detail!!.favoriteSlot)
+    }
+
     // ── S5⑥⑦: 列表 readProgress 填充 ───────────────────────────
 
     @Test

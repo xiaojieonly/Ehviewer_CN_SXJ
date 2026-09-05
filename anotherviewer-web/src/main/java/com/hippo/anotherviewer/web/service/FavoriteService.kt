@@ -4,13 +4,17 @@ import com.hippo.anotherviewer.web.dto.FavoriteItem
 import com.hippo.anotherviewer.web.dto.FavoriteListResponse
 import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class FavoriteService(
     private val favoriteRepository: LocalFavoriteInfoRepository,
     private val historyRepository: com.hippo.anotherviewer.web.repository.HistoryInfoRepository,
+    private val downloadRepository: com.hippo.anotherviewer.web.repository.DownloadInfoRepository,
+    private val historyService: HistoryService,
 ) {
+    private val logger = LoggerFactory.getLogger(FavoriteService::class.java)
 
     /**
      * List favorites with 1-based pagination (contract: `page` starts at 1)
@@ -118,12 +122,35 @@ class FavoriteService(
             this.time = System.currentTimeMillis()
         }
         favoriteRepository.save(entity)
+        // 任务 D：回写来源历史行的 favoriteSlot（与收藏行一致，取夹紧后的值）。
+        // 详情读取链（GalleryService 历史分支）优先历史行，不回写则重进详情
+        // favoriteSlot 恒 -2——收藏按钮「只加不减」的根因。无历史行不新建
+        // （收藏不凭空造历史），降级为日志。
+        if (!historyService.updateFavoriteSlot(gid, entity.favoriteSlot)) {
+            logger.info("addFavorite gid={} slot={}: no history row, favoriteSlot writeback skipped", gid, entity.favoriteSlot)
+        }
+        // 已下载画廊的详情读取链 download 分支优先于 history 分支，下载列表行
+        // 同样以 download 行为 favoriteSlot 来源——来源行是 download 行时也要
+        // 回写，否则重进详情/下载列表仍显示未收藏。
+        downloadRepository.findByGid(gid)?.let {
+            it.favoriteSlot = entity.favoriteSlot
+            downloadRepository.save(it)
+        }
         return true
     }
 
     fun removeFavorite(gid: Long): Boolean {
         val existing = favoriteRepository.findByGid(gid) ?: return false
         favoriteRepository.delete(existing)
+        // 任务 D：对称清除来源历史行的 favoriteSlot（置回未收藏），重进详情
+        // 不残留收藏态；无历史行则本就无状态可残留，降级为日志。
+        if (!historyService.updateFavoriteSlot(gid, SLOT_NOT_FAVORITED)) {
+            logger.debug("removeFavorite gid={}: no history row, favoriteSlot reset skipped", gid)
+        }
+        downloadRepository.findByGid(gid)?.let {
+            it.favoriteSlot = SLOT_NOT_FAVORITED
+            downloadRepository.save(it)
+        }
         return true
     }
 }

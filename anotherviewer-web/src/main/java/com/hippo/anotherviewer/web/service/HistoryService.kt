@@ -108,6 +108,19 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
         historyRepository.deleteAll()
     }
 
+    /**
+     * 收藏联动（任务 D，2026-09-05）：回写/清除历史行的 favoriteSlot
+     * （Android 契约：-2=未收藏，-1=默认夹，0-9=自定义夹）。
+     * 行不存在时返回 false——收藏绝不凭空造历史行，由调用方
+     * （FavoriteService）降级为日志。
+     */
+    fun updateFavoriteSlot(gid: Long, slot: Int): Boolean {
+        val existing = historyRepository.findByGid(gid) ?: return false
+        existing.favoriteSlot = slot
+        historyRepository.save(existing)
+        return true
+    }
+
     private fun HistoryInfoEntity.toItem() = HistoryItem(
         gid = gid,
         token = token,
