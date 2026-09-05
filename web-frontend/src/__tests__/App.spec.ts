@@ -88,18 +88,26 @@ describe('App (UX-13 hamburger reserved slot)', () => {
 
   it('reserves a padding-left slot under the hamburger below 720px (UX-13)', () => {
     const css = appCss()
-    // Narrow viewport media query must declare the hamburger slot.
-    const narrowBlock = css.match(/@media \(max-width: 719px\) \{[^}]*\}/)?.[0]
+    // Hamburger-visible viewports = narrow OR wide-but-landscape-short
+    // (width ≥720 with height <480 — a landscape phone, never a tablet).
+    const narrowBlock = css.match(
+      /@media \(max-width: 719px\), \(min-width: 720px\) and \(max-height: 479\.98px\) \{[^}]*\}/,
+    )?.[0]
     expect(narrowBlock).toBeDefined()
     expect(narrowBlock).toContain('padding-left: calc(48px + var(--safe-area-left))')
   })
 
   it('zeroes the slot padding at >=720px where the hamburger is hidden (UX-13)', () => {
     const css = appCss()
-    const wideBlock = css.match(/@media \(min-width: 720px\) \{[\s\S]*?\n\}/)?.[0]
+    // Persistent-drawer mode requires width ≥720 AND height ≥480 so that a
+    // landscape phone (800×360) keeps the modal drawer + hamburger instead
+    // of donating a third of its width to a permanent sidebar.
+    const wideBlock = css.match(/@media \(min-width: 720px\) and \(min-height: 480px\) \{[\s\S]*?\n\}/)?.[0]
     expect(wideBlock).toBeDefined()
     expect(wideBlock).toContain('padding-left: 0')
-    expect(css).toMatch(/@media \(min-width: 720px\) \{[\s\S]*\.app-hamburger \{\s*display: none;\s*\}\n\}/)
+    expect(css).toMatch(
+      /@media \(min-width: 720px\) and \(min-height: 480px\) \{[\s\S]*\.app-hamburger \{\s*display: none;\s*\}\n\}/,
+    )
   })
 
   it('keeps safe-area insets on the fixed hamburger and the reserved slot (UX-13)', () => {

@@ -299,8 +299,12 @@ function onThemeToggle(): void {
   transform: translateX(0);
 }
 
-/* Wide viewports (≥ --breakpoint-lg: 720px): persistent sidebar. */
-@media (min-width: 720px) {
+/* Wide viewports (≥ --breakpoint-lg: 720px AND tall enough to be a real
+   tablet/desktop): persistent sidebar. The min-height guard keeps
+   landscape phones (width ≥720 but height ≈360-430, smallest-width well
+   under Android sw720dp) in the modal drawer + hamburger mode instead of
+   donating a third of the screen to a permanent panel. */
+@media (min-width: 720px) and (min-height: 480px) {
   .navigation-drawer__panel {
     position: static;
     z-index: auto;

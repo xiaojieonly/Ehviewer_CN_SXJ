@@ -137,19 +137,20 @@ watch(
   transition: margin-left var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
-/* Narrow viewports (<720px): reserve a fixed slot under the floating
+/* Hamburger-visible viewports (<720px, plus landscape-short phones that are
+   wide but under 480px tall): reserve a fixed slot under the floating
    hamburger (40px + 8px left edge + 8px gap, plus safe-area inset) so view
    headers / controls never collide with it. */
-@media (max-width: 719px) {
+@media (max-width: 719px), (min-width: 720px) and (max-height: 479.98px) {
   .app-content {
     padding-left: calc(48px + var(--safe-area-left));
   }
 }
 
-/* Wide viewports: drawer panel is position:static (in-flow), so use flex
-   to lay it out side-by-side with the content column.
+/* Wide, tall-enough viewports: drawer panel is position:static (in-flow), so
+   use flex to lay it out side-by-side with the content column.
    height:100vh ensures the drawer panel's height:100% resolves correctly. */
-@media (min-width: 720px) {
+@media (min-width: 720px) and (min-height: 480px) {
   .app-layout {
     display: flex;
     height: 100vh;
@@ -206,8 +207,9 @@ watch(
   }
 }
 
-/* Hidden on wide viewports where the drawer is persistent. */
-@media (min-width: 720px) {
+/* Hidden on wide, tall-enough viewports where the drawer is persistent
+   (landscape-short phones keep the hamburger — see the padding rule). */
+@media (min-width: 720px) and (min-height: 480px) {
   .app-hamburger {
     display: none;
   }

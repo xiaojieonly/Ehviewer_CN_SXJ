@@ -16,11 +16,13 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // VITE_PROXY_TARGET lets a dev server ride on a remote backend
+        // (e.g. the LAN instance) without rebuilding anything.
+        target: process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: (process.env.VITE_PROXY_TARGET || 'ws://localhost:8080').replace(/^http/, 'ws'),
         ws: true,
       },
     },
