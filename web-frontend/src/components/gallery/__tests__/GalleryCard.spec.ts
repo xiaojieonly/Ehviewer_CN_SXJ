@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import GalleryCard, {
@@ -257,6 +258,36 @@ describe('GalleryCard (surface + category + events)', () => {
     await wrapper.trigger('click')
     expect(wrapper.emitted('click')).toBeTruthy()
     expect(wrapper.emitted('click')![0][0]).toEqual(gallery)
+  })
+
+  it('renders an `<a>` root whose href is the gid-semantics detail URL (B2)', () => {
+    const wrapper = mount(GalleryCard, { props: { gallery: makeGallery(), mode: 'list' } })
+    const root = wrapper.find('a.app-card')
+    expect(root.exists()).toBe(true)
+    // Same target openDetail pushes (gid + token) — never a site host.
+    expect(root.attributes('href')).toBe('/gallery/12345?token=abc123')
+  })
+
+  it('omits the token query from the href when the gallery has none', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ token: '' }), mode: 'grid' },
+    })
+    expect(wrapper.find('a.app-card').attributes('href')).toBe('/gallery/12345')
+  })
+
+  it('modified clicks (Ctrl) do not emit click — the browser opens a new tab', async () => {
+    const wrapper = mount(GalleryCard, { props: { gallery: makeGallery(), mode: 'list' } })
+    await wrapper.trigger('click', { ctrlKey: true })
+    await wrapper.trigger('click', { metaKey: true })
+    expect(wrapper.emitted('click')).toBeUndefined()
+  })
+
+  it('隐私打码：href 仅 gid 语义，新链接入口不外泄标题', () => {
+    setPrivacyMaskEnabled(true)
+    const wrapper = mount(GalleryCard, { props: { gallery: makeGallery(), mode: 'grid' } })
+    const href = wrapper.find('a.app-card').attributes('href') ?? ''
+    expect(href).toBe('/gallery/12345?token=abc123')
+    expect(href).not.toContain('Title')
   })
 
   it('emits click with the gallery on keyboard activation (enter + space)', async () => {
@@ -591,6 +622,9 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     setViewportWidth(1024) // happy-dom default
+    // Teleported menus outlive their (detached) host wrappers — sweep them
+    // so per-test queries over document.body stay isolated.
+    document.body.querySelectorAll('.card-context-menu').forEach((node) => node.remove())
   })
 
   describe('hover quick-action bar (PC form only)', () => {
@@ -726,14 +760,120 @@ describe('GalleryCard (F-UX6 PC quick actions + context menu)', () => {
       expect(document.body.querySelector('.card-context-menu')).toBeNull()
     })
 
-    it('does NOT open on non-PC viewports (375px)', async () => {
+    it('opens on non-PC viewports too (B1: the menu is also the touch path)', async () => {
       stubPointerQuery(true)
       setViewportWidth(375)
       const wrapper = mount(GalleryCard, {
-        props: { gallery: makeGallery(), mode: 'grid' },
+        props: { gallery: makeGallery({ favoriteSlot: -2 }), mode: 'grid' },
       })
       await wrapper.trigger('contextmenu', { clientX: 10, clientY: 10 })
+      expect(contextMenuItems().map((item) => item.textContent?.trim())).toEqual([
+        'Details',
+        'Favorite',
+        'Download',
+        'Copy link',
+      ])
+    })
+  })
+
+  describe('touch long-press context menu (B1)', () => {
+    /** Coarse pointer + narrow viewport = the pure-touch form (no quick actions). */
+    function mountTouchCard(mode: 'grid' | 'list' = 'grid') {
+      stubPointerQuery(false)
+      setViewportWidth(375)
+      // favoriteSlot -2 = not favorited, so the menu offers "Favorite".
+      return mount(GalleryCard, {
+        props: { gallery: makeGallery({ favoriteSlot: -2 }), mode },
+      })
+    }
+
+    function touchOptions(x: number, y: number) {
+      return { touches: [{ clientX: x, clientY: y }] }
+    }
+
+    /** Fake-timer-safe render flush (flushPromises itself uses setTimeout). */
+    async function renderTick() {
+      await nextTick()
+      await nextTick()
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('opens the shared context menu after a ≥500ms long-press', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      vi.advanceTimersByTime(500)
+      await renderTick()
+      const menu = document.body.querySelector('.card-context-menu') as HTMLElement | null
+      expect(menu).not.toBeNull()
+      expect(contextMenuItems().map((item) => item.textContent?.trim())).toEqual([
+        'Details',
+        'Favorite',
+        'Download',
+        'Copy link',
+      ])
+      // Anchored at the touch point (menu opens where the finger held).
+      expect(menu!.style.left).toBe('40px')
+      expect(menu!.style.top).toBe('60px')
+    })
+
+    it('cancels when the finger moves more than 10px (scroll, not long-press)', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      await wrapper.trigger('touchmove', touchOptions(60, 60))
+      vi.advanceTimersByTime(500)
+      await renderTick()
       expect(document.body.querySelector('.card-context-menu')).toBeNull()
+    })
+
+    it('does not open on a short tap (released before 500ms)', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      vi.advanceTimersByTime(400)
+      await wrapper.trigger('touchend', touchOptions(40, 60))
+      vi.advanceTimersByTime(500)
+      await renderTick()
+      expect(document.body.querySelector('.card-context-menu')).toBeNull()
+    })
+
+    it('the native contextmenu after a fired long-press does not open a second menu', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      vi.advanceTimersByTime(500)
+      await renderTick()
+      // Chrome Android fires the native `contextmenu` right after the
+      // long-press — it must be suppressed, not re-open the menu.
+      await wrapper.trigger('contextmenu', { clientX: 41, clientY: 61 })
+      await renderTick()
+      expect(document.body.querySelectorAll('.card-context-menu')).toHaveLength(1)
+    })
+
+    it('touchend after a fired long-press prevents the default (no synthetic click-nav)', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      vi.advanceTimersByTime(500)
+      await renderTick()
+      let touchEndPrevented = false
+      wrapper.element.addEventListener('touchend', (e: Event) => {
+        touchEndPrevented = e.defaultPrevented
+      })
+      await wrapper.trigger('touchend', touchOptions(40, 60))
+      expect(touchEndPrevented).toBe(true)
+    })
+
+    it('a plain tap still emits click (navigation unaffected)', async () => {
+      const wrapper = mountTouchCard()
+      await wrapper.trigger('touchstart', touchOptions(40, 60))
+      await wrapper.trigger('touchend', touchOptions(40, 60))
+      await wrapper.trigger('click')
+      expect(wrapper.emitted('click')).toBeTruthy()
+      expect((wrapper.emitted('click')![0][0] as { gid: number }).gid).toBe(12345)
     })
   })
 })

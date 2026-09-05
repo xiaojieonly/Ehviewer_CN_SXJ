@@ -42,6 +42,17 @@ describe('NavigationDrawer', () => {
       expect(icons).toHaveLength(9)
     })
 
+    it('renders menu items as real `<a>` links with the target path as href (B2)', () => {
+      const wrapper = mount(NavigationDrawer, { props: { open: true } })
+      const items = wrapper.findAll('[data-testid="drawer-item"]')
+      expect(items[0].element.tagName).toBe('A')
+      expect(items[0].attributes('href')).toBe('/') // homepage
+      expect(items[1].attributes('href')).toBe('/?feed=subscription')
+      expect(items[3].attributes('href')).toBe('/?feed=toplist')
+      expect(items[4].attributes('href')).toBe('/favorites')
+      expect(items[7].attributes('href')).toBe('/settings')
+    })
+
     it('accepts custom items via the items prop', () => {
       const custom: NavItem[] = [{ id: 'only', label: '唯一', icon: 'heart' }]
       const wrapper = mount(NavigationDrawer, { props: { open: true, items: custom } })

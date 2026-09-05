@@ -66,16 +66,30 @@
           <div class="content-layout__list">
             <slot />
           </div>
-          <div
-            v-if="loadingMore"
-            class="content-layout__footer"
-            data-testid="content-loading-more"
-          >
-            <span class="pl-spinner pl-spinner--footer" role="progressbar" aria-label="Loading more">
+          <!-- Footer pager: auto-load spinner while a page is in flight, else
+               the B3 "加载更多" fallback button (shown when `hasMore`).
+               Without `hasMore` the footer stays spinner-only, as before. -->
+          <div v-if="loadingMore || hasMore" class="content-layout__footer">
+            <span
+              v-if="loadingMore"
+              class="pl-spinner pl-spinner--footer"
+              role="progressbar"
+              aria-label="Loading more"
+              data-testid="content-loading-more"
+            >
               <svg viewBox="0 0 48 48" aria-hidden="true">
                 <circle cx="24" cy="24" r="20" fill="none" stroke-width="4" />
               </svg>
             </span>
+            <button
+              v-else
+              type="button"
+              class="content-layout__load-more"
+              data-testid="content-load-more"
+              @click="emit('load-more')"
+            >
+              加载更多
+            </button>
           </div>
         </FastScroller>
 
@@ -83,16 +97,30 @@
           <div class="content-layout__list">
             <slot />
           </div>
-          <div
-            v-if="loadingMore"
-            class="content-layout__footer"
-            data-testid="content-loading-more"
-          >
-            <span class="pl-spinner pl-spinner--footer" role="progressbar" aria-label="Loading more">
+          <!-- Footer pager: auto-load spinner while a page is in flight, else
+               the B3 "加载更多" fallback button (shown when `hasMore`).
+               Without `hasMore` the footer stays spinner-only, as before. -->
+          <div v-if="loadingMore || hasMore" class="content-layout__footer">
+            <span
+              v-if="loadingMore"
+              class="pl-spinner pl-spinner--footer"
+              role="progressbar"
+              aria-label="Loading more"
+              data-testid="content-loading-more"
+            >
               <svg viewBox="0 0 48 48" aria-hidden="true">
                 <circle cx="24" cy="24" r="20" fill="none" stroke-width="4" />
               </svg>
             </span>
+            <button
+              v-else
+              type="button"
+              class="content-layout__load-more"
+              data-testid="content-load-more"
+              @click="emit('load-more')"
+            >
+              加载更多
+            </button>
           </div>
         </div>
       </div>
@@ -116,7 +144,9 @@ export type ContentLayoutState = ContentState | 'error'
  * ContentLayout — web replica of `com.hippo.widget.ContentLayout`:
  * ProgressView + tip view + pull-to-refresh header + scrollable list +
  * right-edge FastScroller, plus a footer "load next page" spinner for
- * infinite paging.
+ * infinite paging (B3: with a "加载更多" fallback button when `hasMore` —
+ * the keyboard / screen-reader / auto-load-failure path; the near-bottom
+ * scroll trigger stays the primary mechanism).
  *
  * State machine:
  * - `loading` — center large ProgressView replica (76px).
@@ -146,6 +176,13 @@ const props = withDefaults(
     refreshing?: boolean
     /** Footer "load next page" spinner active. @default false */
     loadingMore?: boolean
+    /**
+     * B3: more pages exist — shows the "加载更多" fallback button (keyboard /
+     * screen-reader reachable, and the rescue path when auto-load misses).
+     * Unset/false keeps the pure auto-load behavior (no button).
+     * @default false
+     */
+    hasMore?: boolean
     /** Enable pull-to-refresh header. @default true */
     refreshEnabled?: boolean
     /** Show the right-edge FastScroller. @default true */
@@ -157,6 +194,7 @@ const props = withDefaults(
     errorText: 'Something went wrong',
     refreshing: false,
     loadingMore: false,
+    hasMore: false,
     refreshEnabled: true,
     fastScroll: true,
   },
@@ -349,6 +387,29 @@ defineExpose({ scrollToTop })
 
 .content-layout__retry:active {
   background: var(--color-primary-dark);
+}
+
+/* B3: footer "加载更多" fallback button (same look as the error retry). */
+.content-layout__load-more {
+  padding: 8px 24px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: background 150ms linear;
+  /* Touch baseline — a comfortable target for thumbs (§1 交互基线). */
+  min-height: 44px;
+}
+
+.content-layout__load-more:active {
+  background: var(--color-primary-dark);
+}
+
+.content-layout__load-more:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* Content state. */

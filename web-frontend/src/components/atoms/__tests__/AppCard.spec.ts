@@ -25,6 +25,21 @@ describe('AppCard (presentational surface)', () => {
     expect(wrapper.attributes('tabindex')).toBe('0')
   })
 
+  it('renders an `<a>` root carrying the detailUrl href (B2 link semantics)', () => {
+    const wrapper = mount(AppCard, {
+      props: { mode: 'list', detailUrl: '/gallery/123?token=abc' },
+    })
+    expect(wrapper.element.tagName).toBe('A')
+    expect(wrapper.attributes('href')).toBe('/gallery/123?token=abc')
+  })
+
+  it('renders no href when detailUrl is not passed (still focusable)', () => {
+    const wrapper = mount(AppCard, { props: { mode: 'list' } })
+    expect(wrapper.element.tagName).toBe('A')
+    expect(wrapper.attributes('href')).toBeUndefined()
+    expect(wrapper.attributes('tabindex')).toBe('0')
+  })
+
   it('does not render any gallery content itself', () => {
     const wrapper = mount(AppCard, { props: { mode: 'list' } })
     expect(wrapper.find('.app-card__title').exists()).toBe(false)
@@ -60,5 +75,25 @@ describe('AppCard (interaction)', () => {
     const wrapper = mount(AppCard, { props: { mode: 'list' } })
     await wrapper.trigger('keydown.space')
     expect(wrapper.emitted('click')).toHaveLength(1)
+  })
+
+  it('plain left clicks preventDefault the href navigation and emit click', async () => {
+    const wrapper = mount(AppCard, { props: { mode: 'list', detailUrl: '/gallery/1' } })
+    let defaultPrevented = false
+    wrapper.element.addEventListener('click', (e: Event) => {
+      defaultPrevented = e.defaultPrevented
+    })
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toHaveLength(1)
+    expect(defaultPrevented).toBe(true)
+  })
+
+  it('modified clicks never emit — the browser keeps open-in-new-tab', async () => {
+    const wrapper = mount(AppCard, { props: { mode: 'list', detailUrl: '/gallery/1' } })
+    await wrapper.trigger('click', { ctrlKey: true })
+    await wrapper.trigger('click', { metaKey: true })
+    await wrapper.trigger('click', { shiftKey: true })
+    await wrapper.trigger('click', { button: 1 })
+    expect(wrapper.emitted('click')).toBeUndefined()
   })
 })

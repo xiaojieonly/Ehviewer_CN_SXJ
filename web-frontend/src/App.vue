@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
+import NavigationDrawer, { DEFAULT_NAV_ITEMS, NAV_TARGET_PATHS } from '@/components/layout/NavigationDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import type { NavItem } from '@/types/components'
@@ -79,20 +79,11 @@ const activeNavId = computed(() => {
 
 function handleNavSelect(item: NavItem) {
   drawerOpen.value = false
-  // subscription / whats_hot / top_lists share the home route and select the
-  // feed via the `feed` query param (frozen feed contract).
-  const paths: Record<string, string> = {
-    homepage: '/',
-    subscription: '/?feed=subscription',
-    whats_hot: '/?feed=popular',
-    top_lists: '/?feed=toplist',
-    favourite: '/favorites',
-    history: '/history',
-    downloads: '/downloads',
-    settings: '/settings',
-    admin: '/admin',
-  }
-  const target = paths[item.id] ?? '/'
+  // B2: the id → path map lives in NavigationDrawer (NAV_TARGET_PATHS) —
+  // the same table the drawer's `<a href>` renders, so link and handler can
+  // never drift. subscription / whats_hot / top_lists share the home route
+  // and select the feed via the `feed` query param (frozen feed contract).
+  const target = NAV_TARGET_PATHS[item.id] ?? '/'
   // Compare the full path (query included) — path-only comparison would treat
   // /?feed=popular and /?feed=toplist as the same target and skip the push.
   if (route.fullPath !== target) {
@@ -185,6 +176,13 @@ watch(
 
 .app-hamburger:active {
   background: var(--color-surface-activated);
+}
+
+/* B4 触屏豁免：粘滞 hover 会把悬停底色永久卡在按钮上。 */
+@media (hover: none) {
+  .app-hamburger:hover {
+    background: var(--color-background-floating);
+  }
 }
 
 /* Hidden on wide viewports where the drawer is persistent. */

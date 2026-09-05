@@ -96,6 +96,9 @@ const downloadLabel = computed(() => {
   z-index: 2;
   display: flex;
   gap: 2px;
+  /* B5: the card-wide `user-select: none` moved here — this bar is the
+     card's only in-card action area now (titles are selectable again). */
+  user-select: none;
   opacity: 0;
   pointer-events: none;
   transition: opacity 140ms var(--ease-decelerate-quart);

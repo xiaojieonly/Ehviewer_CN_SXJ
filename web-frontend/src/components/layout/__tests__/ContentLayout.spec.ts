@@ -109,6 +109,49 @@ describe('ContentLayout', () => {
       expect(wrapper.find('[data-testid="content-loading-more"]').exists()).toBe(false)
     })
 
+    it('shows no load-more button by default (hasMore unset = pure auto-load)', () => {
+      const wrapper = mount(ContentLayout, {
+        props: { state: 'content' },
+        slots: { default: '<p>x</p>' },
+      })
+      expect(wrapper.find('[data-testid="content-load-more"]').exists()).toBe(false)
+    })
+
+    it('shows the load-more fallback button when hasMore is true (B3)', () => {
+      const wrapper = mount(ContentLayout, {
+        props: { state: 'content', hasMore: true },
+        slots: { default: '<p>x</p>' },
+      })
+      expect(wrapper.find('[data-testid="content-load-more"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="content-loading-more"]').exists()).toBe(false)
+    })
+
+    it('clicking the load-more button emits load-more (B3)', async () => {
+      const wrapper = mount(ContentLayout, {
+        props: { state: 'content', hasMore: true },
+        slots: { default: '<p>x</p>' },
+      })
+      await wrapper.find('[data-testid="content-load-more"]').trigger('click')
+      expect(wrapper.emitted('load-more')).toHaveLength(1)
+    })
+
+    it('swaps the button back to the spinner while loadingMore (B3)', () => {
+      const wrapper = mount(ContentLayout, {
+        props: { state: 'content', hasMore: true, loadingMore: true },
+        slots: { default: '<p>x</p>' },
+      })
+      expect(wrapper.find('[data-testid="content-loading-more"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="content-load-more"]').exists()).toBe(false)
+    })
+
+    it('renders the load-more button in the plain-scroll branch too (B3)', () => {
+      const wrapper = mount(ContentLayout, {
+        props: { state: 'content', hasMore: true, fastScroll: false },
+        slots: { default: '<p>x</p>' },
+      })
+      expect(wrapper.find('[data-testid="content-load-more"]').exists()).toBe(true)
+    })
+
     it('parks the refresh header open while refreshing is true', async () => {
       const wrapper = mount(ContentLayout, {
         props: { state: 'content', refreshing: true },

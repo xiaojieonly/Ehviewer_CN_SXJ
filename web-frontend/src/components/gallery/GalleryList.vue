@@ -187,8 +187,9 @@ const MODE_OPTIONS: Array<{ mode: ListMode; icon: string; label: string }> = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 28px;
+  /* B5: 44×44 touch target (was 34×28 — below the §1 交互基线 minimum). */
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   background: transparent;
@@ -264,6 +265,18 @@ const MODE_OPTIONS: Array<{ mode: ListMode; icon: string; label: string }> = [
 @media (prefers-reduced-motion: reduce) {
   .gallery-list__row {
     animation: none;
+  }
+}
+
+/* B4 触屏豁免：粘滞 hover 会把按钮文本色（非激活加深 / 激活变白）永久卡在
+   上一次点按的按钮上。 */
+@media (hover: none) {
+  .gallery-list__mode-btn:hover {
+    color: var(--text-color-secondary);
+  }
+
+  .gallery-list__mode-btn--active:hover {
+    color: var(--color-white);
   }
 }
 </style>

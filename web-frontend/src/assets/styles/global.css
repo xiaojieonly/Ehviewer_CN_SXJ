@@ -34,6 +34,19 @@ a:hover {
   color: var(--color-primary-dark);
 }
 
+/* ==========================================================================
+   B4 触屏豁免 (hover: none) — 触屏没有 hover 通道，点按却会触发 :hover 并
+   长期粘滞（直到点别处），样式就"卡住"了。这里只抹平全局规则；各组件
+   scoped 的 hover 规则（卡片阴影 / 标题变色 / 导航底色等）在各自组件的
+   `@media (hover: none)` 块内复位。操作入口由长按菜单（GalleryCard B1）与
+   详情页承载。
+   ========================================================================== */
+@media (hover: none) {
+  a:hover {
+    color: var(--color-primary);
+  }
+}
+
 button {
   cursor: pointer;
   font-family: inherit;

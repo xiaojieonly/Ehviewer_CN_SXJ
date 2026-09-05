@@ -42,18 +42,23 @@
                mirror items by a divider. -->
           <div v-if="item.id === 'admin'" class="navigation-drawer__divider" role="separator" />
           <slot name="item" :item="item" :active="item.id === activeId">
-            <button
-              type="button"
+            <!-- B2 link semantics: a real `<a href>` (target path per
+                 NAV_TARGET_PATHS) so middle-click / Ctrl+click / the new-tab
+                 menu work for free. `@click.prevent` keeps the existing
+                 router.push flow (App shell owns navigation) and also covers
+                 Enter activation on the link. -->
+            <a
               class="navigation-drawer__item"
               role="menuitemradio"
               :aria-checked="item.id === activeId"
               :class="{ 'is-active': item.id === activeId }"
+              :href="itemHref(item)"
               data-testid="drawer-item"
-              @click="onItemClick(item)"
+              @click.prevent="onItemClick(item)"
             >
               <AppIcon :name="item.icon" size="24px" class="navigation-drawer__item-icon" />
               <span class="navigation-drawer__item-label">{{ item.label }}</span>
-            </button>
+            </a>
           </slot>
         </template>
       </nav>
@@ -122,6 +127,25 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'settings', label: '设置', icon: 'settings-black' },
   { id: 'admin', label: '管理面板', icon: 'settings-dark' },
 ]
+
+/**
+ * B2: nav item id → in-app target path — the single source of truth shared
+ * by the drawer's `<a href>` (link semantics) and the app shell's
+ * navigation handler (App.vue `handleNavSelect`). subscription / whats_hot /
+ * top_lists share the home route and select the feed via the `feed` query
+ * param (frozen feed contract).
+ */
+export const NAV_TARGET_PATHS: Readonly<Record<string, string>> = {
+  homepage: '/',
+  subscription: '/?feed=subscription',
+  whats_hot: '/?feed=popular',
+  top_lists: '/?feed=toplist',
+  favourite: '/favorites',
+  history: '/history',
+  downloads: '/downloads',
+  settings: '/settings',
+  admin: '/admin',
+}
 </script>
 
 <script setup lang="ts">
@@ -218,6 +242,11 @@ function onItemClick(item: NavItem): void {
   emit('update:modelValue', item.id)
   // Android closes the drawer after a navigation selection.
   emit('update:open', false)
+}
+
+/** B2: the `<a>` href for a menu item (NAV_TARGET_PATHS, '/' fallback). */
+function itemHref(item: NavItem): string {
+  return NAV_TARGET_PATHS[item.id] ?? '/'
 }
 
 function onThemeToggle(): void {
@@ -340,19 +369,28 @@ function onThemeToggle(): void {
   width: 100%;
   height: 48px;
   padding: 0 var(--keyline-margin);
-  border: none;
+  /* `<a>` root (B2) — neutralize the global link styling. */
+  color: var(--text-color-primary);
+  text-decoration: none;
   background: transparent;
   cursor: pointer;
   font: inherit;
   text-align: left;
   /* Icon starts at 16px keyline; label lands on the 72px Material keyline. */
   gap: 32px;
-  color: var(--text-color-primary);
   transition: background 150ms linear;
 }
 
 .navigation-drawer__item:hover {
   background: rgba(0, 0, 0, 0.06);
+}
+
+/* B4 触屏豁免：粘滞 hover 会在点按后把灰底永久卡住（还会盖住 active 底色）；
+   选中态由 `.is-active` 承载，触屏不需要 hover 反馈。 */
+@media (hover: none) {
+  .navigation-drawer__item:hover {
+    background: transparent;
+  }
 }
 
 .navigation-drawer__item-icon {

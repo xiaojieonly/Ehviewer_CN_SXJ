@@ -1,5 +1,14 @@
 <template>
-  <AppCard :mode="mode" @click="emit('click', gallery)" @contextmenu="onContextMenu">
+  <AppCard
+    :mode="mode"
+    :detail-url="detailUrl"
+    @click="emit('click', gallery)"
+    @contextmenu="onContextMenu"
+    @touchstart.passive="onTouchStart"
+    @touchmove.passive="onTouchMove"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
+  >
     <!-- List mode — replicates `item_gallery_list.xml`: fixed 80×120dp (2:3)
          thumbnail left, info column right (title / japanese title / rating /
          category chip / page count / tags / posted). -->
@@ -143,7 +152,8 @@
       {{ toastMessage }}
     </div>
 
-    <!-- F-UX6: right-click menu (teleported; action state lives here). -->
+    <!-- F-UX6 + B1: right-click / touch long-press menu (teleported; action
+         state lives here). -->
     <CardContextMenu
       v-if="menuState"
       :x="menuState.x"
@@ -378,10 +388,11 @@ onMounted(() => {
 })
 
 /* --------------------------------------------------------------------------
-   F-UX6 — PC quick actions + right-click menu (roadmap §3.1). PC form ONLY:
-   rendered under `pointer: fine` AND viewport ≥720px (§0 red line — mobile
-   forms never see these). Actions reuse the established API usage of
-   GalleryDetailView / DownloadView; no new backend surface is introduced.
+   F-UX6 — quick actions + context menu (roadmap §3.1). The hover quick-action
+   bar stays PC form ONLY (`pointer: fine` AND viewport ≥720px, §0 red line —
+   mobile forms never see it); the context menu is universal since B1 —
+   right-click on PC, long-press on touch. Actions reuse the established API
+   usage of GalleryDetailView / DownloadView; no new backend surface.
    -------------------------------------------------------------------------- */
 
 const router = useRouter()
@@ -497,6 +508,16 @@ function openDetail(): void {
 }
 
 /**
+ * B2 link semantics — the href carried by the AppCard `<a>` root, same
+ * target `openDetail` pushes (gid + optional token). gid 语义 only：打码
+ * 与否都不泄露标题，中键 / Ctrl+点击 / 新标签右键项免费获得。
+ */
+const detailUrl = computed(() => {
+  const query = props.gallery.token ? `?token=${encodeURIComponent(props.gallery.token)}` : ''
+  return `/gallery/${props.gallery.gid}${query}`
+})
+
+/**
  * Copy the app's own detail link. Never emits a real gallery-site URL — the
  * internal route is the shareable address, and the site host (`e-hentai.org`)
  * never leaks into the copied link.
@@ -541,10 +562,77 @@ const menuItems = computed<CardContextMenuItem[]>(() => [
 ])
 
 function onContextMenu(event: MouseEvent): void {
-  // Non-PC forms keep their native context menu untouched (§0 red line).
-  if (!pcInput.value) return
+  // The browser's native menu is suppressed on EVERY form now — right-click
+  // on PC forms AND the long-press sheet Chrome Android shows (the in-app
+  // menu replaces both; B1).
   event.preventDefault()
+  // Chrome Android fires a native `contextmenu` right after a long-press —
+  // when the touch timer just opened the menu, don't open it twice.
+  if (Date.now() - longPressFiredAt < LONG_PRESS_DEDUP_MS) return
+  clearLongPressTimer()
   menuState.value = { x: event.clientX, y: event.clientY }
+}
+
+/* ------------------------------------- touch long-press (B1) ------------ */
+
+/**
+ * B1 — the touch equivalent of the right-click menu (Android
+ * `onItemLongClick`范式, same precedent as CategoryTable / DownloadItem):
+ * a ≥500ms press that moves <10px opens the same CardContextMenu
+ * (Details / Favorite / Download / Copy link), so touch users get every
+ * card action without entering the detail page. iOS has no native
+ * `contextmenu` on long-press — this timer is its only path; Chrome
+ * Android fires the native event too, deduplicated in `onContextMenu`.
+ */
+const LONG_PRESS_MS = 500
+const LONG_PRESS_SLOP_PX = 10
+/** Window in which a native `contextmenu` after a fired long-press counts as the same gesture. */
+const LONG_PRESS_DEDUP_MS = 1000
+
+let longPressTimer: ReturnType<typeof setTimeout> | null = null
+let longPressX = 0
+let longPressY = 0
+/** 0 = no long-press fired yet; `Date.now()` when the timer opened the menu. */
+let longPressFiredAt = 0
+
+function clearLongPressTimer(): void {
+  if (longPressTimer !== null) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+function onTouchStart(event: TouchEvent): void {
+  const touch = event.touches[0]
+  if (!touch) return
+  longPressX = touch.clientX
+  longPressY = touch.clientY
+  clearLongPressTimer()
+  longPressTimer = setTimeout(() => {
+    longPressTimer = null
+    longPressFiredAt = Date.now()
+    menuState.value = { x: longPressX, y: longPressY }
+  }, LONG_PRESS_MS)
+}
+
+function onTouchMove(event: TouchEvent): void {
+  if (!longPressTimer) return
+  const touch = event.touches[0]
+  if (!touch) return
+  if (
+    Math.abs(touch.clientX - longPressX) > LONG_PRESS_SLOP_PX ||
+    Math.abs(touch.clientY - longPressY) > LONG_PRESS_SLOP_PX
+  ) {
+    clearLongPressTimer()
+  }
+}
+
+function onTouchEnd(event: TouchEvent): void {
+  // The long-press just opened the menu — suppress the synthesized click so
+  // the card doesn't ALSO navigate to the detail page behind the menu (the
+  // iOS path; on Chrome Android the native contextmenu already ate the tap).
+  if (Date.now() - longPressFiredAt < LONG_PRESS_DEDUP_MS) event.preventDefault()
+  clearLongPressTimer()
 }
 
 function onMenuAction(id: CardContextMenuItem['id']): void {
@@ -560,6 +648,7 @@ onBeforeUnmount(() => {
   pointerMql = null
   window.removeEventListener('resize', refreshPcInput)
   if (toastTimer !== undefined) clearTimeout(toastTimer)
+  clearLongPressTimer()
 })
 </script>
 
@@ -571,7 +660,11 @@ onBeforeUnmount(() => {
    interactions (entrance reveal, active press, hover title tint).
    -------------------------------------------------------------------------- */
 .app-card {
-  user-select: none;
+  /* B5: the whole-card `user-select: none` is gone — titles are selectable /
+     copyable again. Only the action areas (CardQuickActions) opt out now. */
+  /* B1: keep the iOS long-press callout (copy / define sheet) out of the
+     way of the long-press context menu — without it iOS shows both. */
+  -webkit-touch-callout: none;
   /* Entrance reveal; `--enter-delay` is staggered by GalleryGrid. Fill mode
      `backwards` (not `both`) so post-animation hover/active transforms win. */
   animation: gallery-card-enter var(--duration-scene-translate) var(--ease-decelerate-quint)
@@ -847,6 +940,19 @@ onBeforeUnmount(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* B4 触屏豁免：粘滞 hover 会把缩放 / 标题变色永久卡在被点的卡片上
+   （放在所有 hover 规则之后，靠源顺序赢下同优先级级联）。 */
+@media (hover: none) {
+  .app-card:hover .gallery-card__img {
+    transform: none;
+  }
+
+  .app-card:hover .gallery-card__title,
+  .app-card:hover .gallery-card__grid-title {
+    color: var(--text-color-primary);
   }
 }
 
