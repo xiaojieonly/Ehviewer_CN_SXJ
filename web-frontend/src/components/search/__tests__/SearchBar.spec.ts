@@ -93,6 +93,24 @@ describe('SearchBar', () => {
       expect(wrapper.emitted('back')).toHaveLength(1)
     })
 
+    it('ignores Enter while the IME composition is active (C1)', async () => {
+      const wrapper = mount(SearchBar, { props: { state: 'search', query: 'futa' } })
+      const input = wrapper.find('input')
+      // isComposing（Chrome/Firefox/Safari 组合中）。
+      await input.trigger('keydown.enter', { isComposing: true })
+      // keyCode 229（Safari 部分 keydown 不带 isComposing）。
+      await input.trigger('keydown.enter', { keyCode: 229 })
+      expect(wrapper.emitted('search')).toBeUndefined()
+    })
+
+    it('ignores Escape while the IME composition is active (C1)', async () => {
+      const wrapper = mount(SearchBar, { props: { state: 'search', query: 'futa' } })
+      const input = wrapper.find('input')
+      await input.trigger('keydown.esc', { isComposing: true })
+      await input.trigger('keydown.esc', { keyCode: 229 })
+      expect(wrapper.emitted('back')).toBeUndefined()
+    })
+
     it('emits back on Backspace only when the query is empty', async () => {
       const withText = mount(SearchBar, { props: { state: 'search', query: 'x' } })
       await withText.find('input').trigger('keydown.backspace')

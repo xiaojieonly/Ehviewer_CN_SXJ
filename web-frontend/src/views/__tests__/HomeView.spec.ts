@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { mount, flushPromises, DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { reactive } from 'vue'
 import HomeView from '../HomeView.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
+import FilterPanel from '@/components/search/FilterPanel.vue'
 import { galleryApi } from '@/api/gallery'
 import { siteApi } from '@/api/site'
 import { preferencesApi } from '@/api/preferences'
@@ -12,20 +13,26 @@ import { availability, markUnknown } from '@/stores/availability'
 import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo, GalleryListResponse, TopListItem } from '@/types'
 
-const { pushMock, routeMock } = vi.hoisted(() => ({
+const { pushMock, replaceMock, routeMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  replaceMock: vi.fn(),
   routeMock: { query: {} },
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
   // Return a reactive wrapper so query mutations (via the cached proxy in
   // tests) re-trigger HomeView's feed watcher.
   useRoute: () => reactive(routeMock),
 }))
 
 vi.mock('@/api/gallery', () => ({
-  galleryApi: { search: vi.fn(), feed: vi.fn(), getQuickSearches: vi.fn() },
+  galleryApi: {
+    search: vi.fn(),
+    feed: vi.fn(),
+    getQuickSearches: vi.fn(),
+    createQuickSearch: vi.fn(),
+  },
 }))
 
 vi.mock('@/api/preferences', () => ({
@@ -97,6 +104,7 @@ describe('HomeView (首页)', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     pushMock.mockClear()
+    replaceMock.mockClear()
     routeMock.query = {}
     // 熔断单例（模块级）在 spec 间持久——重置为初始未知态。
     availability.state = null
@@ -280,6 +288,86 @@ describe('HomeView (首页)', () => {
     reactive(routeMock).query = { feed: 'toplist' }
     await flushPromises()
     expect(galleryApi.feed).toHaveBeenLastCalledWith('toplist', 0, 25)
+  })
+
+  it('leaves the feed through ?keyword= when searching on a feed page (C2)', async () => {
+    routeMock.query = { feed: 'popular' }
+    feedListMock.mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    // Frozen feed 分支不拿关键词发请求——搜索词改为 replace 到 `/?keyword=`
+    // 深链形态（离开 feed、意图可见，由 keyword watcher 执行搜索）。
+    wrapper.findComponent(SearchBar).vm.$emit('search', 'mahua')
+    await flushPromises()
+    expect(replaceMock).toHaveBeenCalledWith({ path: '/', query: { keyword: 'mahua' } })
+    expect(galleryApi.search).not.toHaveBeenCalled()
+  })
+
+  it('runs the search when mounted with a ?keyword= deep link (C2)', async () => {
+    routeMock.query = { keyword: 'artist:someone' }
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+
+    expect(galleryApi.search).toHaveBeenCalledWith('artist:someone', undefined, 0, 25, undefined)
+    expect(galleryApi.feed).not.toHaveBeenCalled()
+  })
+
+  it('re-runs the search when route.query.keyword changes (C2 — detail tag links)', async () => {
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [], total: 0 })
+    wrapper = mount(HomeView)
+    await flushPromises()
+    vi.mocked(galleryApi.search).mockClear()
+
+    reactive(routeMock).query = { keyword: 'female:big' }
+    await flushPromises()
+    expect(galleryApi.search).toHaveBeenCalledWith('female:big', undefined, 0, 25, undefined)
+  })
+
+  it('debounces rapid filter edits into a single search (C6)', async () => {
+    vi.useFakeTimers()
+    await mountHome([gallery()])
+    vi.mocked(galleryApi.search).mockClear()
+
+    const panel = wrapper.findComponent(FilterPanel)
+    panel.vm.$emit('update:filters', { sort: 2 })
+    panel.vm.$emit('update:filters', { sort: 3 })
+    await vi.advanceTimersByTimeAsync(400)
+    expect(galleryApi.search).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(200)
+    expect(galleryApi.search).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('saves a quick search from the FilterPanel action (C3 wiring)', async () => {
+    vi.mocked(galleryApi.createQuickSearch).mockResolvedValue({
+      id: 7,
+      name: 'My preset',
+      mode: 0,
+      category: 0,
+      keyword: '',
+      advanceSearch: 0,
+      minRating: 0,
+      pageFrom: 0,
+      pageTo: 0,
+    })
+    await mountHome([gallery()])
+
+    wrapper.findComponent(FilterPanel).vm.$emit('save-quick-search')
+    await flushPromises()
+    // Save dialog teleports to body.
+    const scrim = document.querySelector('.dialog-scrim')
+    expect(scrim).not.toBeNull()
+    await new DOMWrapper(scrim!.querySelector('.dialog__input')!).setValue('My preset')
+    await new DOMWrapper(scrim!.querySelector('.dialog__btn--primary')!).trigger('click')
+    await flushPromises()
+
+    expect(galleryApi.createQuickSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'My preset', keyword: '', mode: 0 }),
+    )
+    // 成功后对话框关闭。
+    expect(document.querySelector('.dialog-scrim')).toBeNull()
   })
 
   it('resets loadingMore when an in-flight append is superseded by a new search (F5)', async () => {

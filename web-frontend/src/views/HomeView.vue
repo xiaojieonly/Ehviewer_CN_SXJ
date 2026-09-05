@@ -35,12 +35,16 @@
         @clear-filter-chips="onClearFilters"
       />
       <!-- Wave-1 1a: anchored PC filter popover, coexists with the viewMode
-           toggle (P2 stitching). -->
+           toggle (P2 stitching). keywordMode + save-quick-search wiring
+           mirrors SearchView (plan-2026-09-05 C3 — the radio and the save
+           action were dead without it). -->
       <FilterPanel
         v-model:open="filterPanelOpen"
+        v-model:keyword-mode="keywordMode"
         :filters="activeFilters"
         @update:filters="applyFilters"
         @search="onFilterPanelSearch"
+        @save-quick-search="openSaveQuickSearch"
       />
     </div>
 
@@ -52,6 +56,7 @@
       :state="contentState"
       :refreshing="refreshing"
       :loading-more="loadingMore"
+      :has-more="hasMore"
       empty-text="这里什么都没有"
       :error-text="errorText"
       @update:refreshing="refreshing = $event"
@@ -139,6 +144,46 @@
       @click-primary="onPrimaryFab"
       @click-secondary="onSecondaryFab"
     />
+
+    <!-- Save-as-quick-search dialog (C3 wiring): minimal Android
+         EditTextDialog replica — name the current filter state and POST the
+         QuickSearchDto schema payload; failure shows inline in the dialog. -->
+    <Teleport to="body">
+      <div v-if="saveDialogOpen" class="dialog-scrim" @click.self="closeSaveQuickSearch">
+        <div
+          class="dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="save-quick-search-title"
+        >
+          <h3 id="save-quick-search-title" class="dialog__title">Save as quick search</h3>
+          <input
+            ref="saveNameInputRef"
+            v-model="saveName"
+            class="dialog__input"
+            type="text"
+            maxlength="50"
+            placeholder="Preset name"
+            autocomplete="off"
+            @keydown.enter="saveQuickSearch"
+          />
+          <p v-if="saveError" class="dialog__error" role="alert">{{ saveError }}</p>
+          <div class="dialog__actions">
+            <button type="button" class="dialog__btn" @click="closeSaveQuickSearch">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="dialog__btn dialog__btn--primary"
+              :disabled="!saveName.trim() || savingQuickSearch"
+              @click="saveQuickSearch"
+            >
+              {{ savingQuickSearch ? 'Saving…' : 'Save' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -182,6 +227,7 @@ import GalleryList, { resolveListMode } from '@/components/gallery/GalleryList.v
 import type { SearchFilters } from '@/api/gallery'
 import {
   filterChips,
+  filtersToQuickSearchPayload,
   isFilterActive,
   removeFilterChip,
   type FilterChip,
@@ -192,6 +238,7 @@ import type {
   ContentState,
   FabAction,
   GalleryInfo,
+  NormalSearchMode,
   SearchBarState,
   SearchSuggestion,
 } from '@/types/components'
@@ -202,6 +249,14 @@ type HomeContentState = ContentState | 'error'
 
 /** AnotherViewer's default gallery page size. */
 const PAGE_SIZE = 25
+
+/** Keyword mode → QuickSearchDto mode number (SearchView 同款映射，W3 R4-10). */
+const MODE_TO_NUM: Readonly<Record<NormalSearchMode, number>> = {
+  normal: 0,
+  subscription: 1,
+  uploader: 2,
+  tag: 3,
+}
 
 /**
  * Legacy localStorage key of the pre-preferences list mode. Read once during
@@ -309,7 +364,7 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
       galleries.value = commitPage(galleries.value, res.data, target, res.total, mode)
     } else {
       const res = await galleryApi.search(
-        appliedKeyword.value || undefined,
+        composedSearchKeyword(),
         undefined,
         target,
         PAGE_SIZE,
@@ -368,6 +423,12 @@ function onLoadMore(): void {
   if (fetchedPages.value * PAGE_SIZE >= total.value) return
   void loadPage(page.value + 1, 'append')
 }
+
+/**
+ * 是否还有下一页——与 onLoadMore 的判定保持同一口径，喂给 ContentLayout 的
+ * 「加载更多」兜底按钮（B3；自动滚动加载照旧）。
+ */
+const hasMore = computed(() => !noMoreData.value && fetchedPages.value * PAGE_SIZE < total.value)
 
 function openGallery(gallery: GalleryInfo): void {
   const query = gallery.token ? { token: gallery.token } : undefined
@@ -454,9 +515,19 @@ const filterPanelOpen = ref(false)
 const activeFilters = ref<SearchFilters>({})
 const activeFilterChips = computed<FilterChip[]>(() => filterChips(activeFilters.value))
 
+/** Keyword search mode (FilterPanel radio, C3 wiring — mirrors SearchView). */
+const keywordMode = ref<NormalSearchMode>('normal')
+
+/** 筛选即时搜索防抖（C6）：连续勾选 N 个分类只发一次请求。 */
+let filterDebounceTimer: ReturnType<typeof setTimeout> | undefined
+
 function applyFilters(next: SearchFilters): void {
   activeFilters.value = next
-  void applySearch(keyword.value)
+  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+  filterDebounceTimer = setTimeout(() => {
+    filterDebounceTimer = undefined
+    void applySearch(keyword.value)
+  }, 500)
 }
 
 function onRemoveFilterChip(chipId: string): void {
@@ -469,6 +540,11 @@ function onClearFilters(): void {
 
 function onFilterPanelSearch(): void {
   filterPanelOpen.value = false
+  // 显式 Search 动作即时执行，不等待筛选防抖时钟。
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+    filterDebounceTimer = undefined
+  }
   void applySearch(keyword.value)
 }
 const suggestions = ref<SearchSuggestion[]>([])
@@ -486,9 +562,34 @@ function leaveSearchMode(): void {
   searchState.value = 'normal'
 }
 
+/**
+ * 搜索请求关键词：keyword mode 的 `uploader:`/`tag:` 前缀在请求时合成
+ * （SearchView `composedKeyword` 同款；subscription 与 normal 同义落回普通
+ * 搜索），输入框内保持用户原文。
+ */
+function composedSearchKeyword(): string | undefined {
+  const q = appliedKeyword.value
+  if (!q) return undefined
+  if (keywordMode.value === 'uploader') return `uploader:${q}`
+  if (keywordMode.value === 'tag') return `tag:${q}`
+  return q
+}
+
 /** IME action / programmatic search — reload page 0 with the new keyword. */
 function applySearch(query: string): void {
   const q = query.trim()
+  // Frozen feed 契约：loadPage 的 feed 分支忽略关键词——静默丢词是零反馈
+  // 失败（C2）。改为 router.replace 到 `/?keyword=` 深链形态：离开 feed 态、
+  // 意图可见，并由下方 keyword watcher 真正执行搜索。
+  if (feedMode.value) {
+    void router.replace({ path: '/', query: q ? { keyword: q } : {} })
+    return
+  }
+  commitKeyword(q)
+}
+
+/** applySearch 与 `?keyword=` 深链共用的落库 + 重载。 */
+function commitKeyword(q: string): void {
   keyword.value = q
   appliedKeyword.value = q
   searchState.value = 'normal'
@@ -527,6 +628,69 @@ function onSelectSuggestion(suggestion: SearchSuggestion): void {
 
 function onDismissSuggestion(suggestion: SearchSuggestion): void {
   suggestions.value = suggestions.value.filter((s) => s !== suggestion)
+}
+
+/* ---------------------- save-as-quick-search (C3 wiring) ------------------ */
+
+const saveDialogOpen = ref(false)
+const saveName = ref('')
+const saveError = ref('')
+const savingQuickSearch = ref(false)
+const saveNameInputRef = ref<HTMLInputElement | null>(null)
+
+function openSaveQuickSearch(): void {
+  saveName.value = ''
+  saveError.value = ''
+  saveDialogOpen.value = true
+  void nextTick(() => saveNameInputRef.value?.focus())
+}
+
+function closeSaveQuickSearch(): void {
+  saveDialogOpen.value = false
+}
+
+/** Esc 统一挂 window（C7）：焦点不在面板内时也能关闭；组合中不误关。 */
+function onSaveDialogKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && !event.isComposing) closeSaveQuickSearch()
+}
+
+watch(saveDialogOpen, (open) => {
+  if (open) {
+    window.addEventListener('keydown', onSaveDialogKeydown)
+  } else {
+    window.removeEventListener('keydown', onSaveDialogKeydown)
+  }
+})
+
+/**
+ * POST the QuickSearchDto-schema payload (SearchView `saveQuickSearch` 同款,
+ * minus the offline localStorage fallback — HomeView 的 suggestion 列表只吃
+ * 服务器预设)。成功后新预设立刻作为 suggestion 行出现。
+ */
+async function saveQuickSearch(): Promise<void> {
+  const name = saveName.value.trim()
+  if (!name || savingQuickSearch.value) return
+  savingQuickSearch.value = true
+  saveError.value = ''
+  try {
+    const created = await galleryApi.createQuickSearch(
+      filtersToQuickSearchPayload(activeFilters.value, {
+        name,
+        keyword: keyword.value,
+        mode: MODE_TO_NUM[keywordMode.value],
+      }),
+    )
+    suggestions.value = [
+      ...suggestions.value,
+      { text: created.name, hint: created.keyword || undefined },
+    ]
+    saveDialogOpen.value = false
+  } catch (error) {
+    console.error('[HomeView] quick-search POST failed', error)
+    saveError.value = '保存失败，请稍后重试'
+  } finally {
+    savingQuickSearch.value = false
+  }
 }
 
 /* ---------------------------------- FABs -------------------------------- */
@@ -730,6 +894,14 @@ onMounted(() => {
   // 读取服务器侧 EH 熔断状态（幂等：in-flight 单飞）——DOWN 时顶部提示条
   // 与自动请求短路（服务器/拦截器）同时生效。
   void loadAvailability()
+  // `?keyword=` 深链（详情页 tag/uploader 链接等，C2）：首载即执行该搜索，
+  // 复用下方唯一的 loadPage(0, 'replace') 入口。
+  const initialKeyword =
+    typeof route.query.keyword === 'string' ? route.query.keyword.trim() : ''
+  if (initialKeyword) {
+    keyword.value = initialKeyword
+    appliedKeyword.value = initialKeyword
+  }
   void loadPage(0, 'replace')
 })
 
@@ -737,10 +909,17 @@ onMounted(() => {
  * Feed navigation (/?feed=popular → /?feed=toplist, or a feed → the plain
  * home) reuses this component instance — reload page 0 when the query
  * changes (requestSeq drops any stale in-flight page).
+ *
+ * C2：feed 被搜索替换时（applySearch 的 router.replace 同时去掉 feed、带上
+ * keyword）不在此处重载——若 keyword watcher 会执行该搜索（词变化）就交给它；
+ * 若词未变（watcher 会跳过）则此处仍以普通搜索语义重载，避免「离开 feed
+ * 却什么都没发生」。
  */
 watch(
   () => route.query.feed,
   () => {
+    const keywordParam = route.query.keyword
+    if (typeof keywordParam === 'string' && keywordParam.trim() !== appliedKeyword.value) return
     topList.value = []
     galleries.value = []
     page.value = 0
@@ -748,6 +927,19 @@ watch(
     noMoreData.value = false
     contentState.value = 'loading'
     void loadPage(0, 'replace')
+  },
+)
+
+/**
+ * `?keyword=` 深链消费（C2）：详情页 tag/uploader 链接、feed 页搜索都落到
+ * 这里——词变化时提交一次全量搜索。
+ */
+watch(
+  () => route.query.keyword,
+  (next) => {
+    const q = typeof next === 'string' ? next.trim() : ''
+    if (!q || q === appliedKeyword.value) return
+    commitKeyword(q)
   },
 )
 
@@ -769,7 +961,11 @@ watch(viewMode, () => {
   void nextTick(() => measure())
 })
 
-onBeforeUnmount(detachVirtualScroll)
+onBeforeUnmount(() => {
+  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+  window.removeEventListener('keydown', onSaveDialogKeydown)
+  detachVirtualScroll()
+})
 </script>
 
 <style scoped>
@@ -910,5 +1106,125 @@ onBeforeUnmount(detachVirtualScroll)
 
 .home__empty-cta--ghost:active {
   background: var(--color-surface-activated);
+}
+
+/* ------------------------------------------------------------- dialog --- */
+/* Save-as-quick-search dialog（C3）：HistoryView/DownloadView 的 AlertDialog
+   复刻样式同款。 */
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--keyline-margin);
+  background: var(--black-overlay);
+  opacity: 1;
+  animation: scrim-in 160ms linear;
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 20px var(--keyline-margin) var(--spacing);
+  background: var(--color-background-floating);
+  border-radius: var(--card-radius);
+  box-shadow: 0 6px 24px var(--shadow-color);
+  opacity: 1;
+  animation: dialog-in 200ms var(--ease-decelerate-quart);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+}
+
+.dialog__title {
+  margin: 0 0 var(--spacing);
+  font-size: var(--text-medium); /* 18sp */
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.dialog__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+  background: var(--color-bg);
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: var(--text-little-small); /* 16sp */
+  transition: border-color 140ms var(--ease-decelerate-quart);
+}
+
+.dialog__input::placeholder {
+  color: var(--text-color-secondary);
+}
+
+.dialog__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.dialog__error {
+  margin: 6px 0 0;
+  font-size: var(--text-super-small);
+  color: var(--color-red-500);
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing);
+  margin-top: var(--keyline-margin);
+}
+
+.dialog__btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--button-text-color);
+  font-family: inherit;
+  font-size: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-decelerate-quart);
+}
+
+.dialog__btn:hover {
+  background: var(--color-surface-activated);
+}
+
+.dialog__btn--primary {
+  color: var(--color-primary);
+}
+
+.dialog__btn:disabled {
+  color: var(--text-color-secondary);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dialog__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-scrim,
+  .dialog {
+    animation: none;
+  }
 }
 </style>

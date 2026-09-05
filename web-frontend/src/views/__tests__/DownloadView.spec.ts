@@ -491,6 +491,26 @@ describe('DownloadView (虚拟滚动 + 分页加载, plan-2026-08-06 A5/A7)', ()
     vi.useRealTimers()
   })
 
+  it('holds the debounced search while the IME composition is active (C1)', async () => {
+    vi.useFakeTimers()
+    await mountView()
+    const input = wrapper.find('.search-bar__input')
+
+    // 拼音组合期间的中间态输入不触发请求（首屏 1 次）。
+    await input.trigger('compositionstart')
+    await input.setValue('futa')
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(downloadApi.list).toHaveBeenCalledTimes(1)
+
+    // compositionend 后的最终选词照常防抖提交。
+    await input.trigger('compositionend')
+    await input.setValue('漫画')
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    expect(downloadApi.list).toHaveBeenLastCalledWith(undefined, 0, 50, 'time_desc', '漫画', false)
+    vi.useRealTimers()
+  })
+
   it('select-all across pages sends the all-mode target with current filters', async () => {
     vi.mocked(downloadApi.list).mockImplementation(async () => ({
       downloads: pages(250)(0, 50).slice(0, 50),

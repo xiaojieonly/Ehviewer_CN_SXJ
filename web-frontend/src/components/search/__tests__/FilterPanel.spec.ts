@@ -44,6 +44,37 @@ describe('FilterPanel', () => {
       expect(wrapper.emitted('update:open')?.some((args) => args[0] === false)).toBe(true)
       wrapper.unmount()
     })
+
+    it('ignores a mousedown inside the positioning anchor — the filter toggle stays a toggle (C3)', async () => {
+      const wrapper = mountPanel()
+      await flushPromises()
+      await new Promise((resolve) => setTimeout(resolve, 30))
+      // The panel's parent element stands in for the scene's anchor wrapper
+      // (HomeView's .home__searchbar / SearchView's filter anchor), which
+      // holds the SearchBar and its filter toggle.
+      const anchor = wrapper.element.parentElement!
+      anchor.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      await flushPromises()
+      expect(wrapper.emitted('update:open')).toBeUndefined()
+      // Outside is still outside.
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      await flushPromises()
+      expect(wrapper.emitted('update:open')?.some((args) => args[0] === false)).toBe(true)
+      wrapper.unmount()
+    })
+
+    it('closes on Escape via the window listener even without focus inside (C7)', async () => {
+      const wrapper = mountPanel()
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await flushPromises()
+      expect(wrapper.emitted('update:open')?.[0]).toEqual([false])
+      // Parent applies the v-model close → the window listener is removed.
+      await wrapper.setProps({ open: false })
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await flushPromises()
+      expect(wrapper.emitted('update:open')).toHaveLength(1)
+      wrapper.unmount()
+    })
   })
 
   describe('category chips (exclusion bitmask)', () => {

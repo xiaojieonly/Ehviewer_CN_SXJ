@@ -26,7 +26,6 @@
       class="filter-panel"
       role="dialog"
       aria-label="Search filters"
-      @keydown.esc="emit('update:open', false)"
     >
       <header class="filter-panel__header">
         <span class="filter-panel__heading">Filters</span>
@@ -321,7 +320,21 @@ function reset(): void {
 
 /* Click outside the anchored popover closes it (PC affordance). */
 function onDocumentMousedown(event: MouseEvent): void {
-  if (props.open && isClickOutside(panelRef.value, event.target)) {
+  if (!props.open) return
+  // Presses inside the positioning anchor (the wrapper holding the SearchBar
+  // and its filter toggle) are ignored — AppSelect's contains 保护同款。The
+  // toggle's click must stay a toggle: closing on mousedown re-opened on
+  // click, leaving the panel "open-only" (plan-2026-09-05 C3).
+  const anchor = panelRef.value?.parentElement
+  if (anchor?.contains(event.target as Node)) return
+  if (isClickOutside(panelRef.value, event.target)) {
+    emit('update:open', false)
+  }
+}
+
+/** Esc 统一挂 window（C7）：焦点不在面板内时 Esc 也能关闭。 */
+function onWindowKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && !event.isComposing) {
     emit('update:open', false)
   }
 }
@@ -332,6 +345,7 @@ watch(
     if (open) {
       // Defer so the opening click itself is not treated as "outside".
       requestAnimationFrame(() => document.addEventListener('mousedown', onDocumentMousedown))
+      window.addEventListener('keydown', onWindowKeydown)
       // F-UX3: measure once laid out, then keep the cue honest when the
       // panel/body size changes (72dvh cap, window resize, filter edits).
       await nextTick()
@@ -343,6 +357,7 @@ watch(
       }
     } else {
       document.removeEventListener('mousedown', onDocumentMousedown)
+      window.removeEventListener('keydown', onWindowKeydown)
       scrollableBelow.value = false
       stopBodyObserver()
     }
@@ -352,6 +367,7 @@ watch(
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocumentMousedown)
+  window.removeEventListener('keydown', onWindowKeydown)
   stopBodyObserver()
 })
 </script>

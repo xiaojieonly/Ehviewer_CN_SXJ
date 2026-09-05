@@ -175,6 +175,28 @@ describe('FavoriteView (搜索 + 筛选槽位 A5d)', () => {
     vi.useRealTimers()
   })
 
+  it('holds the debounced search while the IME composition is active (C1)', async () => {
+    vi.useFakeTimers()
+    await mountFavorites([makeFavorite(1)])
+    const input = wrapper.find('.search-bar__input')
+
+    // 拼音组合期间的中间态输入不触发请求（首屏 1 次）。
+    await input.trigger('compositionstart')
+    await input.setValue('futa')
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(client.get).toHaveBeenCalledTimes(1)
+
+    // compositionend 后的最终选词照常防抖提交。
+    await input.trigger('compositionend')
+    await input.setValue('漫画')
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    expect(client.get).toHaveBeenLastCalledWith('/favorite/list', {
+      params: { slot: '0', page: '1', q: '漫画' },
+    })
+    vi.useRealTimers()
+  })
+
   it('clear button restores the unfiltered list', async () => {
     vi.useFakeTimers()
     await mountFavorites([makeFavorite(1)])

@@ -279,6 +279,26 @@ describe('HistoryView (F-UX1 grid meta — title + last-viewed sub line)', () =>
     vi.useRealTimers()
   })
 
+  it('holds the debounced search while the IME composition is active (C1)', async () => {
+    vi.useFakeTimers()
+    await mountHistory([makeHistoryItem({ gid: 1 })])
+    const input = wrapper.find('.search-bar__input')
+
+    // 拼音组合期间的中间态输入不触发请求（首屏 1 次）。
+    await input.trigger('compositionstart')
+    await input.setValue('futa')
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(historyApi.listHistory).toHaveBeenCalledTimes(1)
+
+    // compositionend 后的最终选词照常防抖提交。
+    await input.trigger('compositionend')
+    await input.setValue('漫画')
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    expect(historyApi.listHistory).toHaveBeenLastCalledWith('漫画', undefined, 0, 50)
+    vi.useRealTimers()
+  })
+
   it('clear button restores the unfiltered history', async () => {
     vi.useFakeTimers()
     await mountHistory([makeHistoryItem({ gid: 1 })])

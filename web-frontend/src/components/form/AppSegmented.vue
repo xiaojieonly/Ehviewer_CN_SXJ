@@ -1,13 +1,20 @@
 <template>
-  <div class="app-segmented" role="radiogroup" :aria-label="ariaLabel">
+  <div
+    ref="rootRef"
+    class="app-segmented"
+    role="radiogroup"
+    :aria-label="ariaLabel"
+    @keydown="onKeydown"
+  >
     <button
-      v-for="option in options"
+      v-for="(option, index) in options"
       :key="option.value"
       type="button"
       class="app-segmented__btn"
       :class="{ 'app-segmented__btn--active': option.value === modelValue }"
       role="radio"
       :aria-checked="option.value === modelValue"
+      :tabindex="index === activeIndex ? 0 : -1"
       @click="$emit('update:modelValue', option.value)"
     >
       <AppIcon v-if="option.icon" :name="option.icon" :size="size" />
@@ -20,7 +27,12 @@
 /**
  * AppSegmented — segmented control for mutually exclusive options
  * (`role="radiogroup"` with `role="radio"` buttons).
+ *
+ * Keyboard: roving tabindex radiogroup convention — Tab reaches the checked
+ * (fallback: first) segment only, Arrow keys move the selection in the
+ * direction they point and keep focus riding along (plan-2026-09-05 C7).
  */
+import { computed, nextTick, ref } from 'vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
 interface AppSegmentedOption {
@@ -29,7 +41,7 @@ interface AppSegmentedOption {
   icon?: string
 }
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     modelValue: string
     options: AppSegmentedOption[]
@@ -43,9 +55,38 @@ withDefaults(
   },
 )
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
+
+const rootRef = ref<HTMLDivElement | null>(null)
+
+/** Checked segment, falling back to the first one when nothing matches. */
+const activeIndex = computed(() => {
+  const index = props.options.findIndex((option) => option.value === props.modelValue)
+  return index === -1 ? 0 : index
+})
+
+/** Arrow Left/Up = previous, Arrow Right/Down = next (wraps around). */
+function onKeydown(event: KeyboardEvent): void {
+  const count = props.options.length
+  if (count === 0) return
+  const delta =
+    event.key === 'ArrowRight' || event.key === 'ArrowDown'
+      ? 1
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? -1
+        : 0
+  if (delta === 0) return
+  event.preventDefault()
+  const next = (activeIndex.value + delta + count) % count
+  emit('update:modelValue', props.options[next].value)
+  void nextTick(() => {
+    rootRef.value
+      ?.querySelectorAll<HTMLButtonElement>('.app-segmented__btn')
+      [next]?.focus()
+  })
+}
 </script>
 
 <style scoped>

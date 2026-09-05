@@ -17,6 +17,8 @@
         type="search"
         :placeholder="filterSlot ? `筛选：${filterSlot.name}` : '搜索标题…'"
         aria-label="搜索收藏"
+        @compositionstart="searchComposing = true"
+        @compositionend="onSearchCompositionEnd"
       />
       <button
         v-if="searchQuery"
@@ -67,6 +69,7 @@
       :state="state"
       v-model:refreshing="refreshing"
       :loading-more="loadingMore"
+      :has-more="currentPage < totalPages"
       empty-text="No favorites"
       :error-text="errorText"
       @refresh="onRefresh"
@@ -294,9 +297,24 @@ function currentFilter(): { q: string | null; regex: boolean } {
   return { q: debouncedQuery.value || null, regex: false }
 }
 
-watch(searchQuery, (next) => {
+watch(searchQuery, scheduleSearchCommit)
+
+/* IME 组合输入保护（plan-2026-09-05 C1）：拼音组合期间的 input 事件携带
+   中间态字母——组合置位时防抖回调直接丢弃，compositionend 后由最终选词的
+   input 事件重新走防抖提交。 */
+const searchComposing = ref(false)
+
+function onSearchCompositionEnd(): void {
+  searchComposing.value = false
+  scheduleSearchCommit()
+}
+
+/** 防抖提交搜索词（watch 与 compositionend 共用同一时钟）。 */
+function scheduleSearchCommit(): void {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
+    if (searchComposing.value) return
+    const next = searchQuery.value
     if (debouncedQuery.value !== next) {
       debouncedQuery.value = next
       // 槽位激活时该变更来自 selectFilterSlot 清空搜索词——加载已由
@@ -307,7 +325,7 @@ watch(searchQuery, (next) => {
       void loadPage(1, false)
     }
   }, 400)
-})
+}
 
 function clearSearch(): void {
   searchQuery.value = ''
@@ -513,13 +531,20 @@ onMounted(() => {
   color: var(--text-color-secondary);
 }
 
+/* 键盘焦点可见（C7）：pill 容器内的输入框用内嵌 outline。 */
+.search-bar__input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* 触控目标加大（B5/C 附加项）：24px 图标钮 → 32px 命中区 + padding。 */
 .search-bar__clear {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
   border: none;
   border-radius: 50%;
   background: transparent;

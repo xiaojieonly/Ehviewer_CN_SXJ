@@ -363,7 +363,9 @@ async function load() {
       return
     }
     gallery.value = detail
-    isFavorited.value = (detail.favoriteSlot ?? -1) >= 0
+    // Android favoriteSlot 契约：-2=未收藏，-1=默认收藏夹，0-9=自定义槽位
+    // （与 GalleryCard 的 `>= -1` 判定一致）。
+    isFavorited.value = (detail.favoriteSlot ?? -2) >= -1
   } catch (e) {
     if (seq !== loadSeq) return
     gallery.value = null
@@ -415,8 +417,14 @@ function reloadComments() {
 }
 
 /* ----------------------------------------------------------- actions --- */
+/** 返回：深链直达（history 无上一页，`back` 为空）时 router.back() 是
+ *  no-op——兜底回首页，按钮不再无响应（plan-2026-09-05 C5）。 */
 function goBack() {
-  router.back()
+  if (history.state?.back) {
+    router.back()
+  } else {
+    void router.push('/')
+  }
 }
 
 /** Open the reader (Android `read` button → GalleryActivity). */

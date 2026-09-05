@@ -66,8 +66,8 @@
             autocomplete="off"
             aria-label="Search query"
             @input="onInput"
-            @keydown.enter.prevent="applySearch"
-            @keydown.esc="emit('back')"
+            @keydown.enter="onEnterKeydown"
+            @keydown.esc="onEscKeydown"
             @keydown.backspace="onBackspace"
           />
           <button
@@ -223,6 +223,28 @@ function applySearch(): void {
     return
   }
   emit('search', q)
+}
+
+/**
+ * IME composition guard (plan-2026-09-05 C1): Enter/Esc while the IME is
+ * composing confirms/cancels the composition itself — treating them as
+ * "search"/"back" fired the raw pinyin string and collapsed the bar.
+ * `keyCode === 229` covers Safari, which reports isComposing only on some
+ * keydown events during composition.
+ */
+function isComposingKeydown(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === 229
+}
+
+function onEnterKeydown(event: KeyboardEvent): void {
+  if (isComposingKeydown(event)) return
+  event.preventDefault()
+  applySearch()
+}
+
+function onEscKeydown(event: KeyboardEvent): void {
+  if (isComposingKeydown(event)) return
+  emit('back')
 }
 
 function onInput(event: Event): void {

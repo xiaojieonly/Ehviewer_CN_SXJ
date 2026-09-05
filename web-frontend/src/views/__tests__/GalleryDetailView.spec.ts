@@ -11,13 +11,14 @@ import { setPrivacyMaskEnabled } from '@/utils/privacyMask'
 import type { CommentItem } from '@/api/comment'
 import type { GalleryDetail } from '@/types'
 
-const { pushMock, routeQuery } = vi.hoisted(() => ({
+const { pushMock, backMock, routeQuery } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  backMock: vi.fn(),
   routeQuery: { token: undefined as string | undefined },
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, back: backMock }),
   useRoute: () => ({ query: routeQuery }),
 }))
 
@@ -58,7 +59,7 @@ function makeDetail(overrides: Partial<GalleryDetail> = {}): GalleryDetail {
     thumbWidth: 0,
     thumbHeight: 0,
     pages: 10,
-    favoriteSlot: -1,
+    favoriteSlot: -2,
     favoriteName: '',
     tags: [],
     imageUrl: '',
@@ -269,7 +270,7 @@ describe('GalleryDetailView (T-F2) — optimistic favorite toggle', () => {
   it('flips the heart optimistically while the request is pending, then confirms', async () => {
     const d = deferred<{ success: boolean }>()
     vi.mocked(favoriteApi.addFavorite).mockReturnValue(d.promise)
-    wrapper = await mountDetail({ favoriteSlot: -1 })
+    wrapper = await mountDetail({ favoriteSlot: -2 })
 
     expect(favButton(wrapper).attributes('aria-pressed')).toBe('false')
     await favButton(wrapper).trigger('click')
@@ -292,7 +293,7 @@ describe('GalleryDetailView (T-F2) — optimistic favorite toggle', () => {
 
   it('rolls back the optimistic flip when the API reports success:false', async () => {
     vi.mocked(favoriteApi.addFavorite).mockResolvedValue({ success: false })
-    wrapper = await mountDetail({ favoriteSlot: -1 })
+    wrapper = await mountDetail({ favoriteSlot: -2 })
 
     await favButton(wrapper).trigger('click')
     await flushPromises()
@@ -304,13 +305,21 @@ describe('GalleryDetailView (T-F2) — optimistic favorite toggle', () => {
 
   it('rolls back when the API rejects outright', async () => {
     vi.mocked(favoriteApi.addFavorite).mockRejectedValue(new Error('network'))
-    wrapper = await mountDetail({ favoriteSlot: -1 })
+    wrapper = await mountDetail({ favoriteSlot: -2 })
 
     await favButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(favButton(wrapper).attributes('aria-pressed')).toBe('false')
     expect(wrapper.find('.gallery-detail__toast').text()).toBe('Favorite update failed')
+  })
+
+  it('treats favoriteSlot -1 (默认收藏夹) as already favorited', async () => {
+    // Android 契约：-2=未收藏，-1=默认收藏夹（GalleryCard 同款 `>= -1` 判定）
+    wrapper = await mountDetail({ favoriteSlot: -1 })
+
+    expect(favButton(wrapper).attributes('aria-pressed')).toBe('true')
+    expect(favButton(wrapper).classes()).toContain('is-active')
   })
 
   it('calls removeFavorite and flips off for an already-favorited gallery', async () => {
@@ -540,6 +549,37 @@ describe('GalleryDetailView (T-F2) — route param change reuses the component',
 
     expect(wrapper.find('.detail-actions__btn--favorite').attributes('aria-pressed')).toBe('false')
     expect(wrapper.find('.detail-actions__btn--download').text()).toBe('Download')
+  })
+})
+
+describe('GalleryDetailView — back button (C5 deep-link fallback)', () => {
+  beforeEach(() => {
+    pushMock.mockClear()
+    backMock.mockClear()
+    history.replaceState({}, '', '/')
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.clearAllMocks()
+  })
+
+  it('falls back to pushing / when there is no history to go back to (deep link)', async () => {
+    // history.state.back 为空（深链直达 / 新标签打开）。
+    wrapper = await mountDetail()
+    await wrapper.find('.detail-header__back').trigger('click')
+    expect(backMock).not.toHaveBeenCalled()
+    expect(pushMock).toHaveBeenCalledWith('/')
+  })
+
+  it('uses router.back() when a previous entry exists', async () => {
+    // Vue Router 的 history.state 携带 back（上一条路由）。
+    history.replaceState({ back: '/' }, '', '/gallery/42')
+    wrapper = await mountDetail()
+    await wrapper.find('.detail-header__back').trigger('click')
+    expect(backMock).toHaveBeenCalledTimes(1)
+    expect(pushMock).not.toHaveBeenCalled()
   })
 })
 

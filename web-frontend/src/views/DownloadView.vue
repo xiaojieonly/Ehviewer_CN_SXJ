@@ -27,6 +27,8 @@
         type="search"
         :placeholder="activeSlot ? `筛选：${activeSlot.name}` : '搜索标题…'"
         aria-label="搜索下载"
+        @compositionstart="searchComposing = true"
+        @compositionend="onSearchCompositionEnd"
       />
       <button
         v-if="searchQuery"
@@ -182,6 +184,7 @@
       class="download-view__content"
       :state="state"
       :loading-more="loadingMore"
+      :has-more="downloads.length < total"
       v-model:refreshing="refreshing"
       empty-text="No downloads"
       :error-text="errorText"
@@ -265,7 +268,6 @@
           role="dialog"
           aria-modal="true"
           aria-labelledby="new-label-title"
-          @keyup.esc="closeLabelDialog"
         >
           <h3 id="new-label-title" class="dialog__title">New label</h3>
           <input
@@ -305,7 +307,6 @@
           role="dialog"
           aria-modal="true"
           aria-labelledby="move-label-title"
-          @keyup.esc="closeMoveDialog"
         >
           <h3 id="move-label-title" class="dialog__title">Move to label</h3>
           <ul class="dialog__label-list">
@@ -610,20 +611,35 @@ function currentFilter(): { q: string | null; regex: boolean } {
   return { q: debouncedQuery.value || null, regex: false }
 }
 
-watch(searchQuery, (next) => {
+watch(searchQuery, scheduleSearchCommit)
+
+/* IME 组合输入保护（plan-2026-09-05 C1）：拼音组合期间的 input 事件携带
+   中间态字母——组合置位时防抖回调直接丢弃，compositionend 后由最终选词的
+   input 事件重新走防抖提交。 */
+const searchComposing = ref(false)
+
+function onSearchCompositionEnd(): void {
+  searchComposing.value = false
+  scheduleSearchCommit()
+}
+
+/** 防抖提交搜索词（watch 与 compositionend 共用同一时钟）。 */
+function scheduleSearchCommit(): void {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
+    if (searchComposing.value) return
+    // 搜索词变化 → 重置分页重新加载（负载在服务端）。
+    const next = searchQuery.value
     if (debouncedQuery.value !== next) {
       debouncedQuery.value = next
       // 槽位激活时该变更来自 selectSlot 清空搜索词——加载已由 onSlotBarSelect
       // 触发（也避免与槽位过滤重复请求）。
       if (activeSlot.value) return
-      // 搜索词变化 → 重置分页重新加载（负载在服务端）。
       state.value = 'loading'
       void load()
     }
   }, 400)
-})
+}
 
 function clearSearch(): void {
   searchQuery.value = ''
@@ -1056,6 +1072,18 @@ function closeLabelDialog(): void {
   showLabelDialog.value = false
 }
 
+/** Esc 统一挂 window（C7）：焦点不在面板内（刚打开未聚焦）时也能关闭。 */
+function onDialogKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || event.isComposing) return
+  if (showLabelDialog.value) closeLabelDialog()
+  else if (showMoveDialog.value) closeMoveDialog()
+}
+
+watch([showLabelDialog, showMoveDialog], ([labelOpen, moveOpen]) => {
+  if (labelOpen || moveOpen) window.addEventListener('keydown', onDialogKeydown)
+  else window.removeEventListener('keydown', onDialogKeydown)
+})
+
 watch(showLabelDialog, async (open) => {
   if (open) {
     await nextTick()
@@ -1151,6 +1179,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   clearTimeout(toastTimer)
+  window.removeEventListener('keydown', onDialogKeydown)
 })
 </script>
 
@@ -1433,13 +1462,20 @@ onUnmounted(() => {
   color: var(--text-color-secondary);
 }
 
+/* 键盘焦点可见（C7）：pill 容器内的输入框用内嵌 outline。 */
+.search-bar__input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* 触控目标加大（B5/C 附加项）：24px 图标钮 → 32px 命中区 + padding。 */
 .search-bar__clear {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
   border: none;
   border-radius: 50%;
   background: transparent;
