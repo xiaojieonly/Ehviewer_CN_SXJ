@@ -26,7 +26,10 @@
       </svg>
     </button>
 
-    <main class="app-content" :class="{ 'app-content--full': !showChrome }">
+    <main
+      class="app-content"
+      :class="{ 'app-content--full': !showChrome || isFocusedScene }"
+    >
       <router-view v-slot="{ Component, route }">
         <KeepAlive :include="CACHED_VIEWS" :max="8">
           <component :is="Component" :key="cachedViewKey(Component, route)" />
@@ -80,7 +83,16 @@ function cachedViewKey(Component: Component | null | undefined, route: RouteLoca
 }
 
 const showChrome = computed(() => !CHROME_HIDDEN_ROUTES.has(route.name as string))
-const showHamburger = computed(() => showChrome.value)
+
+/**
+ * Gallery detail is a focused scene (Android parity): it carries its own
+ * back-arrow header, so the shell hamburger and its reserved left slot only
+ * collide with it. The persistent wide-screen drawer stays available — only
+ * the floating hamburger + slot are dropped.
+ */
+const isFocusedScene = computed(() => route.name === 'GalleryDetail')
+
+const showHamburger = computed(() => showChrome.value && !isFocusedScene.value)
 
 const routeToNav: Record<string, string> = {
   '/': 'homepage',
@@ -164,8 +176,9 @@ watch(
   }
 }
 
-/* Full-width content when chrome (drawer) is hidden (login / reader): the
-   hamburger is hidden there, so the reserved slot must not apply. */
+/* Full-width content when the hamburger slot must not apply: chrome-less
+   routes (login / reader) and the focused gallery-detail scene (own back
+   header, hamburger hidden). */
 .app-content--full {
   margin-left: 0 !important;
   padding-left: 0 !important;
