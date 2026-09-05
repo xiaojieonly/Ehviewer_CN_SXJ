@@ -905,6 +905,26 @@ onBeforeUnmount(() => {
   outline-offset: -2px;
 }
 
+/* Label can never bleed into the neighbouring button (320px phones give each
+   of the 4 buttons <60px; "DOWNLOAD" at 12px bold caps is ~69px). */
+.detail-actions__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Narrow phones: tighten the type so the four labels keep real gaps instead
+   of ellipsizing (the ellipsis above is only the last-resort guard). */
+@media (max-width: 479px) {
+  .detail-actions__btn {
+    gap: 4px;
+    padding: 10px 2px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+}
+
 /* Android: download = textColorThemePrimary, read = textColorThemeAccent */
 .detail-actions__btn--read {
   color: var(--color-accent-text, var(--text-color-theme-accent));
