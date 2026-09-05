@@ -9,7 +9,6 @@
       type="button"
       class="reader-toolbar__btn"
       aria-label="返回画廊"
-      :tabindex="visible ? 0 : -1"
       @click="emit('back')"
     >
       <!-- Material arrow_back (mirrored under RTL via dir) -->
@@ -32,7 +31,6 @@
       type="button"
       class="reader-toolbar__btn"
       aria-label="阅读设置"
-      :tabindex="visible ? 0 : -1"
       @click="emit('open-settings')"
     >
       <!-- Material settings gear -->
@@ -57,6 +55,11 @@
  *
  * `rtl` mirrors the whole bar (back button on the right, arrow flipped)
  * for right-to-left reading direction.
+ *
+ * No per-visibility tabindex juggling (plan-2026-09-05 A6): the hidden state
+ * is `visibility: hidden`, which already removes the buttons from the Tab
+ * order and hit-testing — dynamically forcing -1 would only fight whatever
+ * the user had focused when the chrome hid. Focus stays where it is.
  */
 interface ReaderToolbarProps {
   visible: boolean

@@ -64,7 +64,8 @@
  * - Navigation is spread-aware in dual mode (cover alone, then (2,3), (4,5)…
  *   in 1-based terms), matching `SpreadLayoutManager` paging.
  * - Keyboard: ←/→ (or A/D) turn pages — mirrored under RTL — Home/End jump,
- *   Space/Esc toggle the chrome, +/− zoom.
+ *   Space/Esc toggle the chrome; +/− zoom in single-page mode only (A7),
+ *   in unified 0.25 steps within [0.5, 3].
  * - Auto-play advances on a 100 ms-ticked timer (progress drives the countdown
  *   chip) and stops at the last page; it pauses while the tab is hidden.
  * - WebSocket: subscribes to `/topic/gallery/{gid}/enhanced` and hot-swaps
@@ -110,6 +111,9 @@ import {
   AUTO_PLAY_INTERVALS_MS,
   PAGE_MODE_PREFS,
   READING_DIRECTIONS,
+  READER_ZOOM_MAX,
+  READER_ZOOM_MIN,
+  READER_ZOOM_STEP,
   firstPageOfSpread,
   spreadIndexOf,
 } from '@/components/reader/PageMode.vue'
@@ -368,6 +372,19 @@ function goBack() {
 /* Keyboard — ←/→ mirror under RTL, Space/Esc toggle chrome            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Unified zoom semantics (plan-2026-09-05 A7): 0.25 steps clamped to
+ * [0.5, 3] — the same units as the reader settings sheet, the double-tap
+ * cycle and the pinch clamp.
+ */
+function zoomIn(): void {
+  zoom.value = Math.min(READER_ZOOM_MAX, Math.round((zoom.value + READER_ZOOM_STEP) * 100) / 100)
+}
+
+function zoomOut(): void {
+  zoom.value = Math.max(READER_ZOOM_MIN, Math.round((zoom.value - READER_ZOOM_STEP) * 100) / 100)
+}
+
 useKeyboardNav({
   onPrev: () => {
     if (direction.value === 'rtl') nextPage()
@@ -386,11 +403,13 @@ useKeyboardNav({
   onToggleToolbar: () => {
     readerRef.value?.toggleChrome()
   },
-  onZoomIn: () => {
-    zoom.value = Math.min(readerPrefs.value.maxZoom, Math.round((zoom.value + readerPrefs.value.zoomStep) * 100) / 100)
+  // A7: +/- 仅单页模式注册——scroll/dual 下回调缺席（getter 按当前模式
+  // 解析），useKeyboardNav 不认领按键，也不再无声改一个看不见的 zoom 值。
+  get onZoomIn() {
+    return resolvedMode.value === 'page' ? zoomIn : undefined
   },
-  onZoomOut: () => {
-    zoom.value = Math.max(0.5, Math.round((zoom.value - readerPrefs.value.zoomStep) * 100) / 100)
+  get onZoomOut() {
+    return resolvedMode.value === 'page' ? zoomOut : undefined
   },
   pagingEnabled: () => readerPrefs.value.keyboardPaging,
 })

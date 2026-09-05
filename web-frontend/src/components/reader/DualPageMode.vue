@@ -65,6 +65,38 @@
         </div>
       </template>
     </div>
+
+    <!--
+      A4: edge hot-zone hints — same hover-only affordance as PageMode
+      (gradient + chevron + resize cursor, hidden on touch devices). Visual
+      only; clicks bubble to the stage's tap-zone handler.
+    -->
+    <div class="dual-page__hint dual-page__hint--prev" aria-hidden="true">
+      <!-- chevron_left -->
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M15 18l-6-6 6-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+    <div class="dual-page__hint dual-page__hint--next" aria-hidden="true">
+      <!-- chevron_right -->
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M9 6l6 6-6 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
   </div>
 </template>
 
@@ -237,6 +269,54 @@ useReaderGestures({
   touch-action: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* --- A4: edge hot-zone hints (same affordance as PageMode) ------------- */
+
+.dual-page__hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  width: clamp(56px, 12%, 140px);
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transition: opacity var(--duration-scene-opacity) var(--ease-decelerate-quart);
+}
+
+.dual-page__hint svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.dual-page__hint--prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 12px;
+  cursor: w-resize;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.dual-page__hint--next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 12px;
+  cursor: e-resize;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.dual-page__hint:hover {
+  opacity: 1;
+}
+
+/* Touch / hover-less devices never see the hints. */
+@media (hover: none), (pointer: coarse) {
+  .dual-page__hint {
+    display: none;
+  }
 }
 
 .dual-page__row {

@@ -1,5 +1,9 @@
 <template>
-  <div ref="rootRef" class="image-reader">
+  <!--
+    pointermove (mouse only) wakes the chrome and re-arms its idle countdown
+    (plan-2026-09-05 A6); throttled, and touch never synthesizes it here.
+  -->
+  <div ref="rootRef" class="image-reader" @pointermove="onChromePointerMove">
     <!-- Page area — fills the viewport behind the overlaid chrome -->
     <PageMode
       v-if="mode === 'page'"
@@ -30,6 +34,7 @@
       :gid="gid"
       :total-pages="totalPages"
       :current-page="currentPage"
+      :scrubbing="seeking"
       :enhanced-urls="enhancedUrls"
       @update:current-page="(page) => emit('update:currentPage', page)"
       @toggle-chrome="toggleChrome"
@@ -38,17 +43,19 @@
     <!--
       GalleryHeader replica (clock / stroked N/M progress / battery),
       docked just under the toolbar; auto-hides after 3 s idle
-      (HIDE_SLIDER_DELAY) via its own v-model:visible.
+      (HIDE_SLIDER_DELAY) — the bar only NOTIFIES the idle timeout (A6) and
+      this component decides whether to hide (chrome hover pauses it).
     -->
     <div class="image-reader__status-bar" :aria-hidden="!chromeVisible">
       <!-- :key remount re-arms the bar's internal HIDE_SLIDER_DELAY countdown
            after interactions the idle guard swallowed (scrub, settings). -->
       <ReaderStatusBar
+        ref="statusBarRef"
         :key="statusBarEpoch"
         :current-page="currentPage + 1"
         :total-pages="totalPages"
         :visible="chromeVisible"
-        @update:visible="onStatusBarVisibility"
+        @idle="onStatusBarIdle"
       />
     </div>
 
@@ -71,6 +78,7 @@
         :total-pages="totalPages"
         :reversed="direction === 'rtl'"
         @change="onSeekCommit"
+        @update:current-page="onSeekPreview"
         @seek-start="onSeekStart"
         @seek-end="onSeekEnd"
       />
@@ -119,10 +127,13 @@
  * components exactly like `activity_gallery.xml` + `GalleryActivity`:
  *
  * - `GalleryHeader` (ReaderStatusBar) floats over the page and auto-hides
- *   after `HIDE_SLIDER_DELAY` (3 s) of idle — re-armed on every interaction.
+ *   after `HIDE_SLIDER_DELAY` (3 s) of idle — re-armed on every interaction,
+ *   mouse movement (A6) or chrome tap; the bar only notifies the idle
+ *   timeout and this component decides (chrome hover pauses the hide).
  * - `SeekBarPanel` + `ReversibleSeekBar` dock at the bottom (48dp,
  *   `gallerySliderBackgroundColor`), mirrored for RTL reading; the page jump
- *   applies on release (`change`), while labels track the drag live.
+ *   applies on release (`change`), while labels track the drag live. In
+ *   scroll mode the drag also previews instantly (A8).
  * - Brightness is the `mask` ColorView: a black overlay whose opacity
  *   follows the brightness setting (0 = follow system).
  * - Auto-play mirrors `auto_transfer`: a countdown chip above the seek bar.
@@ -197,6 +208,8 @@ const emit = defineEmits<ImageReaderEmits>()
 
 const rootRef = ref<HTMLElement | null>(null)
 const rootWidth = ref(0)
+/** The status bar instance — its idle countdown is re-armed on mouse wake. */
+const statusBarRef = ref<InstanceType<typeof ReaderStatusBar> | null>(null)
 
 /** Chrome (status bar + toolbar + seek bar) visibility — tap to toggle. */
 const chromeVisible = ref(true)
@@ -214,11 +227,63 @@ function toggleChrome() {
   chromeVisible.value = !chromeVisible.value
 }
 
-function onStatusBarVisibility(visible: boolean) {
-  // The 3 s idle countdown must not fire mid-scrub or while the settings
-  // sheet is open — GalleryActivity likewise keeps the slider while tracking.
-  if (!visible && (seeking.value || settingsVisible.value)) return
-  chromeVisible.value = visible
+/* ------------------------------------------------------------------ */
+/* A6: chrome visibility — mouse wake + centralized idle decision      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The status bar only NOTIFIES when its 3s idle countdown fires; hiding (or
+ * pausing) is decided here, so a pointer parked on the interactive chrome
+ * suspends the auto-hide for as long as it stays there.
+ */
+function onStatusBarIdle() {
+  // The 3 s idle timeout must not fire mid-scrub or while the settings
+  // sheet is open — GalleryActivity likewise keeps the slider while
+  // tracking; seek-end / closing the sheet re-arms the countdown.
+  if (seeking.value || settingsVisible.value) return
+  if (pointerOnChrome()) {
+    // Hovering the toolbar / seek bar pauses the self-hide: re-arm instead.
+    statusBarRef.value?.resetIdle()
+    return
+  }
+  chromeVisible.value = false
+}
+
+/** Last (throttled) mouse position — -1 until a real mouse move is seen. */
+const lastMouse = { x: -1, y: -1 }
+let lastPointerMoveAt = 0
+
+/** A6: mouse wake — throttle keeps the handler ~free (200ms ceiling). */
+const CHROME_WAKE_THROTTLE_MS = 200
+
+function onChromePointerMove(event: PointerEvent) {
+  // Touch/pen contact also fires pointermove — only the mouse wakes chrome.
+  if (event.pointerType !== 'mouse') return
+  const now = Date.now()
+  if (now - lastPointerMoveAt < CHROME_WAKE_THROTTLE_MS) return
+  lastPointerMoveAt = now
+  lastMouse.x = event.clientX
+  lastMouse.y = event.clientY
+  if (!chromeVisible.value) {
+    // Showing the bar re-arms its idle countdown via the visible watcher.
+    chromeVisible.value = true
+  } else {
+    statusBarRef.value?.resetIdle()
+  }
+}
+
+/**
+ * Is the mouse currently resting on the interactive chrome (toolbar / seek
+ * bar)? The status bar itself is pointer-events:none (taps pass through to
+ * the reader), so it deliberately never counts as a hover anchor.
+ */
+function pointerOnChrome(): boolean {
+  if (lastMouse.x < 0) return false
+  if (typeof document === 'undefined' || typeof document.elementFromPoint !== 'function') {
+    return false
+  }
+  const el = document.elementFromPoint(lastMouse.x, lastMouse.y)
+  return el?.closest('.reader-toolbar, .image-reader__seekbar') != null
 }
 
 function onSeekStart() {
@@ -230,7 +295,7 @@ function onSeekEnd() {
   seeking.value = false
   // Re-arm the header's idle countdown — mirrors GalleryActivity re-posting
   // HIDE_SLIDER_DELAY in onStopTrackingTouch. The guard in
-  // onStatusBarVisibility swallowed the mid-scrub timeout, so remount the
+  // onStatusBarIdle swallowed the mid-scrub timeout, so remount the
   // bar to restart its countdown without a visibility flicker.
   if (chromeVisible.value) statusBarEpoch.value += 1
 }
@@ -244,6 +309,18 @@ function closeSettings() {
 
 /** Seek bar release — the page jump applies here (1-based contract). */
 function onSeekCommit(page: number) {
+  emit('update:currentPage', page - 1)
+}
+
+/**
+ * A8: scrub preview — the seek bar reports live input positions while
+ * dragging. Scroll mode jumps instantly (no smooth animation fighting the
+ * finger); page/dual modes keep the release-commit contract and ignore
+ * intermediate positions. The round-trip keeps the existing progress
+ * semantics (ReaderView throttles the writeback as for any page change).
+ */
+function onSeekPreview(page: number) {
+  if (props.mode !== 'scroll') return
   emit('update:currentPage', page - 1)
 }
 

@@ -51,6 +51,7 @@ vi.mock('@/components/reader/ImageReader.vue', () => ({
       'pageMode',
       'direction',
       'brightness',
+      'zoom',
     ],
     emits: ['update:current-page'],
     methods: {
@@ -58,7 +59,7 @@ vi.mock('@/components/reader/ImageReader.vue', () => ({
       toggleChrome() {},
     },
     template:
-      '<div class="image-reader-stub" :data-enabled="autoPlay && autoPlay.enabled ? \'on\' : \'off\'" :data-progress="String(autoPlayProgress ?? 0)" :data-total="String(totalPages ?? 0)" :data-page-mode="String(pageMode ?? \'\')" :data-direction="String(direction ?? \'\')" :data-brightness="String(brightness ?? 0)">{{ currentPage }}</div>',
+      '<div class="image-reader-stub" :data-enabled="autoPlay && autoPlay.enabled ? \'on\' : \'off\'" :data-progress="String(autoPlayProgress ?? 0)" :data-total="String(totalPages ?? 0)" :data-page-mode="String(pageMode ?? \'\')" :data-direction="String(direction ?? \'\')" :data-brightness="String(brightness ?? 0)" :data-zoom="String(zoom ?? 1)">{{ currentPage }}</div>',
   },
 }))
 
@@ -450,6 +451,71 @@ describe('ReaderView (T-F2) — keyboard navigation', () => {
     pressKey(' ')
     await flushPromises()
     expect(wrapper.find('.image-reader-stub').text()).toBe('1')
+  })
+})
+
+describe('ReaderView (A7) — 缩放按键统一语义', () => {
+  let wrapper: VueWrapper | undefined
+
+  async function mountReady(): Promise<VueWrapper> {
+    vi.mocked(galleryApi.getDetail).mockResolvedValue(detailFixture())
+    vi.mocked(galleryApi.addHistory).mockResolvedValue({ success: true })
+    const mounted = mount(ReaderView)
+    await flushPromises()
+    return mounted
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    routeParams.gid = '123456'
+    delete routeParams.page
+    replaceMock.mockReset().mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    localStorage.removeItem(READER_SETTINGS_KEY)
+    vi.restoreAllMocks()
+  })
+
+  it('steps zoom by the unified 0.25 and clamps to [0.5, 3] in single-page mode', async () => {
+    setReaderSettings({ direction: 'ltr', pageMode: 'single', brightness: 0 })
+    wrapper = await mountReady()
+    const zoom = () => wrapper!.find('.image-reader-stub').attributes('data-zoom')
+
+    expect(zoom()).toBe('1')
+    pressKey('+')
+    await flushPromises()
+    expect(zoom()).toBe('1.25')
+
+    pressKey('=')
+    await flushPromises()
+    expect(zoom()).toBe('1.5')
+
+    pressKey('-')
+    await flushPromises()
+    expect(zoom()).toBe('1.25')
+
+    // Clamp ceiling: 20 steps of +0.25 from 1.25 lands exactly on 3 and stays.
+    for (let i = 0; i < 20; i++) pressKey('+')
+    await flushPromises()
+    expect(zoom()).toBe('3')
+
+    // Clamp floor.
+    for (let i = 0; i < 20; i++) pressKey('-')
+    await flushPromises()
+    expect(zoom()).toBe('0.5')
+  })
+
+  it('does not register +/- in dual mode (no silent value mutation)', async () => {
+    setReaderSettings({ direction: 'ltr', pageMode: 'dual', brightness: 0 })
+    wrapper = await mountReady()
+
+    pressKey('+')
+    pressKey('-')
+    await flushPromises()
+    expect(wrapper.find('.image-reader-stub').attributes('data-zoom')).toBe('1')
   })
 })
 

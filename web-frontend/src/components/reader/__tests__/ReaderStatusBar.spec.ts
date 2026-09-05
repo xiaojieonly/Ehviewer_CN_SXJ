@@ -70,16 +70,16 @@ describe('ReaderStatusBar', () => {
   })
 
   describe('auto-hide (HIDE_SLIDER_DELAY = 3000ms)', () => {
-    it('emits update:visible(false) after 3s of visibility', () => {
+    // plan-2026-09-05 A6: the bar only NOTIFIES the idle timeout (`idle`);
+    // the parent decides whether to hide or pause the countdown.
+    it('emits idle after 3s of visibility', () => {
       const wrapper = factory({ visible: true })
 
       vi.advanceTimersByTime(2999)
-      expect(wrapper.emitted('update:visible')).toBeUndefined()
+      expect(wrapper.emitted('idle')).toBeUndefined()
 
       vi.advanceTimersByTime(1)
-      const emitted = wrapper.emitted('update:visible')
-      expect(emitted).toBeTruthy()
-      expect(emitted![emitted!.length - 1]).toEqual([false])
+      expect(wrapper.emitted('idle')).toBeTruthy()
     })
 
     it('re-arms the countdown when the bar is re-shown', async () => {
@@ -91,22 +91,36 @@ describe('ReaderStatusBar', () => {
 
       // 2999ms after the re-show: still quiet.
       vi.advanceTimersByTime(2999)
-      expect(wrapper.emitted('update:visible')).toBeUndefined()
+      expect(wrapper.emitted('idle')).toBeUndefined()
 
       vi.advanceTimersByTime(1)
-      expect(wrapper.emitted('update:visible')!.pop()).toEqual([false])
+      expect(wrapper.emitted('idle')).toHaveLength(1)
+    })
+
+    it('re-arms the countdown via the exposed resetIdle() (mouse wake, A6)', async () => {
+      const wrapper = factory({ visible: true })
+
+      vi.advanceTimersByTime(2000)
+      ;(wrapper.vm as unknown as { resetIdle: () => void }).resetIdle()
+
+      // 2999ms after the re-arm: still quiet.
+      vi.advanceTimersByTime(2999)
+      expect(wrapper.emitted('idle')).toBeUndefined()
+
+      vi.advanceTimersByTime(1)
+      expect(wrapper.emitted('idle')).toHaveLength(1)
     })
 
     it('never auto-hides when mounted hidden', () => {
       const wrapper = factory({ visible: false })
       vi.advanceTimersByTime(60_000)
-      expect(wrapper.emitted('update:visible')).toBeUndefined()
+      expect(wrapper.emitted('idle')).toBeUndefined()
     })
 
     it('emits at most once per visible session', () => {
       const wrapper = factory({ visible: true })
       vi.advanceTimersByTime(10_000)
-      expect(wrapper.emitted('update:visible')).toHaveLength(1)
+      expect(wrapper.emitted('idle')).toHaveLength(1)
     })
   })
 

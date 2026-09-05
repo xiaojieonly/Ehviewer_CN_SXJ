@@ -185,7 +185,7 @@
  *
  * Every value is v-model'd upward; persistence is the parent's concern.
  */
-import { AUTO_PLAY_INTERVALS_MS } from './PageMode.vue'
+import { AUTO_PLAY_INTERVALS_MS, READER_ZOOM_MAX, READER_ZOOM_MIN } from './PageMode.vue'
 import type { AutoPlayState, PageModePref, ReadingDirection } from './PageMode.vue'
 
 interface ReaderSettingsProps {
@@ -210,8 +210,10 @@ interface ReaderSettingsEmits {
 const props = defineProps<ReaderSettingsProps>()
 const emit = defineEmits<ReaderSettingsEmits>()
 
-const zoomMin = 0.5
-const zoomMax = 3
+// A7: 缩放语义统一——范围与阅读器其余通道（键盘 +/-、双击、捏合）共用
+// PageMode 的常量，步长固定 0.25。
+const zoomMin = READER_ZOOM_MIN
+const zoomMax = READER_ZOOM_MAX
 
 const directionOptions: ReadonlyArray<{ value: ReadingDirection; label: string }> = [
   { value: 'ltr', label: '从左到右' },

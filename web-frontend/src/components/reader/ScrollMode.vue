@@ -60,6 +60,12 @@ interface ScrollModeProps {
   totalPages: number
   /** 0-based current page. v-model:currentPage. */
   currentPage: number
+  /**
+   * True while the seek bar is being scrubbed (plan-2026-09-05 A8): external
+   * page changes jump INSTANTLY so the preview tracks the finger instead of
+   * smooth-scrolling behind it.
+   */
+  scrubbing?: boolean
   /** AI-enhanced hot-swap URLs keyed by 0-based page. */
   enhancedUrls?: ReadonlyMap<number, string>
 }
@@ -70,6 +76,7 @@ interface ScrollModeEmits {
 }
 
 const props = withDefaults(defineProps<ScrollModeProps>(), {
+  scrubbing: false,
   enhancedUrls: undefined,
 })
 const emit = defineEmits<ScrollModeEmits>()
@@ -233,7 +240,9 @@ function scrollToPage(page: number, instant = false) {
 watch(
   () => props.currentPage,
   (page) => {
-    if (!emittingCurrent) scrollToPage(page)
+    // A8: while the seek bar is scrubbed, previews jump instantly; every
+    // other external change (keyboard, deep link, auto-play) smooth-scrolls.
+    if (!emittingCurrent) scrollToPage(page, props.scrubbing)
   },
 )
 </script>

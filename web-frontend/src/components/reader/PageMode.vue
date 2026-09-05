@@ -40,6 +40,39 @@
       </div>
     </Transition>
 
+    <!--
+      A4: edge hot-zone hints — gradient + one-sided chevron, revealed on
+      hover only (hidden on touch / hover-less devices via CSS). Purely
+      visual affordance: clicks still bubble to the stage's tap zones, the
+      strips only add the semantic resize cursors.
+    -->
+    <div class="page-mode__hint page-mode__hint--prev" aria-hidden="true">
+      <!-- chevron_left -->
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M15 18l-6-6 6-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+    <div class="page-mode__hint page-mode__hint--next" aria-hidden="true">
+      <!-- chevron_right -->
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M9 6l6 6-6 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+
     <div v-if="error" class="page-mode__overlay page-mode__overlay--error" role="alert">
       <p class="page-mode__error-text">{{ errorText }}</p>
       <button type="button" class="page-mode__retry" @click="retry">重试</button>
@@ -68,6 +101,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { useSwipeGesture } from '@/composables/useSwipeGesture'
+import { useTapZoom } from '@/composables/useTapZoom'
 
 /** Android `Settings.READING_DIRECTION_*`: LTR / RTL / vertical (scroll). */
 export type ReadingDirection = 'ltr' | 'rtl' | 'vertical'
@@ -94,6 +128,25 @@ export interface AutoPlayState {
 export const READING_DIRECTIONS: readonly ReadingDirection[] = ['ltr', 'rtl', 'vertical']
 export const PAGE_MODE_PREFS: readonly PageModePref[] = ['auto', 'single', 'dual', 'scroll']
 export const AUTO_PLAY_INTERVALS_MS: readonly number[] = [2000, 3000, 5000, 8000]
+
+/* ------------------------------------------------------------------------ */
+/* Unified zoom semantics (plan-2026-09-05 A7)                               */
+/*                                                                           */
+/* The settings sheet, keyboard +/-, double-tap/click and pinch all move in  */
+/* the same units: 0.25 steps within [0.5, 3]; the double-tap cycle is       */
+/* 1 → 1.5 → 2 → 1; pinch never shrinks below fit (clamped to [1, 3]).       */
+/* ------------------------------------------------------------------------ */
+
+/** Lowest zoom — reachable via the settings sheet / keyboard (shrink page). */
+export const READER_ZOOM_MIN = 0.5
+/** Highest zoom — every channel clamps here. */
+export const READER_ZOOM_MAX = 3
+/** Unified step for keyboard +/- and the settings sheet buttons. */
+export const READER_ZOOM_STEP = 0.25
+/** Double-tap / double-click cycle: fit → 150% → 200% → fit. */
+export const READER_DOUBLE_TAP_STEPS: readonly number[] = [1, 1.5, 2]
+/** Pinch never shrinks below fit — its lower clamp differs from the keyboard. */
+export const READER_PINCH_ZOOM_MIN = 1
 
 /**
  * Responsive reader image URL — `streamGalleryImage` endpoint (0-based page)
@@ -130,7 +183,7 @@ export function firstPageOfSpread(spread: number): number {
 }
 
 /* ------------------------------------------------------------------------ */
-/* Shared tap / swipe gesture handling                                       */
+/* Shared tap / swipe / wheel gesture handling                               */
 /* ------------------------------------------------------------------------ */
 
 export interface ReaderGestureOptions {
@@ -139,9 +192,9 @@ export interface ReaderGestureOptions {
   /** RTL reading — mirrors tap zones and swipe direction. */
   isRtl: () => boolean
   /**
-   * When true, single-tap zones and swipes are ignored (e.g. zoomed: the
-   * pointer is panning the image). Double-tap still works so the user can
-   * zoom back out.
+   * When true, single-tap zones, swipes and the wheel are ignored (zoomed:
+   * the pointer is panning the image). Double-tap still works so the user
+   * can zoom back out.
    */
   suppressed: () => boolean
   onPrev: () => void
@@ -158,90 +211,95 @@ export interface ReaderGestures {
   suppressTaps: () => void
 }
 
-const DOUBLE_TAP_WINDOW_MS = 280
-const TAP_SUPPRESS_WINDOW_MS = 400
+/**
+ * A3: wheel paging — one wheel gesture = one page. Leading-edge throttle:
+ * the first event turns instantly, further events inside the window are
+ * dropped (trackpads stream small deltas continuously).
+ */
+const WHEEL_PAGE_INTERVAL_MS = 150
 
 /**
- * Tap-zone + swipe navigation shared by the paged reader modes:
+ * Tap-zone + swipe + wheel navigation shared by the paged reader modes:
  * - left ⅓ = prev, right ⅓ = next, center = toggle chrome (mirrored in RTL,
  *   like Tachiyomi/AnotherViewer RTL pagers);
  * - swipe left = next / swipe right = prev in LTR, reversed in RTL (the next
  *   page slides in from the left, so the finger sweeps right);
- * - single taps are delayed by the double-tap window so double-tap zoom never
- *   triggers a stray page turn.
+ * - desktop clicks act immediately with the zoom cycle on the native
+ *   `dblclick` (plan-2026-09-05 A5, see `useTapZoom`);
+ * - the wheel pages with the physical direction — down = next, deliberately
+ *   NOT mirrored under RTL (plan-2026-09-05 A3).
  */
 export function useReaderGestures(options: ReaderGestureOptions): ReaderGestures {
-  let lastTapAt = 0
-  let tapTimer: ReturnType<typeof setTimeout> | null = null
-  let suppressUntil = 0
+  // A5: single/double disambiguation (and the dblclick zoom channel) live in
+  // the shared composable, which also owns the timer cleanup.
+  const tap = useTapZoom(options.el, {
+    onSingleTap: (x) => zoneAction(x),
+    onDoubleTap: options.onDoubleTap,
+    suppressed: options.suppressed,
+  })
 
-  function suppressTaps() {
-    suppressUntil = Date.now() + TAP_SUPPRESS_WINDOW_MS
+  /** Wave-1 1c: resolve a client-x coordinate to its tap-zone action. */
+  function zoneAction(x: number) {
+    const el = options.el.value
+    if (!el) return
+    const scheme = options.tapZoneScheme ? options.tapZoneScheme() : 'threeZone'
+    if (scheme === 'disabled') {
+      options.onToggleChrome()
+      return
+    }
+    const edge = scheme === 'edgeOnly' ? 0.15 : 1 / 3
+    const left = x - el.getBoundingClientRect().left
+    const width = el.clientWidth
+    if (left < width * edge) {
+      ;(options.isRtl() ? options.onNext : options.onPrev)()
+    } else if (left > width * (1 - edge)) {
+      ;(options.isRtl() ? options.onPrev : options.onNext)()
+    } else {
+      options.onToggleChrome()
+    }
   }
 
   useSwipeGesture(options.el, {
     onSwipeLeft: () => {
-      suppressTaps()
+      tap.suppressTaps()
       if (options.suppressed()) return
       ;(options.isRtl() ? options.onPrev : options.onNext)()
     },
     onSwipeRight: () => {
-      suppressTaps()
+      tap.suppressTaps()
       if (options.suppressed()) return
       ;(options.isRtl() ? options.onNext : options.onPrev)()
     },
   })
 
-  function onClick(event: MouseEvent) {
-    const el = options.el.value
-    if (!el || Date.now() < suppressUntil) return
+  // --- A3: wheel paging (paged modes only; ScrollMode keeps native scroll) -
 
-    const now = Date.now()
-    if (options.onDoubleTap && now - lastTapAt <= DOUBLE_TAP_WINDOW_MS) {
-      if (tapTimer !== null) {
-        clearTimeout(tapTimer)
-        tapTimer = null
-      }
-      lastTapAt = 0
-      options.onDoubleTap()
-      return
-    }
+  let lastWheelAt = 0
 
-    // Zoomed: the pointer is for panning — no zone navigation.
+  function onWheel(event: WheelEvent) {
+    // The stage never scrolls natively — keep the event from leaking to the
+    // page behind the reader.
+    event.preventDefault()
+    // Zoomed in the wheel is noise while dragging; zones are suppressed too.
     if (options.suppressed()) return
-
-    lastTapAt = now
-    const x = event.clientX - el.getBoundingClientRect().left
-    const width = el.clientWidth
-    tapTimer = setTimeout(() => {
-      tapTimer = null
-      // Wave-1 1c: tap-zone scheme (threeZone / edgeOnly / disabled).
-      const scheme = options.tapZoneScheme ? options.tapZoneScheme() : 'threeZone'
-      if (scheme === 'disabled') {
-        options.onToggleChrome()
-        return
-      }
-      const edge = scheme === 'edgeOnly' ? 0.15 : 1 / 3
-      if (x < width * edge) {
-        ;(options.isRtl() ? options.onNext : options.onPrev)()
-      } else if (x > width * (1 - edge)) {
-        ;(options.isRtl() ? options.onPrev : options.onNext)()
-      } else {
-        options.onToggleChrome()
-      }
-    }, DOUBLE_TAP_WINDOW_MS)
+    if (!event.deltaY) return
+    const now = Date.now()
+    if (now - lastWheelAt < WHEEL_PAGE_INTERVAL_MS) return
+    lastWheelAt = now
+    // 向下滚 = 下一页（物理直觉，不随 RTL 镜像）。
+    if (event.deltaY > 0) options.onNext()
+    else options.onPrev()
   }
 
   onMounted(() => {
-    options.el.value?.addEventListener('click', onClick)
+    options.el.value?.addEventListener('wheel', onWheel, { passive: false })
   })
 
   onBeforeUnmount(() => {
-    options.el.value?.removeEventListener('click', onClick)
-    if (tapTimer !== null) clearTimeout(tapTimer)
+    options.el.value?.removeEventListener('wheel', onWheel)
   })
 
-  return { suppressTaps }
+  return { suppressTaps: tap.suppressTaps }
 }
 </script>
 
@@ -282,9 +340,8 @@ const props = withDefaults(defineProps<PageModeProps>(), {
 })
 const emit = defineEmits<PageModeEmits>()
 
-const ZOOM_MIN = 1
-const ZOOM_MAX = 3
-const DOUBLE_TAP_STEPS = [1, 2, 3]
+const ZOOM_MIN = READER_PINCH_ZOOM_MIN
+const ZOOM_MAX = READER_ZOOM_MAX
 /** Auto-retry budget for transient image failures before the error page. */
 const MAX_AUTO_RETRIES = 3
 
@@ -313,16 +370,17 @@ let retryTimer: ReturnType<typeof setTimeout> | undefined
 /*                                                                     */
 /* 此前该设置只有设置界面在读写，阅读器从未消费（死设置）。这里把它      */
 /* 接成 <img> 的布局尺寸类；'fit' 保持既有 max-* + contain 行为，其余    */
-/* 取消对应约束。非 'fit' 下布局盒本身可超出舞台，因此平移在 zoom=1     */
-/* 也必须可用（pannable），手势语义与放大状态一致。                     */
+/* 取消对应约束。非 fit 只是布局基准（plan-2026-09-05 A2）：不据此进入  */
+/* 可平移态、也不抑制热区——真正放大（zoom>1）才切换到平移手势，否则     */
+/* 单一条件会同时废掉触屏翻页与鼠标点击/滚轮。                          */
 /* ------------------------------------------------------------------ */
 
 const pageScaling = computed(() => preferencesStore.prefs?.reader.pageScaling ?? 'fit')
 
 const scalingClass = computed(() => `page-mode__img--${pageScaling.value}`)
 
-/** 布局盒可能超出舞台（缩放中或非 fit 缩放）→ 需要拖拽平移。 */
-const pannable = computed(() => props.zoom > 1.001 || pageScaling.value !== 'fit')
+/** 真正放大（zoom>1）才进入可平移态：拖拽平移、抑制热区与滚轮翻页。 */
+const pannable = computed(() => props.zoom > 1.001)
 
 /* ------------------------------------------------------------------ */
 /* Responsive image URLs (§8: container width × DPR)                   */
@@ -387,8 +445,8 @@ watch(
     hasLoaded.value = false
     retryAttempts.value = 0
     retryDelayMs.value = 0
-    // 每页从中性位置开始：fit 下 zoom 复位会顺带清零，但非 fit 缩放
-    // （原始大小/适应宽度）跨页保持 zoom=1，必须显式复位平移。
+    // 每页从中性位置开始：翻页会显式清零平移（fit 下 zoom 复位顺带清零，
+    // 非 fit 缩放跨页保持 zoom=1，同样从中性位置起读）。
     panX.value = 0
     panY.value = 0
     if (retryTimer) clearTimeout(retryTimer)
@@ -466,7 +524,7 @@ watch(
 )
 
 /* ------------------------------------------------------------------ */
-/* Zoom: double-tap cycle (1→2→3→1), pinch, settings                   */
+/* Zoom: double-tap/click cycle (1→1.5→2→1), pinch, settings (A7)      */
 /* ------------------------------------------------------------------ */
 
 function clampZoom(value: number): number {
@@ -474,7 +532,7 @@ function clampZoom(value: number): number {
 }
 
 function cycleZoom() {
-  const next = DOUBLE_TAP_STEPS.find((step) => step > props.zoom + 0.01) ?? 1
+  const next = READER_DOUBLE_TAP_STEPS.find((step) => step > props.zoom + 0.01) ?? 1
   emit('update:zoom', next)
 }
 
@@ -496,8 +554,7 @@ function clampPan() {
 watch(
   () => props.zoom,
   () => {
-    // 仅在完全无平移必要时归零（fit + 未放大）；非 fit 缩放下 zoom=1
-    // 依然是可平移状态，必须保留并夹紧偏移。
+    // 仅在完全无平移必要时归零（未放大）；放大状态下夹紧偏移。
     if (!pannable.value) {
       panX.value = 0
       panY.value = 0
@@ -514,7 +571,7 @@ watch(
 const gestures: ReaderGestures = useReaderGestures({
   el: stageRef,
   isRtl: () => props.direction === 'rtl',
-  // 平移可用时（放大中或非 fit 缩放）单点区域与滑动都让位给拖拽。
+  // 仅真正放大时热区/滑动/滚轮让位给拖拽（A2；非 fit 缩放只是布局基准）。
   suppressed: () => pannable.value,
   onPrev: () => emit('prev'),
   onNext: () => emit('next'),
@@ -636,6 +693,66 @@ function onPointerUp(event: PointerEvent) {
   cursor: grab;
 }
 
+/* --- A4: edge hot-zone hints ------------------------------------------ */
+
+/*
+ * Hover-only affordance for the left/right tap zones: a subtle gradient plus
+ * a single-sided chevron, faded in while the pointer rests on the edge.
+ * The strip is a visual layer only — clicks bubble to the stage's tap-zone
+ * handler; it exists to carry the semantic resize cursor. Hidden on touch /
+ * hover-less devices (and while zoomed, when the zones yield to panning).
+ */
+.page-mode__hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  width: clamp(56px, 12%, 140px);
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transition: opacity var(--duration-scene-opacity) var(--ease-decelerate-quart);
+}
+
+.page-mode__hint svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.page-mode__hint--prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 12px;
+  cursor: w-resize;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.page-mode__hint--next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 12px;
+  cursor: e-resize;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.page-mode__hint:hover {
+  opacity: 1;
+}
+
+/* Touch / hover-less devices never see the hints. */
+@media (hover: none), (pointer: coarse) {
+  .page-mode__hint {
+    display: none;
+  }
+}
+
+/* Zoomed in the tap zones yield to panning — hide the affordance too. */
+.page-mode--zoomed .page-mode__hint {
+  display: none;
+}
+
 .page-mode__frame {
   display: flex;
   align-items: center;
@@ -673,10 +790,10 @@ function onPointerUp(event: PointerEvent) {
 }
 
 /* reader.pageScaling（此前只有设置界面、阅读器未消费）：
-   fit=铺满舞台框；width/height/original 解除对应方向的约束，
-   超出舞台的部分由 pannable 拖拽平移查看。
-   注意：非 fit 模式需要布局盒语义（宽度撑满/原始尺寸），因此覆盖
-   fit 的 width/height:100%。 */
+   fit=铺满舞台框；width/height/original 解除对应方向的约束。
+   注意：非 fit 只是布局基准（A2）——超出的部分不再启用 zoom=1 拖拽平移
+   （那会同时废掉热区翻页）；要看全图请双击放大后拖拽。非 fit 模式需要
+   布局盒语义（宽度撑满/原始尺寸），因此覆盖 fit 的 width/height:100%。 */
 .page-mode__img--width {
   width: 100%;
   height: auto;

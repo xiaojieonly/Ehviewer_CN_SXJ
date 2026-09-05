@@ -44,8 +44,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
  *   0.5dp outline drawn BEHIND the fill (`paint-order: stroke fill` here),
  *   text = `"(index + 1) + "/" + size` from `GalleryActivity.updateProgress()`.
  * - Auto-hide uses `GalleryActivity.HIDE_SLIDER_DELAY` (3000 ms): while
- *   visible, 3 s without interaction emits `update:visible(false)`
- *   (v-model:visible); the parent re-shows the bar on reader tap.
+ *   visible, 3 s without interaction emits `idle` — the bar only NOTIFIES
+ *   (plan-2026-09-05 A6); the parent decides whether to hide (v-model-style
+ *   `visible` prop) or pause the countdown while the pointer rests on the
+ *   interactive chrome (exposed `resetIdle()` re-arms it).
  *
  * Note: per the F7 task spec this web replica places the clock on the LEFT
  * and the battery placeholder on the RIGHT (mirrored relative to the Android
@@ -62,10 +64,11 @@ interface ReaderStatusBarProps {
 
 interface ReaderStatusBarEmits {
   /**
-   * Idle timeout fired (3 s without interaction) — the parent should hide
-   * the bar. v-model:visible.
+   * Idle timeout fired (3 s without interaction). Notification only (A6):
+   * the parent decides whether to hide the bar (via the `visible` prop) or
+   * pause the countdown (e.g. while the pointer hovers the chrome).
    */
-  (e: 'update:visible', visible: boolean): void
+  (e: 'idle'): void
 }
 
 const props = defineProps<ReaderStatusBarProps>()
@@ -119,7 +122,7 @@ function restartIdleTimer() {
   if (props.visible) {
     idleTimer = setTimeout(() => {
       idleTimer = null
-      emit('update:visible', false)
+      emit('idle')
     }, IDLE_HIDE_DELAY_MS)
   }
 }
@@ -127,6 +130,9 @@ function restartIdleTimer() {
 // Re-arm whenever the bar is (re-)shown; the parent re-asserts `visible`
 // on reader taps, which restarts the countdown.
 watch(() => props.visible, restartIdleTimer, { immediate: true })
+
+/** Parent-driven re-arm (A6): mouse activity while the chrome is shown. */
+defineExpose({ resetIdle: restartIdleTimer })
 
 onBeforeUnmount(() => {
   clearIdleTimer()
