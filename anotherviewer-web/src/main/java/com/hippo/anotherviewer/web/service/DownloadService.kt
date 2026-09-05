@@ -125,7 +125,9 @@ class DownloadService(
         //   time_desc / time_asc / title_asc / title_desc
         // 过滤：q 非空时按标题/标题日文匹配；regex=true 时 q 按正则解释
         // （SQLite 无 REGEXP：SQL 层仅按 label 投影，正则匹配+排序在服务端内存完成）。
-        val size = limit.coerceIn(1, 500)
+        // 2026-09-05：上限从 500 放宽到 MAX_LIST_LIMIT——下载列表全量本地资源，
+        // WebUI 一次拉全量（虚拟滚动渲染），跳页分页退役。保留上限仅作防御。
+        val size = limit.coerceIn(1, MAX_LIST_LIMIT)
         val sortObj = sortOf(sort)
         val pageable = PageRequest.of(offset.coerceAtLeast(0) / size, size, sortObj)
         val labels = labelRepository.findAll()
@@ -838,6 +840,9 @@ class DownloadService(
     private companion object {
         /** 跨页全选/批量单次解析的全集上限（9000+ 级规模安全；超限取前 N 条）。 */
         const val MAX_BATCH_IDS = 100_000
+
+        /** /download/list 单次返回上限（2026-09-05 从 500 放宽：WebUI 全量拉取）。 */
+        const val MAX_LIST_LIMIT = 100_000
 
         /** 筛选槽位持久化键（serverConfig KV，随备份自动导出）。 */
         const val KEY_FILTER_SLOTS = "download.filterSlots"

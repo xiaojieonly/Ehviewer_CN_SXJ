@@ -94,6 +94,31 @@ class DownloadServiceTest {
     }
 
     @Test
+    fun `list limit above the old 500 cap is honored for full-list loading`() {
+        // 2026-09-05 全量加载：limit=100_000 不得被钳到 500——WebUI 一次拉
+        // 全量，size 直通 PageRequest（mock 按请求到的 Pageable 回 600 行）。
+        val rows = (1..600L).map {
+            DownloadInfoEntity().apply { id = it; gid = it; token = "t$it"; title = "T$it" }
+        }
+        `when`(
+            downloadRepository.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable::class.java))
+        ).thenReturn(org.springframework.data.domain.PageImpl(rows))
+        `when`(
+            historyRepository.findByGidIn(any<Collection<Long>>())
+        ).thenReturn(emptyList())
+        `when`(downloadRepository.count()).thenReturn(600L)
+
+        val response = service.listDownloads(limit = 100_000)
+
+        assertEquals(600, response.downloads.size)
+        assertEquals(600, response.total)
+        // Pageable 拿到的 size 就是调用方的 limit（未被 500 钳制）。
+        org.mockito.Mockito.verify(downloadRepository).findAll(
+            org.mockito.ArgumentMatchers.argThat<org.springframework.data.domain.Pageable> { it.pageSize == 100_000 }
+        )
+    }
+
+    @Test
     fun `restartAll skips disk-verified rows and restarts the rest`() {
         `when`(availability.isBlocked()).thenReturn(false)
         // DownloadDirs.resolve：相对 downloadDir 原样采用 → CWD 下建测试目录。

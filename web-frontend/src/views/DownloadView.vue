@@ -45,83 +45,6 @@
          与上方搜索框互斥。 -->
     <FilterSlotBar :slots="slots" :active-id="activeSlotId" @select="onSlotBarSelect" />
 
-    <!-- 分页条（Android PaginationIndicator 对齐，plan-2026-08-30 §3.4.0.1）：
-         页码指示 + 每页条数切换（localStorage 与 AdminDownload 同键）+ 跳页
-         （服务端 offset 直取并替换列表）。无限加载体验保留。
-         PC 适配（2026-08-30）：直点页码按钮组（滚动窗口 + 省略号折叠）+ 前后页，
-         不再只有输入框。 -->
-    <nav
-      v-if="paginationVisible"
-      class="pagination-bar"
-      data-testid="download-pagination"
-      aria-label="下载分页"
-    >
-      <span class="pagination-bar__info">
-        第 {{ currentPage }} / {{ totalPages }} 页 · {{ total }} 条
-      </span>
-      <span class="pagination-bar__pages" role="group" aria-label="页码">
-        <button
-          type="button"
-          class="pagination-bar__page"
-          :disabled="currentPage <= 1"
-          aria-label="上一页"
-          @click="jumpToPage(currentPage - 1)"
-        >
-          ‹
-        </button>
-        <template v-for="(item, i) in pageWindow" :key="`${item}-${i}`">
-          <button
-            v-if="item !== '…'"
-            type="button"
-            class="pagination-bar__page"
-            :class="{ 'pagination-bar__page--active': item === currentPage }"
-            :aria-current="item === currentPage ? 'page' : undefined"
-            :aria-label="`第 ${item} 页`"
-            @click="jumpToPage(item)"
-          >
-            {{ item }}
-          </button>
-          <span v-else class="pagination-bar__ellipsis" aria-hidden="true">…</span>
-        </template>
-        <button
-          type="button"
-          class="pagination-bar__page"
-          :disabled="currentPage >= totalPages"
-          aria-label="下一页"
-          @click="jumpToPage(currentPage + 1)"
-        >
-          ›
-        </button>
-      </span>
-      <label class="pagination-bar__size">
-        条/页
-        <select
-          v-model.number="pageSize"
-          class="pagination-bar__select"
-          aria-label="每页条数"
-        >
-          <option v-for="size in DOWNLOAD_PAGE_SIZES" :key="size" :value="size">
-            {{ size }}
-          </option>
-        </select>
-      </label>
-      <span class="pagination-bar__jump">
-        <input
-          v-model.number="jumpInput"
-          class="pagination-bar__input"
-          type="number"
-          min="1"
-          :max="totalPages"
-          :aria-label="`跳页（1 至 ${totalPages}）`"
-          @keyup.enter="jumpToPage()"
-          placeholder="页"
-        />
-        <button type="button" class="pagination-bar__btn" @click="jumpToPage()">
-          跳页
-        </button>
-      </span>
-    </nav>
-
     <!-- Multi-select toolbar (Android custom choice mode: 全选/开始/停止/
          删除/移动；长按或右键条目进入) -->
     <div
@@ -183,8 +106,6 @@
       ref="contentRef"
       class="download-view__content"
       :state="state"
-      :loading-more="loadingMore"
-      :has-more="downloads.length < total"
       v-model:refreshing="refreshing"
       empty-text="No downloads"
       :error-text="errorText"
@@ -193,8 +114,9 @@
     >
       <!-- Virtualized single-column list: only the rows inside the scroller
            viewport (+ overscan) are mounted; the ul keeps the full total
-           height so the scrollbar, FastScroller and load-more footer
-           geometry stay intact (tanstack virtualizer window mode). -->
+           height so the scrollbar and FastScroller geometry stay intact
+           (tanstack virtualizer window mode). 2026-09-05：一次拉全量
+           （服务端 limit 放宽），分页/追加加载退役。 -->
       <ul
         ref="listHostRef"
         class="download-list"
@@ -388,12 +310,7 @@ import { useFilterSlots } from '@/composables/useFilterSlots'
 import { usePcInput } from '@/composables/usePcInput'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import type { FabAction } from '@/types/components'
-import {
-  DOWNLOAD_PAGE_SIZES,
-  isDownloadPageSize,
-  loadDownloadListPrefs,
-  saveDownloadListPrefs,
-} from '@/utils/downloadListSettings'
+import { loadDownloadListPrefs } from '@/utils/downloadListSettings'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -413,11 +330,16 @@ const STATE_FAILED = 4
 
 /* ------------------------------------------------------------- list ----- */
 
-/** 列表偏好（设备本地）：每页条数 + 排序模式，与 AdminDownload 同键共享。
- *  每页条数可在下方分页条切换（即时保存回 localStorage）。 */
+/** 列表偏好（设备本地）：排序模式（与 AdminDownload 同键共享）。
+ *  2026-09-05：每页条数随全量加载退役，不再读 pageSize。 */
 const listPrefs = loadDownloadListPrefs()
-const pageSize = ref(listPrefs.pageSize)
 const SORT_MODE = listPrefs.sortMode
+
+/**
+ * 全量拉取上限：服务端 2026-09-05 起支持到 100_000（本地资源 + 虚拟滚动
+ * 渲染），一次请求拿全列表，跳页分页退役。
+ */
+const DOWNLOAD_LIST_LIMIT = 100_000
 
 /** Fixed row-height estimate for the virtualizer (single-column list). */
 const ROW_ESTIMATE = 160
@@ -427,88 +349,11 @@ const labels = ref<DownloadLabel[]>([])
 const activeLabel = ref<number | null>(null)
 const state = ref<ViewState>('loading')
 const refreshing = ref(false)
-/** Total entries under the current label (from the server, page 1). */
+/** Total entries under the current label (from the server). */
 const total = ref(0)
-/** Guard against overlapping load-more requests. */
-const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** F4 REGEX_INVALID: the error tip switches to a dedicated regex message. */
 const errorText = ref('Failed to load downloads')
-
-/* ---------------------------------------------------- pagination bar ---- */
-
-/** 当前页码（1 起，跟随加载位置；无限加载用当前语义，跳页用 offset 语义）。 */
-const currentPage = ref(1)
-/** 跳页输入。 */
-const jumpInput = ref<number | null>(1)
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-/**
- * 分页条可见性：total > pageSize 才显示。对齐 Android 仅当可见条数 ≥
- * paginationSize(500) 时显示指示器——WebUI 是无限加载，「可见条数」恒等于已
- * 加载数，因此用更合理的 total ≤ pageSize 同义判定（还有更多页才需要定位）。
- */
-const paginationVisible = computed(() => total.value > pageSize.value)
-
-/**
- * 跳页：服务端 offset 直取并替换列表（offset = (k-1)*pageSize），列表顶部
- * 重置为所跳页面（虚拟滚动由 virtualizer + scrollToTop 滚回顶部）。
- */
-function jumpToPage(force?: number): void {
-  const target = Math.min(
-    Math.max(Math.floor(force ?? jumpInput.value ?? currentPage.value), 1),
-    totalPages.value,
-  )
-  if (!Number.isFinite(target) || target < 1) return
-  if (target === currentPage.value) return
-  jumpInput.value = target
-  state.value = 'loading'
-  void load((target - 1) * pageSize.value)
-}
-
-/**
- * PC 页码窗口（2026-08-30）：总页数 ≤7 全量；否则首页/末页夹在窗口两端，
- * 窗口内 ±1 邻页 + 折叠省略号（每侧至多 7 字节），当前页永遠可见。
- * 返回示例（page=6/total=30）：[1,'…',5,6,7,'…',30]。
- */
-const pageWindow = computed<(number | '…')[]>(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const windowSize = 5 // 当前 ±2（含本身）
-  const start = Math.max(2, Math.min(current - 2, total - windowSize))
-  const end = start + windowSize - 1
-  const items: (number | '…')[] = []
-  items.push(1)
-  if (start > 2) items.push('…')
-  for (let p = start; p <= end; p++) items.push(p)
-  if (end < total - 1) items.push('…')
-  items.push(total)
-  return items
-})
-
-/** PC 键盘：PageUp/PageDown 上一页/下一页（列表失焦时仍生效，全页级）。 */
-function onPageKey(e: KeyboardEvent): void {
-  const target = e.target as HTMLElement | null
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')) return
-  if (e.key === 'PageDown') {
-    e.preventDefault()
-    if (currentPage.value < totalPages.value) jumpToPage(currentPage.value + 1)
-  } else if (e.key === 'PageUp') {
-    e.preventDefault()
-    if (currentPage.value > 1) jumpToPage(currentPage.value - 1)
-  }
-}
-onMounted(() => window.addEventListener('keydown', onPageKey))
-onUnmounted(() => window.removeEventListener('keydown', onPageKey))
-
-/** 每页条数切换（分页条下拉）→ 即时保存本地偏好 + 重置回第 1 页加载。 */
-watch(pageSize, (next) => {
-  if (!isDownloadPageSize(next)) return
-  saveDownloadListPrefs({ sortMode: SORT_MODE, pageSize: next })
-  jumpInput.value = 1
-  state.value = 'loading'
-  void load(0)
-})
 
 /**
  * F4: extracts the business error code from the API error envelope
@@ -649,17 +494,17 @@ function clearSearch(): void {
 }
 
 /**
- * 加载（替换模式）：`offset` 为服务端分页偏移（跳页时 (n-1)*pageSize，
- * 其余入口保持 0）。成功后当前页码跟随加载位置（offset 语义）。
+ * 加载（替换模式，2026-09-05 全量）：一次拉取全部匹配行（服务端 limit 上限
+ * 已放宽），搜索/标签/槽位变更各自触发重载。
  */
-async function load(offset = 0): Promise<void> {
+async function load(): Promise<void> {
   const seq = ++requestSeq
   try {
     const filter = currentFilter()
     const result = await downloadApi.list(
       activeLabel.value ?? undefined,
-      offset,
-      pageSize.value,
+      0,
+      DOWNLOAD_LIST_LIMIT,
       SORT_MODE,
       filter.q,
       filter.regex,
@@ -668,7 +513,6 @@ async function load(offset = 0): Promise<void> {
     downloads.value = result.downloads
     labels.value = result.labels
     total.value = result.total
-    currentPage.value = Math.min(Math.floor(offset / pageSize.value) + 1, totalPages.value)
     state.value = result.downloads.length === 0 ? 'empty' : 'content'
     contentRef.value?.scrollToTop()
   } catch (error) {
@@ -689,50 +533,6 @@ async function load(offset = 0): Promise<void> {
     }
   }
 }
-
-/** Append the next page once the virtual window reaches the loaded tail. */
-async function loadMore(): Promise<void> {
-  if (loadingMore.value) return
-  if (downloads.value.length >= total.value) return
-  const seq = requestSeq
-  loadingMore.value = true
-  try {
-    const filter = currentFilter()
-    const result = await downloadApi.list(
-      activeLabel.value ?? undefined,
-      downloads.value.length,
-      pageSize.value,
-      SORT_MODE,
-      filter.q,
-      filter.regex,
-    )
-    if (seq !== requestSeq) return
-    downloads.value.push(...result.downloads)
-    total.value = result.total
-    // 无限加载：当前页码跟随已加载位置的下一页（封顶到最后一页）。
-    currentPage.value = Math.min(
-      Math.floor(Math.max(downloads.value.length - 1, 0) / pageSize.value) + 1,
-      totalPages.value,
-    )
-  } catch (error) {
-    console.error('Failed to load more downloads', error)
-    // Retryable: the next scroll / virtualizer update re-triggers the load.
-    showToast('Failed to load more downloads')
-  } finally {
-    loadingMore.value = false
-  }
-}
-
-/** Fire when the virtual window's last row reaches the loaded tail. */
-watch(
-  () => virtualizer.value.range?.endIndex ?? -1,
-  () => {
-    const range = virtualizer.value.range
-    if (!range || loadingMore.value) return
-    if (downloads.value.length >= total.value) return
-    if (range.endIndex >= downloads.value.length - 1) void loadMore()
-  },
-)
 
 function selectTab(id: number | null, event: MouseEvent): void {
   if (id === activeLabel.value) return
@@ -1262,140 +1062,6 @@ onUnmounted(() => {
 .label-tabs__tab:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
-}
-
-/* ----------------------------------------------------- pagination bar ---- */
-/* 简洁一行条（label-tabs 样式语言）：页码 / 每页条数 / 跳页。 */
-.pagination-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing);
-  flex-shrink: 0;
-  padding: 6px max(var(--gallery-list-margin-h), 4px);
-  background: var(--color-bg);
-  border-bottom: 1px solid var(--color-divider);
-  font-size: var(--text-super-small); /* 12sp */
-  color: var(--text-color-secondary);
-}
-
-.pagination-bar__info {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-/* PC 页码窗口（2026-08-30）：直点页码 + 省略号折叠 + 前后页。 */
-.pagination-bar__pages {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.pagination-bar__pages::-webkit-scrollbar {
-  display: none;
-}
-
-.pagination-bar__page {
-  min-width: 26px;
-  padding: 2px 5px;
-  border: 1px solid transparent;
-  border-radius: var(--card-radius);
-  background: transparent;
-  color: var(--color-primary);
-  font-family: inherit;
-  font-size: var(--text-super-small);
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease-decelerate-quart);
-}
-
-.pagination-bar__page:hover:not(:disabled) {
-  background: var(--color-surface-activated);
-}
-
-.pagination-bar__page:disabled {
-  color: var(--text-color-disabled, #9e9e9e);
-  cursor: default;
-}
-
-.pagination-bar__page--active {
-  background: var(--color-primary);
-  color: var(--color-primary-inverse, #fff);
-  border-color: var(--color-primary);
-}
-
-.pagination-bar__page--active:hover {
-  background: var(--color-primary);
-}
-
-.pagination-bar__ellipsis {
-  min-width: 18px;
-  text-align: center;
-  color: var(--text-color-secondary);
-  user-select: none;
-}
-
-.pagination-bar__size,
-.pagination-bar__jump {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.pagination-bar__select,
-.pagination-bar__input {
-  padding: 2px 6px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: var(--color-surface);
-  color: var(--text-color-primary);
-  font-family: inherit;
-  font-size: var(--text-super-small);
-}
-
-.pagination-bar__input {
-  width: 52px;
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.pagination-bar__input::-webkit-outer-spin-button,
-.pagination-bar__input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.pagination-bar__select:focus,
-.pagination-bar__input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.pagination-bar__btn {
-  padding: 2px 8px;
-  border: none;
-  border-radius: var(--card-radius);
-  background: transparent;
-  color: var(--color-primary);
-  font-family: inherit;
-  font-size: var(--text-super-small);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease-decelerate-quart);
-}
-
-.pagination-bar__btn:hover {
-  background: var(--color-surface-activated);
 }
 
 /* -------------------------------------------------- PC batch bar ---- */

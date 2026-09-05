@@ -360,9 +360,9 @@ class DownloadControllerTest {
     }
 
     @Test
-    fun `list clamps limit above 500 to 500`() {
+    fun `list honors large limit for full-list loading (2026-09-05 放宽)`() {
         `when`(downloadRepository.findAll(any(Pageable::class.java)))
-            .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 500), 0))
+            .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 9999), 0))
         `when`(downloadRepository.count()).thenReturn(0L)
         `when`(labelRepository.findAll()).thenReturn(emptyList())
 
@@ -370,7 +370,7 @@ class DownloadControllerTest {
             .andExpect(status().isOk)
         val captor = ArgumentCaptor.forClass(Pageable::class.java)
         verify(downloadRepository).findAll(captureK(captor))
-        assertEquals(500, captor.value.pageSize)
+        assertEquals(9999, captor.value.pageSize)
     }
 
     @Test
