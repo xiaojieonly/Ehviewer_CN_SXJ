@@ -219,6 +219,7 @@
     <!-- Update -->
     <string name="new_version">New version</string>
     <string name="update">Update</string>
+    <string name="update_dialog_sponsor">Treat the author</string>
     <string name="update_fail">Check for updates failed</string>
     <string name="update_to">Update to</string>
     <string name="no_updates_available">Already the latest version</string>
@@ -489,6 +490,11 @@
     <string name="download_search_hint">Input search key</string>
     <string name="reset_reading_progress_message">Reset the reading progress of all downloaded galleries?</string>
     <string name="download_service_label">EhViewer Download Service</string>
+    <string name="archiver_download_service_label">EhViewer Archive Download</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Resume</string>
+    <string name="archiver_download_paused">Paused</string>
+    <string name="archiver_download_restart_no_range">Server does not support resume; restarting download</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s left</string>
     <string name="remember_download_label">Remember download label</string>

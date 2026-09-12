@@ -407,6 +407,11 @@
     <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
     <string name="reset_reading_progress_message">Réinitialiser les progrès de lecture de toutes les galeries téléchargées ?</string>
     <string name="download_service_label">Service du téléchargement EhViewer</string>
+    <string name="archiver_download_service_label">Téléchargement d\'archives EhViewer</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Reprendre</string>
+    <string name="archiver_download_paused">En pause</string>
+    <string name="archiver_download_restart_no_range">Le serveur ne prend pas en charge la reprise ; le téléchargement redémarre</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, encore %2$s</string>
     <string name="remember_download_label">Enregistrer le label de téléchargement</string>

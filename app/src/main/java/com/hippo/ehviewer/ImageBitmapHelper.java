@@ -18,6 +18,7 @@ package com.hippo.ehviewer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import android.util.Log;
 
 import com.hippo.conaco.ValueHelper;
 import com.hippo.lib.image.Image;
@@ -28,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class ImageBitmapHelper implements ValueHelper<Image> {
+    private static final String TAG = "ImageBitmapHelper";
 
     private static final int MAX_CACHE_SIZE = 512 * 512;
 
@@ -42,12 +44,21 @@ public class ImageBitmapHelper implements ValueHelper<Image> {
         try {
             isPipe.obtain();
             FileInputStream is = (FileInputStream) isPipe.open();
-            return Image.decode(is,hardware);
+            Image image = Image.decode(is,hardware);
+            if (image == null) {
+                Log.w(TAG, "Image decode failed, result is null. hardware=" + hardware);
+            }
+            return image;
 //            return ImageBitmap.decode(is,hardware);
         } catch (OutOfMemoryError e) {
             Analytics.recordException(e);
             return null;
+        } catch (ClassCastException e) {
+            Analytics.recordException(e);
+            Log.w(TAG, "InputStream is not FileInputStream. hardware=" + hardware, e);
+            return null;
         } catch (IOException e) {
+            Log.w(TAG, "Open image stream failed. hardware=" + hardware, e);
             return null;
         } finally {
             isPipe.close();

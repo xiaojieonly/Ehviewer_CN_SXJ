@@ -134,6 +134,7 @@
     <!-- Update -->
     <string name="new_version">新版本</string>
     <string name="update">更新</string>
+    <string name="update_dialog_sponsor">赏饭给作者</string>
     <string name="update_fail">检查更新失败</string>
     <string name="update_fail_info">点击 是 跳转至Github主页</string>
     <string name="update_to">更新至</string>
@@ -398,6 +399,11 @@
     <string name="download_search_hint">输入关键字</string>
     <string name="reset_reading_progress_message">重置所有已下载画廊的阅读进度？</string>
     <string name="download_service_label">EhViewer 下载服务</string>
+    <string name="archiver_download_service_label">EhViewer 档案下载</string>
+    <string name="archiver_download_pause">暂停</string>
+    <string name="archiver_download_resume">继续</string>
+    <string name="archiver_download_paused">已暂停</string>
+    <string name="archiver_download_restart_no_range">服务器不支持断点续传，将重新下载</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s，剩余 %2$s</string>
     <string name="remember_download_label">记住下载标签</string>

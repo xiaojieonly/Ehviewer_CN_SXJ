@@ -389,6 +389,11 @@
     <string name="download_search_hint">検索キーを入力</string>
     <string name="reset_reading_progress_message">すべてのダウンロード済みのギャラリーの閲覧進捗をリセットしますか？</string>
     <string name="download_service_label">EhViewer ダウンロードサービス</string>
+    <string name="archiver_download_service_label">EhViewer アーカイブのダウンロード</string>
+    <string name="archiver_download_pause">一時停止</string>
+    <string name="archiver_download_resume">再開</string>
+    <string name="archiver_download_paused">一時停止中</string>
+    <string name="archiver_download_restart_no_range">サーバーはレジュームに対応していないため、ダウンロードをやり直します</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s、残り %2$s</string>
     <string name="remember_download_label">ダウンロードラベルを記憶する</string>

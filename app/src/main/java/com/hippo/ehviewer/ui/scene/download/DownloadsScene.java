@@ -550,11 +550,13 @@ public class DownloadsScene extends ToolbarScene
             @Override
             public void onPageChanged(int newIndexPage) {
                 indexPage = newIndexPage;
+                queryUnreadSpiderInfo();
             }
 
             @Override
             public void onPageSizeChanged(int newPageSize) {
                 pageSize = newPageSize;
+                queryUnreadSpiderInfo();
             }
         });
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
@@ -1596,6 +1598,7 @@ public class DownloadsScene extends ToolbarScene
                     if (spiderInfo != null) {
                         mSpiderInfoMap.put(info.gid, spiderInfo);
                     }
+                    trimSpiderInfoMapToCurrentPage();
                 }
 
 //                mSpiderInfoMap.remove(info.gid);
@@ -1632,15 +1635,49 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+    /** 仅返回当前分页的数据，避免为不可见条目加载阅读进度。 */
+    @NonNull
+    private List<DownloadInfo> getCurrentPageList() {
+        if (mList == null) {
+            return Collections.emptyList();
+        }
+        if (mList.size() > paginationSize && canPagination) {
+            int from = pageSize * (indexPage - 1);
+            if (from < 0) {
+                from = 0;
+            }
+            if (from >= mList.size()) {
+                return Collections.emptyList();
+            }
+            int to = Math.min(from + pageSize, mList.size());
+            return mList.subList(from, to);
+        }
+        return mList;
+    }
+
+    /** 释放其他分页的进度缓存，限制大下载列表的内存占用。 */
+    private void trimSpiderInfoMapToCurrentPage() {
+        List<DownloadInfo> pageList = getCurrentPageList();
+        Set<Long> keep = new HashSet<>(pageList.size());
+        for (DownloadInfo info : pageList) {
+            keep.add(info.gid);
+        }
+        mSpiderInfoMap.keySet().retainAll(keep);
+    }
+
+    /** 合并当前页的本地归档进度与普通下载进度，跳过无须读取的任务。 */
     @SuppressLint("NotifyDataSetChanged")
     private void queryUnreadSpiderInfo() {
         if (mList == null) {
             return;
         }
+        trimSpiderInfoMapToCurrentPage();
+        List<DownloadInfo> pageList = getCurrentPageList();
         List<DownloadInfo> requestList = new ArrayList<>();
         boolean hasImportedArchive = false;
-        for (int i = 0; i < mList.size(); i++) {
-            DownloadInfo info = mList.get(i);
+        for (int i = 0; i < pageList.size(); i++) {
+            DownloadInfo info = pageList.get(i);
+            // 本地归档没有下载目录的 SpiderInfo，必须从归档专用存储刷新进度。
             if (isImportedArchive(info)) {
                 hasImportedArchive = true;
                 mSpiderInfoMap.remove(info.gid);
@@ -1657,6 +1694,9 @@ public class DownloadsScene extends ToolbarScene
         if (hasImportedArchive && mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
+        if (requestList.isEmpty()) {
+            return;
+        }
         DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList, this::spiderInfoResultCallBack);
         executor.execute();
     }
@@ -1664,6 +1704,7 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("NotifyDataSetChanged")
     private void spiderInfoResultCallBack(Map<Long, SpiderInfo> resultMap) {
         mSpiderInfoMap.putAll(resultMap);
+        trimSpiderInfoMapToCurrentPage();
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
