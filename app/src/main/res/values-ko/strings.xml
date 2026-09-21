@@ -425,6 +425,11 @@
     <string name="download_search_hint">키워드 입력</string>
     <string name="reset_reading_progress_message">다운로드한 모든 갤러리의 독서 진행도를 초기화하시겠습니까?</string>
     <string name="download_service_label">EhViewer 다운로드 서비스</string>
+    <string name="archiver_download_service_label">EhViewer 아카이브 다운로드</string>
+    <string name="archiver_download_pause">일시정지</string>
+    <string name="archiver_download_resume">재개</string>
+    <string name="archiver_download_paused">일시정지됨</string>
+    <string name="archiver_download_restart_no_range">서버가 이어받기를 지원하지 않아 다운로드를 다시 시작합니다</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s 남음</string>
     <string name="remember_download_label">다운로드 레이블 기억</string>

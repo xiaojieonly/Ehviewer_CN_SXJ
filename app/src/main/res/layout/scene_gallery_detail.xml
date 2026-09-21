@@ -25,11 +25,10 @@
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="none"
-        android:overScrollMode="never">
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
-        <include
-            layout="@layout/gallery_detail_content"/>
+        <include layout="@layout/gallery_detail_content" />
 
     </ScrollView>
 

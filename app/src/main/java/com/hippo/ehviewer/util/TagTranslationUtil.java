@@ -16,12 +16,8 @@ public class TagTranslationUtil {
             }
             String group = ehTags.getTranslation("n:" + namespace);
             //翻译标签名
-            String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
-            if (tags[0].length() == 1 && tags[0].matches("^[a-z]+$")) {
-                prefix = tags[0] + ":";
-            }
-
-            String tagStr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
+            String prefix = translationPrefix(tags[0]);
+            String tagStr = ehTags.getTranslation(prefix + tags[1]);
 
 
             if (group != null && tagStr != null) {
@@ -56,8 +52,8 @@ public class TagTranslationUtil {
         if (ehTags != null && tags.length == 2) {
             String group = ehTags.getTranslation("n:" + tags[0]);
             //翻译标签名
-            String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
-            String tagstr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
+            String prefix = translationPrefix(tags[0]);
+            String tagstr = ehTags.getTranslation(prefix + tags[1]);
 
 
             if (group != null && tagstr != null) {
@@ -82,5 +78,14 @@ public class TagTranslationUtil {
         return getTagCN(tag.split(":"),ehTags);
     }
 
-
+    /**
+     * Resolve lookup prefix for a full namespace ({@code location}) or short prefix ({@code loc}).
+     */
+    private static String translationPrefix(String namespaceOrPrefix) {
+        if (EhTagDatabase.prefixToNamespace(namespaceOrPrefix + ":") != null) {
+            return namespaceOrPrefix + ":";
+        }
+        String prefix = EhTagDatabase.namespaceToPrefix(namespaceOrPrefix);
+        return prefix != null ? prefix : "";
+    }
 }

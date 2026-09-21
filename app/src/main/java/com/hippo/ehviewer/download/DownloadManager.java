@@ -49,7 +49,6 @@ import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -771,9 +770,18 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         ensureDownload();
     }
 
-    @SuppressLint("StaticFieldLeak")
     public void resetAllReadingProgress() {
+        resetAllReadingProgress(null);
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    public void resetAllReadingProgress(@Nullable Runnable onComplete) {
         LinkedList<DownloadInfo> list = new LinkedList<>(mAllInfoList);
+
+        // Keep an already running reader in sync with the persisted reset.
+        for (DownloadInfo downloadInfo : list) {
+            SpiderQueen.resetReadingProgress(downloadInfo.gid);
+        }
 
         new AsyncTask<Void, Void, Void>() {
             @Override
@@ -803,13 +811,17 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     }
                     spiderInfo.startPage = 0;
 
-                    try {
-                        spiderInfo.write(file.openOutputStream());
-                    } catch (IOException e) {
-                        Log.e(TAG, "Can't write SpiderInfo", e);
-                    }
+                    // Keep the download file and the spider-info cache in sync.
+                    spiderInfo.writeNewSpiderInfoToLocal(new SpiderDen(galleryInfo), mContext);
                 }
                 return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void unused) {
+                if (onComplete != null) {
+                    onComplete.run();
+                }
             }
         }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
     }

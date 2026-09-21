@@ -56,6 +56,7 @@ import com.hippo.ehviewer.client.parser.GalleryListParser;
 import com.hippo.ehviewer.client.parser.GalleryPageApiParser;
 import com.hippo.ehviewer.client.parser.GalleryPageParser;
 import com.hippo.ehviewer.client.parser.GalleryTokenApiParser;
+import com.hippo.ehviewer.client.parser.GetEditCommentParser;
 import com.hippo.ehviewer.client.parser.MyTagLitParser;
 import com.hippo.ehviewer.client.parser.ProfileParser;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
@@ -500,6 +501,48 @@ public class EhEngine {
             }
 
             return GalleryDetailParser.parseComments(document);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
+    }
+
+    public static GetEditCommentParser.Result getEditComment(@Nullable EhClient.Task task,
+                                                             OkHttpClient okHttpClient, long apiUid,
+                                                             String apiKey, long gid, String token,
+                                                             long commentId) throws Throwable {
+        final JSONObject json = new JSONObject();
+        json.put("method", "geteditcomment");
+        json.put("apiuid", apiUid);
+        json.put("apikey", apiKey);
+        json.put("gid", gid);
+        json.put("token", token);
+        json.put("comment_id", commentId);
+        final RequestBody requestBody = RequestBody.create(MEDIA_TYPE_JSON, json.toString());
+        String url = EhUrl.getApiUrl();
+        String referer = EhUrl.getGalleryDetailUrl(gid, token);
+        String origin = EhUrl.getOrigin();
+        Log.d(TAG, url);
+        Request request = new EhRequestBuilder(url, referer, origin)
+                .post(requestBody)
+                .build();
+        Call call = okHttpClient.newCall(request);
+
+        if (task != null) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            return GetEditCommentParser.parse(body);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);

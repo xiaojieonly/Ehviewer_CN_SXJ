@@ -501,6 +501,7 @@ public class DownloadListInfosExecutor {
         tagList.addAll(parserList("other", tags.other));
         tagList.addAll(parserList("parody", tags.parody));
         tagList.addAll(parserList("reclass", tags.reclass));
+        tagList.addAll(parserList("location", tags.location));
 
         return tagList;
     }

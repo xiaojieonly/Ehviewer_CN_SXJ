@@ -16,6 +16,7 @@
 package com.hippo.ehviewer.download
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -52,7 +53,6 @@ import com.hippo.lib.yorozuya.collect.LongList
 import com.hippo.lib.yorozuya.collect.SparseJBArray
 import com.hippo.lib.yorozuya.collect.SparseJLArray
 
-@SuppressLint("UnspecifiedImmutableFlag")
 class DownloadService : Service(), DownloadManager.DownloadListener {
     private var mNotifyManager: NotificationManager? = null
     private var mDownloadManager: DownloadManager? = null
@@ -111,6 +111,8 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         
         mDownloadManager = EhApplication.getDownloadManager(applicationContext)
         mDownloadManager!!.setDownloadListener(this)
+
+        ensureEnteredForeground()
     }
 
     override fun onDestroy() {
@@ -142,10 +144,12 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        ensureEnteredForeground()
         try {
             if (intent != null) {
-                // Handle the case where the intent is not null
                 handleIntent(intent)
+            } else {
+                checkStopSelf()
             }
         } catch (_: NullPointerException) {
         }
@@ -225,6 +229,22 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         throw IllegalStateException("No bindService")
     }
 
+    private fun startForegroundCompat(id: Int, notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(id, notification)
+        }
+    }
+
+    private fun ensureEnteredForeground() {
+        if (mNotifyManager == null) {
+            return
+        }
+        ensureDownloadingBuilder()
+        mDownloadingDelay?.startForeground(immediate = true)
+    }
+
     @Suppress("deprecation")
     private fun ensureDownloadingBuilder() {
         if (mDownloadingBuilder != null) {
@@ -233,10 +253,11 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val stopAllIntent = Intent(this, DownloadService::class.java)
         stopAllIntent.setAction(ACTION_STOP_ALL)
-        val piStopAll = PendingIntent.getService(this, 0, stopAllIntent, 0)
+        val piStopAll = PendingIntent.getService(this, 0, stopAllIntent, PENDING_INTENT_FLAGS)
 
         mDownloadingBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setSmallIcon(R.drawable.ic_stat_download)
+            .setContentTitle(getString(R.string.download_service))
             .setOngoing(true)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
@@ -247,6 +268,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
                 piStopAll
             )
             .setShowWhen(false)
+            .setProgress(0, 0, true)
             .setChannelId(CHANNEL_ID!!)
 
         mDownloadingDelay =
@@ -260,7 +282,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val clearIntent = Intent(this, DownloadService::class.java)
         clearIntent.setAction(ACTION_CLEAR)
-        val piClear = PendingIntent.getService(this, 0, clearIntent, 0)
+        val piClear = PendingIntent.getService(this, 0, clearIntent, PENDING_INTENT_FLAGS)
 
         val bundle = Bundle()
         bundle.putString(DownloadsScene.KEY_ACTION, DownloadsScene.ACTION_CLEAR_DOWNLOAD_SERVICE)
@@ -270,11 +292,11 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent, PENDING_INTENT_FLAGS
         )
 
         mDownloadedBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setSmallIcon(R.drawable.ic_stat_download_done)
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
             .setContentTitle(getString(R.string.stat_download_done_title))
             .setDeleteIntent(piClear)
@@ -333,7 +355,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent, PENDING_INTENT_FLAGS
         )
 
         mDownloadingBuilder!!.setContentTitle(EhUtils.getSuitableTitle(info))
@@ -509,8 +531,13 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
     private fun checkStopSelf() {
         if (mDownloadManager == null || mDownloadManager!!.isIdle) {
-//            stopForeground(true);
-            // 释放 WakeLock
+            mDownloadingDelay?.cancel()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
             releaseWakeLock()
             stopSelf()
         }
@@ -645,8 +672,10 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
     // TODO Include all notification in one delay
     // Avoid frequent notification
     private class NotificationDelay(
-        private var mService: Service?, private val mNotifyManager: NotificationManager?,
-        private val mBuilder: NotificationCompat.Builder, private val mId: Int
+        private var mService: DownloadService?,
+        private val mNotifyManager: NotificationManager?,
+        private val mBuilder: NotificationCompat.Builder,
+        private val mId: Int
     ) : Runnable {
         @IntDef(OPS_NOTIFY, OPS_CANCEL, OPS_START_FOREGROUND)
         @Retention(AnnotationRetention.SOURCE)
@@ -654,12 +683,14 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         private var mLastTime: Long = 0
         private var mPosted = false
+        private var mHasStartedForeground = false
 
-        // false for show, true for cancel
         @Ops
         private var mOps = 0
 
         fun release() {
+            SimpleHandler.getInstance().removeCallbacks(this)
+            mPosted = false
             mService = null
         }
 
@@ -667,12 +698,10 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
             if (mPosted) {
                 mOps = OPS_NOTIFY
             } else {
-                val now = SystemClock.currentThreadTimeMillis()
+                val now = SystemClock.elapsedRealtime()
                 if (now - mLastTime > DELAY) {
-                    // Wait long enough, do it now
                     mNotifyManager!!.notify(mId, mBuilder.build())
                 } else {
-                    // Too quick, post delay
                     mOps = OPS_NOTIFY
                     mPosted = true
                     SimpleHandler.getInstance().postDelayed(this, DELAY)
@@ -685,44 +714,52 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
             if (mPosted) {
                 mOps = OPS_CANCEL
             } else {
-                val now = SystemClock.currentThreadTimeMillis()
+                val now = SystemClock.elapsedRealtime()
                 if (now - mLastTime > DELAY) {
-                    // Wait long enough, do it now
                     mNotifyManager!!.cancel(mId)
                 } else {
-                    // Too quick, post delay
                     mOps = OPS_CANCEL
                     mPosted = true
                     SimpleHandler.getInstance().postDelayed(this, DELAY)
                 }
+                mLastTime = now
             }
         }
 
-        fun startForeground() {
+        fun startForeground(immediate: Boolean = false) {
+            if (immediate) {
+                if (mPosted) {
+                    SimpleHandler.getInstance().removeCallbacks(this)
+                    mPosted = false
+                }
+                applyStartForeground()
+                mLastTime = SystemClock.elapsedRealtime()
+                return
+            }
             if (mPosted) {
                 mOps = OPS_START_FOREGROUND
-            } else {
-                val now = SystemClock.currentThreadTimeMillis()
-                if (now - mLastTime > DELAY) {
-                    // Wait long enough, do it now
-                    if (mService != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            mService!!.startForeground(
-                                mId,
-                                mBuilder.build(),
-                                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                            )
-                        } else {
-                            mService!!.startForeground(mId, mBuilder.build())
-                        }
-                    }
-                } else {
-                    // Too quick, post delay
-                    mOps = OPS_START_FOREGROUND
-                    mPosted = true
-                    SimpleHandler.getInstance().postDelayed(this, DELAY)
-                }
+                return
             }
+            if (!mHasStartedForeground) {
+                applyStartForeground()
+                mLastTime = SystemClock.elapsedRealtime()
+                return
+            }
+            val now = SystemClock.elapsedRealtime()
+            if (now - mLastTime > DELAY) {
+                applyStartForeground()
+                mLastTime = now
+            } else {
+                mOps = OPS_START_FOREGROUND
+                mPosted = true
+                SimpleHandler.getInstance().postDelayed(this, DELAY)
+            }
+        }
+
+        private fun applyStartForeground() {
+            val service = mService ?: return
+            service.startForegroundCompat(mId, mBuilder.build())
+            mHasStartedForeground = true
         }
 
         override fun run() {
@@ -730,17 +767,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
             when (mOps) {
                 OPS_NOTIFY -> mNotifyManager!!.notify(mId, mBuilder.build())
                 OPS_CANCEL -> mNotifyManager!!.cancel(mId)
-                OPS_START_FOREGROUND -> if (mService != null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        mService!!.startForeground(
-                            mId,
-                            mBuilder.build(),
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                        )
-                    } else {
-                        mService!!.startForeground(mId, mBuilder.build())
-                    }
-                }
+                OPS_START_FOREGROUND -> applyStartForeground()
             }
         }
 
@@ -771,6 +798,8 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         const val KEY_GID_LIST: String = "gid_list"
 
         private const val TAG = "DownloadService"
+        private const val PENDING_INTENT_FLAGS =
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         private const val ID_DOWNLOADING = 1
         private const val ID_DOWNLOADED = 2
         private const val ID_509 = 3
