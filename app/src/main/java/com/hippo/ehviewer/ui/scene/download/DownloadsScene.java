@@ -126,13 +126,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
@@ -534,13 +532,11 @@ public class DownloadsScene extends ToolbarScene
             @Override
             public void onPageChanged(int newIndexPage) {
                 indexPage = newIndexPage;
-                queryUnreadSpiderInfo();
             }
 
             @Override
             public void onPageSizeChanged(int newPageSize) {
                 pageSize = newPageSize;
-                queryUnreadSpiderInfo();
             }
         });
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
@@ -786,13 +782,8 @@ public class DownloadsScene extends ToolbarScene
                         .setMessage(R.string.reset_reading_progress_message)
                         .setNegativeButton(android.R.string.cancel, null)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                            resetReadingProgressInUi();
                             if (mDownloadManager != null) {
-                                Toast.makeText(context, R.string.reset_reading_progress_processing,
-                                        Toast.LENGTH_SHORT).show();
-                                mDownloadManager.resetAllReadingProgress(() ->
-                                        Toast.makeText(context, R.string.reset_reading_progress_done,
-                                                Toast.LENGTH_SHORT).show());
+                                mDownloadManager.resetAllReadingProgress();
                             }
                         }).show();
                 return true;
@@ -1578,7 +1569,6 @@ public class DownloadsScene extends ToolbarScene
                     if (spiderInfo != null) {
                         mSpiderInfoMap.put(info.gid, spiderInfo);
                     }
-                    trimSpiderInfoMapToCurrentPage();
                 }
 
 //                mSpiderInfoMap.remove(info.gid);
@@ -1603,61 +1593,16 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    private void resetReadingProgressInUi() {
-        for (SpiderInfo spiderInfo : mSpiderInfoMap.values()) {
-            if (spiderInfo != null) {
-                spiderInfo.startPage = 0;
-            }
-        }
-        if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
-        }
-    }
-
-    @NonNull
-    private List<DownloadInfo> getCurrentPageList() {
-        if (mList == null) {
-            return Collections.emptyList();
-        }
-        if (mList.size() > paginationSize && canPagination) {
-            int from = pageSize * (indexPage - 1);
-            if (from < 0) {
-                from = 0;
-            }
-            if (from >= mList.size()) {
-                return Collections.emptyList();
-            }
-            int to = Math.min(from + pageSize, mList.size());
-            return mList.subList(from, to);
-        }
-        return mList;
-    }
-
-    private void trimSpiderInfoMapToCurrentPage() {
-        List<DownloadInfo> pageList = getCurrentPageList();
-        Set<Long> keep = new HashSet<>(pageList.size());
-        for (DownloadInfo info : pageList) {
-            keep.add(info.gid);
-        }
-        mSpiderInfoMap.keySet().retainAll(keep);
-    }
-
     private void queryUnreadSpiderInfo() {
         if (mList == null) {
             return;
         }
-        trimSpiderInfoMapToCurrentPage();
-        List<DownloadInfo> pageList = getCurrentPageList();
         List<DownloadInfo> requestList = new ArrayList<>();
-        for (int i = 0; i < pageList.size(); i++) {
-            DownloadInfo info = pageList.get(i);
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
             if (!mSpiderInfoMap.containsKey(info.gid) || mSpiderInfoMap.get(info.gid) == null) {
                 requestList.add(info);
             }
-        }
-        if (requestList.isEmpty()) {
-            return;
         }
         DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList, this::spiderInfoResultCallBack);
         executor.execute();
@@ -1666,7 +1611,6 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("NotifyDataSetChanged")
     private void spiderInfoResultCallBack(Map<Long, SpiderInfo> resultMap) {
         mSpiderInfoMap.putAll(resultMap);
-        trimSpiderInfoMapToCurrentPage();
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }

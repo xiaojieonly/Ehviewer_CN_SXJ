@@ -98,7 +98,6 @@ public class EhDaoGenerator {
         entity.addStringProperty("reclass");
         entity.addDateProperty("create_time");
         entity.addDateProperty("update_time");
-        entity.addStringProperty("location");
     }
 
 
@@ -122,7 +121,6 @@ public class EhDaoGenerator {
         javaClass.getField("reclass").setPublic();
         javaClass.getField("create_time").setPublic();
         javaClass.getField("update_time").setPublic();
-        javaClass.getField("location").setPublic();
 
         javaClass.addMethod("\t@Override\n" +
                 "\tpublic String toString() {\n" +

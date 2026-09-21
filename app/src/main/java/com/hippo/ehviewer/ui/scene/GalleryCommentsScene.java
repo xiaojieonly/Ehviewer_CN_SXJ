@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -43,8 +42,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -68,7 +65,6 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.GalleryComment;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
-import com.hippo.ehviewer.client.parser.GetEditCommentParser;
 import com.hippo.ehviewer.client.parser.VoteCommentParser;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.reveal.ViewAnimationUtils;
@@ -143,14 +139,6 @@ public final class GalleryCommentsScene extends ToolbarScene
 
     private boolean mShowAllComments = false;
     private boolean mRefreshingComments = false;
-    private boolean mGettingEditComment = false;
-
-    private int mOriginalSoftInputMode;
-
-    @Nullable
-    private ViewTreeObserver.OnGlobalLayoutListener mKeyboardLayoutListener;
-    private int mVisibleBottomBaseline = 0;
-    private int mLastRootHeight = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -205,9 +193,9 @@ public final class GalleryCommentsScene extends ToolbarScene
      * @param inflater
      * @param container
      * @param savedInstanceState
-     * @return View
+     * @return
      */
-    @NonNull
+    @Nullable
     @Override
     public View onCreateView3(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -226,7 +214,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
-        assert drawable != null;
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
 
@@ -259,8 +246,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         addAboveSnackView(mEditPanel);
         addAboveSnackView(mFabLayout);
 
-        setupKeyboardListener();
-
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
         updateView(false);
@@ -277,11 +262,6 @@ public final class GalleryCommentsScene extends ToolbarScene
             mRecyclerView = null;
         }
         if (null != mEditPanel) {
-            if (mKeyboardLayoutListener != null) {
-                mEditPanel.getRootView().getViewTreeObserver()
-                        .removeOnGlobalLayoutListener(mKeyboardLayoutListener);
-                mKeyboardLayoutListener = null;
-            }
             removeAboveSnackView(mEditPanel);
             mEditPanel = null;
         }
@@ -302,62 +282,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         super.onViewCreated(view, savedInstanceState);
         setTitle(R.string.gallery_comments);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-    }
-
-    private void setupKeyboardListener() {
-        if (mEditPanel == null) {
-            return;
-        }
-        final View root = mEditPanel.getRootView();
-        mKeyboardLayoutListener = () -> {
-            if (mEditPanel == null) {
-                return;
-            }
-            int rootHeight = root.getHeight();
-            // 分屏/折叠屏尺寸变化时重置基准
-            if (rootHeight != mLastRootHeight) {
-                mLastRootHeight = rootHeight;
-                mVisibleBottomBaseline = 0;
-            }
-            Rect frame = new Rect();
-            root.getWindowVisibleDisplayFrame(frame);
-            if (frame.bottom > mVisibleBottomBaseline) {
-                mVisibleBottomBaseline = frame.bottom;
-            }
-            int keyboardHeight = mVisibleBottomBaseline - frame.bottom;
-            // 小幅变化（导航栏显隐等）不算键盘
-            if (keyboardHeight < rootHeight * 0.15f) {
-                keyboardHeight = 0;
-            }
-            ViewGroup.MarginLayoutParams lp =
-                    (ViewGroup.MarginLayoutParams) mEditPanel.getLayoutParams();
-            if (lp.bottomMargin != keyboardHeight) {
-                lp.bottomMargin = keyboardHeight;
-                mEditPanel.setLayoutParams(lp);
-            }
-        };
-        root.getViewTreeObserver().addOnGlobalLayoutListener(mKeyboardLayoutListener);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        MainActivity activity = getActivity2();
-        if (activity != null) {
-            mOriginalSoftInputMode = activity.getWindow().getAttributes().softInputMode;
-            activity.getWindow().setSoftInputMode(
-                    WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
-                            | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        }
-    }
-
-    @Override
-    public void onPause() {
-        MainActivity activity = getActivity2();
-        if (activity != null) {
-            activity.getWindow().setSoftInputMode(mOriginalSoftInputMode);
-        }
-        super.onPause();
     }
 
     @Override
@@ -383,7 +307,7 @@ public final class GalleryCommentsScene extends ToolbarScene
 
 
 
-    private static class InfoHolder extends RecyclerView.ViewHolder {
+    private class InfoHolder extends RecyclerView.ViewHolder {
 
         private final TextView key;
         private final TextView value;
@@ -419,14 +343,13 @@ public final class GalleryCommentsScene extends ToolbarScene
         final LayoutInflater inflater = LayoutInflater.from(context);
         EasyRecyclerView rv = (EasyRecyclerView) inflater.inflate(R.layout.dialog_recycler_view, null);
         rv.setAdapter(new RecyclerView.Adapter<InfoHolder>() {
-            @NonNull
             @Override
-            public InfoHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            public InfoHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 return new InfoHolder(inflater.inflate(R.layout.item_drawer_favorites, parent, false));
             }
 
             @Override
-            public void onBindViewHolder(@NonNull InfoHolder holder, int position) {
+            public void onBindViewHolder(InfoHolder holder, int position) {
                 holder.key.setText(userArray[position]);
                 holder.value.setText(voteArray[position]);
             }
@@ -480,8 +403,7 @@ public final class GalleryCommentsScene extends ToolbarScene
         }
 
         new AlertDialog.Builder(context)
-                .setItems(menu.toArray(new String[0]), new DialogInterface.OnClickListener() {
-                    @SuppressLint({"NonConstantResourceId", "NotifyDataSetChanged"})
+                .setItems(menu.toArray(new String[menu.size()]), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which < 0 || which >= menuId.size()) {
@@ -504,12 +426,14 @@ public final class GalleryCommentsScene extends ToolbarScene
                                 showVoteStatusDialog(context, comment.voteState);
                                 break;
                             case R.id.edit_comment:
-                                getEditComment(comment.id);
+                                prepareEditComment(comment.id);
+                                if (!mInAnimation && mEditPanel != null && mEditPanel.getVisibility() != View.VISIBLE) {
+                                    showEditPanel(true);
+                                }
                                 break;
                             case R.id.join_blacklist:
                                 EhDB.insertBlackList(BlackListUtils.parseBlacklist(comment));
                                 mCommentList.DeleteComment(position);
-                                assert mAdapter != null;
                                 mAdapter.notifyDataSetChanged();
                                 updateView(true);
                                 break;
@@ -526,7 +450,8 @@ public final class GalleryCommentsScene extends ToolbarScene
         }
 
         RecyclerView.ViewHolder holder = parent.getChildViewHolder(view);
-        if (holder instanceof ActualCommentHolder commentHolder) {
+        if (holder instanceof ActualCommentHolder) {
+            ActualCommentHolder commentHolder = (ActualCommentHolder) holder;
             ClickableSpan span = commentHolder.comment.getCurrentSpan();
             commentHolder.comment.clearCurrentSpan();
 
@@ -578,22 +503,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         if (mSendImage != null) {
             mSendImage.setImageDrawable(mPencilDrawable);
         }
-    }
-
-    private void getEditComment(long commentId) {
-        Context context = getEHContext();
-        MainActivity activity = getActivity2();
-        if (mGettingEditComment || context == null || activity == null) {
-            return;
-        }
-
-        mGettingEditComment = true;
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_EDIT_COMMENT)
-                .setArgs(mApiUid, mApiKey, mGid, mToken, commentId)
-                .setCallback(new GetEditCommentListener(
-                        context, activity.getStageId(), getTag()));
-        EhApplication.getEhClient(context).execute(request);
     }
 
     private void showEditPanelWithAnimation() {
@@ -944,23 +853,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         updateView(true);
     }
 
-    private void onGetEditCommentSuccess(GetEditCommentParser.Result result) {
-        mGettingEditComment = false;
-        prepareEditComment(result.id);
-        if (mEditText != null) {
-            mEditText.setText(result.comment);
-            mEditText.setSelection(mEditText.length());
-        }
-        if (!mInAnimation && mEditPanel != null
-                && mEditPanel.getVisibility() != View.VISIBLE) {
-            showEditPanel(true);
-        }
-    }
-
-    private void onGetEditCommentFinished() {
-        mGettingEditComment = false;
-    }
-
     private void onVoteCommentSuccess(VoteCommentParser.Result result) {
         if (mAdapter == null || mCommentList == null || mCommentList.comments == null ) {
             return;
@@ -1055,45 +947,6 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         @Override
         public void onCancel() {
-        }
-
-        @Override
-        public boolean isInstance(SceneFragment scene) {
-            return scene instanceof GalleryCommentsScene;
-        }
-    }
-
-    private static class GetEditCommentListener
-            extends EhCallback<GalleryCommentsScene, GetEditCommentParser.Result> {
-
-        public GetEditCommentListener(Context context, int stageId, String sceneTag) {
-            super(context, stageId, sceneTag);
-        }
-
-        @Override
-        public void onSuccess(GetEditCommentParser.Result result) {
-            GalleryCommentsScene scene = getScene();
-            if (scene != null) {
-                scene.onGetEditCommentSuccess(result);
-            }
-        }
-
-        @Override
-        public void onFailure(Exception e) {
-            GalleryCommentsScene scene = getScene();
-            if (scene != null) {
-                scene.onGetEditCommentFinished();
-            }
-            showTip(getContent().getString(R.string.edit_comment_failed) + "\n"
-                    + ExceptionUtils.getReadableString(e), LENGTH_LONG);
-        }
-
-        @Override
-        public void onCancel() {
-            GalleryCommentsScene scene = getScene();
-            if (scene != null) {
-                scene.onGetEditCommentFinished();
-            }
         }
 
         @Override

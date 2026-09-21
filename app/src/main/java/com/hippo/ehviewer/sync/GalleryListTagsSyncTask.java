@@ -104,9 +104,6 @@ public class GalleryListTagsSyncTask {
             case "reclass":
                 tags.reclass = getTagString(tags.reclass, tagArr[1]);
                 break;
-            case "location":
-                tags.location = getTagString(tags.location, tagArr[1]);
-                break;
             default:
         }
     }

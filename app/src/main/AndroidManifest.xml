@@ -27,9 +27,6 @@
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
 
     <application
         android:name=".EhApplication"
@@ -182,7 +179,7 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="screenSize|uiMode"
-            android:theme="@style/AppTheme.Settings" />
+            android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
@@ -249,10 +246,6 @@
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
-        <service
-            android:name=".download.ArchiverDownloadService"
-            android:foregroundServiceType="dataSync"
-            android:label="@string/archiver_download_service_label" />
 
         <provider
             android:name="com.hippo.content.FileProvider"

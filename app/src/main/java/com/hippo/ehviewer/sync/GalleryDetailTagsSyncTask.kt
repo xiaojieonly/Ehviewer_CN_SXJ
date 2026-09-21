@@ -55,7 +55,6 @@ class GalleryDetailTagsSyncTask(val detail: GalleryDetail) : Thread() {
             "other" -> tags.other = getTagString(group.size(), group)
             "parody" -> tags.parody = getTagString(group.size(), group)
             "reclass" -> tags.reclass = getTagString(group.size(), group)
-            "location" -> tags.location = getTagString(group.size(), group)
             else -> {}
         }
     }

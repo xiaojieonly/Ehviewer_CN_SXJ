@@ -38,7 +38,6 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
         public final static Property Reclass = new Property(13, String.class, "reclass", false, "RECLASS");
         public final static Property Create_time = new Property(14, java.util.Date.class, "create_time", false, "CREATE_TIME");
         public final static Property Update_time = new Property(15, java.util.Date.class, "update_time", false, "UPDATE_TIME");
-        public final static Property Location = new Property(16, String.class, "location", false, "LOCATION");
     };
 
 
@@ -69,8 +68,7 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
                 "\"PARODY\" TEXT," + // 12: parody
                 "\"RECLASS\" TEXT," + // 13: reclass
                 "\"CREATE_TIME\" INTEGER," + // 14: create_time
-                "\"UPDATE_TIME\" INTEGER," + // 15: update_time
-                "\"LOCATION\" TEXT);"); // 16: location
+                "\"UPDATE_TIME\" INTEGER);"); // 15: update_time
     }
 
     /** Drops the underlying database table. */
@@ -158,11 +156,6 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
         if (update_time != null) {
             stmt.bindLong(16, update_time.getTime());
         }
- 
-        String location = entity.getLocation();
-        if (location != null) {
-            stmt.bindString(17, location);
-        }
     }
 
     @Override
@@ -244,11 +237,6 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
         if (update_time != null) {
             stmt.bindLong(16, update_time.getTime());
         }
- 
-        String location = entity.getLocation();
-        if (location != null) {
-            stmt.bindString(17, location);
-        }
     }
 
     @Override
@@ -274,8 +262,7 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
             cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // parody
             cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // reclass
             cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)), // create_time
-            cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)), // update_time
-            cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16) // location
+            cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)) // update_time
         );
         return entity;
     }
@@ -298,7 +285,6 @@ public class GalleryTagsDao extends AbstractDao<GalleryTags, Long> {
         entity.setReclass(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
         entity.setCreate_time(cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)));
         entity.setUpdate_time(cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)));
-        entity.setLocation(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
      }
     
     @Override
