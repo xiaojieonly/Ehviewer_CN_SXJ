@@ -31,20 +31,35 @@ import java.io.OutputStream
  * 缩略图数据容器
  */
 class ThumbDataContainer(private val mInfo: DownloadInfo) : DataContainer {
+    private var mDirectory: UniFile? = null
     private var mFile: UniFile? = null
 
-    private fun ensureFile() {
-        if (mFile == null) {
-            val dir = SpiderDen.getGalleryDownloadDir(mInfo)
+    private fun ensureDirectory(): UniFile? {
+        if (mDirectory == null) {
+            val dir = SpiderDen.getExistingGalleryDownloadDir(mInfo)
             if (dir != null && dir.isDirectory()) {
-                mFile = dir.createFile(".thumb")
+                mDirectory = dir
             }
         }
+        return mDirectory
+    }
+
+    private fun findExistingFile(): UniFile? {
+        val dir = ensureDirectory() ?: return null
+        val file = dir.findFile(".thumb")
+        if (file == null || !file.isFile) return null
+        if (file.length() <= 0L) {
+            file.delete()
+            return null
+        }
+        mFile = file
+        return file
     }
 
     override fun isEnabled(): Boolean {
-        ensureFile()
-        return mFile != null
+        // Reading must never create .thumb. A missing file means Conaco should continue to the
+        // network source; the directory is needed only if that response is later saved.
+        return ensureDirectory() != null
     }
 
     override fun onUrlMoved(requestUrl: String?, responseUrl: String?) {
@@ -56,36 +71,38 @@ class ThumbDataContainer(private val mInfo: DownloadInfo) : DataContainer {
         mediaType: String?,
         notify: ProgressNotifier?
     ): Boolean {
-        ensureFile()
-        if (mFile == null) {
-            return false
-        }
+        val dir = ensureDirectory() ?: return false
+        val temporaryName = ".thumb.tmp-${System.nanoTime().toString(16)}"
+        val temporary = dir.createFile(temporaryName) ?: return false
 
         var os: OutputStream? = null
         try {
-            os = mFile!!.openOutputStream()
+            os = temporary.openOutputStream()
             IOUtils.copy(`is`, os)
-            return true
+            IOUtils.closeQuietly(os)
+            os = null
+            if (temporary.length() <= 0L) return false
+            val old = dir.findFile(".thumb")
+            if (old != null && !old.delete()) return false
+            if (!temporary.renameTo(".thumb")) return false
+            mFile = dir.findFile(".thumb")
+            return mFile != null
         } catch (e: IOException) {
             e.printStackTrace()
             return false
         } finally {
             IOUtils.closeQuietly(os)
+            if (temporary.exists()) temporary.delete()
         }
     }
 
     override fun get(): InputStreamPipe? {
-        ensureFile()
-        if (mFile != null) {
-            return UniFileInputStreamPipe(mFile)
-        } else {
-            return null
-        }
+        val file = findExistingFile() ?: return null
+        return UniFileInputStreamPipe(file)
     }
 
     override fun remove() {
-        if (mFile != null) {
-            mFile!!.delete()
-        }
+        findExistingFile()?.delete()
+        mFile = null
     }
 }
