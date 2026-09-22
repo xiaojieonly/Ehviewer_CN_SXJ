@@ -370,8 +370,8 @@ public class DownloadsScene extends ToolbarScene
         PaginationIndicator paginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
         mPaginationController.setPaginationIndicator(paginationIndicator);
 
-        paginationIndicator.setPerPageCountChoices(mPaginationController.getPerPageCountChoices(),
-                mPaginationController.getPageSizePos(mPaginationController.getPageSize()));
+        paginationIndicator.setPerPageCountChoices(mPaginationController.perPageCountChoices,
+                mPaginationController.getPageSizePos(mPaginationController.pageSize));
 
         mViewTransition = new ViewTransition(content, tip);
 
@@ -534,7 +534,7 @@ public class DownloadsScene extends ToolbarScene
             }
         }
 
-        if (mInitPosition >= 0 && mPaginationController.getIndexPage() != 1) {
+        if (mInitPosition >= 0 && mPaginationController.indexPage != 1) {
             mPaginationController.initPage(mInitPosition);
             mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
             mInitPosition = -1;
@@ -976,17 +976,17 @@ public class DownloadsScene extends ToolbarScene
     // DownloadAdapterCallback 接口实现
     @Override
     public int getIndexPage() {
-        return mPaginationController.getIndexPage();
+        return mPaginationController.indexPage;
     }
 
     @Override
     public int getPageSize() {
-        return mPaginationController.getPageSize();
+        return mPaginationController.pageSize;
     }
 
     @Override
     public int getPaginationSize() {
-        return mPaginationController.getPaginationSize();
+        return mPaginationController.paginationSize;
     }
 
     @Override
