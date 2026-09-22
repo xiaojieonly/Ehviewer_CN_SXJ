@@ -225,4 +225,11 @@
     <color name="light_blue_50">#FFE1F5FE</color>
     <color name="light_blue_200">#FF81D4FA</color>
 
+    <!-- 下载状态横线颜色 -->
+    <color name="download_state_line_none">@color/grey_500</color>
+    <color name="download_state_line_wait">@color/yellow_800</color>
+    <color name="download_state_line_download">@color/colorAccent</color>
+    <color name="download_state_line_finish">@color/deep_green_600</color>
+    <color name="download_state_line_failed">@color/red_500</color>
+
 </resources>

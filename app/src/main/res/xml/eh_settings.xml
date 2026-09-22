@@ -108,6 +108,24 @@
 
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
+        android:key="history_list_mode"
+        android:summary="%s"
+        android:title="@string/settings_eh_history_list_mode"
+        app:allowDividerAbove="true"
+        app:entries="@array/list_mode_entries"
+        app:entryValues="@array/list_mode_entry_values" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="0"
+        android:key="download_list_mode"
+        android:summary="%s"
+        android:title="@string/settings_eh_download_list_mode"
+        app:allowDividerAbove="true"
+        app:entries="@array/list_mode_entries"
+        app:entryValues="@array/list_mode_entry_values" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="0"
         android:key="detail_size"
         android:summary="%s"
         android:title="@string/settings_eh_detail_size"

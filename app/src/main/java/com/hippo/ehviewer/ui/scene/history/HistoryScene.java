@@ -54,6 +54,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.drawable.TriangleDrawable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.HistoryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
@@ -64,6 +65,7 @@ import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.widget.SimpleRatingView;
+import com.hippo.ehviewer.widget.TileThumb;
 import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
@@ -81,6 +83,9 @@ public class HistoryScene extends ToolbarScene
         implements EasyRecyclerView.OnItemClickListener,
         EasyRecyclerView.OnItemLongClickListener{
 
+    private static final int TYPE_LIST = 0;
+    private static final int TYPE_GRID = 1;
+
     /*---------------
      View life cycle
      ---------------*/
@@ -92,6 +97,13 @@ public class HistoryScene extends ToolbarScene
     private RecyclerView.Adapter<?> mAdapter;
     @Nullable
     private LazyList<HistoryInfo> mLazyList;
+
+    @Nullable
+    private AutoStaggeredGridLayoutManager mLayoutManager;
+
+    private int mListMode = TYPE_LIST;
+    private MarginItemDecoration mListDecoration;
+    private MarginItemDecoration mGridDecoration;
 
     @Override
     public int getNavCheckedItem() {
@@ -130,20 +142,17 @@ public class HistoryScene extends ToolbarScene
         mRecyclerView.setItemAnimator(animator);
         AutoStaggeredGridLayoutManager layoutManager = new AutoStaggeredGridLayoutManager(
                 0, StaggeredGridLayoutManager.VERTICAL);
-        layoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
-        layoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
+        mLayoutManager = layoutManager;
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
-        int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
-        int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
-        int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_v);
-        MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
-        mRecyclerView.addItemDecoration(decoration);
-        decoration.applyPaddings(mRecyclerView);
+
+        mListMode = Settings.getHistoryListMode();
+        applyListMode(resources);
+
         guardManager.attachRecyclerView(mRecyclerView);
         swipeManager.attachRecyclerView(mRecyclerView);
 
@@ -181,6 +190,10 @@ public class HistoryScene extends ToolbarScene
             mRecyclerView = null;
         }
 
+        mLayoutManager = null;
+        mListDecoration = null;
+        mGridDecoration = null;
+
         mViewTransition = null;
         mAdapter = null;
     }
@@ -192,6 +205,50 @@ public class HistoryScene extends ToolbarScene
             mLazyList.close();
         }
         mLazyList = lazyList;
+    }
+
+    private void applyListMode(Resources resources) {
+        if (null == mLayoutManager || null == mRecyclerView) {
+            return;
+        }
+
+        if (mListMode == TYPE_GRID) {
+            int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+            mLayoutManager.setColumnSize(columnWidth);
+            mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_SUITABLE_SIZE);
+
+            if (null != mListDecoration) {
+                mRecyclerView.removeItemDecoration(mListDecoration);
+            }
+            if (null == mGridDecoration) {
+                int interval = resources.getDimensionPixelOffset(R.dimen.gallery_grid_interval);
+                int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_grid_margin_h);
+                int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_grid_margin_v);
+                mGridDecoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
+            }
+            mRecyclerView.addItemDecoration(mGridDecoration);
+            mGridDecoration.applyPaddings(mRecyclerView);
+        } else {
+            int columnWidth = resources.getDimensionPixelOffset(Settings.getDetailSizeResId());
+            mLayoutManager.setColumnSize(columnWidth);
+            mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
+
+            if (null != mGridDecoration) {
+                mRecyclerView.removeItemDecoration(mGridDecoration);
+            }
+            if (null == mListDecoration) {
+                int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
+                int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
+                int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_v);
+                mListDecoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
+            }
+            mRecyclerView.addItemDecoration(mListDecoration);
+            mListDecoration.applyPaddings(mRecyclerView);
+        }
+
+        if (null != mAdapter) {
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     private void updateView(boolean animation) {
@@ -279,23 +336,50 @@ public class HistoryScene extends ToolbarScene
         }
 
         final GalleryInfo gi = mLazyList.get(position);
-        new AlertDialog.Builder(context)
-                .setTitle(EhUtils.getSuitableTitle(gi))
-                .setItems(R.array.gallery_list_menu_entries, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0: // Download
-                                CommonOperations.startDownload(activity, gi, false);
-                                break;
-                            case 1: // Favorites
-                                CommonOperations.addToFavorites(activity, gi,
-                                        new addToFavoriteListener(context,
-                                                activity.getStageId(), getTag()), false);
-                                break;
+
+        if (mListMode == TYPE_GRID) {
+            new AlertDialog.Builder(context)
+                    .setTitle(EhUtils.getSuitableTitle(gi))
+                    .setItems(R.array.history_grid_menu_entries, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case 0: // Download
+                                    CommonOperations.startDownload(activity, gi, false);
+                                    break;
+                                case 1: // Favorites
+                                    CommonOperations.addToFavorites(activity, gi,
+                                            new addToFavoriteListener(context,
+                                                    activity.getStageId(), getTag()), false);
+                                    break;
+                                case 2: // Delete
+                                    EhDB.deleteHistoryInfo((HistoryInfo) gi);
+                                    updateLazyList();
+                                    mAdapter.notifyDataSetChanged();
+                                    updateView(true);
+                                    break;
+                            }
                         }
-                    }
-                }).show();
+                    }).show();
+        } else {
+            new AlertDialog.Builder(context)
+                    .setTitle(EhUtils.getSuitableTitle(gi))
+                    .setItems(R.array.gallery_list_menu_entries, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case 0: // Download
+                                    CommonOperations.startDownload(activity, gi, false);
+                                    break;
+                                case 1: // Favorites
+                                    CommonOperations.addToFavorites(activity, gi,
+                                            new addToFavoriteListener(context,
+                                                    activity.getStageId(), getTag()), false);
+                                    break;
+                            }
+                        }
+                    }).show();
+        }
         return true;
     }
 
@@ -355,13 +439,21 @@ public class HistoryScene extends ToolbarScene
         }
 
         @Override
-        public HistoryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            HistoryHolder holder = new HistoryHolder(mInflater.inflate(R.layout.item_history, parent, false));
+        public int getItemViewType(int position) {
+            return mListMode;
+        }
 
-            ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
-            lp.width = mListThumbWidth;
-            lp.height = mListThumbHeight;
-            holder.thumb.setLayoutParams(lp);
+        @Override
+        public HistoryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            int layoutId = viewType == TYPE_GRID ? R.layout.item_history_grid : R.layout.item_history;
+            HistoryHolder holder = new HistoryHolder(mInflater.inflate(layoutId, parent, false));
+
+            if (viewType == TYPE_LIST) {
+                ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
+                lp.width = mListThumbWidth;
+                lp.height = mListThumbHeight;
+                holder.thumb.setLayoutParams(lp);
+            }
 
             return holder;
         }
@@ -373,24 +465,50 @@ public class HistoryScene extends ToolbarScene
             }
 
             GalleryInfo gi = mLazyList.get(position);
-            holder.thumb.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
-            holder.title.setText(EhUtils.getSuitableTitle(gi));
-            holder.uploader.setText(gi.uploader);
-            holder.rating.setRating(gi.rating);
-            TextView category = holder.category;
-            String newCategoryText = EhUtils.getCategory(gi.category);
-            if (!newCategoryText.equals(category.getText())) {
-                category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(gi.category));
+            if (mListMode == TYPE_GRID) {
+                bindGridHolder(holder, gi);
+            } else {
+                bindListHolder(holder, gi);
             }
-            holder.posted.setText(gi.posted);
-            holder.simpleLanguage.setText(gi.simpleLanguage);
 
             // Update transition name
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 long gid = gi.gid;
                 ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(gid));
             }
+        }
+
+        private void bindListHolder(HistoryHolder holder, GalleryInfo gi) {
+            holder.thumb.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
+            holder.title.setText(EhUtils.getSuitableTitle(gi));
+            holder.uploader.setText(gi.uploader);
+            holder.rating.setRating(gi.rating);
+            TextView category = holder.category;
+            String newCategoryText = EhUtils.getCategory(gi.category);
+            if (!newCategoryText.equals(category.getText().toString())) {
+                category.setText(newCategoryText);
+                category.setBackgroundColor(EhUtils.getCategoryColor(gi.category));
+            }
+            holder.posted.setText(gi.posted);
+            holder.simpleLanguage.setText(gi.simpleLanguage);
+        }
+
+        private void bindGridHolder(HistoryHolder holder, GalleryInfo gi) {
+            if (holder.thumb instanceof TileThumb) {
+                ((TileThumb) holder.thumb).setThumbSize(gi.thumbWidth, gi.thumbHeight);
+            }
+            holder.thumb.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
+
+            View category = holder.category;
+            Drawable drawable = category.getBackground();
+            int color = EhUtils.getCategoryColor(gi.category);
+            if (!(drawable instanceof TriangleDrawable)) {
+                drawable = new TriangleDrawable(color);
+                category.setBackground(drawable);
+            } else {
+                ((TriangleDrawable) drawable).setColor(color);
+            }
+            holder.simpleLanguage.setText(gi.simpleLanguage);
         }
 
         @Override
@@ -400,6 +518,9 @@ public class HistoryScene extends ToolbarScene
 
         @Override
         public int onGetSwipeReactionType(HistoryHolder holder, int position, int x, int y) {
+            if (mListMode == TYPE_GRID) {
+                return SwipeableItemConstants.REACTION_CAN_NOT_SWIPE_ANY;
+            }
             return SwipeableItemConstants.REACTION_CAN_SWIPE_LEFT;
         }
 

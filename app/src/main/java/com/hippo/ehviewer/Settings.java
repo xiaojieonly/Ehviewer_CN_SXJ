@@ -1534,6 +1534,17 @@ public class Settings {
         putBoolean(KEY_DRAG_DOWNLOAD_GALLERY, value);
     }
 
+    public static final String KEY_HISTORY_LIST_MODE = "history_list_mode";
+    private static final int DEFAULT_HISTORY_LIST_MODE = 0;
+
+    public static int getHistoryListMode() {
+        return getIntFromStr(KEY_HISTORY_LIST_MODE, DEFAULT_HISTORY_LIST_MODE);
+    }
+
+    public static void putHistoryListMode(int value) {
+        putIntToStr(KEY_HISTORY_LIST_MODE, value);
+    }
+
     public static final String KEY_HISTORY_INFO_SIZE = "history_info_size";
 
     public static int DEFAULT_HISTORY_INFO_SIZE = 100;
@@ -1549,6 +1560,17 @@ public class Settings {
 
     public static void setHistoryInfoSize(int value) {
         putIntToStr(KEY_HISTORY_INFO_SIZE, value);
+    }
+
+    public static final String KEY_DOWNLOAD_LIST_MODE = "download_list_mode";
+    private static final int DEFAULT_DOWNLOAD_LIST_MODE = 0;
+
+    public static int getDownloadListMode() {
+        return getIntFromStr(KEY_DOWNLOAD_LIST_MODE, DEFAULT_DOWNLOAD_LIST_MODE);
+    }
+
+    public static void putDownloadListMode(int value) {
+        putIntToStr(KEY_DOWNLOAD_LIST_MODE, value);
     }
 
     public static final String KEY_DOWNLOAD_TIMEOUT = "download_timeout";

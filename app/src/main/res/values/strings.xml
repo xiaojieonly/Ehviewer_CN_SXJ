@@ -603,6 +603,8 @@
     <string name="settings_eh_gallery_site">Gallery site</string>
     <string name="settings_eh_launch_page">Launch page</string>
     <string name="settings_eh_list_mode">List mode</string>
+    <string name="settings_eh_history_list_mode">History list mode</string>
+    <string name="settings_eh_download_list_mode">Download list mode</string>
     <string name="settings_eh_list_mode_detail">Detail</string>
     <string name="settings_eh_list_mode_thumb">Thumb</string>
     <string name="settings_eh_detail_size">Detail size</string>

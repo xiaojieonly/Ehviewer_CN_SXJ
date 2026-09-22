@@ -513,6 +513,8 @@
     <string name="settings_eh_gallery_site">画廊站点</string>
     <string name="settings_eh_launch_page">启动页</string>
     <string name="settings_eh_list_mode">列表模式</string>
+    <string name="settings_eh_history_list_mode">历史列表模式</string>
+    <string name="settings_eh_download_list_mode">下载列表模式</string>
     <string name="settings_eh_list_mode_detail">详情</string>
     <string name="settings_eh_list_mode_thumb">缩略图</string>
     <string name="settings_eh_list_show_read_progress">显示阅读进度</string>

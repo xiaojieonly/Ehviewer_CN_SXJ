@@ -23,6 +23,8 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +39,7 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.android.resource.AttrResources;
+import com.hippo.drawable.TriangleDrawable;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
@@ -54,6 +57,7 @@ import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.widget.SimpleRatingView;
+import com.hippo.ehviewer.widget.TileThumb;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.ripple.Ripple;
@@ -84,11 +88,15 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     private static final String TAG = DownloadAdapter.class.getSimpleName();
     public static boolean DRAG_ENABLE = false;
 
+    public static final int TYPE_LIST = 0;
+    public static final int TYPE_GRID = 1;
+
     private final LayoutInflater mInflater;
     private final int mListThumbWidth;
     private final int mListThumbHeight;
     private final DownloadsScene mScene;
     private final DownloadAdapterCallback mCallback;
+    private int mType = TYPE_LIST;
 
     private View movedItem = null;
 
@@ -111,6 +119,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         DRAG_ENABLE = Settings.getDragDownloadGallery();
         this.mScene = scene;
         this.mCallback = callback;
+        this.mType = Settings.getDownloadListMode();
         
         LayoutInflater mInflater1;
         try {
@@ -149,15 +158,23 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         return list.get(posInList).gid;
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        return mType;
+    }
+
     @NonNull
     @Override
     public DownloadHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        DownloadHolder holder = new DownloadHolder(mInflater.inflate(R.layout.item_download, parent, false));
+        int layoutId = viewType == TYPE_GRID ? R.layout.item_download_grid : R.layout.item_download;
+        DownloadHolder holder = new DownloadHolder(mInflater.inflate(layoutId, parent, false));
 
-        ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
-        lp.width = mListThumbWidth;
-        lp.height = mListThumbHeight;
-        holder.thumb.setLayoutParams(lp);
+        if (viewType == TYPE_LIST) {
+            ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
+            lp.width = mListThumbWidth;
+            lp.height = mListThumbHeight;
+            holder.thumb.setLayoutParams(lp);
+        }
 
         return holder;
     }
@@ -184,54 +201,164 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 loadArchiveThumbnail(holder.thumb, Uri.parse(info.archiveUri));
             } else {
                 // Normal thumbnail loading for regular downloads
+                if (holder.thumb instanceof TileThumb) {
+                    ((TileThumb) holder.thumb).setThumbSize(info.thumbWidth, info.thumbHeight);
+                }
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true, false);
             }
 
-
-
-            holder.title.setText(title);
-            holder.uploader.setText(info.uploader);
-
-            // Handle rating display for imported archives
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
-                // For imported archives, show 5 stars or hide rating
-                holder.rating.setRating(5.0f);
+            if (mType == TYPE_GRID) {
+                bindGridState(holder, info);
             } else {
-                // For normal downloads, show actual rating
-                holder.rating.setRating(info.rating);
+                bindListInfo(holder, info);
             }
-
-            SpiderInfo spiderInfo = mCallback.getSpiderInfoMap().get(info.gid);
-
-            if (spiderInfo != null) {
-                int startPage = spiderInfo.startPage + 1;
-                String readText = startPage + "/" + spiderInfo.pages;
-                holder.readProgress.setText(readText);
-            }
-
-            TextView category = holder.category;
-            String newCategoryText = EhUtils.getCategory(info.category);
-            int categoryColor;
-            // Special handling for imported archives - prioritize archiveUri over category field
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
-                newCategoryText = mScene.getString(R.string.imported_archive_category);
-                categoryColor = 0xFF4CAF50; // Green color for imported archives
-            } else {
-                newCategoryText = EhUtils.getCategory(info.category);
-                categoryColor = EhUtils.getCategoryColor(info.category);
-            }
-
-            if (!newCategoryText.equals(category.getText())) {
-                category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
-            }
-            bindForState(holder, info);
 
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         } catch (Exception e) {
             Analytics.recordException(e);
+        }
+    }
+
+    private void bindListInfo(DownloadHolder holder, DownloadInfo info) {
+        // 下載狀態以右側橫線顏色表示
+        if (holder.stateLine != null) {
+            holder.stateLine.setBackgroundColor(getStateLineColor(info));
+        }
+
+
+        if (holder.title != null) {
+            holder.title.setText(EhUtils.getSuitableTitle(info));
+        }
+        if (holder.uploader != null) {
+            holder.uploader.setText(info.uploader);
+        }
+
+        // Handle rating display for imported archives
+        if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            // For imported archives, show 5 stars or hide rating
+            holder.rating.setRating(5.0f);
+        } else {
+            // For normal downloads, show actual rating
+            holder.rating.setRating(info.rating);
+        }
+
+        SpiderInfo spiderInfo = mCallback.getSpiderInfoMap().get(info.gid);
+        if (spiderInfo != null) {
+            int startPage = spiderInfo.startPage + 1;
+            String readText = startPage + "/" + spiderInfo.pages;
+            holder.readProgress.setText(readText);
+        }
+
+        TextView category = holder.category;
+        String newCategoryText = EhUtils.getCategory(info.category);
+        int categoryColor;
+        // Special handling for imported archives - prioritize archiveUri over category field
+        if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            newCategoryText = mScene.getString(R.string.imported_archive_category);
+            categoryColor = 0xFF4CAF50; // Green color for imported archives
+        } else {
+            newCategoryText = EhUtils.getCategory(info.category);
+            categoryColor = EhUtils.getCategoryColor(info.category);
+        }
+
+        if (!newCategoryText.equals(category.getText().toString())) {
+            category.setText(newCategoryText);
+            category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
+        }
+        bindForState(holder, info);
+    }
+
+    private void bindGridState(DownloadHolder holder, DownloadInfo info) {
+        if (holder.stateLine != null) {
+            holder.stateLine.setBackgroundColor(getStateLineColor(info));
+        }
+
+        TextView category = holder.category;
+        if (category != null) {
+            category.setText(null);
+            int color = info.archiveUri != null && info.archiveUri.startsWith("content://")
+                    ? 0xFF4CAF50
+                    : EhUtils.getCategoryColor(info.category);
+
+            Drawable drawable = category.getBackground();
+            if (!(drawable instanceof TriangleDrawable)) {
+                drawable = new TriangleDrawable(color);
+                category.setBackground(drawable);
+            } else {
+                ((TriangleDrawable) drawable).setColor(color);
+            }
+        }
+
+        if (holder.simpleLanguage != null) {
+            holder.simpleLanguage.setText(info.simpleLanguage);
+        }
+
+        Resources resources = mScene.getResources2();
+        if (resources == null) {
+            return;
+        }
+
+        boolean isImportedArchive = info.archiveUri != null && info.archiveUri.startsWith("content://");
+        if (isImportedArchive) {
+            if (holder.progressBar != null) {
+                holder.progressBar.setVisibility(View.GONE);
+            }
+            if (holder.percent != null) {
+                holder.percent.setVisibility(View.GONE);
+            }
+            return;
+        }
+
+        switch (info.state) {
+            case DownloadInfo.STATE_NONE:
+                setGridState(holder, resources.getString(R.string.download_state_none));
+                break;
+            case DownloadInfo.STATE_WAIT:
+                setGridState(holder, resources.getString(R.string.download_state_wait));
+                break;
+            case DownloadInfo.STATE_DOWNLOAD:
+                setGridProgress(holder, info);
+                break;
+            case DownloadInfo.STATE_FAILED:
+                String text = info.legacy <= 0
+                        ? resources.getString(R.string.download_state_failed)
+                        : resources.getString(R.string.download_state_failed_2, info.legacy);
+                setGridState(holder, text);
+                break;
+            case DownloadInfo.STATE_FINISH:
+                setGridState(holder, resources.getString(R.string.download_state_finish));
+                break;
+        }
+    }
+
+    private void setGridState(DownloadHolder holder, String state) {
+        if (holder.progressBar != null) {
+            holder.progressBar.setVisibility(View.GONE);
+        }
+        if (holder.percent != null) {
+            holder.percent.setVisibility(View.GONE);
+        }
+    }
+
+    private void setGridProgress(DownloadHolder holder, DownloadInfo info) {
+        if (holder.progressBar != null) {
+            holder.progressBar.setVisibility(View.VISIBLE);
+            if (info.total <= 0 || info.finished < 0) {
+                holder.progressBar.setIndeterminate(true);
+            } else {
+                holder.progressBar.setIndeterminate(false);
+                holder.progressBar.setMax(info.total);
+                holder.progressBar.setProgress(info.finished);
+            }
+        }
+        if (holder.percent != null) {
+            if (info.total <= 0 || info.finished < 0) {
+                holder.percent.setText(null);
+            } else {
+                holder.percent.setText(info.finished + "/" + info.total);
+            }
         }
     }
 
@@ -247,6 +374,30 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         }
         int count = listSize - mCallback.getPageSize() * (mCallback.getIndexPage() - 1);
         return Math.min(count, mCallback.getPageSize());
+    }
+
+    private int getStateLineColor(DownloadInfo info) {
+        Resources resources = mScene.getResources2();
+        if (resources == null) {
+            return Color.GRAY;
+        }
+        if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            return resources.getColor(R.color.download_state_line_finish);
+        }
+        switch (info.state) {
+            case DownloadInfo.STATE_WAIT:
+            case DownloadInfo.STATE_UPDATE:
+                return resources.getColor(R.color.download_state_line_wait);
+            case DownloadInfo.STATE_DOWNLOAD:
+                return resources.getColor(R.color.download_state_line_download);
+            case DownloadInfo.STATE_FINISH:
+                return resources.getColor(R.color.download_state_line_finish);
+            case DownloadInfo.STATE_FAILED:
+                return resources.getColor(R.color.download_state_line_failed);
+            case DownloadInfo.STATE_NONE:
+            default:
+                return resources.getColor(R.color.download_state_line_none);
+        }
     }
 
     private void bindForState(DownloadHolder holder, DownloadInfo info) {
@@ -294,7 +445,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.rating.setVisibility(View.VISIBLE);
         holder.category.setVisibility(View.VISIBLE);
         holder.readProgress.setVisibility(View.VISIBLE);
-        holder.state.setVisibility(View.VISIBLE);
         holder.progressBar.setVisibility(View.GONE);
         holder.percent.setVisibility(View.GONE);
         holder.speed.setVisibility(View.GONE);
@@ -305,8 +455,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             holder.start.setVisibility(View.VISIBLE);
             holder.stop.setVisibility(View.GONE);
         }
-
-        holder.state.setText(state);
     }
 
     @SuppressLint("SetTextI18n")
@@ -315,7 +463,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.rating.setVisibility(View.GONE);
         holder.category.setVisibility(View.GONE);
         holder.readProgress.setVisibility(View.GONE);
-        holder.state.setVisibility(View.GONE);
         holder.progressBar.setVisibility(View.VISIBLE);
         holder.percent.setVisibility(View.VISIBLE);
         holder.speed.setVisibility(View.VISIBLE);
@@ -653,7 +800,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         return null;
     }
 
-    public class DownloadHolder extends AbstractDraggableItemViewHolder implements View.OnClickListener {
+    public class DownloadHolder extends AbstractDraggableItemViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         public final LoadImageView thumb;
         public final TextView title;
@@ -663,10 +810,11 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final TextView readProgress;
         public final View start;
         public final View stop;
-        public final TextView state;
+        public final View stateLine;
         public final android.widget.ProgressBar progressBar;
         public final TextView percent;
         public final TextView speed;
+        public final TextView simpleLanguage;
 
         public DownloadHolder(View itemView) {
             super(itemView);
@@ -679,19 +827,31 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             readProgress = itemView.findViewById(R.id.read_progress);
             start = itemView.findViewById(R.id.start);
             stop = itemView.findViewById(R.id.stop);
-            state = itemView.findViewById(R.id.state);
+            stateLine = itemView.findViewById(R.id.state_line);
             progressBar = itemView.findViewById(R.id.progress_bar);
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
+            simpleLanguage = itemView.findViewById(R.id.simple_language);
 
             // TODO cancel on click listener when select items
-            thumb.setOnClickListener(this);
-            start.setOnClickListener(this);
-            stop.setOnClickListener(this);
+            if (thumb != null) {
+                thumb.setOnClickListener(this);
+                thumb.setOnLongClickListener(this);
+            }
+            if (start != null) {
+                start.setOnClickListener(this);
+            }
+            if (stop != null) {
+                stop.setOnClickListener(this);
+            }
 
             boolean isDarkTheme = !AttrResources.getAttrBoolean(mScene.getEHContext(), androidx.appcompat.R.attr.isLightTheme);
-            Ripple.addRipple(start, isDarkTheme);
-            Ripple.addRipple(stop, isDarkTheme);
+            if (start != null) {
+                Ripple.addRipple(start, isDarkTheme);
+            }
+            if (stop != null) {
+                Ripple.addRipple(stop, isDarkTheme);
+            }
         }
 
         @Override
@@ -743,6 +903,27 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                     downloadManager.stopDownload(list.get(mCallback.positionInList(index)).gid);
                 }
             }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            if (thumb != v) {
+                return false;
+            }
+            EasyRecyclerView recyclerView = mCallback.getRecyclerView();
+            if (recyclerView == null) {
+                return false;
+            }
+            int index = recyclerView.getChildAdapterPosition(itemView);
+            if (index < 0) {
+                return false;
+            }
+
+            if (!recyclerView.isInCustomChoice()) {
+                recyclerView.intoCustomChoiceMode();
+            }
+            recyclerView.toggleItemChecked(index);
+            return true;
         }
     }
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/CardView.Normal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="2dp"
+    android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.hippo.ehviewer.widget.TileThumb
+                android:id="@+id/thumb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:foreground="@drawable/tile_background"
+                android:scaleType="centerCrop"
+                app:retryType="none" />
+
+            <TextView
+                android:id="@+id/category"
+                android:layout_width="32dp"
+                android:layout_height="24dp"
+                android:layout_gravity="top|right" />
+
+            <TextView
+                android:id="@+id/simple_language"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|right"
+                android:layout_marginRight="2dp"
+                android:textColor="@android:color/white"
+                android:textSize="10dp"
+                android:textStyle="bold" />
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:indeterminate="false" />
+
+            <TextView
+                android:id="@+id/percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_marginRight="4dp"
+                android:layout_marginBottom="4dp"
+                android:background="#80000000"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="10sp" />
+
+        </FrameLayout>
+
+        <View
+            android:id="@+id/state_line"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:background="@color/download_state_line_none" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

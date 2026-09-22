@@ -21,7 +21,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp"
-    style="@style/CardView.Reactive">
+    style="@style/CardView.Reactive"
+    android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -35,7 +36,7 @@
                 android:id="@+id/thumb"
                 android:layout_width="@dimen/gallery_list_thumb_width"
                 android:layout_height="@dimen/gallery_list_thumb_height"
-                app:retryType="longClick"
+                app:retryType="none"
                 app:minAspect="0.333"
                 app:maxAspect="1.333"/>
 
@@ -122,15 +123,12 @@
 
             </FrameLayout>
 
-            <TextView
-                android:id="@+id/state"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_above="@id/actions"
-                android:layout_marginBottom="4dp"
+            <View
+                android:id="@+id/state_line"
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
                 android:layout_alignParentRight="true"
-                android:paddingRight="16dp"
-                android:textColor="?attr/textColorThemeAccent"/>
+                android:background="@color/download_state_line_none"/>
 
             <ProgressBar
                 android:id="@+id/progress_bar"

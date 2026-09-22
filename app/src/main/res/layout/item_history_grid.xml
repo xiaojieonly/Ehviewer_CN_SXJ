@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card"
+        style="@style/CardView.Normal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="2dp">
+
+        <com.hippo.ehviewer.widget.TileThumb
+            android:id="@+id/thumb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:foreground="@drawable/tile_background"
+            android:scaleType="centerCrop"
+            app:retryType="none" />
+
+        <TextView
+            android:id="@+id/category"
+            android:layout_width="32dp"
+            android:layout_height="24dp"
+            android:layout_gravity="top|right" />
+
+        <TextView
+            android:id="@+id/simple_language"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_marginRight="2dp"
+            android:textColor="@android:color/white"
+            android:textSize="10dp"
+            android:textStyle="bold" />
+
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>

@@ -770,7 +770,6 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         ensureDownload();
     }
 
-    @SuppressLint("StaticFieldLeak")
     public void resetAllReadingProgress() {
         resetAllReadingProgress(null);
     }

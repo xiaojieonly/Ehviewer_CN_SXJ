@@ -342,4 +342,16 @@ public class DownloadPaginationController {
         }
         return index;
     }
+
+    /**
+     * Called from {@link DownloadsScene#onDestroyView()}.
+     * The controller outlives the view, so the old indicator/listener must be
+     * released here. Otherwise {@code getPaginationIndicator() != null} stays
+     * true on the next view creation and {@link #needInitPage} gets stuck,
+     * which breaks page switching after returning from the detail scene.
+     */
+    public void onDestroyView() {
+        mPaginationIndicator = null;
+        myPageChangeListener = null;
+    }
 }

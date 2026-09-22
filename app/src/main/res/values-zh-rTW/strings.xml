@@ -518,6 +518,8 @@
     <string name="settings_eh_gallery_site">圖庫站台</string>
     <string name="settings_eh_launch_page">啟動頁</string>
     <string name="settings_eh_list_mode">列表模式</string>
+    <string name="settings_eh_history_list_mode">歷史列表模式</string>
+    <string name="settings_eh_download_list_mode">下載列表模式</string>
     <string name="settings_eh_list_mode_detail">詳細資料</string>
     <string name="settings_eh_list_mode_thumb">縮圖</string>
     <string name="settings_eh_detail_size">詳細大小</string>

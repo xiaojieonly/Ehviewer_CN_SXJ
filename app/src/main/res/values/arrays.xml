@@ -326,6 +326,12 @@
         <item>@string/add_to_favourites</item>
     </string-array>
 
+    <string-array name="history_grid_menu_entries">
+        <item>@string/download</item>
+        <item>@string/add_to_favourites</item>
+        <item>@string/delete</item>
+    </string-array>
+
     <string-array name="filter_entries">
         <item>@string/filter_title</item>
         <item>@string/filter_uploader</item>

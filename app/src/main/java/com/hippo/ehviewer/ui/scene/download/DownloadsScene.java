@@ -170,6 +170,12 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     private AutoStaggeredGridLayoutManager mLayoutManager;
 
+    @Nullable
+    private MarginItemDecoration mListDecoration;
+    @Nullable
+    private MarginItemDecoration mGridDecoration;
+    private int mListMode = DownloadAdapter.TYPE_LIST;
+
     // 拖拽管理器
     @Nullable
     private RecyclerViewDragDropManager mDragDropManager;
@@ -480,8 +486,8 @@ public class DownloadsScene extends ToolbarScene
         // 初始化分页监听器
         mPaginationController.bindPageChangeListener(mOriginalAdapter, mRecyclerView);
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
-        mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
-        mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
+        mListMode = Settings.getDownloadListMode();
+        applyListMode(resources);
 
         // 设置拖拽动画器
         final GeneralItemAnimator animator = new DraggableItemAnimator();
@@ -509,13 +515,6 @@ public class DownloadsScene extends ToolbarScene
         if (itemAnimator instanceof GeneralItemAnimator) {
             ((GeneralItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
         }
-        int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
-        int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
-        int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_v);
-        MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
-        mRecyclerView.addItemDecoration(decoration);
-        decoration.applyPaddings(mRecyclerView);
-
         // 将拖拽管理器附加到RecyclerView
         if (mDragDropManager != null) {
             try {
@@ -585,6 +584,9 @@ public class DownloadsScene extends ToolbarScene
         mOriginalAdapter = null;
         mLayoutManager = null;
         mDragDropManager = null;
+        mListDecoration = null;
+        mGridDecoration = null;
+        mPaginationController.onDestroyView();
         EventBus.getDefault().unregister(this);
     }
 
@@ -960,6 +962,46 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     public DownloadManager getMDownloadManager() {
         return mDownloadManager;
+    }
+
+    private void applyListMode(Resources resources) {
+        if (null == mLayoutManager || null == mRecyclerView) {
+            return;
+        }
+
+        if (mListMode == DownloadAdapter.TYPE_GRID) {
+            int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+            mLayoutManager.setColumnSize(columnWidth);
+            mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_SUITABLE_SIZE);
+
+            if (null != mListDecoration) {
+                mRecyclerView.removeItemDecoration(mListDecoration);
+            }
+            if (null == mGridDecoration) {
+                int interval = resources.getDimensionPixelOffset(R.dimen.gallery_grid_interval);
+                int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_grid_margin_h);
+                int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_grid_margin_v);
+                mGridDecoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
+            }
+            mRecyclerView.addItemDecoration(mGridDecoration);
+            mGridDecoration.applyPaddings(mRecyclerView);
+        } else {
+            int columnWidth = resources.getDimensionPixelOffset(Settings.getDetailSizeResId());
+            mLayoutManager.setColumnSize(columnWidth);
+            mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
+
+            if (null != mGridDecoration) {
+                mRecyclerView.removeItemDecoration(mGridDecoration);
+            }
+            if (null == mListDecoration) {
+                int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
+                int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
+                int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_v);
+                mListDecoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
+            }
+            mRecyclerView.addItemDecoration(mListDecoration);
+            mListDecoration.applyPaddings(mRecyclerView);
+        }
     }
 
     // DownloadAdapterCallback 接口实现
