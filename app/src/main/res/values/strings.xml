@@ -1086,6 +1086,13 @@
     <string name="imported_archive_info_title">Local Import Info</string>
     <string name="imported_archive_info_message">This is an item imported from local storage</string>
     <string name="imported_archive_category">Local Import</string>
+    <string name="import_local_album">Import local album</string>
+    <string name="import_album_title">Select image folder</string>
+    <string name="import_album_processing">Importing album…</string>
+    <string name="import_album_failed">Failed to import album</string>
+    <string name="import_album_no_images">No supported images in the selected folder</string>
+    <string name="import_album_already_imported">Album already imported</string>
+    <string name="import_album_success">Imported %d images successfully</string>
     <!-- TagSelectActivity -->
     <string name="tag_search_entrance">Tag Selector</string>
 </resources>

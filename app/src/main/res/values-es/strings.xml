@@ -916,6 +916,13 @@
     <string name="imported_archive_info_title">Información de importación local</string>
     <string name="imported_archive_info_message">Este es un elemento importado desde almacenamiento local</string>
     <string name="imported_archive_category">Importación local</string>
+    <string name="import_local_album">Importar álbum local</string>
+    <string name="import_album_title">Seleccionar carpeta de imágenes</string>
+    <string name="import_album_processing">Importando álbum…</string>
+    <string name="import_album_failed">Error al importar álbum</string>
+    <string name="import_album_no_images">No hay imágenes compatibles en la carpeta seleccionada</string>
+    <string name="import_album_already_imported">Álbum ya importado</string>
+    <string name="import_album_success">Se importaron %d imágenes correctamente</string>
     <string name="pagination_count">contar</string>
     <string name="pagination_page_and_item">r/p</string>
     <string name="appwidget_text">EJEMPLO</string>

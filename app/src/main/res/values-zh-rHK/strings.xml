@@ -1052,5 +1052,12 @@
     <string name="imported_archive_info_title">本機匯入資訊</string>
     <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
     <string name="imported_archive_category">本機匯入</string>
+    <string name="import_local_album">匯入本機相簿</string>
+    <string name="import_album_title">選擇圖片資料夾</string>
+    <string name="import_album_processing">正在匯入相簿…</string>
+    <string name="import_album_failed">相簿匯入失敗</string>
+    <string name="import_album_no_images">所選資料夾中沒有支援的圖片</string>
+    <string name="import_album_already_imported">相簿已匯入</string>
+    <string name="import_album_success">成功匯入 %d 張圖片</string>
 
 </resources>

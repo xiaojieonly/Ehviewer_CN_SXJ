@@ -963,6 +963,13 @@
     <string name="imported_archive_info_title">로컬 가져오기 정보</string>
     <string name="imported_archive_info_message">로컬 저장소에서 가져온 항목입니다</string>
     <string name="imported_archive_category">로컬 가져오기</string>
+    <string name="import_local_album">로컬 앨범 가져오기</string>
+    <string name="import_album_title">이미지 폴더 선택</string>
+    <string name="import_album_processing">앨범 가져오는 중…</string>
+    <string name="import_album_failed">앨범 가져오기 실패</string>
+    <string name="import_album_no_images">선택한 폴더에 지원되는 이미지가 없습니다</string>
+    <string name="import_album_already_imported">이미 가져온 앨범입니다</string>
+    <string name="import_album_success">이미지 %d장을 가져왔습니다</string>
 
 
 </resources>

@@ -911,4 +911,11 @@
     <string name="imported_archive_info_title">Lokaler Import-Info</string>
     <string name="imported_archive_info_message">Dies ist ein Element, das aus dem lokalen Speicher importiert wurde</string>
     <string name="imported_archive_category">Lokaler Import</string>
+    <string name="import_local_album">Lokales Album importieren</string>
+    <string name="import_album_title">Bildordner auswählen</string>
+    <string name="import_album_processing">Album wird importiert…</string>
+    <string name="import_album_failed">Albumimport fehlgeschlagen</string>
+    <string name="import_album_no_images">Keine unterstützten Bilder im ausgewählten Ordner</string>
+    <string name="import_album_already_imported">Album wurde bereits importiert</string>
+    <string name="import_album_success">%d Bilder erfolgreich importiert</string>
 </resources>

@@ -893,6 +893,13 @@
     <string name="imported_archive_info_title">ข้อมูลการนำเข้าท้องถิ่น</string>
     <string name="imported_archive_info_message">นี่คือรายการที่นำเข้าจากที่เก็บข้อมูลท้องถิ่น</string>
     <string name="imported_archive_category">การนำเข้าท้องถิ่น</string>
+    <string name="import_local_album">นำเข้าอัลบั้มท้องถิ่น</string>
+    <string name="import_album_title">เลือกโฟลเดอร์รูปภาพ</string>
+    <string name="import_album_processing">กำลังนำเข้าอัลบั้ม…</string>
+    <string name="import_album_failed">การนำเข้าอัลบั้มล้มเหลว</string>
+    <string name="import_album_no_images">โฟลเดอร์ที่เลือกไม่มีรูปภาพที่รองรับ</string>
+    <string name="import_album_already_imported">อัลบั้มถูกนำเข้าแล้ว</string>
+    <string name="import_album_success">นำเข้ารูปภาพ %d ภาพสำเร็จแล้ว</string>
 
     <!--  排行榜  -->
     <string name="all_time_top_list">รายการอันดับตลอดกาล</string>

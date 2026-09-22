@@ -77,6 +77,7 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadAlbumImporter;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadArchiveImporter;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadBatchActions;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadChoiceListener;
@@ -116,7 +117,7 @@ public class DownloadsScene extends ToolbarScene
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener,
         SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener,
         DownloadAdapter.DownloadAdapterCallback,
-        DownloadArchiveImporter.Host, DownloadSearchController.Host,
+        DownloadArchiveImporter.Host, DownloadAlbumImporter.Host, DownloadSearchController.Host,
         DownloadBatchActions.Host, DownloadPaginationController.Host,
         DownloadGuideHelper.Host, DownloadChoiceListener.Host {
 
@@ -149,6 +150,7 @@ public class DownloadsScene extends ToolbarScene
     private List<DownloadInfo> mBackList;
 
     private final DownloadArchiveImporter mArchiveImporter = new DownloadArchiveImporter(this);
+    private final DownloadAlbumImporter mAlbumImporter = new DownloadAlbumImporter(this);
     private final DownloadSearchController mSearchController = new DownloadSearchController(this);
     private final DownloadBatchActions mBatchActions = new DownloadBatchActions(this);
     private final DownloadPaginationController mPaginationController = new DownloadPaginationController(this);
@@ -197,6 +199,12 @@ public class DownloadsScene extends ToolbarScene
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             mArchiveImporter::handleSelectedFile
+    );
+
+    @NonNull
+    private final ActivityResultLauncher<Intent> folderPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            mAlbumImporter::handleSelectedFolder
     );
 
     @Override
@@ -687,6 +695,9 @@ public class DownloadsScene extends ToolbarScene
             case R.id.import_local_archive:
                 mArchiveImporter.importLocalArchive(filePickerLauncher);
                 return true;
+            case R.id.import_local_album:
+                mAlbumImporter.importLocalAlbum(folderPickerLauncher);
+                return true;
 //            case R.id.misc:
 //            case R.id.doujinshi:
 //            case R.id.manga:
@@ -1006,6 +1017,12 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public DownloadManager getDownloadManager() {
         return mDownloadManager;
+    }
+
+    @Nullable
+    @Override
+    public String getLabel() {
+        return mLabel;
     }
 
     @Override

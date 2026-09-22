@@ -353,9 +353,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             return;
         }
 
-        // Do nothing in the case of a local compressed file.
+        // Do nothing for locally imported archives or albums.
         if (galleryInfo instanceof DownloadInfo downloadInfo) {
-            if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")){
+            if (downloadInfo.archiveUri != null) {
                 return;
             }
         }
@@ -364,6 +364,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         DownloadInfo info = mAllInfoMap.get(galleryInfo.gid);
 
         if (info != null) { // Get it in download list
+            if (info.archiveUri != null) {
+                return;
+            }
             if (info.state != DownloadInfo.STATE_WAIT) {
                 // Set state DownloadInfo.STATE_WAIT
                 info.state = DownloadInfo.STATE_WAIT;
@@ -429,6 +432,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     Log.d(TAG, "Can't get download info with gid: " + gid);
                     continue;
                 }
+                if (info.archiveUri != null) {
+                    continue;
+                }
 
                 if (info.state == DownloadInfo.STATE_NONE ||
                         info.state == DownloadInfo.STATE_FAILED ||
@@ -448,6 +454,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 DownloadInfo info = mAllInfoMap.get(gid);
                 if (null == info) {
                     Log.d(TAG, "Can't get download info with gid: " + gid);
+                    continue;
+                }
+                if (info.archiveUri != null) {
                     continue;
                 }
 

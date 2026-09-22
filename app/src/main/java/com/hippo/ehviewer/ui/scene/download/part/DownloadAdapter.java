@@ -23,6 +23,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +35,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,6 +52,7 @@ import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.gallery.A7ZipArchive;
 import com.hippo.ehviewer.gallery.Pipe;
+import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
@@ -174,15 +179,24 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             DownloadInfo info = list.get(pos);
 
             String title = EhUtils.getSuitableTitle(info);
+            boolean importedArchive = isImportedArchive(info);
+            boolean localAlbum = DownloadAlbumImporter.isLocalAlbum(info);
+            boolean localImport = importedArchive || localAlbum;
             // Add special prefix for imported archives
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            if (importedArchive) {
                 title = "📦 " + title;
+            } else if (localAlbum) {
+                title = "📁 " + title;
             }
             // Handle thumbnail loading for imported archives
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            if (importedArchive) {
+                holder.thumb.setTag(R.id.thumb, null);
                 // For imported archives, extract first image as thumbnail
                 loadArchiveThumbnail(holder.thumb, Uri.parse(info.archiveUri));
+            } else if (localAlbum) {
+                loadLocalAlbumThumbnail(holder.thumb, info);
             } else {
+                holder.thumb.setTag(R.id.thumb, null);
                 // Normal thumbnail loading for regular downloads
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true, false);
@@ -194,7 +208,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             holder.uploader.setText(info.uploader);
 
             // Handle rating display for imported archives
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            if (localImport) {
                 // For imported archives, show 5 stars or hide rating
                 holder.rating.setRating(5.0f);
             } else {
@@ -211,10 +225,10 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             }
 
             TextView category = holder.category;
-            String newCategoryText = EhUtils.getCategory(info.category);
+            String newCategoryText;
             int categoryColor;
             // Special handling for imported archives - prioritize archiveUri over category field
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            if (localImport) {
                 newCategoryText = mScene.getString(R.string.imported_archive_category);
                 categoryColor = 0xFF4CAF50; // Green color for imported archives
             } else {
@@ -224,7 +238,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             if (!newCategoryText.equals(category.getText())) {
                 category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
+                category.setBackgroundColor(categoryColor);
             }
             bindForState(holder, info);
 
@@ -249,6 +263,10 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         return Math.min(count, mCallback.getPageSize());
     }
 
+    private boolean isImportedArchive(DownloadInfo info) {
+        return info != null && info.archiveUri != null && info.archiveUri.startsWith("content://");
+    }
+
     private void bindForState(DownloadHolder holder, DownloadInfo info) {
         Resources resources = mScene.getResources2();
         if (null == resources) {
@@ -256,9 +274,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         }
 
         // Check if this is an imported archive - skip state judging
-        boolean isImportedArchive;
-        isImportedArchive = info.archiveUri != null &&
-                info.archiveUri.startsWith("content://");
+        boolean isImportedArchive = isImportedArchive(info);
         if (isImportedArchive) {
             bindState(holder, info, resources.getString(R.string.download_state_finish));
             return;
@@ -444,6 +460,78 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         } catch (Exception e) {
             // 忽略硬件位图相关错误
             Log.e("DownloadAdapter", "Error in onItemDragFinished: " + e.getMessage());
+        }
+    }
+
+    private void loadLocalAlbumThumbnail(LoadImageView thumb, DownloadInfo info) {
+        String cacheKey = DownloadAlbumImporter.URI_PREFIX + info.gid;
+        thumb.setTag(R.id.thumb, cacheKey);
+        Bitmap cachedThumbnail = thumbnailCache.get(cacheKey);
+        if (cachedThumbnail != null && !cachedThumbnail.isRecycled()) {
+            Resources resources = mScene.getResources2();
+            if (resources != null) {
+                thumb.load(new BitmapDrawable(resources, cachedThumbnail));
+            } else {
+                thumb.setImageBitmap(cachedThumbnail);
+            }
+            return;
+        }
+
+        thumb.load(new ColorDrawable(Color.TRANSPARENT));
+        new Thread(() -> {
+            Bitmap thumbnail = decodeLocalAlbumThumb(info);
+            mScene.runOnUiThread(() -> {
+                if (!cacheKey.equals(thumb.getTag(R.id.thumb))) {
+                    return;
+                }
+                if (thumbnail != null && !thumbnail.isRecycled()) {
+                    thumbnailCache.put(cacheKey, thumbnail);
+                    Resources resources = mScene.getResources2();
+                    if (resources != null) {
+                        thumb.load(new BitmapDrawable(resources, thumbnail));
+                    } else {
+                        thumb.setImageBitmap(thumbnail);
+                    }
+                }
+            });
+        }).start();
+    }
+
+    @Nullable
+    private Bitmap decodeLocalAlbumThumb(DownloadInfo info) {
+        UniFile dir = SpiderDen.getGalleryDownloadDir(info);
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
+        UniFile thumbFile = dir.findFile(".thumb");
+        if (thumbFile == null) {
+            thumbFile = SpiderDen.findImageFile(dir, 0);
+        }
+        if (thumbFile == null) {
+            return null;
+        }
+        try (InputStream boundsStream = thumbFile.openInputStream()) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(boundsStream, null, options);
+            int thumbnailSize = 150;
+            int sampleSize = 1;
+            if (options.outHeight > thumbnailSize || options.outWidth > thumbnailSize) {
+                int halfHeight = options.outHeight / 2;
+                int halfWidth = options.outWidth / 2;
+                while ((halfHeight / sampleSize) >= thumbnailSize && (halfWidth / sampleSize) >= thumbnailSize) {
+                    sampleSize *= 2;
+                }
+            }
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = sampleSize;
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            try (InputStream decodeStream = thumbFile.openInputStream()) {
+                return BitmapFactory.decodeStream(decodeStream, null, options);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to decode local album thumbnail for gid=" + info.gid, e);
+            return null;
         }
     }
 
@@ -713,7 +801,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             if (thumb == v) {
                 DownloadInfo currentInfo = list.get(mScene.positionInList(index));
-                if (currentInfo.archiveUri != null && currentInfo.archiveUri.startsWith("content://")) {
+                if (isImportedArchive(currentInfo) || DownloadAlbumImporter.isLocalAlbum(currentInfo)) {
                     // Show info dialog for imported archive
                     String message = mScene.getString(R.string.imported_archive_info_message) + "\n\n" + currentInfo.archiveUri;
                     new AlertDialog.Builder(context)

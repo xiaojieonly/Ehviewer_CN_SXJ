@@ -998,5 +998,12 @@
     <string name="imported_archive_info_title">本地导入信息</string>
     <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
     <string name="imported_archive_category">本地导入</string>
+    <string name="import_local_album">导入本地相册</string>
+    <string name="import_album_title">选择图片文件夹</string>
+    <string name="import_album_processing">正在导入相册…</string>
+    <string name="import_album_failed">相册导入失败</string>
+    <string name="import_album_no_images">所选文件夹中没有支持的图片</string>
+    <string name="import_album_already_imported">相册已导入</string>
+    <string name="import_album_success">成功导入 %d 张图片</string>
 
 </resources>
