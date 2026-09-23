@@ -25,7 +25,6 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.widget.Toast
 import androidx.preference.Preference
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
@@ -36,13 +35,10 @@ import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.spider.SpiderInfo
 import com.hippo.ehviewer.spider.SpiderQueen
-import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
 import com.hippo.util.ExceptionUtils.throwIfFatal
 import com.hippo.util.IoThreadPoolExecutor
 import okhttp3.OkHttpClient
-import java.io.IOException
-import java.io.InputStream
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -114,26 +110,18 @@ class RestoreDownloadPreference : Preference {
             }
             val siFile = file.findFile(SpiderQueen.SPIDER_INFO_FILENAME) ?: return null
 
-            var `is`: InputStream? = null
-            try {
-                `is` = siFile.openInputStream()
-                val spiderInfo = SpiderInfo.read(`is`) ?: return null
-                val gid = spiderInfo.gid
-                if (mManager.containDownloadInfo(gid)) {
-                    return null
-                }
-                val token = spiderInfo.token
-                val restoreItem = RestoreItem()
-                restoreItem.gid = gid
-                restoreItem.token = token
-                restoreItem.dirname = file.getName()
-                return restoreItem
-            } catch (e: IOException) {
-                FirebaseCrashlytics.getInstance().recordException(e)
+            // Only need gid/token for restore; avoid failing on corrupt pToken lines.
+            val spiderInfo = SpiderInfo.readHeader(siFile) ?: return null
+            val gid = spiderInfo.gid
+            if (mManager.containDownloadInfo(gid)) {
                 return null
-            } finally {
-                IOUtils.closeQuietly(`is`)
             }
+            val token = spiderInfo.token
+            val restoreItem = RestoreItem()
+            restoreItem.gid = gid
+            restoreItem.token = token
+            restoreItem.dirname = file.getName()
+            return restoreItem
         }
 
         private fun doInBackground(): Any? {

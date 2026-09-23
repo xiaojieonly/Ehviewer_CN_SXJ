@@ -235,6 +235,22 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="reading_refresh_rate_entries">
+        <item>@string/settings_read_refresh_rate_default</item>
+        <item>@string/settings_read_refresh_rate_60</item>
+        <item>@string/settings_read_refresh_rate_90</item>
+        <item>@string/settings_read_refresh_rate_120</item>
+        <item>@string/settings_read_refresh_rate_max</item>
+    </string-array>
+
+    <string-array name="reading_refresh_rate_entry_values" translatable="false">
+        <item>0</item>
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
+        <item>-1</item>
+    </string-array>
+
     <string-array name="picture_decoding_method">
         <item>@string/settings_read_picture_decoding_method_origin</item>
         <item>@string/settings_read_picture_decoding_method_native</item>

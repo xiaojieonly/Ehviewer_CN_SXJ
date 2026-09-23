@@ -382,6 +382,8 @@
     <string name="download_remove_dialog_check_text">Borrar imágenes</string>
     <string name="download_reset_reading_progress">Reiniciar progreso de lectura</string>
     <string name="reset_reading_progress_message">¿Deseas reiniciar el progreso de lectura en todas las galerías?</string>
+    <string name="reset_reading_progress_processing">Reiniciando el progreso de lectura...</string>
+    <string name="reset_reading_progress_done">Progreso de lectura reiniciado</string>
     <string name="stat_download_action_stop_all">Detener todo</string>
     <string name="drawer_download_label_title">Etiquetas</string>
     <string name="default_download_label_name">Predeterminado</string>
@@ -527,6 +529,12 @@
     <string name="settings_read_screen_rotation_portrait">Retrato</string>
     <string name="settings_read_screen_rotation_landscape">Paisaje</string>
     <string name="settings_read_screen_rotation_sensor">Rotación automática</string>
+    <string name="settings_read_refresh_rate">Frecuencia de actualización</string>
+    <string name="settings_read_refresh_rate_default">Defecto</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">Máximo de la pantalla</string>
     <string name="settings_read_reading_direction">Dirección de lectura</string>
     <string name="settings_read_reading_direction_left_to_right">Izquierda a derecha</string>
     <string name="settings_read_reading_direction_right_to_Left">Derecha a izquierda</string>

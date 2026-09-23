@@ -36,6 +36,15 @@
         app:entryValues="@array/screen_rotation_entry_values" />
 
     <com.hippo.preference.ListPreference
+        android:defaultValue="0"
+        android:key="reading_refresh_rate"
+        android:summary="%s"
+        android:title="@string/settings_read_refresh_rate"
+        app:allowDividerAbove="true"
+        app:entries="@array/reading_refresh_rate_entries"
+        app:entryValues="@array/reading_refresh_rate_entry_values" />
+
+    <com.hippo.preference.ListPreference
         android:defaultValue="1"
         android:key="reading_direction"
         android:summary="%s"

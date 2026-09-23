@@ -217,17 +217,40 @@ public class SpiderInfo {
             } catch (EOFException e) {
                 break;
             }
-            int pos = line.indexOf(" ");
-            if (pos > 0) {
-                int index = Integer.parseInt(line.substring(0, pos));
-                String pToken = line.substring(pos + 1);
-                if (!TextUtils.isEmpty(pToken) && pToken.length() <= MAX_STORED_PTOKEN_CHARS) {
-                    spiderInfo.pTokenMap.put(index, pToken);
-                }
+            int[] indexOut = new int[1];
+            String pToken = tryParsePTokenLine(line, indexOut);
+            if (pToken != null) {
+                spiderInfo.pTokenMap.put(indexOut[0], pToken);
+            } else if (line.indexOf(" ") <= 0) {
+                Log.e(TAG, "Can't parse index and pToken, index = " + line.indexOf(" "));
             } else {
-                Log.e(TAG, "Can't parse index and pToken, index = " + pos);
+                // Corrupt index (e.g. NumberFormatException) — skip line, keep header.
+                Log.w(TAG, "Skip bad pToken line: " + line);
             }
         }
+    }
+
+    /**
+     * Parse one "{index} {pToken}" line.
+     * Returns the pToken when valid; null means skip this line (bad format or corrupt index).
+     * Package-visible for unit tests.
+     */
+    @Nullable
+    static String tryParsePTokenLine(@NonNull String line, @NonNull int[] indexOut) {
+        int pos = line.indexOf(" ");
+        if (pos <= 0) {
+            return null;
+        }
+        try {
+            indexOut[0] = Integer.parseInt(line.substring(0, pos));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        String pToken = line.substring(pos + 1);
+        if (pToken.isEmpty() || pToken.length() > MAX_STORED_PTOKEN_CHARS) {
+            return null;
+        }
+        return pToken;
     }
 
     public void write(@NonNull OutputStream os) {

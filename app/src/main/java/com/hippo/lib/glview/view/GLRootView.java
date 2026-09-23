@@ -28,7 +28,9 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Display;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import androidx.annotation.NonNull;
@@ -39,6 +41,8 @@ import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.glrenderer.GLES11Canvas;
 import com.hippo.lib.glview.glrenderer.GLES20Canvas;
 import com.hippo.lib.glview.glrenderer.UploadedTexture;
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.util.ReadingRefreshRate;
 import com.hippo.lib.glview.util.ApiHelper;
 import com.hippo.lib.glview.util.GalleryUtils;
 import com.hippo.lib.glview.util.MotionEventHelper;
@@ -460,12 +464,27 @@ public class GLRootView extends GLSurfaceView
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         unfreeze();
         super.surfaceChanged(holder, format, w, h);
+        applySurfaceFrameRate(holder);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         unfreeze();
         super.surfaceCreated(holder);
+        applySurfaceFrameRate(holder);
+    }
+
+    private void applySurfaceFrameRate(SurfaceHolder holder) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        Surface surface = holder.getSurface();
+        if (surface == null || !surface.isValid()) {
+            return;
+        }
+        Display display = getDisplay();
+        float hz = ReadingRefreshRate.resolveHz(display, Settings.getReadingRefreshRateHz());
+        surface.setFrameRate(hz, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
     }
 
     @Override

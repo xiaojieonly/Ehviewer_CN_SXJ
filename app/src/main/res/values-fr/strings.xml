@@ -406,6 +406,8 @@
     <string name="download_stop_all">Arrêter tout</string>
     <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
     <string name="reset_reading_progress_message">Réinitialiser les progrès de lecture de toutes les galeries téléchargées ?</string>
+    <string name="reset_reading_progress_processing">Réinitialisation des progrès de lecture...</string>
+    <string name="reset_reading_progress_done">Progrès de lecture réinitialisés</string>
     <string name="download_service_label">Service du téléchargement EhViewer</string>
     <string name="archiver_download_service_label">Téléchargement d\'archives EhViewer</string>
     <string name="archiver_download_pause">Pause</string>
@@ -521,6 +523,12 @@
     <string name="settings_read_screen_rotation_default">Par défaut</string>
     <string name="settings_read_screen_rotation_portrait">Portrait</string>
     <string name="settings_read_screen_rotation_landscape">Landscape</string>
+    <string name="settings_read_refresh_rate">Taux de rafraîchissement</string>
+    <string name="settings_read_refresh_rate_default">Par défaut</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">Maximum de l\'écran</string>
     <string name="settings_read_reading_direction">Direction de lecture</string>
     <string name="settings_read_reading_direction_left_to_right">De gauche à droite</string>
     <string name="settings_read_reading_direction_right_to_Left">De droite à gauche</string>

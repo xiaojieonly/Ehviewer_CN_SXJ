@@ -38,6 +38,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.lib.glgallery.GalleryView;
+import com.hippo.ehviewer.util.ReadingRefreshRate;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
@@ -658,6 +659,18 @@ public class Settings {
 
     public static void putScreenRotation(int value) {
         putIntToStr(KEY_SCREEN_ROTATION, value);
+    }
+
+    public static final String KEY_READING_REFRESH_RATE = "reading_refresh_rate";
+    private static final int DEFAULT_READING_REFRESH_RATE = 0;
+
+    public static int getReadingRefreshRateHz() {
+        return ReadingRefreshRate.sanitize(
+                getIntFromStr(KEY_READING_REFRESH_RATE, DEFAULT_READING_REFRESH_RATE));
+    }
+
+    public static void putReadingRefreshRateHz(int value) {
+        putIntToStr(KEY_READING_REFRESH_RATE, ReadingRefreshRate.sanitize(value));
     }
 
     private static final String KEY_READING_DIRECTION = "reading_direction";

@@ -416,6 +416,8 @@
     <string name="download_stop_all">หยุดทั้งหมด</string>
     <string name="download_reset_reading_progress">รีเซ็ตตำแหน่งที่อ่าน</string>
     <string name="reset_reading_progress_message">รีเซ็ตตำแหน่งที่อ่านค้างไว้ทั้งหมดในแกลเลอรี่ที่โหลดไว้ทั้งหมดหรือไม่?</string>
+    <string name="reset_reading_progress_processing">กำลังรีเซ็ตตำแหน่งที่อ่าน...</string>
+    <string name="reset_reading_progress_done">รีเซ็ตตำแหน่งที่อ่านแล้ว</string>
     <string name="download_service_label">บริการดาวน์โหลดของ EhViewer</string>
     <string name="archiver_download_service_label">ดาวน์โหลดไฟล์เก็บถาวร EhViewer</string>
     <string name="archiver_download_pause">หยุดชั่วคราว</string>
@@ -565,6 +567,12 @@
     <string name="settings_read_screen_rotation_default">ค่าเริ่มต้น</string>
     <string name="settings_read_screen_rotation_portrait">แนวตั้ง</string>
     <string name="settings_read_screen_rotation_landscape">แนวนอน</string>
+    <string name="settings_read_refresh_rate">อัตรารีเฟรช</string>
+    <string name="settings_read_refresh_rate_default">ค่าเริ่มต้น</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">สูงสุดของหน้าจอ</string>
     <string name="settings_read_reading_direction">ทิศทางการเปิดหน้าอ่าน</string>
     <string name="settings_read_reading_direction_left_to_right">ซ้าย -> ขวา</string>
     <string name="settings_read_reading_direction_right_to_Left">ขวา -> ซ้าย</string>

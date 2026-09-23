@@ -388,6 +388,8 @@
     <string name="download_search_gallery">ギャラリーを検索</string>
     <string name="download_search_hint">検索キーを入力</string>
     <string name="reset_reading_progress_message">すべてのダウンロード済みのギャラリーの閲覧進捗をリセットしますか？</string>
+    <string name="reset_reading_progress_processing">閲覧進捗をリセットしています...</string>
+    <string name="reset_reading_progress_done">閲覧進捗をリセットしました</string>
     <string name="download_service_label">EhViewer ダウンロードサービス</string>
     <string name="archiver_download_service_label">EhViewer アーカイブのダウンロード</string>
     <string name="archiver_download_pause">一時停止</string>
@@ -529,6 +531,12 @@
     <string name="settings_read_screen_rotation_portrait">縦画面</string>
     <string name="settings_read_screen_rotation_landscape">横画面</string>
     <string name="settings_read_screen_rotation_sensor">自動回転</string>
+    <string name="settings_read_refresh_rate">リフレッシュレート</string>
+    <string name="settings_read_refresh_rate_default">システムのデフォルト</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">画面の最高</string>
     <string name="settings_read_reading_direction">閲覧方向</string>
     <string name="settings_read_reading_direction_left_to_right">左から右へ</string>
     <string name="settings_read_reading_direction_right_to_Left">右から左へ</string>
