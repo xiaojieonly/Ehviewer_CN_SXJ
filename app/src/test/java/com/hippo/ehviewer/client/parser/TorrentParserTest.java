@@ -51,5 +51,16 @@ public class TorrentParserTest {
         assertEquals("https://ehtracker.org/get/3905209/713846c3ddf05826d4443790a5b6619eae734d71.torrent", result[1].url);
         assertTrue(result[0].name.contains("Part 2"));
         assertTrue(result[1].name.contains("1280x"));
+
+        // Test seeds, peers, size, downloads
+        assertEquals(13, result[0].seeds);
+        assertEquals(4, result[0].peers);
+        assertEquals("252.0 MiB", result[0].size);
+        assertEquals(50, result[0].downloads);
+
+        assertEquals(11, result[1].seeds);
+        assertEquals(2, result[1].peers);
+        assertEquals("14.21 MiB", result[1].size);
+        assertEquals(33, result[1].downloads);
     }
 }
