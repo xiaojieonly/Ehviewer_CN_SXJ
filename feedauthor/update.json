@@ -1,17 +1,19 @@
 {
-  "version": "2.0.2.3",
+  "version": "2.0.2.4",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.2.3 建军节快乐~",
+    "title": "新版发布2.0.2.4",
     "content": [
-      "修复页码显示延迟的问题",
-      "添加重置阅读进度功能以更新UI",
-      "更新 AboutFragment 以使用 setPreferencesFromResource，确保仅在满足条件时设置偏好项点击监听器",
-      "修复drawable赋值逻辑以避免潜在的空指针异常",
-      "增强图像解码错误处理，避免空值返回并记录警告",
-      "添加获取可编辑评论的功能，更新相关解析器和UI逻辑"
+      "更新Gradle插件和Gradle包装器版本",
+      "增强异常处理，捕获 NoSuchElementException 以避免潜在的错误",
+      "添加读取画廊信息头的功能，优化内存处理并增强异常捕获",
+      "添加封面图像对话框功能，优化下载服务通知和动画效果",
+      "重构SelectItemWithIconAdapter为Kotlin并删除旧Java实现",
+      "更新归档下载功能，重构下载管理器为Kotlin，添加新服务和进度通知，添加暂停继续下载功能",
+      "在更新对话框中增加支持链接与赞助按钮",
+      "猫尾草: 抽离下载信息监听器接口"
     ]
   }
 }
