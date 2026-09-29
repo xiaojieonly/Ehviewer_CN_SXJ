@@ -14,16 +14,18 @@ import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.gallery.GalleryProvider2
 import com.hippo.ehviewer.spider.SpiderDen
 import com.hippo.ehviewer.spider.SpiderQueen
-import com.hippo.ehviewer.util.GZIPUtils
 import com.hippo.lib.yorozuya.FileUtils as YorozuyaFileUtils
 import com.hippo.lib.yorozuya.StringUtils
 import com.hippo.lib.yorozuya.Utilities
 import com.hippo.unifile.UniFile
 import com.hippo.util.FileUtils
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.Collections
 import java.util.Locale
+import java.util.zip.ZipInputStream
 
 /**
  * 归档 zip 下载完成后的解压与导入处理。
@@ -48,18 +50,21 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
             handleFailedTask(galleryInfo, taskId)
             return
         }
-        val fileName = createFileName(galleryInfo.title, galleryInfo.gid)
-        val tempFilePath = tempDir.path + "/" + fileName
+        val displayName = createFileName(galleryInfo.title, galleryInfo.gid)
+        val tempFile = File(tempDir, "archiver_${galleryInfo.gid}")
 
         Thread {
             try {
-                if (!GZIPUtils.UnZipFolder(zipFile.path, tempFilePath)) {
+                if (!unzipArchive(zipFile, tempFile)) {
                     postImportFailed(galleryInfo, taskId)
                     return@Thread
                 }
-                importGallery(tempFilePath, galleryInfo, taskId)
+                importGallery(tempFile.path, galleryInfo, taskId, displayName)
             } catch (e: Exception) {
                 Log.e(TAG, "Error importing downloaded zip", e)
+                if (tempFile.exists() && !YorozuyaFileUtils.delete(tempFile)) {
+                    tempFile.deleteOnExit()
+                }
                 postImportFailed(galleryInfo, taskId)
             }
         }.start()
@@ -99,7 +104,12 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
         handleFailedTask(galleryInfo, taskId)
     }
 
-    private fun importGallery(tempFilePath: String, galleryInfo: GalleryInfo, taskId: Long) {
+    private fun importGallery(
+        tempFilePath: String,
+        galleryInfo: GalleryInfo,
+        taskId: Long,
+        displayName: String
+    ) {
         if (tempFilePath.isEmpty()) {
             postImportFailed(galleryInfo, taskId)
             return
@@ -172,7 +182,6 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
         if (!YorozuyaFileUtils.delete(tempFile)) {
             tempFile.deleteOnExit()
         }
-        val finalFileName = tempFile.name
         mainHandler.post {
             val labelName = appContext.getString(R.string.download_label_archiver)
             val manager = EhApplication.getDownloadManager(appContext)
@@ -180,7 +189,7 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
             manager.addDownload(galleryInfo, labelName, DownloadInfo.STATE_FINISH)
             Toast.makeText(
                 appContext,
-                appContext.getString(R.string.stat_download_done_line_succeeded, finalFileName),
+                appContext.getString(R.string.stat_download_done_line_succeeded, displayName),
                 Toast.LENGTH_LONG
             ).show()
             Settings.deleteArchiverDownloadId(galleryInfo.gid)
@@ -194,6 +203,7 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
 
     companion object {
         private const val TAG = "ArchiverDownloadCompleter"
+        private const val EXTRACT_BUFFER_SIZE = 8192
 
         private val MAX_ARCHIVER_BASENAME_UTF8_BYTES =
             255 - ".zip".toByteArray(StandardCharsets.UTF_8).size
@@ -217,6 +227,87 @@ class ArchiverDownloadCompleter private constructor(appContext: Context) {
                 result = if (gid > 0) "archiver_$gid" else "archiver"
             }
             return result
+        }
+
+        /**
+         * 把档案解压到短文件名，避免 zip 内的长标题目录超过单级路径 255 字节。
+         * 图片按条目顺序写成 %08d + 扩展名，非图片、目录和包含 ".." 的条目跳过。
+         */
+        @JvmStatic
+        internal fun unzipArchive(zipFile: File, destDir: File): Boolean {
+            if (destDir.exists() && !YorozuyaFileUtils.delete(destDir)) {
+                Log.e(TAG, "Failed to delete leftover temp dir: ${destDir.path}")
+                return false
+            }
+            if (!destDir.mkdirs() && !destDir.isDirectory) {
+                Log.e(TAG, "Failed to create temp dir: ${destDir.path}")
+                return false
+            }
+            var imageIndex = 0
+            try {
+                ZipInputStream(FileInputStream(zipFile)).use { inZip ->
+                    while (true) {
+                        val entry = inZip.nextEntry ?: break
+                        val name = entry.name ?: continue
+                        if (entry.isDirectory || name.contains("..")) {
+                            continue
+                        }
+                        val baseName = entryBaseName(name)
+                        if (baseName.isEmpty() || !isSupportedImageName(baseName)) {
+                            continue
+                        }
+                        val extension = getImageExtension(baseName)
+                        val outFile = File(
+                            destDir,
+                            String.format(Locale.US, "%08d%s", imageIndex + 1, extension)
+                        )
+                        try {
+                            FileOutputStream(outFile).use { output ->
+                                val buffer = ByteArray(EXTRACT_BUFFER_SIZE)
+                                while (true) {
+                                    val read = inZip.read(buffer)
+                                    if (read == -1) {
+                                        break
+                                    }
+                                    output.write(buffer, 0, read)
+                                }
+                                output.flush()
+                            }
+                        } catch (e: Exception) {
+                            deleteTempDir(destDir)
+                            Log.e(TAG, "Failed to extract archive entry to: ${outFile.path}", e)
+                            return false
+                        }
+                        imageIndex++
+                    }
+                }
+            } catch (e: Exception) {
+                deleteTempDir(destDir)
+                Log.e(TAG, "Failed to unzip archive: ${zipFile.path}", e)
+                return false
+            }
+            if (imageIndex == 0) {
+                deleteTempDir(destDir)
+                Log.e(TAG, "No image files found in archive: ${zipFile.path}")
+                return false
+            }
+            return true
+        }
+
+        private fun deleteTempDir(destDir: File) {
+            if (destDir.exists() && !YorozuyaFileUtils.delete(destDir)) {
+                Log.w(TAG, "Failed to delete temp dir: ${destDir.path}")
+            }
+        }
+
+        private fun entryBaseName(name: String): String {
+            val slash = maxOf(name.lastIndexOf('/'), name.lastIndexOf('\\'))
+            return if (slash >= 0) name.substring(slash + 1) else name
+        }
+
+        private fun isSupportedImageName(name: String): Boolean {
+            val lower = name.lowercase(Locale.ROOT)
+            return StringUtils.endsWith(lower, GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS)
         }
 
         private fun resolveImportRoot(dir: File): File? {
