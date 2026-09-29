@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1pJl_NzCt46YlLv494kUuKw) 提取码：9mej
-- [夸克网盘](https://pan.quark.cn/s/873901763b79) 提取码：ULkh
-- [蓝奏云](https://wwbfg.lanzouu.com/iqgrh3zxrdah)，电脑端可正常下载 提取码：73tu
+- [百度云](https://pan.baidu.com/s/1twAXVvWwHlyJvXxqqZvxXw) 提取码：yw5g
+- [夸克网盘](https://pan.quark.cn/s/58eb2dfbb397) 提取码：uKmB
+- [蓝奏云](https://wwbfg.lanzouu.com/irQum45xom2b)，电脑端可正常下载 提取码：7nb4
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:7289464887abcd77f106c84f7ab395e5d6e74465&xt=urn:btmh:122013a4f6850078100eab8e49819aa9a34f29c1f88856089413cf2bf236453d4302&dn=EhViewer-2.0.2.3.apk&xl=27747455
+- Torrent链接:magnet:?xt=urn:btih:3404d041a906ea03b43d3a9155d0ade91fa92a43&xt=urn:btmh:12208c8c1f7266e8ecfe1ba21bc4f02e4ab5637a9b5703b141960a5251c1605cd806&dn=EhViewer-2.0.2.4.apk&xl=28205186
 
 
 点击前往赏饭：
@@ -31,6 +31,19 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2026/09/01
+### 新版发布2.0.2.4
+
+- 更新Gradle插件和Gradle包装器版本
+- 增强异常处理，捕获 NoSuchElementException 以避免潜在的错误
+- 添加读取画廊信息头的功能，优化内存处理并增强异常捕获
+- 添加封面图像对话框功能，优化下载服务通知和动画效果
+- 重构SelectItemWithIconAdapter为Kotlin并删除旧Java实现
+- 更新归档下载功能，重构下载管理器为Kotlin，添加新服务和进度通知，添加暂停继续下载功能
+- 在更新对话框中增加支持链接与赞助按钮
+- 猫尾草: 抽离下载信息监听器接口
+
+
 ## 2026/08/01
 ### 新版发布2.0.2.3 建军节快乐~
 
@@ -40,6 +53,12 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 - 修复drawable赋值逻辑以避免潜在的空指针异常
 - 增强图像解码错误处理，避免空值返回并记录警告
 - 添加获取可编辑评论的功能，更新相关解析器和UI逻辑
+- [百度云](https://pan.baidu.com/s/1pJl_NzCt46YlLv494kUuKw) 提取码：9mej
+- [夸克网盘](https://pan.quark.cn/s/873901763b79) 提取码：ULkh
+- [蓝奏云](https://wwbfg.lanzouu.com/iqgrh3zxrdah)，电脑端可正常下载 提取码：73tu
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:7289464887abcd77f106c84f7ab395e5d6e74465&xt=urn:btmh:122013a4f6850078100eab8e49819aa9a34f29c1f88856089413cf2bf236453d4302&dn=EhViewer-2.0.2.3.apk&xl=27747455
+
 
 ## 2026/07/01
 ### 新版发布2.0.2.2
