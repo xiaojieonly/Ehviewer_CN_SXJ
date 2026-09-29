@@ -347,14 +347,28 @@ public final class SpiderDen {
             }
             // Fix extension
             extension = fixExtension(extension);
-            // Copy from cache to download dir
-            UniFile file = dir.createFile(generateImageFilename(index, extension));
-            if (file == null) {
+            // Copy from cache to download dir through a temporary file: the
+            // final name is only published after the copy succeeded, so an
+            // interrupted copy can never leave a truncated file behind.
+            String finalFilename = generateImageFilename(index, extension);
+            removeDownloadDirTempFiles(dir, index);
+            UniFile tempFile = dir.createFile(DownloadVerifier.tempFilename(finalFilename));
+            if (tempFile == null) {
                 return false;
             }
-            os = file.openOutputStream();
-            IOUtils.copy(pipe.open(), os);
-            return true;
+            boolean success = false;
+            try {
+                os = tempFile.openOutputStream();
+                IOUtils.copy(pipe.open(), os);
+                IOUtils.closeQuietly(os);
+                os = null;
+                success = publishDownloadFile(dir, index, finalFilename, tempFile);
+            } finally {
+                if (!success) {
+                    removeDownloadDirTempFiles(dir, index);
+                }
+            }
+            return success;
         } catch (IOException e) {
             return false;
         } finally {
@@ -482,6 +496,15 @@ public final class SpiderDen {
             return false;
         }
 
+        return publishDownloadFile(dir, index, finalFilename, tempFile);
+    }
+
+    /**
+     * Publish a fully written temporary file under its final name: keeps at
+     * most one final file per index, renames when the provider supports it
+     * and falls back to a copy when it does not.
+     */
+    private static boolean publishDownloadFile(UniFile dir, int index, String finalFilename, UniFile tempFile) {
         // Only one final file may exist per index: drop leftovers of older
         // (possibly truncated) downloads before publishing the new one.
         for (int i = 0, n = GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS.length; i < n; i++) {
