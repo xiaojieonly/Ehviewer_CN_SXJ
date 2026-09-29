@@ -1524,6 +1524,18 @@ public final class SpiderQueen implements Runnable {
                             } else if (receivedSize > contentLength) {
                                 Log.w(TAG, "Received data is more than contentLength");
                             }
+                        } else {
+                            // No content length (e.g. a chunked response): fall
+                            // back to the byte count embedded in the image URL
+                            // when it is present.
+                            long expectedSize = DownloadVerifier.expectedSizeFromUrl(targetImageUrl);
+                            if (!DownloadVerifier.isSizeSufficient(expectedSize, receivedSize)) {
+                                Log.e(TAG, "Can't download all of image data, expected "
+                                        + expectedSize + " bytes, got " + receivedSize);
+                                error = "Incomplete";
+                                forceHtml = true;
+                                continue;
+                            }
                         }
                     } finally {
                         if (osPipe != null) {

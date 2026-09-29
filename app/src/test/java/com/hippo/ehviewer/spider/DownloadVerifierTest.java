@@ -48,4 +48,27 @@ public class DownloadVerifierTest {
     public void sizeSufficientHandlesZeroExpected() {
         assertTrue(DownloadVerifier.isSizeSufficient(0L, 0L));
     }
+
+    @Test
+    public void expectedSizeFromLegacyUrl() {
+        assertEquals(183117L, DownloadVerifier.expectedSizeFromUrl(
+                "http://69.30.203.46:60111/h/6047fa2f194742f6fa541ec1f631ec3ab438f960-183117-1280-960-jpg/keystamp=1550291100-c4438f48c8;fileindex=67379169;xres=1280/Valentines_2019_002.jpg"));
+    }
+
+    @Test
+    public void expectedSizeMissingOnModernUrl() {
+        assertEquals(-1L, DownloadVerifier.expectedSizeFromUrl(
+                "https://example.org/s/abcdef/1234567-3?k=deadbeef&t=1234567890"));
+    }
+
+    @Test
+    public void expectedSizeNullUrl() {
+        assertEquals(-1L, DownloadVerifier.expectedSizeFromUrl(null));
+    }
+
+    @Test
+    public void expectedSizeRejectsImplausibleValues() {
+        assertEquals(-1L, DownloadVerifier.expectedSizeFromUrl(
+                "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-7-1280-960-jpg/x"));
+    }
 }

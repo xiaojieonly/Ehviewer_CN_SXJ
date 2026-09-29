@@ -13,6 +13,13 @@ public final class DownloadVerifier {
      */
     public static final String TEMP_SUFFIX = ".tmp";
 
+    /**
+     * Legacy image URLs embed the authoritative byte count of the served
+     * file: ".../<sha1>-<bytes>-<width>-<height>-<ext>/...".
+     */
+    private static final java.util.regex.Pattern SIZE_IN_URL =
+            java.util.regex.Pattern.compile("/[0-9a-fA-F]{40}-(\\d+)-(\\d+)-(\\d+)-[a-z]+(?:/|\\?|$)");
+
     private DownloadVerifier() {
     }
 
@@ -21,6 +28,30 @@ public final class DownloadVerifier {
      */
     public static String tempFilename(String finalFilename) {
         return finalFilename + TEMP_SUFFIX;
+    }
+
+    /**
+     * Byte count embedded in an image URL, or -1 when the URL does not carry
+     * one (for example modern "?k=&t=" URLs).
+     */
+    public static long expectedSizeFromUrl(String url) {
+        if (url == null) {
+            return -1L;
+        }
+        java.util.regex.Matcher m = SIZE_IN_URL.matcher(url);
+        if (!m.find()) {
+            return -1L;
+        }
+        try {
+            long size = Long.parseLong(m.group(1));
+            // Implausible values are treated as "no information".
+            if (size < 1024L || size > 512L * 1024L * 1024L) {
+                return -1L;
+            }
+            return size;
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
     }
 
     /**
