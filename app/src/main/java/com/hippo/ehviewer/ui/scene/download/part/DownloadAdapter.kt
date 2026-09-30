@@ -217,7 +217,10 @@ class DownloadAdapter(scene: DownloadsScene, callback: DownloadAdapterCallback) 
 
             val spiderInfo = mCallback.spiderInfoMap!![info.gid]
 
-            if (spiderInfo != null) {
+            // 归档条目每次绑定都重设文本，避免复用其他条目的进度。
+            if (importedArchive) {
+                holder.readProgress.text = spiderInfo?.let { formatArchiveReadingProgress(it.startPage, it.pages) }
+            } else if (spiderInfo != null) {
                 val startPage = spiderInfo.startPage + 1
                 val readText = startPage.toString() + "/" + spiderInfo.pages
                 holder.readProgress.text = readText
@@ -853,6 +856,14 @@ class DownloadAdapter(scene: DownloadsScene, callback: DownloadAdapterCallback) 
     }
 
     companion object {
+        /** 处理未知总页数、负页码和超界页码，并避免整数加一溢出。 */
+        @JvmStatic
+        private fun formatArchiveReadingProgress(startPage: Int, pageCount: Int): String? {
+            val start = maxOf(startPage, 0)
+            if (pageCount <= 0) return if (start > 0) "${start.toLong() + 1}/?" else null
+            return "${minOf(start, pageCount - 1) + 1}/$pageCount"
+        }
+
         private val TAG: String = DownloadAdapter::class.java.getSimpleName()
         @JvmField
         var DRAG_ENABLE: Boolean = false
