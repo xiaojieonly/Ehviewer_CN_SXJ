@@ -100,7 +100,7 @@ public class DownloadSearchController implements SearchBar.Helper, SearchBarMove
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
 
         LinearLayout linearLayout = (LinearLayout) layoutInflater.inflate(R.layout.download_search_dialog, null);
-        mSearchBar = linearLayout.findViewById(R.id.download_search_bar);
+        mSearchBar = linearLayout.<SearchBar>findViewById(R.id.download_search_bar);
         mSearchBar.setHelper(helper);
         mSearchBar.setIsComeFromDownload(true);
         mSearchBar.setEditTextHint(R.string.download_search_hint);

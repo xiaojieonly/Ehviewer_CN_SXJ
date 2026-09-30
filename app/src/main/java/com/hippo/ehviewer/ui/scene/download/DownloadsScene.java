@@ -78,6 +78,7 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadAlbumImporter;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadArchiveImporter;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadBatchActions;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadChoiceListener;
@@ -118,7 +119,7 @@ public class DownloadsScene extends ToolbarScene
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener,
         SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener,
         DownloadAdapter.DownloadAdapterCallback,
-        DownloadArchiveImporter.Host, DownloadSearchController.Host,
+        DownloadArchiveImporter.Host, DownloadAlbumImporter.Host, DownloadSearchController.Host,
         DownloadBatchActions.Host, DownloadPaginationController.Host,
         DownloadGuideHelper.Host, DownloadChoiceListener.Host {
 
@@ -151,6 +152,7 @@ public class DownloadsScene extends ToolbarScene
     private List<DownloadInfo> mBackList;
 
     private final DownloadArchiveImporter mArchiveImporter = new DownloadArchiveImporter(this);
+    private final DownloadAlbumImporter mAlbumImporter = new DownloadAlbumImporter(this);
     private final DownloadSearchController mSearchController = new DownloadSearchController(this);
     private final DownloadBatchActions mBatchActions = new DownloadBatchActions(this);
     private final DownloadPaginationController mPaginationController = new DownloadPaginationController(this);
@@ -199,6 +201,12 @@ public class DownloadsScene extends ToolbarScene
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             mArchiveImporter::handleSelectedFiles
+    );
+
+    @NonNull
+    private final ActivityResultLauncher<Intent> folderPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            mAlbumImporter::handleSelectedFolder
     );
 
     @Override
@@ -364,8 +372,8 @@ public class DownloadsScene extends ToolbarScene
         PaginationIndicator paginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
         mPaginationController.setPaginationIndicator(paginationIndicator);
 
-        paginationIndicator.setPerPageCountChoices(mPaginationController.getPerPageCountChoices(),
-                mPaginationController.getPageSizePos(mPaginationController.getPageSize()));
+        paginationIndicator.setPerPageCountChoices(mPaginationController.perPageCountChoices,
+                mPaginationController.getPageSizePos(mPaginationController.pageSize));
 
         mViewTransition = new ViewTransition(content, tip);
 
@@ -528,7 +536,7 @@ public class DownloadsScene extends ToolbarScene
             }
         }
 
-        if (mInitPosition >= 0 && mPaginationController.getIndexPage() != 1) {
+        if (mInitPosition >= 0 && mPaginationController.indexPage != 1) {
             mPaginationController.initPage(mInitPosition);
             mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
             mInitPosition = -1;
@@ -688,6 +696,9 @@ public class DownloadsScene extends ToolbarScene
                 return true;
             case R.id.import_local_archive:
                 mArchiveImporter.importLocalArchive(filePickerLauncher);
+                return true;
+            case R.id.import_local_album:
+                mAlbumImporter.importLocalAlbum(folderPickerLauncher);
                 return true;
 //            case R.id.misc:
 //            case R.id.doujinshi:
@@ -985,17 +996,17 @@ public class DownloadsScene extends ToolbarScene
     // DownloadAdapterCallback 接口实现
     @Override
     public int getIndexPage() {
-        return mPaginationController.getIndexPage();
+        return mPaginationController.indexPage;
     }
 
     @Override
     public int getPageSize() {
-        return mPaginationController.getPageSize();
+        return mPaginationController.pageSize;
     }
 
     @Override
     public int getPaginationSize() {
-        return mPaginationController.getPaginationSize();
+        return mPaginationController.paginationSize;
     }
 
     @Override
@@ -1043,6 +1054,12 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public DownloadManager getDownloadManager() {
         return mDownloadManager;
+    }
+
+    @Nullable
+    @Override
+    public String getLabel() {
+        return mLabel;
     }
 
     @Override

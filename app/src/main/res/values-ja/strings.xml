@@ -924,4 +924,11 @@
     <string name="imported_archive_info_title">ローカルインポート情報</string>
     <string name="imported_archive_info_message">これはローカルストレージからインポートされたアイテムです</string>
     <string name="imported_archive_category">ローカルインポート</string>
+    <string name="import_local_album">ローカルアルバムをインポート</string>
+    <string name="import_album_title">画像フォルダを選択</string>
+    <string name="import_album_processing">アルバムをインポート中…</string>
+    <string name="import_album_failed">アルバムのインポートに失敗しました</string>
+    <string name="import_album_no_images">選択したフォルダに対応する画像がありません</string>
+    <string name="import_album_already_imported">アルバムは既にインポートされています</string>
+    <string name="import_album_success">%d 枚の画像をインポートしました</string>
 </resources>

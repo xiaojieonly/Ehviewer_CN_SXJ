@@ -49,8 +49,6 @@ public class DownloadListInfosExecutor {
 
     private final String mSearchKey;
 
-    private DownloadManager mDownloadManager;
-
     public DownloadListInfosExecutor(@Nullable List<DownloadInfo> mList, String searchKey) {
         this.mList = mList;
         this.mSearchKey = searchKey;
@@ -59,7 +57,6 @@ public class DownloadListInfosExecutor {
     public DownloadListInfosExecutor(@Nullable List<DownloadInfo> mList, DownloadManager downloadManager) {
         this.mList = mList;
         this.mSearchKey = "";
-        mDownloadManager = downloadManager;
     }
 
     public void setDownloadSearchingListener(DownloadSearchCallback downloadSearchCallback) {
@@ -146,7 +143,7 @@ public class DownloadListInfosExecutor {
             return new ArrayList<>();
         }
         DownloadInfo[] arr = new DownloadInfo[mList.size()];
-        mList.toArray(arr);
+        mList.<DownloadInfo>toArray(arr);
 
         // 如果是按文件大小排序，先计算所有文件大小
         if (type == R.id.sort_by_file_size_asc || type == R.id.sort_by_file_size_desc) {
@@ -179,7 +176,7 @@ public class DownloadListInfosExecutor {
                 merge(arr, left, mid, n - 1, type);
             }
         }
-        return Arrays.asList(arr);
+        return Arrays.<DownloadInfo>asList(arr);
     }
 
     // 合并函数，把两个有序的数组合并起来
@@ -440,7 +437,7 @@ public class DownloadListInfosExecutor {
                 tags.add(tag);
             }
         }
-        return tags.toArray(new String[0]);
+        return tags.<String>toArray(new String[0]);
     }
 
     private static boolean matchSingleTag(String tag, String searchTag) {

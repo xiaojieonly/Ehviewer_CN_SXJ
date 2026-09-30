@@ -893,6 +893,13 @@
     <string name="imported_archive_info_title">Informations d\'importation locale</string>
     <string name="imported_archive_info_message">Il s\'agit d\'un élément importé depuis le stockage local</string>
     <string name="imported_archive_category">Importation locale</string>
+    <string name="import_local_album">Importer un album local</string>
+    <string name="import_album_title">Sélectionner le dossier d\'images</string>
+    <string name="import_album_processing">Importation de l\'album…</string>
+    <string name="import_album_failed">Échec de l\'importation de l\'album</string>
+    <string name="import_album_no_images">Aucune image prise en charge dans le dossier sélectionné</string>
+    <string name="import_album_already_imported">Album déjà importé</string>
+    <string name="import_album_success">%d images importées avec succès</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Page précédente</string>

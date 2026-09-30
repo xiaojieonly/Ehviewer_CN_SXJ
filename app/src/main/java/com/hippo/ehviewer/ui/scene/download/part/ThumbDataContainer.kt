@@ -37,7 +37,10 @@ class ThumbDataContainer(private val mInfo: DownloadInfo) : DataContainer {
         if (mFile == null) {
             val dir = SpiderDen.getGalleryDownloadDir(mInfo)
             if (dir != null && dir.isDirectory()) {
-                mFile = dir.createFile(".thumb")
+                mFile = dir.findFile(".thumb")
+                if (mFile == null) {
+                    mFile = dir.createFile(".thumb")
+                }
             }
         }
     }
