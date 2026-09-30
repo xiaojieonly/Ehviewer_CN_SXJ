@@ -1,17 +1,18 @@
 {
-  "version": "2.0.2.3",
+  "version": "2.0.2.5",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.2.3 建军节快乐~",
+    "title": "新版发布2.0.2.5 国庆节快乐~",
     "content": [
-      "修复页码显示延迟的问题",
-      "添加重置阅读进度功能以更新UI",
-      "更新 AboutFragment 以使用 setPreferencesFromResource，确保仅在满足条件时设置偏好项点击监听器",
-      "修复drawable赋值逻辑以避免潜在的空指针异常",
-      "增强图像解码错误处理，避免空值返回并记录警告",
-      "添加获取可编辑评论的功能，更新相关解析器和UI逻辑"
+      "为 Gallery_Tags 增加 LOCATION 标签分类，并同步更新相关数据库处理",
+      "改进 SpiderInfo 解析并增强 RestoreDownloadPreference 功能",
+      "添加阅读刷新率设置功能",
+      "重构下载页，新增下载归档导入、批量操作、选择监听器、搜索控制器及分页控制器",
+      "修复阅读进度重置功能 by: Mios-dream",
+      "添加本地相册导入功能",
+      "修复归档解压因文件名超长导致的导入失败"
     ]
   }
 }
