@@ -17,6 +17,7 @@ import com.hippo.ehviewer.client.EhRequest
 import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.userTag.TagPushParam
+import com.hippo.ehviewer.client.data.userTag.UserTag
 import com.hippo.ehviewer.client.data.userTag.UserTagList
 import com.hippo.ehviewer.dao.Filter
 import com.hippo.ehviewer.ui.MainActivity
@@ -112,6 +113,49 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
         Toast.makeText(context, R.string.gallery_tag_copy, Toast.LENGTH_LONG).show()
     }
 
+    fun subscribeUploader(uploader: String?) {
+        if (uploader.isNullOrEmpty()) {
+            return
+        }
+        Settings.addSubscribedUploader(uploader)
+        requestTag("uploader:$uploader", true)
+    }
+
+    fun unsubscribeUploader(uploader: String?) {
+        if (uploader.isNullOrEmpty()) {
+            return
+        }
+        Settings.removeSubscribedUploader(uploader)
+        val userTag = findUploaderTag(uploader)
+        if (userTag != null) {
+            deleteWatchedTag(userTag)
+        } else {
+            showTip(R.string.unsubscribe_the_uploader_success, BaseScene.LENGTH_SHORT)
+        }
+    }
+
+    private fun findUploaderTag(uploader: String): UserTag? {
+        val ctx = context ?: return null
+        val list = EhApplication.getUserTagList(ctx) ?: return null
+        val tagName = "uploader:$uploader"
+        return list.userTags?.firstOrNull { it.tagName == tagName }
+    }
+
+    private fun deleteWatchedTag(userTag: UserTag) {
+        val ctx = context
+        val activity = baseScene.activity2
+        if (ctx == null || activity == null) {
+            showTip(R.string.unsubscribe_the_uploader_success, BaseScene.LENGTH_SHORT)
+            return
+        }
+        val callback = UnsubscribeListener(ctx, activity.stageId, baseScene.tag)
+        val request = EhRequest()
+            .setMethod(EhClient.METHOD_DELETE_WATCHED)
+            .setArgs(EhUrl.getMyTag(), userTag)
+            .setCallback(callback)
+        EhApplication.getEhClient(ctx).execute(request)
+    }
+
     private fun requestTag(tagName: String?, tagState: Boolean) {
         val url = EhUrl.getMyTag()
 
@@ -163,6 +207,28 @@ class GalleryListSceneDialog(val baseScene: BaseScene) {
 
         override fun onFailure(e: Exception) {
             Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onCancel() {
+        }
+    }
+
+    private inner class UnsubscribeListener(
+        context: Context,
+        stageId: Int,
+        sceneTag: String?
+    ) : EhCallback<GalleryListScene?, UserTagList?>(context, stageId, sceneTag) {
+        override fun isInstance(scene: SceneFragment): Boolean {
+            return false
+        }
+
+        override fun onSuccess(result: UserTagList?) {
+            baseScene.setTagList(result)
+            showTip(R.string.unsubscribe_the_uploader_success, BaseScene.LENGTH_SHORT)
+        }
+
+        override fun onFailure(e: Exception) {
+            showTip(R.string.unsubscribe_the_uploader_success, BaseScene.LENGTH_SHORT)
         }
 
         override fun onCancel() {

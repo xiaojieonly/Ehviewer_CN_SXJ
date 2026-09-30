@@ -624,6 +624,58 @@ public final class GalleryListScene extends BaseScene
         }
         setNavCheckedItem(checkedItemId);
         mNavCheckedId = checkedItemId;
+        updateSubscriptionFeedFab();
+    }
+
+    private void updateSubscriptionFeedFab() {
+        if (mFabLayout == null || mUrlBuilder == null) {
+            return;
+        }
+        boolean subscription = mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION;
+        FloatingActionButton fab = null;
+        int index = -1;
+        for (int i = 0; i < mFabLayout.getSecondaryFabCount(); i++) {
+            FloatingActionButton child = mFabLayout.getSecondaryFabAt(i);
+            if (child != null && child.getId() == R.id.subscription_feed_mode) {
+                fab = child;
+                index = i;
+                break;
+            }
+        }
+        if (index < 0 || fab == null) {
+            return;
+        }
+        mFabLayout.setSecondaryFabVisibilityAt(index, subscription);
+        if (!subscription) {
+            return;
+        }
+        int current = Settings.getSubscriptionFeedMode();
+        int next = (current + 1) % 3;
+        if (next == Settings.SUBSCRIPTION_FEED_TAGS) {
+            fab.setImageResource(R.drawable.ic_subscription_feed_tags);
+        } else if (next == Settings.SUBSCRIPTION_FEED_UPLOADERS) {
+            fab.setImageResource(R.drawable.ic_subscription_feed_uploaders);
+        } else {
+            fab.setImageResource(R.drawable.ic_subscription_feed_both);
+        }
+    }
+
+    private void cycleSubscriptionFeedMode() {
+        int next = (Settings.getSubscriptionFeedMode() + 1) % 3;
+        Settings.setSubscriptionFeedMode(next);
+        updateSubscriptionFeedFab();
+        int tip;
+        if (next == Settings.SUBSCRIPTION_FEED_TAGS) {
+            tip = R.string.subscription_feed_tags;
+        } else if (next == Settings.SUBSCRIPTION_FEED_UPLOADERS) {
+            tip = R.string.subscription_feed_uploaders;
+        } else {
+            tip = R.string.subscription_feed_both;
+        }
+        showTip(tip, LENGTH_SHORT);
+        if (mHelper != null) {
+            mHelper.refresh();
+        }
     }
 
     @NonNull
@@ -1462,6 +1514,12 @@ public final class GalleryListScene extends BaseScene
     @Override
     public void onClickSecondaryFab(FabLayout view, FloatingActionButton fab, int position) {
         if (null == mHelper) {
+            return;
+        }
+
+        if (fab.getId() == R.id.subscription_feed_mode) {
+            cycleSubscriptionFeedMode();
+            view.setExpanded(false);
             return;
         }
 
