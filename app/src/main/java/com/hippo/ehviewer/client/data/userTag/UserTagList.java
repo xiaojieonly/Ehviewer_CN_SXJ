@@ -48,4 +48,21 @@ public class UserTagList implements Parcelable {
     public int size(){
         return userTags.size();
     }
+
+    public UserTag findByTagName(String tagName) {
+        if (userTags == null || tagName == null) {
+            return null;
+        }
+        for (UserTag userTag : userTags) {
+            if (userTag != null && tagName.equalsIgnoreCase(userTag.tagName)) {
+                return userTag;
+            }
+        }
+        return null;
+    }
+
+    public boolean isWatched(String tagName) {
+        UserTag userTag = findByTagName(tagName);
+        return userTag != null && userTag.watched;
+    }
 }
