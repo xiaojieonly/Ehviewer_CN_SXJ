@@ -653,8 +653,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mPreviews = ViewUtils.$$(belowHeader, R.id.previews);
         mGridLayout = (SimpleGridAutoSpanLayout) ViewUtils.$$(mPreviews, R.id.grid_layout);
         mPreviewText = (TextView) ViewUtils.$$(mPreviews, R.id.preview_text);
-        Ripple.addRipple(mPreviews, isDarkTheme);
-        mPreviews.setOnClickListener(this);
+        mPreviewText.setOnClickListener(this);
 
         mProgress = ViewUtils.$$(mainView, R.id.progress);
 
@@ -1201,12 +1200,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         // 限制初始显示的预览数量，避免创建过多视图导致滚动卡顿
         // 只显示前27个预览（约3-4行，每行约6-9个），其余通过点击"查看更多"跳转
-        final int totalSize = previewSet.size();
+        final int totalSize = previewSet != null ? previewSet.size() : 0;
 //        final int maxDisplayCount = 40; // 限制显示数量
 //        final int displayCount = Math.min(totalSize, maxDisplayCount);
         final long gid = gd.gid;
 
-        if (gd.previewPages <= 0 || previewSet == null || previewSet.size() == 0) {
+        if (gd.previewPages <= 0 || totalSize == 0) {
             mPreviewText.setText(R.string.no_previews);
             return;
         } else if (gd.previewPages == 1 ) {
@@ -1219,7 +1218,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         for (int i = 0; i < totalSize; i++) {
             View view = inflater.inflate(R.layout.item_gallery_preview, mGridLayout, false);
             LoadImageView image = view.findViewById(R.id.image);
-            image.setTag(R.id.index, i);
+            image.setTag(R.id.index, previewSet.getPosition(i));
             image.setOnClickListener(this);
             TextView text = view.findViewById(R.id.text);
             text.setText(Integer.toString(previewSet.getPosition(i) + 1));
@@ -1580,7 +1579,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             startScene(new Announcer(GalleryCommentsScene.class)
                     .setArgs(args)
                     .setRequestCode(this, REQUEST_CODE_COMMENT_GALLERY));
-        } else if (mPreviews == v) {
+        } else if (mPreviewText == v) {
             if (null != mGalleryDetail) {
                 Bundle args = new Bundle();
                 args.putParcelable(GalleryPreviewsScene.KEY_GALLERY_INFO, mGalleryDetail);

@@ -44,10 +44,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.hippo.easyrecyclerview.EasyRecyclerView
+            <com.hippo.ehviewer.widget.ControllerRecyclerView
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:focusable="false"
+                android:descendantFocusability="afterDescendants"
                 android:clipToPadding="false"/>
 
         </com.hippo.refreshlayout.RefreshLayout>
