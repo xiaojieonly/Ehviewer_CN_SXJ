@@ -61,6 +61,11 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
     @Override
     public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
         if (mHelper.isValidView(recyclerView)) {
+            if (!recyclerView.isInTouchMode()) {
+                // Keep toolbar actions visible during keyboard/controller navigation.
+                showSearchBar(false);
+                return;
+            }
             int oldBottom = (int) ViewUtils.getY2(mSearchBar);
             int offsetYStep = MathUtils.clamp(-dy, -oldBottom, -(int) mSearchBar.getTranslationY());
             if (offsetYStep != 0) {
@@ -88,7 +93,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
             if (recyclerView == null) {
                 return;
             }
-            if (!recyclerView.isShown()) {
+            if (!recyclerView.isInTouchMode() || !recyclerView.isShown()) {
                 show = true;
             } else if (recyclerView.computeVerticalScrollOffset() < mSearchBar.getBottom()){
                 show = true;
