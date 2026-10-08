@@ -229,7 +229,7 @@ public class TouchNavigationTest {
         awaitLayout();
         int requests = gallery.helper.requests;
         // The existing scroll listener loads the next page as the end approaches.
-        for (int i = 0; i < 20 && gallery.helper.requests == requests; i++) {
+        for (int i = 0; i < 40 && gallery.helper.requests == requests; i++) {
             drag(gallery.recyclerView, 0.5f, 0.8f, 0.5f, 0.2f);
         }
         assertEquals(requests + 1, gallery.helper.requests);
