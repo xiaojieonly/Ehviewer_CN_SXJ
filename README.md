@@ -238,7 +238,7 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 
 
 
-- [2024年更新日志-人生的不起落落落落](feedauthor/year2025-life-broken-down.md)  
+- [2025年更新日志-人生的不起落落落落](feedauthor/year2025-life-broken-down.md)  
 - [2024年更新日志-感谢大家的支持](feedauthor/year2024-thanks.md)  
 - [2023年更新日志-时间过的好快](feedauthor/year2023-boom.md)  
 - [2022年更新日志-成长](feedauthor/year2022-growing-up.md)  
