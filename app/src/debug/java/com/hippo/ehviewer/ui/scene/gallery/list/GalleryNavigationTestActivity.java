@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
 import com.hippo.drawable.DrawerArrowDrawable;
+import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -58,6 +59,10 @@ public class GalleryNavigationTestActivity extends Activity {
     public NavigationView navigation;
     public int menuClicks;
     public int lastMenuId;
+    public int toolbarTitleClicks;
+    public int toolbarActionClicks;
+    public int drawerOpens;
+    public int drawerCloses;
     public ContentLayout content;
     public PagingHelper helper;
     public int clicks;
@@ -73,6 +78,25 @@ public class GalleryNavigationTestActivity extends Activity {
         if (getIntent().getBooleanExtra("menu", false)) {
             setContentView(R.layout.activity_main);
             drawer = findViewById(R.id.draw_view);
+            drawer.setDrawerListener(new DrawerLayout.DrawerListener() {
+                @Override
+                public void onDrawerSlide(View view, float percent) {
+                }
+
+                @Override
+                public void onDrawerOpened(View view) {
+                    drawerOpens++;
+                }
+
+                @Override
+                public void onDrawerClosed(View view) {
+                    drawerCloses++;
+                }
+
+                @Override
+                public void onDrawerStateChanged(View view, int state) {
+                }
+            });
             navigation = findViewById(R.id.nav_view);
             navigation.setCheckedItem(R.id.nav_homepage);
             navigation.setNavigationItemSelectedListener(item -> {
@@ -97,9 +121,11 @@ public class GalleryNavigationTestActivity extends Activity {
                 }
                 @Override
                 public void onClickTitle() {
+                    toolbarTitleClicks++;
                 }
                 @Override
                 public void onClickRightIcon() {
+                    toolbarActionClicks++;
                 }
                 @Override
                 public void onSearchEditTextClick() {

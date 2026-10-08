@@ -653,6 +653,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mPreviews = ViewUtils.$$(belowHeader, R.id.previews);
         mGridLayout = (SimpleGridAutoSpanLayout) ViewUtils.$$(mPreviews, R.id.grid_layout);
         mPreviewText = (TextView) ViewUtils.$$(mPreviews, R.id.preview_text);
+        Ripple.addRipple(mPreviews, isDarkTheme);
+        mPreviews.setOnClickListener(this);
         mPreviewText.setOnClickListener(this);
 
         mProgress = ViewUtils.$$(mainView, R.id.progress);
@@ -1579,7 +1581,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             startScene(new Announcer(GalleryCommentsScene.class)
                     .setArgs(args)
                     .setRequestCode(this, REQUEST_CODE_COMMENT_GALLERY));
-        } else if (mPreviewText == v) {
+        } else if (mPreviews == v || mPreviewText == v) {
             if (null != mGalleryDetail) {
                 Bundle args = new Bundle();
                 args.putParcelable(GalleryPreviewsScene.KEY_GALLERY_INFO, mGalleryDetail);

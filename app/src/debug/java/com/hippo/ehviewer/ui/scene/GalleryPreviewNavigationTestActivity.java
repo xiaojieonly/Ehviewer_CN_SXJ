@@ -44,6 +44,7 @@ public class GalleryPreviewNavigationTestActivity extends Activity {
     public SimpleGridAutoSpanLayout grid;
     public EasyRecyclerView recyclerView;
     public TextView more;
+    public View previews;
     public int clicks;
     public int longClicks;
     public int moreClicks;
@@ -93,7 +94,7 @@ public class GalleryPreviewNavigationTestActivity extends Activity {
         } else {
             scrollView = new ScrollView(this);
             scrollView.setVerticalScrollBarEnabled(false);
-            View previews = getLayoutInflater().inflate(
+            previews = getLayoutInflater().inflate(
                     R.layout.gallery_detail_previews, scrollView, false);
             grid = previews.findViewById(R.id.grid_layout);
             grid.setColumnSize(columnWidth);
@@ -105,6 +106,7 @@ public class GalleryPreviewNavigationTestActivity extends Activity {
             }
             more = previews.findViewById(R.id.preview_text);
             more.setText(R.string.more_previews);
+            previews.setOnClickListener(v -> moreClicks++);
             more.setOnClickListener(v -> moreClicks++);
             scrollView.addView(previews);
             root.addView(scrollView, new LinearLayout.LayoutParams(-1, 0, 1));

@@ -18,6 +18,7 @@ package com.hippo.ehviewer.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -25,6 +26,8 @@ import com.hippo.ehviewer.R;
 
 /** One focus target per preview, retaining the image's open and retry actions. */
 public class GalleryPreviewView extends LinearLayout {
+    private View mImage;
+
     public GalleryPreviewView(Context context) {
         super(context);
     }
@@ -40,8 +43,16 @@ public class GalleryPreviewView extends LinearLayout {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        View image = findViewById(R.id.image);
-        setOnClickListener(v -> image.performClick());
-        setOnLongClickListener(v -> image.performLongClick());
+        mImage = findViewById(R.id.image);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (super.dispatchKeyEvent(event)) {
+            return true;
+        }
+        // Reuse the image's native confirmation/retry handling without making
+        // the caption or empty space intercept the parent's touch gestures.
+        return isFocused() && isEnabled() && mImage != null && mImage.dispatchKeyEvent(event);
     }
 }
