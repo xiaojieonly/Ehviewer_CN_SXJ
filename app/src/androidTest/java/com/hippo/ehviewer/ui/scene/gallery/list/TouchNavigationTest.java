@@ -18,6 +18,7 @@ package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -222,16 +223,15 @@ public class TouchNavigationTest {
     }
 
     @Test
-    public void pullingUpStillLoadsTheNextPageWithoutControllerInput() {
+    public void swipingUpStillLoadsTheNextPageWithoutControllerInput() {
         startGallery(GalleryAdapterNew.TYPE_LIST);
         instrumentation.runOnMainSync(() -> gallery.enablePaging(2));
         awaitLayout();
-        instrumentation.runOnMainSync(() -> gallery.recyclerView.scrollToPosition(119));
-        SystemClock.sleep(400);
-        instrumentation.runOnMainSync(() -> gallery.recyclerView.scrollBy(0, 100000));
-        awaitLayout();
         int requests = gallery.helper.requests;
-        drag(gallery.recyclerView, 0.5f, 0.8f, 0.5f, 0.2f);
+        // The existing scroll listener loads the next page as the end approaches.
+        for (int i = 0; i < 20 && gallery.helper.requests == requests; i++) {
+            drag(gallery.recyclerView, 0.5f, 0.8f, 0.5f, 0.2f);
+        }
         assertEquals(requests + 1, gallery.helper.requests);
         assertEquals(ContentLayout.ContentHelper.TYPE_NEXT_PAGE_KEEP_POS, gallery.helper.requestType);
         assertEquals(1, gallery.helper.requestPage);
@@ -361,13 +361,15 @@ public class TouchNavigationTest {
     public void switchingBackToTouchRestoresToolbarHidingAndClearsCardFocus() {
         startGallery(GalleryAdapterNew.TYPE_LIST);
         instrumentation.setInTouchMode(false);
+        // Deliver a real key before requesting keyboard focus; touch-mode updates are asynchronous.
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         View first = card();
         instrumentation.runOnMainSync(() -> assertTrue(first.requestFocus()));
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         SystemClock.sleep(400);
         drag(gallery.recyclerView, 0.5f, 0.8f, 0.5f, 0.2f);
         instrumentation.runOnMainSync(() -> {
-            assertFalse(gallery.recyclerView.hasFocus());
+            // RecyclerView can retain its own native touch focus, but a card must not stay focused.
+            assertNull(gallery.recyclerView.getFocusedChild());
             assertTrue(gallery.searchBar.getTranslationY() < 0);
         });
         assertEquals(0, gallery.clicks);

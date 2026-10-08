@@ -20,6 +20,7 @@
     android:id="@+id/previews"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:focusable="false"
     android:orientation="vertical"
     android:padding="@dimen/keyline_margin"
     android:divider="@drawable/spacer_keyline"
