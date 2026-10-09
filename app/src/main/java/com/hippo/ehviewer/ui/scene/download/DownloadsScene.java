@@ -47,6 +47,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -104,6 +105,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -198,7 +200,7 @@ public class DownloadsScene extends ToolbarScene
     @NonNull
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            mArchiveImporter::handleSelectedFile
+            mArchiveImporter::handleSelectedFiles
     );
 
     @NonNull
@@ -812,6 +814,7 @@ public class DownloadsScene extends ToolbarScene
                 }
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setData(archiveUri);
+                intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
             } else {
                 // This is a normal download, use ACTION_EH
                 intent.setAction(GalleryActivity.ACTION_EH);
@@ -925,11 +928,23 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+    /** 重载列表时清理已删除项的进度，并更新标签数量。 */
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onReload() {
+        if (mDownloadManager != null) {
+            Iterator<Long> iterator = mPaginationController.getSpiderInfoMap().keySet().iterator();
+            while (iterator.hasNext()) {
+                if (!mDownloadManager.containDownloadInfo(iterator.next())) {
+                    iterator.remove();
+                }
+            }
+        }
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
+        }
+        if (downloadLabelDraw != null && mViewTransition != null) {
+            downloadLabelDraw.updateDownloadLabels();
         }
         updateView();
     }
@@ -952,13 +967,18 @@ public class DownloadsScene extends ToolbarScene
         updateView();
     }
 
+    /** 删除下载项时同步移除分页进度缓存并刷新标签。 */
     @Override
     public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        mPaginationController.getSpiderInfoMap().remove(info.gid);
         if (mList != list) {
             return;
         }
         if (mAdapter != null) {
             mAdapter.notifyItemRemoved(listIndexInPage(position));
+        }
+        if (downloadLabelDraw != null && mViewTransition != null) {
+            downloadLabelDraw.updateDownloadLabels();
         }
         updateView();
     }
@@ -1012,6 +1032,23 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public Map<Long, SpiderInfo> getSpiderInfoMap() {
         return mPaginationController.getSpiderInfoMap();
+    }
+
+    /** 返回选择文件时所在的标签，后台处理期间不随界面切换改变。 */
+    @Override
+    public String getArchiveImportLabel() {
+        return mLabel;
+    }
+
+    /** 仅在页面仍可交互且管理器一致时展示导入结果。 */
+    @Override
+    public boolean canShowArchiveImportResult(DownloadManager manager) {
+        if (!isAdded() || mViewTransition == null || mDownloadManager != manager || getView() == null) {
+            return false;
+        }
+        MainActivity activity = getActivity2();
+        return activity != null && activity.getLifecycle().getCurrentState()
+                .isAtLeast(Lifecycle.State.STARTED) && getStackIndex() == activity.getSceneCount() - 1;
     }
 
     @Override
