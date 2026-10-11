@@ -19,6 +19,9 @@ package com.hippo.widget.recyclerview;
 import android.view.View;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+
+import com.hippo.anotherviewer.ui.pane.TwoPaneState;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +33,8 @@ public class AutoStaggeredGridLayoutManager extends StaggeredGridLayoutManager {
     private int mColumnSize = -1;
     private boolean mColumnSizeChanged = true;
     private int mStrategy;
+    /** 上次测量时的双栏（跨屏）状态：状态翻转时强制重算列数。 */
+    private boolean mLastTwoPane;
 
     private List<OnUpdateSpanCountListener> mListeners;
 
@@ -71,7 +76,8 @@ public class AutoStaggeredGridLayoutManager extends StaggeredGridLayoutManager {
 
     @Override
     public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state, int widthSpec, int heightSpec) {
-        if (mColumnSizeChanged && mColumnSize > 0) {
+        boolean twoPane = TwoPaneState.isActive();
+        if ((mColumnSizeChanged || twoPane != mLastTwoPane) && mColumnSize > 0) {
             int totalSpace;
             if (getOrientation() == VERTICAL) {
                 if (View.MeasureSpec.EXACTLY != View.MeasureSpec.getMode(widthSpec)) {
@@ -86,17 +92,24 @@ public class AutoStaggeredGridLayoutManager extends StaggeredGridLayoutManager {
             }
 
             int spanCount;
-            switch (mStrategy) {
-                default:
-                case STRATEGY_MIN_SIZE:
-                    spanCount = getSpanCountForMinSize(totalSpace, mColumnSize);
-                    break;
-                case STRATEGY_SUITABLE_SIZE:
-                    spanCount = getSpanCountForSuitableSize(totalSpace, mColumnSize);
-                    break;
+            if (twoPane) {
+                // 跨屏双栏：左栏是列表、右栏是详情，列表恒定单列，
+                // 不随窗口变宽自动分列；单屏时保持按宽度自动分列
+                spanCount = 1;
+            } else {
+                switch (mStrategy) {
+                    default:
+                    case STRATEGY_MIN_SIZE:
+                        spanCount = getSpanCountForMinSize(totalSpace, mColumnSize);
+                        break;
+                    case STRATEGY_SUITABLE_SIZE:
+                        spanCount = getSpanCountForSuitableSize(totalSpace, mColumnSize);
+                        break;
+                }
             }
             setSpanCount(spanCount);
             mColumnSizeChanged = false;
+            mLastTwoPane = twoPane;
 
             if (null != mListeners) {
                 for (int i = 0, n = mListeners.size(); i < n; i++) {

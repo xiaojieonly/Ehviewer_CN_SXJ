@@ -975,4 +975,6 @@
     <string name="download_delegate_failed">Server download failed</string>
     <string name="settings_detail_placeholder">Select a category on the left</string>
 
+    <string name="settings_advanced_prefer_local_access">Prefer local access</string>
+    <string name="settings_advanced_prefer_local_access_summary">When on, the app connects to the gallery sites directly (no server relay). When off (default), all access is relayed through the paired server. Data syncs to the server periodically in either mode.</string>
 </resources>

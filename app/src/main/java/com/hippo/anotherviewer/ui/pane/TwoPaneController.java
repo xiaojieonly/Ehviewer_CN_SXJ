@@ -16,18 +16,21 @@
 
 package com.hippo.anotherviewer.ui.pane;
 
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.hippo.anotherviewer.R;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
 import com.hippo.anotherviewer.ui.MainActivity;
+import com.hippo.anotherviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.scene.Announcer;
 
 /**
  * 双屏双栏控制器：MainActivity 的薄钩子，只负责生命周期转发与
@@ -38,18 +41,25 @@ import com.hippo.anotherviewer.ui.MainActivity;
  *     <li>出现铰链时把左栏场景容器（{@code R.id.fragment_container}，
  *     原有 SceneFragment 体系原样不动）压窄到左屏宽度，点亮右栏
  *     {@code R.id.detail_pane}；</li>
- *     <li>右栏以普通 Fragment 方式承载 {@link GalleryDetailPaneFragment}，
- *     不进入 StageActivity 场景栈；</li>
- *     <li>铰链消失/收起时移除右栏、恢复容器宽度，左栏场景栈
- *     （含返回键语义）全程未被改动。</li>
+ *     <li>右栏承载真正的 {@link GalleryDetailScene}：借
+ *     {@link Announcer#setContainerId(int)} 让 StageActivity 把场景加进右栏
+ *     容器，原版详情逻辑（下载、收藏、标签、评论……）完整可用；</li>
+ *     <li>铰链消失/收起时结束右栏全部场景、恢复容器宽度，左栏场景栈
+ *     全程未被改动。</li>
  * </ul>
+ *
+ * <p>右栏场景的生命周期归框架所有（StageActivity/SceneFragment 负责
+ * add/detach/pop 与返回键语义），本类只在"右栏该显示什么"发生变化时
+ * 启动/结束右栏场景，从不手动 detach/attach 场景视图，也不直接操作
+ * 场景 Fragment。
  *
  * <p>单屏（无分隔铰链）时 {@link #showGalleryDetail(GalleryInfo)}
  * 直接返回 false，调用方走原有单栏流程，默认路径零改动。
  */
 public final class TwoPaneController implements FoldSplitDetector.Listener {
 
-    private static final String PANE_FRAGMENT_TAG = "gallery_detail_pane";
+    private static final String TAG = "TwoPaneController";
+    private static final String KEY_SAVED_TWO_PANE = "two_pane_active";
 
     private final MainActivity mActivity;
     private final FoldSplitDetector mDetector;
@@ -90,13 +100,21 @@ public final class TwoPaneController implements FoldSplitDetector.Listener {
     }
 
     /**
-     * 双栏模式下在右栏展示画廊详情。
+     * 双栏模式下在右栏展示画廊详情（真实的 {@link GalleryDetailScene}）。
      *
      * @return true 表示已交给右栏（调用方不要再走单栏 startScene 流程）；
      * false 表示当前不是双栏，调用方按原流程处理。
      */
     public boolean showGalleryDetail(@Nullable GalleryInfo galleryInfo) {
-        if (mSplit == null || galleryInfo == null) {
+        Log.i(TAG, "showGalleryDetail split=" + (mSplit != null) + " gi=" + (galleryInfo != null ? galleryInfo.gid : -1));
+        if (mSplit == null) {
+            // 单屏：清理可能残留的右栏场景。Duo 外壳在移屏/取消跨屏时会重建
+            // Activity，FragmentManager 会把右栏场景恢复——单屏下它既不可见也
+            // 不该存活，否则下次跨屏会重新露出旧详情。
+            cleanupStalePaneScenes();
+            return false;
+        }
+        if (galleryInfo == null) {
             return false;
         }
         mPendingDetail = galleryInfo;
@@ -122,6 +140,7 @@ public final class TwoPaneController implements FoldSplitDetector.Listener {
      ---------------*/
 
     private void expand(@NonNull FoldSplitDetector.Split split) {
+        Log.i(TAG, "expand() leftPane=" + split.leftPaneWidth + " win=" + split.windowWidth);
         mSplit = split;
 
         View container = mActivity.findViewById(R.id.fragment_container);
@@ -153,11 +172,42 @@ public final class TwoPaneController implements FoldSplitDetector.Listener {
         reconcilePaneFragment();
     }
 
+    /** 单屏交互时清理残留的右栏场景（重建恢复的旧详情等）。 */
+    private void cleanupStalePaneScenes() {
+        if (mActivity.hasScenesIn(R.id.detail_pane)) {
+            Log.i(TAG, "cleanupStalePaneScenes: finishing stale pane scenes");
+            mActivity.finishScenesIn(R.id.detail_pane);
+            updateHint();
+        }
+    }
+
+    /** 跨重建持久化：保存当前是否处于双栏，重建后据此判断右栏场景是否合法。 */
+    public void saveState(@NonNull Bundle outState) {
+        outState.putBoolean(KEY_SAVED_TWO_PANE, mSplit != null);
+    }
+
+    /**
+     * 重建恢复：保存时为单屏却被恢复的右栏场景必然是残留（Duo 外壳重建），
+     * 立即清理，避免再次跨屏时露出旧详情；保存时为双栏则保留恢复的详情。
+     */
+    public void restoreState(@Nullable Bundle savedState) {
+        if (savedState == null) {
+            return;
+        }
+        if (!savedState.getBoolean(KEY_SAVED_TWO_PANE, false)) {
+            cleanupStalePaneScenes();
+        }
+    }
+
     private void collapse() {
+        Log.i(TAG, "collapse() enter");
         mSplit = null;
         mPendingDetail = null;
 
-        removePaneFragment();
+        // 结束右栏全部场景：走框架标准 finish 流程，右栏场景的生命周期
+        // 回调与结果回传照常触发，左栏场景栈不动。
+        mActivity.finishScenesIn(R.id.detail_pane);
+        updateHint();
 
         View container = mActivity.findViewById(R.id.fragment_container);
         View pane = mActivity.findViewById(R.id.detail_pane);
@@ -178,49 +228,65 @@ public final class TwoPaneController implements FoldSplitDetector.Listener {
         }
     }
 
-    /** 保证右栏片段、提示文案与待展示画廊三者一致。 */
+    /**
+     * 保证右栏场景与待展示画廊一致：右栏已在展示同一画廊的详情场景时
+     * 什么都不做（铰链事件会反复触发本方法，重启场景会丢场景内状态）；
+     * 否则先结束右栏现有场景，再以真实 {@link GalleryDetailScene} 打开。
+     * 场景生命周期归框架所有，本类只负责启动与结束。
+     */
     private void reconcilePaneFragment() {
-        FragmentManager fm = mActivity.getSupportFragmentManager();
-        Fragment pane = fm.findFragmentByTag(PANE_FRAGMENT_TAG);
-
-        if (mPendingDetail == null && pane instanceof GalleryDetailPaneFragment) {
-            // 旋转恢复等场景：从还活着的面板回读当前画廊
-            mPendingDetail = ((GalleryDetailPaneFragment) pane).getCurrentGallery();
-        }
-
-        showHint(pane == null);
         if (mPendingDetail == null) {
+            // 无待展示画廊（例如刚旋转恢复）：右栏场景若还在就保持原状，
+            // 只同步提示文案。
+            updateHint();
             return;
         }
-        if (pane instanceof GalleryDetailPaneFragment) {
-            ((GalleryDetailPaneFragment) pane).updateGallery(mPendingDetail);
-        } else {
-            FragmentTransaction transaction = fm.beginTransaction();
-            transaction.replace(R.id.detail_pane,
-                    GalleryDetailPaneFragment.newInstance(mPendingDetail), PANE_FRAGMENT_TAG);
-            transaction.commitAllowingStateLoss();
-            showHint(false);
+        if (isShowingGallery(mPendingDetail)) {
+            updateHint();
+            return;
         }
+        mActivity.finishScenesIn(R.id.detail_pane);
+        startPaneDetailScene(mPendingDetail);
+        updateHint();
     }
 
-    private void removePaneFragment() {
-        FragmentManager fm = mActivity.getSupportFragmentManager();
-        Fragment pane = fm.findFragmentByTag(PANE_FRAGMENT_TAG);
-        if (pane != null) {
-            fm.beginTransaction().remove(pane).commitAllowingStateLoss();
+    /** 右栏当前是否已经在展示该画廊的详情场景。 */
+    private boolean isShowingGallery(@NonNull GalleryInfo galleryInfo) {
+        Fragment pane = mActivity.getSupportFragmentManager().findFragmentById(R.id.detail_pane);
+        if (!(pane instanceof GalleryDetailScene)) {
+            return false;
         }
-        showHint(true);
+        Bundle args = pane.getArguments();
+        if (args == null) {
+            return false;
+        }
+        GalleryInfo showing = args.getParcelable(GalleryDetailScene.KEY_GALLERY_INFO);
+        return showing != null && showing.gid == galleryInfo.gid
+                && TextUtils.equals(showing.token, galleryInfo.token);
     }
 
-    /** 右栏空置提示：仅在没有面板片段时可见。 */
-    private void showHint(boolean show) {
+    /**
+     * 让 StageActivity 把真实详情场景加进右栏容器。列表场景点击时
+     * 拿不到可用的缩略图，因此不设置转场（{@code setTranHelper}）。
+     */
+    private void startPaneDetailScene(@NonNull GalleryInfo galleryInfo) {
+        Bundle args = new Bundle();
+        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
+        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, galleryInfo);
+        Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
+        announcer.setContainerId(R.id.detail_pane);
+        mActivity.startScene(announcer);
+    }
+
+    /** 右栏空置提示：仅当右栏没有场景时可见。 */
+    private void updateHint() {
         View pane = mActivity.findViewById(R.id.detail_pane);
         if (pane == null) {
             return;
         }
         View hint = pane.findViewById(R.id.detail_pane_hint);
         if (hint != null) {
-            hint.setVisibility(show ? View.VISIBLE : View.GONE);
+            hint.setVisibility(mActivity.hasScenesIn(R.id.detail_pane) ? View.GONE : View.VISIBLE);
         }
     }
 }

@@ -57,7 +57,14 @@ public class SceneFragment extends Fragment {
     public void startScene(Announcer announcer) {
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
-            ((StageActivity) activity).startScene(announcer);
+            StageActivity stageActivity = (StageActivity) activity;
+            if (announcer.getContainerId() == 0 && getTag() != null) {
+                // 继承发起场景自身的容器：右栏详情场景发起的子场景（预览/评论等）
+                // 留在右栏；左栏场景发起的一切仍在左栏。未显式指定容器时才继承，
+                // 活动层发起的场景（抽屉等）基于默认容器不受影响。
+                announcer.setContainerId(stageActivity.getSceneContainerId(getTag()));
+            }
+            stageActivity.startScene(announcer);
         }
     }
 

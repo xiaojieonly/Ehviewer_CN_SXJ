@@ -25,6 +25,8 @@ public final class Announcer {
     TransitionHelper tranHelper;
     SceneFragment requestFrom;
     int requestCode;
+    /** Target container view id, 0 for the stage's default container. */
+    int containerId = 0;
 
     public Announcer(Class<?> clazz) {
         this.clazz = clazz;
@@ -52,5 +54,19 @@ public final class Announcer {
         this.requestFrom = requestFrom;
         this.requestCode = requestCode;
         return this;
+    }
+
+    /**
+     * Add the scene to {@code containerId} instead of the stage's default
+     * container. {@code 0} (the default) keeps the classic single-container
+     * behavior.
+     */
+    public Announcer setContainerId(int containerId) {
+        this.containerId = containerId;
+        return this;
+    }
+
+    public int getContainerId() {
+        return containerId;
     }
 }

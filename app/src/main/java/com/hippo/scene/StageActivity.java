@@ -52,10 +52,17 @@ public abstract class StageActivity extends SiteActivity {
 
     private static final String KEY_STAGE_ID = "stage_activity_stage_id";
     private static final String KEY_SCENE_TAG_LIST = "stage_activity_scene_tag_list";
+    private static final String KEY_SCENE_CONTAINER_IDS = "stage_activity_scene_container_ids";
     private static final String KEY_NEXT_ID = "stage_activity_next_id";
 
     private final ArrayList<String> mSceneTagList = new ArrayList<>();
     private final ArrayList<String> mDelaySceneTagList = new ArrayList<>();
+    /**
+     * Container view id each scene was added to, keyed by scene tag; mirrors
+     * {@link #mSceneTagList}. A tag without an entry belongs to the default
+     * container ({@link #getContainerViewId()}), i.e. single column.
+     */
+    private final HashMap<String, Integer> mSceneContainerIds = new HashMap<>();
     private final AtomicInteger mIdGenerator = new AtomicInteger();
 
     private int mStageId = IntIdGenerator.INVALID_ID;
@@ -168,6 +175,13 @@ public abstract class StageActivity extends SiteActivity {
             if (list != null) {
                 mSceneTagList.addAll(list);
                 mDelaySceneTagList.addAll(list);
+                // Restore the container bookkeeping together with the tag list;
+                // a state without it (legacy save) falls back to the default container.
+                Object containerIds = savedInstanceState.getSerializable(KEY_SCENE_CONTAINER_IDS);
+                if (containerIds instanceof HashMap) {
+                    //noinspection unchecked
+                    mSceneContainerIds.putAll((HashMap<String, Integer>) containerIds);
+                }
             }
             mIdGenerator.lazySet(savedInstanceState.getInt(KEY_NEXT_ID));
         }
@@ -208,6 +222,7 @@ public abstract class StageActivity extends SiteActivity {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_STAGE_ID, mStageId);
         outState.putStringArrayList(KEY_SCENE_TAG_LIST, mSceneTagList);
+        outState.putSerializable(KEY_SCENE_CONTAINER_IDS, new HashMap<>(mSceneContainerIds));
         outState.putInt(KEY_NEXT_ID, mIdGenerator.getAndIncrement());
     }
 
@@ -267,12 +282,51 @@ public abstract class StageActivity extends SiteActivity {
         }
     }
 
+    /**
+     * The single decision point for the container a newly started scene is added
+     * to, shared by {@link #startScene} and {@link #startSceneFirstly}:
+     *
+     * <ul>
+     *     <li>an announcer with an explicit container id wins (two-pane right
+     *     pane);</li>
+     *     <li>otherwise a scene started from the current top scene stays in that
+     *     scene's container, so scenes started by a pane scene (previews,
+     *     comments, ...) also open in the pane;</li>
+     *     <li>everything else (empty stack, default container) uses
+     *     {@link #getContainerViewId()}, i.e. the classic single-container
+     *     behavior.</li>
+     * </ul>
+     */
+    private int getStartSceneContainerId(@Nullable Announcer announcer) {
+        if (announcer != null && announcer.containerId != 0) {
+            return announcer.containerId;
+        }
+        return getContainerViewId();
+    }
+
+    /**
+     * Container view id the scene with {@code tag} was added to. Unknown tags
+     * (legacy state) belong to the default container.
+     */
+    public int getSceneContainerId(@Nullable String tag) {
+        if (tag != null) {
+            Integer containerId = mSceneContainerIds.get(tag);
+            if (containerId != null) {
+                return containerId;
+            }
+        }
+        return getContainerViewId();
+    }
+
     public void startScene(Announcer announcer) {
         Class<?> clazz = announcer.clazz;
         Bundle args = announcer.args;
         TransitionHelper tranHelper = announcer.tranHelper;
         FragmentManager fragmentManager = getSupportFragmentManager();
         int launchMode = getSceneLaunchMode(clazz);
+
+        // Container this scene is added to (see getStartSceneContainerId())
+        int containerViewId = getStartSceneContainerId(announcer);
 
         // Check LAUNCH_MODE_SINGLE_TASK
         if (launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TASK) {
@@ -308,6 +362,9 @@ public abstract class StageActivity extends SiteActivity {
                     }
 
                     // Remove tag from index i+1
+                    for (int j = i + 1; j < n; j++) {
+                        mSceneContainerIds.remove(mSceneTagList.get(j));
+                    }
                     mSceneTagList.subList(i + 1, mSceneTagList.size()).clear();
 
                     // Attach fragment
@@ -359,8 +416,15 @@ public abstract class StageActivity extends SiteActivity {
         // Add new tag to list
         mSceneTagList.add(newTag);
         mDelaySceneTagList.add(newTag);
+        mSceneContainerIds.put(newTag, containerViewId);
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
+        // Two-pane: the current top scene might live in another container (the
+        // other pane); the panes are independent, so it must not be detached or
+        // animated away here — treat it as "nothing to hide in this container".
+        if (currentScene != null && containerViewId != getSceneContainerId(currentScene.getTag())) {
+            currentScene = null;
+        }
         // Animation
         if (currentScene != null) {
             if (tranHelper == null || !tranHelper.onTransition(
@@ -386,7 +450,7 @@ public abstract class StageActivity extends SiteActivity {
         }
 
         // Add new scene
-        transaction.add(getContainerViewId(), newScene, newTag);
+        transaction.add(containerViewId, newScene, newTag);
 
         // Commit
         transaction.commitAllowingStateLoss();
@@ -407,6 +471,9 @@ public abstract class StageActivity extends SiteActivity {
         boolean createNewScene = true;
         boolean findScene = false;
         SceneFragment scene = null;
+
+        // Container this scene is added to; computed before the stack is rebuilt
+        int containerViewId = getStartSceneContainerId(announcer);
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
 
@@ -449,6 +516,9 @@ public abstract class StageActivity extends SiteActivity {
         if (null != findSceneTag) {
             mSceneTagList.add(findSceneTag);
         }
+        // Drop the container bookkeeping of the scenes removed just above;
+        // the surviving scene keeps its entry.
+        mSceneContainerIds.keySet().retainAll(mSceneTagList);
 
         if (createNewScene) {
             scene = newSceneInstance(clazz);
@@ -460,9 +530,10 @@ public abstract class StageActivity extends SiteActivity {
             // Add tag to list
             mSceneTagList.add(tag);
             mDelaySceneTagList.add(tag);
+            mSceneContainerIds.put(tag, containerViewId);
 
             // Add scene
-            transaction.add(getContainerViewId(), scene, tag);
+            transaction.add(containerViewId, scene, tag);
         }
 
         // Commit
@@ -549,11 +620,50 @@ public abstract class StageActivity extends SiteActivity {
 
         // Remove tag
         mSceneTagList.remove(index);
+        mSceneContainerIds.remove(tag);
 
         // Return result
         if (scene instanceof SceneFragment) {
             ((SceneFragment) scene).returnResult(this);
         }
+    }
+
+    /**
+     * Whether any scene on the stack was added to {@code containerViewId}.
+     * Two-pane mode uses this to tell "pane empty" from "pane has a scene".
+     */
+    public boolean hasScenesIn(int containerViewId) {
+        for (int i = mSceneTagList.size() - 1; i >= 0; i--) {
+            if (getSceneContainerId(mSceneTagList.get(i)) == containerViewId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Finish every scene that was added to {@code containerViewId}, from the top
+     * of the scene stack down. Every pop goes through the framework's own
+     * {@link #finishScene(SceneFragment)}, so transitions, lifecycle callbacks
+     * and scene results behave exactly like a user-initiated finish.
+     * Two-pane mode uses this to clear the right pane.
+     */
+    public void finishScenesIn(int containerViewId) {
+        Log.i(TAG, "finishScenesIn(" + containerViewId + ") stack=" + mSceneTagList + " containers=" + mSceneContainerIds);
+        for (int i = mSceneTagList.size() - 1; i >= 0; i--) {
+            String tag = mSceneTagList.get(i);
+            if (getSceneContainerId(tag) != containerViewId) {
+                continue;
+            }
+            SceneFragment scene = findSceneByTag(tag);
+            if (scene == null) {
+                Log.e(TAG, "finishScenesIn: Can't find scene by tag: " + tag);
+                continue;
+            }
+            Log.i(TAG, "finishScenesIn: finishing tag=" + tag);
+            finishScene(scene);
+        }
+        Log.i(TAG, "finishScenesIn done stack=" + mSceneTagList);
     }
 
     public void refreshTopScene() {

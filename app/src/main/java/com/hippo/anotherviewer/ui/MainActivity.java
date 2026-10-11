@@ -666,12 +666,18 @@ public final class MainActivity extends StageActivity
 
     private void onRestore(Bundle savedInstanceState) {
         mNavCheckedItem = savedInstanceState.getInt(KEY_NAV_CHECKED_ITEM);
+        if (mTwoPaneController != null) {
+            mTwoPaneController.restoreState(savedInstanceState);
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState, @NonNull PersistableBundle outPersistentState) {
 //        super.onSaveInstanceState(outState, outPersistentState);
         outState.putInt(KEY_NAV_CHECKED_ITEM, mNavCheckedItem);
+        if (mTwoPaneController != null) {
+            mTwoPaneController.saveState(outState);
+        }
     }
 
     @Override
@@ -965,34 +971,39 @@ public final class MainActivity extends StageActivity
                 Bundle nav_homepage = new Bundle();
                 nav_homepage.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
                 startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_homepage));
+                        .setArgs(nav_homepage)
+                        .setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_subscription:
                 Bundle nav_subscription = new Bundle();
                 nav_subscription.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
                 startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_subscription));
+                        .setArgs(nav_subscription)
+                        .setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_whats_hot:
                 Bundle nav_whats_hot = new Bundle();
                 nav_whats_hot.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
                 startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_whats_hot));
+                        .setArgs(nav_whats_hot)
+                        .setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_top_lists:
                 Bundle nav_top_lists = new Bundle();
                 nav_top_lists.putString(SiteTopListScene.KEY_ACTION, SiteTopListScene.ACTION_TOP_LIST);
                 startSceneFirstly(new Announcer(SiteTopListScene.class)
-                        .setArgs(nav_top_lists));
+                        .setArgs(nav_top_lists)
+                        .setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_favourite:
-                startScene(new Announcer(FavoritesScene.class));
+                // 抽屉目的地恒定落在默认容器（左栏）：即使栈顶是右栏详情场景也不继承其容器
+                startScene(new Announcer(FavoritesScene.class).setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_history:
-                startScene(new Announcer(HistoryScene.class));
+                startScene(new Announcer(HistoryScene.class).setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_downloads:
-                startScene(new Announcer(DownloadsScene.class));
+                startScene(new Announcer(DownloadsScene.class).setContainerId(getContainerViewId()));
                 break;
             case R.id.nav_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);

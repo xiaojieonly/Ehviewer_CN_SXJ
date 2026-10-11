@@ -328,7 +328,6 @@
     <string name="download">Download</string>
     <string name="read">Read</string>
     <string name="detail_pane_hint">Select a gallery on the left to see its details here</string>
-    <string name="detail_pane_full_detail">Full details</string>
     <string name="more_information">More information</string>
     <plurals name="page_count">
         <item quantity="one">%d page</item>
@@ -1215,4 +1214,6 @@
     <string name="wifi_retry_connect">尝试重新链接</string>
     <string name="image_path_error">获取图片路径出错</string>
     <string name="settings_detail_placeholder">在左侧选择分类，此处展示设置</string>
+    <string name="settings_advanced_prefer_local_access">优先本地访问</string>
+    <string name="settings_advanced_prefer_local_access_summary">开启后优先直连图站（不经服务器转接）；关闭（默认）时已配对服务器的全部访问经服务器转接。两种模式下数据都会定期同步到服务器。</string>
 </resources>

@@ -38,11 +38,15 @@ public class SiteSSLSocketFactory extends SSLSocketFactory {
             return ((SSLSocketFactory) getDefault()).createSocket(s, host, port, autoClose);
         }
         InetAddress address = s.getInetAddress();
-        if (address != null) {
-            String hostAddress = address.getHostAddress();
-            if (hostAddress != null) {
-                Log.d("SiteSSLSocketFactory", "Host: " + host + " Address: " + hostAddress);
-            }
+        if (address == null) {
+            // 经代理（SOCKS/HTTP CONNECT）连接时底层 socket 尚未绑定到目标地址
+            // （getInetAddress() 为 null），域前置没有可用的具体地址——退回标准
+            // TLS 包装，避免把 null 传给 createSocket 触发 NPE
+            return ((SSLSocketFactory) getDefault()).createSocket(s, host, port, autoClose);
+        }
+        String hostAddress = address.getHostAddress();
+        if (hostAddress != null) {
+            Log.d("SiteSSLSocketFactory", "Host: " + host + " Address: " + hostAddress);
         }
         if (autoClose) s.close();
         return getDefault().createSocket(address, port);

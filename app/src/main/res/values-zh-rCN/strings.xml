@@ -240,7 +240,6 @@
     <string name="download">下载</string>
     <string name="read">阅读</string>
     <string name="detail_pane_hint">在左侧选择画廊，此处展示详情</string>
-    <string name="detail_pane_full_detail">完整详情</string>
     <string name="more_information">查看更多信息</string>
     <plurals name="page_count">
         <item quantity="other">%d 页</item>

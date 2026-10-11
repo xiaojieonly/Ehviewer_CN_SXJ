@@ -38,7 +38,7 @@ public class ReadFragment extends BasePreferenceFragmentCompat {
         // Duo 真机：横屏双页由折叠姿态自动决定，不给用户选择，
         // 隐藏相关偏好项，避免出现无效设置。
         if (DuoSupport.isDuoHardware()) {
-            String[] hiddenKeys = {"reading_dual_page"};
+            String[] hiddenKeys = {"reading_dual_page", "reading_first_page_cover"};
             for (String key : hiddenKeys) {
                 Preference preference = findPreference(key);
                 if (preference != null) {

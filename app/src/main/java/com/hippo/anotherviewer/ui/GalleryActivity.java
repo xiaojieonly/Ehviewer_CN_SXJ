@@ -95,6 +95,7 @@ import com.hippo.anotherviewer.spider.SpiderDen;
 import com.hippo.anotherviewer.spider.SpiderInfo;
 import com.hippo.anotherviewer.ui.pane.DuoSupport;
 import com.hippo.anotherviewer.webui.WebUiConfig;
+import com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler;
 import com.hippo.anotherviewer.webui.WebUiSettings;
 import com.hippo.anotherviewer.widget.FoldPolicy;
 import com.hippo.anotherviewer.widget.GalleryGuideView;
@@ -617,9 +618,20 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
     }
 
+    /**
+     * 封面页开关：Duo 真机双页布局下恒为关闭——跨屏打开即第一页与第二页同屏
+     * （不先单独展示封面），其余设备/单页布局保持用户设置原样。
+     */
+    private boolean isCoverEnabled(int layoutMode) {
+        if (DuoSupport.isDuoHardware() && layoutMode == GalleryView.LAYOUT_DUAL_PAGE) {
+            return false;
+        }
+        return Settings.getReadingFirstPageCover();
+    }
+
     private GalleryView buildGalleryView(int layoutMode, int spreadMode, int startPage) {
         Resources resources = getResources();
-        return new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(Settings.getReadingFirstPageCover()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
+        return new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(isCoverEnabled(layoutMode)).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
     }
 
     private boolean isEglAvailable() {
@@ -764,6 +776,9 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         // page turns can enqueue writes behind this flush. Synchronous but
         // cheap — primary-key history-row ops only.
         flushReadingProgress();
+        // 局域网内即时同步：退出阅读器即请求一次同步周期，把刚冲刷的进度
+        // 推送到服务器（节流见 requestProgressSync；未配对时静默跳过）
+        requestProgressSync();
     }
 
     @Override
@@ -1031,6 +1046,10 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         // archive/WebUI proxy). Off the UI thread, mirroring
         // SpiderQueen.putStartPage's .spm write.
         persistHistoryPage(index);
+        // 长时间阅读中途也保持服务器侧快速跟进（60 秒节流）
+        if (index >= 0) {
+            requestProgressSync();
+        }
 
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -1096,6 +1115,24 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
      * write already carries exactly this page. Safe to call from both onPause
      * and onDestroy; every SiteDB call is a primary-key read/update.
      */
+    /** 进度同步请求的最小间隔：吸收连续翻页与 pause/destroy 的重复触发。 */
+    private static final long PROGRESS_SYNC_MIN_INTERVAL_MS = 60_000L;
+    private static volatile long sLastProgressSyncRequest = 0L;
+
+    /**
+     * 请求一次自动同步（未配对/失败均静默）。翻页与退出阅读器都会调用，
+     * 以 60 秒节流避免高频打点；服务器侧增量推送（ledger），多余周期无写放大。
+     */
+    private void requestProgressSync() {
+        long now = System.currentTimeMillis();
+        long last = sLastProgressSyncRequest;
+        if (now - last < PROGRESS_SYNC_MIN_INTERVAL_MS) {
+            return;
+        }
+        sLastProgressSyncRequest = now;
+        WebUiAutoSyncScheduler.triggerOnce(this);
+    }
+
     private void flushReadingProgress() {
         GalleryInfo info = mGalleryInfo;
         int index = mCurrentIndex;

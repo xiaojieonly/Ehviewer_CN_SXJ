@@ -30,6 +30,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
+import androidx.preference.SwitchPreference;
 
 import com.hippo.anotherviewer.AppConfig;
 import com.hippo.anotherviewer.SiteApplication;
@@ -46,6 +47,9 @@ import java.util.Arrays;
 
 public class AdvancedFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
+
+    /** 设置→高级：「优先本地访问」开关的 preference key。 */
+    private static final String KEY_PREFER_LOCAL_ACCESS = "prefer_local_access";
     public static final int DB_LOADING = 0;
     public static final int DB_LOAD_FINISH = 1;
 
@@ -65,6 +69,22 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+        // 优先本地访问：关闭（默认）= 已配对时所有访问经服务器转接（tier=2）；
+        // 开启 = 直连优先（tier=1）。两种模式下同步腿都常驻定期同步。
+        SwitchPreference preferLocal = findPreference(KEY_PREFER_LOCAL_ACCESS);
+        if (preferLocal != null) {
+            com.hippo.anotherviewer.webui.WebUiSettings webUiSettings =
+                    new com.hippo.anotherviewer.webui.WebUiSettings(requireContext());
+            preferLocal.setPersistent(false);
+            preferLocal.setChecked(webUiSettings.clientTier() < 2);
+            preferLocal.setOnPreferenceChangeListener((pref, newValue) -> {
+                boolean preferLocalOn = (Boolean) newValue;
+                webUiSettings.setClientTier(preferLocalOn ? 1 : 2);
+                preferLocal.setChecked(preferLocalOn);
+                return true;
+            });
+        }
+
         context = getContext();
         addPreferencesFromResource(R.xml.advanced_settings);
 

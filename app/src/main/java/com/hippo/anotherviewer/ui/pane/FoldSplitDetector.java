@@ -18,6 +18,7 @@ package com.hippo.anotherviewer.ui.pane;
 
 import android.app.Activity;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -103,6 +104,13 @@ public final class FoldSplitDetector {
     private WindowInfoTrackerCallbackAdapter mAdapter;
     @Nullable
     private Split mLastSplit;
+    /** 窗口尺寸变化的监听器：Duo 上取消跨屏不会重推 WindowLayoutInfo，需重注册强制刷新。 */
+    @Nullable
+    private View mReRegisterView;
+    @Nullable
+    private android.view.View.OnLayoutChangeListener mLayoutListener;
+    private int mLastWidth = -1;
+    private int mLastHeight = -1;
 
     private final Consumer<WindowLayoutInfo> mConsumer = this::onLayoutInfoChanged;
 
@@ -122,6 +130,37 @@ public final class FoldSplitDetector {
         // 主线程 Executor：保证回调线程一致，无需再加锁
         adapter.addWindowLayoutInfoListener(mActivity,
                 androidx.core.content.ContextCompat.getMainExecutor(mActivity), mConsumer);
+        // Duo 上 androidx.window 只在铰链姿态变化时推送，窗口尺寸变化（拖拽跨屏/
+        // 折回单屏）不重推：尺寸变化时重注册监听器强制刷新一次分割状态，
+        // 保证取消跨屏能及时触发 collapse()。
+        View content = mActivity.findViewById(android.R.id.content);
+        if (content != null) {
+            mReRegisterView = content;
+            mLayoutListener = (v, l, t, r, b, ol, ot, or2, ob) -> {
+                int width = r - l;
+                int height = b - t;
+                if (mLastWidth != -1 && (width != mLastWidth || height != mLastHeight)) {
+                    reregister();
+                }
+                mLastWidth = width;
+                mLastHeight = height;
+            };
+            content.addOnLayoutChangeListener(mLayoutListener);
+        }
+    }
+
+    /** 重注册窗口布局监听：强制系统重推一次当前折叠几何（含"无分隔"状态）。 */
+    private void reregister() {
+        WindowInfoTrackerCallbackAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return;
+        }
+        try {
+            adapter.removeWindowLayoutInfoListener(mConsumer);
+        } catch (RuntimeException ignored) {
+        }
+        adapter.addWindowLayoutInfoListener(mActivity,
+                androidx.core.content.ContextCompat.getMainExecutor(mActivity), mConsumer);
     }
 
     /** 停止监听（Activity onStop 时机）。 */
@@ -135,6 +174,13 @@ public final class FoldSplitDetector {
             adapter.removeWindowLayoutInfoListener(mConsumer);
         } catch (RuntimeException ignored) {
         }
+        if (mReRegisterView != null && mLayoutListener != null) {
+            mReRegisterView.removeOnLayoutChangeListener(mLayoutListener);
+        }
+        mReRegisterView = null;
+        mLayoutListener = null;
+        mLastWidth = -1;
+        mLastHeight = -1;
     }
 
     /** 仅供同包单元测试直调；处理一条窗口布局信息并去重回报。 */
@@ -165,6 +211,9 @@ public final class FoldSplitDetector {
             return;
         }
         mLastSplit = split;
+        Log.i("FoldSplitDetector", "split changed -> " + (split != null ? "two-pane" : "single"));
+        // 全局双栏状态：跨屏时列表布局管理器据此钳制单列（见 TwoPaneState）
+        TwoPaneState.setActive(split != null);
         mListener.onSplitChanged(split);
     }
 

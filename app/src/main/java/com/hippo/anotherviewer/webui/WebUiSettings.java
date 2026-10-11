@@ -239,7 +239,9 @@ public final class WebUiSettings {
 
     /** Client behavior tier (D3), 0..3; out-of-range stored values fall back to 1. */
     public int clientTier() {
-        int tier = preferences.getInt(KEY_CLIENT_TIER, 1);
+        // 默认 Tier-2：已配对服务器时所有访问经服务器转接（图片/页面/同步），
+        // 用户可在 设置→高级 勾选「优先本地访问」改回直连（tier=1，同步腿照常）
+        int tier = preferences.getInt(KEY_CLIENT_TIER, 2);
         return tier >= 0 && tier <= 3 ? tier : 1;
     }
 

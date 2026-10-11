@@ -64,7 +64,6 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_SYNC_NOW = "webui_sync_now";
     private static final String KEY_REMOTE_READ = "webui_remote_read";
     private static final String KEY_CONFLICT_STRATEGY = "webui_conflict_strategy";
-    private static final String KEY_CLIENT_TIER = "webui_client_tier";
     private static final String KEY_AUTO_SYNC_INTERVAL = "webui_auto_sync_interval";
     private static final String KEY_PAIR = "webui_pair";
     private static final String KEY_SYNC_PREFERENCES = "webui_sync_preferences";
@@ -170,34 +169,6 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             });
             updateStrategySummary(strategy);
         }
-        ListPreference tier = findPreference(KEY_CLIENT_TIER);
-        if (tier != null) {
-            tier.setEntries(new CharSequence[]{
-                    getString(R.string.settings_webui_tier_0),
-                    getString(R.string.settings_webui_tier_1),
-                    getString(R.string.settings_webui_tier_2),
-                    getString(R.string.settings_webui_tier_3)});
-            tier.setEntryValues(new CharSequence[]{"0", "1", "2", "3"});
-            tier.setValue(String.valueOf(policySettings.clientTier()));
-            tier.setPersistent(false);
-            tier.setOnPreferenceChangeListener((pref, newValue) -> {
-                policySettings.setClientTier(Integer.parseInt((String) newValue));
-                tier.setValue((String) newValue);
-                updateTierSummary(tier);
-                if (remoteRead != null) {
-                    updateRemoteReadForTier(remoteRead, policySettings);
-                }
-                if ("3".equals(newValue)) {
-                    // Tier-3 (download hosting) is deferred to its own wave;
-                    // picking it routes browsing like Tier-2 and nothing more.
-                    Toast.makeText(requireContext(),
-                            R.string.settings_webui_tier_3_deferred_note,
-                            Toast.LENGTH_LONG).show();
-                }
-                return true;
-            });
-            updateTierSummary(tier);
-        }
         EditTextPreference interval = findPreference(KEY_AUTO_SYNC_INTERVAL);
         if (interval != null) {
             interval.setText(String.valueOf(policySettings.autoSyncIntervalSec()));
@@ -234,15 +205,6 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
      * dialog cannot grey out a single entry, so the label's "（押后）" marker,
      * this summary and a pick-time toast carry the disclosure instead).
      */
-    private void updateTierSummary(ListPreference tier) {
-        int index = tier.findIndexOfValue(tier.getValue());
-        CharSequence label = index >= 0 ? tier.getEntries()[index] : "";
-        String summary = label + " — " + getString(R.string.settings_webui_client_tier_summary);
-        if ("3".equals(tier.getValue())) {
-            summary += " · " + getString(R.string.settings_webui_tier_3_deferred_note);
-        }
-        tier.setSummary(summary);
-    }
 
     /**
      * Tier-2 implies remote reading, so at tier >= 2 the switch reflects the
