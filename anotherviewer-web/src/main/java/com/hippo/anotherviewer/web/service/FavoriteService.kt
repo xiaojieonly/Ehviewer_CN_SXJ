@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.web.dto.FavoriteItem
 import com.hippo.anotherviewer.web.dto.FavoriteListResponse
 import com.hippo.anotherviewer.web.config.CurrentUsernameProvider
+import com.hippo.anotherviewer.web.config.PrivacyMaskFilter
 import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import org.slf4j.LoggerFactory
@@ -135,6 +136,10 @@ class FavoriteService(
     ): Boolean {
         val clampedSlot = slot.coerceIn(SLOT_NOT_FAVORITED, SLOT_MAX)
         val now = System.currentTimeMillis()
+        // 打码边界（2026-10-11 用户裁决）：打码开关只应影响响应展示，绝不让脱敏
+        // 数据落库——打码期间前端只持有 `#gid` 序列号标题，与历史回写同口径拒收
+        // （置空，列表按 #gid 兜底渲染）；真标题待 App 推送/后续操作自然补全。
+        val safeTitle = title?.takeIf { !PrivacyMaskFilter.isMaskedTitle(it) }
         // A7-3（P1-1）：List 化防同 gid 多行炸单实体派生查询；firstOrNull 与原
         // findByGid 等价（单行模型下语义不变，多行脏数据不再毒化请求）。
         val existing = favoriteRepository.findAllByGid(gid).firstOrNull()
@@ -145,7 +150,7 @@ class FavoriteService(
             existing == null -> LocalFavoriteInfoEntity().apply {
                 this.gid = gid
                 this.token = token
-                this.title = title
+                this.title = safeTitle
                 // category is a site bitmask (up to 512); it is written to its own
                 // column only and must never leak into favoriteSlot.
                 this.category = category
@@ -157,7 +162,7 @@ class FavoriteService(
             }
             existing.deleted -> existing.apply {
                 this.token = token
-                this.title = title
+                this.title = safeTitle
                 this.category = category
                 this.favoriteSlot = clampedSlot
                 this.time = now

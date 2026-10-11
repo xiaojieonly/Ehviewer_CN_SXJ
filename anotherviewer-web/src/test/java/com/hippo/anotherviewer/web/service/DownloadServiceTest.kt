@@ -460,6 +460,80 @@ class DownloadServiceTest {
     }
 
     @Test
+    fun `addDownload rejects masked serial titles and dirs (privacy boundary)`() {
+        // 打码开关只应影响响应展示，绝不让脱敏序列号落库：打码期间前端只持有
+        // `#gid` 标题——add 拒收（置空），目录名随之回落纯 gid（不再产生
+        // `gid-#gid` 目录，线上 9022/9023 即此产物）；真标题由下载管线回填。
+        `when`(downloadRepository.findAllByGid(77L)).thenReturn(emptyList())
+
+        assertTrue(service.addDownload(DownloadAddRequest(gid = 77L, token = "a1b2c3d4e5", title = "#77", thumb = null)))
+
+        verify(downloadRepository).save(
+            argThatK {
+                it.gid == 77L && it.title == null &&
+                    !it.downloadDir!!.contains("#") && it.downloadDir!!.endsWith("77")
+            }
+        )
+    }
+
+    @Test
+    fun `download pipeline backfills real title for masked-title rows (privacy boundary)`() {
+        // 打码期入库的存量行（title=#gid）：详情页与页数同源（10 分钟缓存）拿
+        // 真标题回填——打码关闭后列表展示真标题，不再残留序列号。
+        val server = startPageServer(fixture("valid.jpg"))
+        try {
+            val row = DownloadInfoEntity().apply {
+                id = 1L; gid = 42L; token = "tok"; title = "#42"; titleJpn = ""
+                state = 0
+                downloadDir = java.io.File(java.io.File(tempDir, "downloads"), "42").absolutePath
+            }
+            `when`(availability.isBlocked()).thenReturn(false)
+            `when`(downloadRepository.findById(1L)).thenReturn(Optional.of(row))
+            `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+            `when`(galleryLookup.fetchPageCount(42L, "tok")).thenReturn(1)
+            `when`(galleryLookup.fetchImageUrl(42L, "tok", 1)).thenReturn(server.url("/1.jpg").toString())
+            `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
+            `when`(galleryLookup.bestEffortDetail(42L, "tok")).thenReturn(
+                com.hippo.anotherviewer.client.data.GalleryDetail().apply {
+                    title = "Real Title"
+                    titleJpn = "リアルタイトル"
+                }
+            )
+
+            assertTrue(service.startDownload(1L))
+            awaitUntil { row.state == 3 }
+
+            assertEquals("Real Title", row.title)
+            assertEquals("リアルタイトル", row.titleJpn)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun `download pipeline never overwrites an existing real title`() {
+        // 已有真标题的行（App 推送/正常添加）是权威：管线不得触碰，也不发起
+        // 详情请求——防止回填逻辑越界改写标题。
+        val dir = java.io.File(java.io.File(tempDir, "downloads"), "42")
+        dir.mkdirs()
+        java.io.File(dir, "00000001.webp").writeBytes(ByteArray(8) { 1 })
+        val row = DownloadInfoEntity().apply {
+            id = 1L; gid = 42L; token = "tok"; title = "Real Existing Title"; titleJpn = "既存"
+            state = 0; total = 1
+            downloadDir = dir.absolutePath
+        }
+        `when`(availability.isBlocked()).thenReturn(false)
+        `when`(downloadRepository.findById(1L)).thenReturn(Optional.of(row))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        assertTrue(service.startDownload(1L))
+        awaitUntil { row.state == 3 }
+
+        assertEquals("Real Existing Title", row.title)
+        verify(galleryLookup, never()).bestEffortDetail(42L, "tok")
+    }
+
+    @Test
     fun `state writes bump lastModified but never write username`() {
         // startDownload 的 EH-DOWN 状态写（等价 updateEntity 路径）：state 变更是同步
         // 可见字段 → bump lastModified；worker/请求线程规则：username 不写。

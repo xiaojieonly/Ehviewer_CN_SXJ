@@ -116,6 +116,20 @@ class FavoriteServiceTest {
     // ── A7-1: 统一 stamping ──
 
     @Test
+    fun `addFavorite rejects masked serial titles (privacy boundary)`() {
+        // 打码开关只应影响响应展示，绝不让脱敏序列号落库（与历史回写同口径）：
+        // 打码期间前端只持有 `#gid` 标题——拒收置空，列表按 #gid 兜底渲染。
+        `when`(repository.findAllByGid(42L)).thenReturn(emptyList())
+        `when`(historyRepository.findAllByGid(42L)).thenReturn(emptyList())
+        `when`(downloadRepository.findAllByGid(42L)).thenReturn(emptyList())
+
+        service.addFavorite(42L, "token", "#42", 512)
+
+        val entity = savedEntity()
+        assertNull(entity.title)
+    }
+
+    @Test
     fun `addFavorite stamps username and lastModified`() {
         `when`(repository.findAllByGid(42L)).thenReturn(emptyList())
         `when`(historyRepository.findAllByGid(42L)).thenReturn(emptyList())

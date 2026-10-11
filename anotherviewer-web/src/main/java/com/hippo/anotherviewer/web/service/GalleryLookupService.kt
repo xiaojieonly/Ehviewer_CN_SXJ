@@ -156,4 +156,16 @@ class GalleryLookupService(
         detailCache.put(gid, detail)
         return detail
     }
+
+    /**
+     * 详情页 best-effort 获取（标题回填数据源，2026-10-11 打码边界修复）：
+     * 命中 10 分钟详情缓存（与 [fetchPageCount]/[fetchImageUrl] 同源，正常下载
+     * 路径零额外请求）；EH DOWN / 解析失败返回 null，调用方按「无变化」处理。
+     */
+    fun bestEffortDetail(gid: Long, token: String): GalleryDetail? =
+        try {
+            detail(gid, token)
+        } catch (e: Exception) {
+            null
+        }
 }

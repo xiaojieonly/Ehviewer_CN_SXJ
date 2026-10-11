@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
+import com.hippo.anotherviewer.web.config.PrivacyMaskFilter
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.entity.DownloadInfoEntity
@@ -289,16 +290,21 @@ class DownloadService(
         // findByGid 等价（单行模型下语义不变，多行脏数据不再毒化请求）。
         val existing = downloadRepository.findAllByGid(request.gid).firstOrNull()
         val now = System.currentTimeMillis()
+        // 打码边界（2026-10-11 用户裁决）：打码开关只应影响**响应展示**，绝不让
+        // 脱敏数据落库——打码期间客户端只持有 `#gid` 形态的序列号标题，与历史
+        // 回写同口径拒收（置空；目录名随之回落纯 gid，不再产生 `gid-#gid` 目录）；
+        // 真标题由下载管线解析详情页时回填（title 空/脱敏的行）。
+        val safeTitle = request.title?.takeIf { !PrivacyMaskFilter.isMaskedTitle(it) }
         // 2026-08-30：目录命名对齐 Android——`{gid}-{title}`（人读可辨），
         // 标题缺席回落纯 gid（旧布局兼容）。
-        val downloadPath = File(config.download.path, DownloadDirs.dirName(request.gid, request.title))
+        val downloadPath = File(config.download.path, DownloadDirs.dirName(request.gid, safeTitle))
         downloadPath.mkdirs()
 
         val entity = when {
             existing == null -> DownloadInfoEntity().apply {
                 gid = request.gid
                 token = request.token
-                title = request.title
+                title = safeTitle
                 titleJpn = ""
                 thumb = request.thumb
                 category = 0
@@ -315,7 +321,7 @@ class DownloadService(
             }
             existing.deleted -> existing.apply {
                 token = request.token
-                title = request.title
+                title = safeTitle
                 thumb = request.thumb
                 label = request.label
                 state = 0
@@ -832,6 +838,26 @@ class DownloadService(
         val existingTotal = downloadRepository.findById(task.id)
             .map { it.total }.orElse(0)
         val totalPages = if (existingTotal > 0) existingTotal else fetchPageCount(task.gid, task.token)
+
+        // 标题回填（打码边界，2026-10-11）：打码期客户端只送得到 `#gid` 形态的
+        // 脱敏标题——add 入口已拒收，但历史存量行可能残留序列号/空标题；详情页
+        // 与页数同源（10 分钟缓存，通常零额外请求）拿真标题回填。已有真标题的
+        // 行不做任何改动（App 推送/正常添加的标题是权威）。
+        val titleRow = downloadRepository.findById(task.id).orElse(null)
+        if (titleRow != null &&
+            (titleRow.title.isNullOrBlank() || PrivacyMaskFilter.isMaskedTitle(titleRow.title))
+        ) {
+            val detail = galleryLookup.bestEffortDetail(task.gid, task.token)
+            val realTitle = detail?.title?.takeIf {
+                it.isNotBlank() && !PrivacyMaskFilter.isMaskedTitle(it)
+            }
+            if (realTitle != null) {
+                updateEntity(task.id) {
+                    it.title = realTitle
+                    if (it.titleJpn.isNullOrBlank()) it.titleJpn = detail.titleJpn ?: ""
+                }
+            }
+        }
 
         if (totalPages == null || totalPages <= 0) {
             // A failed page-count fetch must NEVER masquerade as a 1-page
