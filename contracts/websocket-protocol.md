@@ -1,9 +1,15 @@
 # WebSocket Message Protocol Specification
 
 > **Status**: Frozen (Wave 0 contract)
-> **Version**: 1.2.0
+> **Version**: 1.3.0
 > **Created**: 2026-07-28
-> **Last calibrated**: 2026-10-11 (v1.2.0: additive — `/ws-native` raw-STOMP WebSocket endpoint
+> **Last calibrated**: 2026-10-11 (v1.3.0: additive — `sync.update` becomes **implemented**
+> on `/topic/sync`, published AFTER_COMMIT following each sync push transaction; no
+> throttling — at most one event per push; envelope `version: "1.3"`. The planned
+> `sync.conflict` type is **removed**: conflict resolution v4
+> (`contracts/sync-conflict-rules.md` v4.0, `docs/adr/0006-server-stamps-lww-recycle-bin.md`)
+> has no conflict notification. Payload `entities` widened to the 8 sync collections
+> incl. `preferences`); previously 2026-10-11 (v1.2.0: additive — `/ws-native` raw-STOMP WebSocket endpoint
 > becomes the primary transport; SockJS `/ws` demoted to fallback. Background: the SockJS
 > **websocket** transport silently drops the server's open frame after a successful 101
 > upgrade in the current deployment shape — reproduced across Tomcat 10.1.36/10.1.40 ×
@@ -161,7 +167,10 @@ new Client({
 5. After reconnect, clients SHOULD fetch a state snapshot via REST to catch
    missed events: `GET /api/v1/download/list`, `GET /api/v1/process/status/{taskId}`,
    and for background jobs `GET /api/v1/jobs/{jobId}` /
-   `GET /api/v1/jobs/active?type=` (v1.1, §3.6).
+   `GET /api/v1/jobs/active?type=` (v1.1, §3.6). For sync, the snapshot re-pull
+   (`GET /api/v1/sync/pull?since=…`) is implemented by the web frontend itself:
+   the sync list caches are invalidated and refetched on `sync.update` and on
+   reconnect (v1.3, §3.4/§5.3).
 6. **Visibility pause**: while the tab is hidden (`document.visibilityState ===
    'hidden'`) the socket is deactivated and reconnection paused; on
    `visibilitychange` back to visible, the connection resumes.
@@ -191,7 +200,7 @@ interface WsEnvelope<T = unknown> {
   type: string
   /** Epoch milliseconds when the event occurred on the server */
   timestamp: number
-  /** Protocol version (semver major.minor) for forward compatibility — the server sends "1.0" on process./image. topics and "1.1" on job.* topics (§3.6) */
+  /** Protocol version (semver major.minor) for forward compatibility — the server sends "1.0" on process./image. topics, "1.1" on job.* topics (§3.6) and "1.3" on sync.update (§3.4) */
   version: string
   /** Message payload — shape determined by `type` */
   payload: T
@@ -236,7 +245,7 @@ Message types follow `{domain}.{event}` naming:
 | `process` | Image processing pipeline (implemented) |
 | `image` | Individual image events (implemented: `image.enhanced.ready`) |
 | `job` | Unified background jobs (implemented, v1.1: `job.*` on `/topic/jobs/*`, see §3.6) |
-| `sync` | Device synchronization (planned) |
+| `sync` | Device synchronization (implemented, v1.3: `sync.update` on `/topic/sync`, see §3.4) |
 | `system` | Server health and errors (planned) |
 
 ---
@@ -510,51 +519,51 @@ pages as the user reads, rather than waiting for the entire gallery.
 
 ---
 
-### 3.4 Sync — [PLANNED]
+### 3.4 Sync — `sync.update` **[IMPLEMENTED]** (v1.3)
 
-No `/topic/sync` publisher exists in the current server (sync is REST-only,
-`SyncController` under `/api/v1/sync`). The following types are specified for a
-future wave.
+#### `sync.update` — [IMPLEMENTED] (v1.3)
 
-#### `sync.update`
-
-Emitted when a remote device pushes changes to the server.
+Emitted when a remote device (or a WebUI REST write) pushes changes that the
+server commits. The sync REST protocol stays authoritative
+(`/api/v1/sync/push` / `/api/v1/sync/pull`, `SyncController`); this event only
+tells subscribed clients *that* something changed so they can re-pull.
 
 **Topic**: `/topic/sync`
 
 ```typescript
 interface SyncUpdatePayload {
-  /** Entity types that were updated */
-  entities: Array<'favorites' | 'history' | 'downloads' | 'reading-progress' | 'filters'>
-  /** Identifier of the device that pushed the changes */
+  /** Entity types touched by the push that triggered this event (8 sync collections incl. preferences; ehSession changes are NOT announced) */
+  entities: Array<'favorites' | 'history' | 'downloads' | 'bookmarks' | 'filters' | 'quickSearches' | 'downloadLabels' | 'preferences'>
+  /** Identifier of the device whose push triggered the event */
   deviceId: string
-  /** Number of records changed per entity */
+  /** Number of records changed per entity type in this push */
   counts: Record<string, number>
-  /** Sync timestamp (epoch millis) for incremental pull */
+  /** Sync timestamp (epoch millis, server clock domain — same clock as row lastModified) for incremental pull */
   syncTimestamp: number
 }
 ```
 
-#### `sync.conflict`
+Implementation facts (verified against the server publisher):
 
-Emitted when a sync conflict is detected and auto-resolved.
+- **Envelope `version: "1.3"`** (§2).
+- **Publishing timing = AFTER_COMMIT**: the event is published only after the
+  push transaction has committed, so a subscriber that immediately calls
+  `GET /api/v1/sync/pull?since=…` will observe the committed rows.
+- **No throttling**: each push transaction produces **at most one**
+  `sync.update` event (one per push, regardless of how many rows changed).
+  This differs from `job.progress` (500 ms throttle, §3.6).
+- `syncTimestamp` shares the server clock domain with row `lastModified`
+  (sync-conflict-rules v4 §1.2); clients may pull with
+  `since = syncTimestamp - 1000` to stay inside the server's 1-second overlap
+  window (client-side idempotent merge absorbs the overlap, §6.2 there).
 
-**Topic**: `/topic/sync`
+#### `sync.conflict` — removed (v4)
 
-```typescript
-interface SyncConflictPayload {
-  /** Entity type with the conflict */
-  entity: 'favorites' | 'history' | 'downloads' | 'reading-progress' | 'filters'
-  /** Local (server) version timestamp */
-  localVersion: number
-  /** Remote (device) version timestamp */
-  remoteVersion: number
-  /** How the conflict was resolved */
-  resolution: 'local-wins' | 'remote-wins' | 'union-merge'
-  /** Human-readable description of what happened */
-  description: string
-}
-```
+The `sync.conflict` type from earlier drafts is **deleted from this contract**:
+conflict resolution v4 (`contracts/sync-conflict-rules.md` v4.0,
+`docs/adr/0006-server-stamps-lww-recycle-bin.md`) resolves every conflict
+deterministically by server-stamped LWW — there is **no conflict notification**
+and never was a publisher. Clients must not subscribe expecting it.
 
 ---
 
@@ -853,6 +862,12 @@ WebSocket is not guaranteed delivery. After reconnection:
 5. For `image.enhanced.ready` events missed during disconnection, the reader
    SHOULD probe `GET /api/v1/image/{galleryId}/{page}?enhanced=1` when displaying
    a page — 404 means the enhanced file is not ready yet; keep the original.
+6. **`sync.update` (v1.3, §3.4)**: a client that receives (or misses)
+   `sync.update` — including one delivered while disconnected — SHOULD
+   invalidate its cached lists for every entity type in `payload.entities` and
+   re-pull via `GET /api/v1/sync/pull?since={lastSyncTimestamp}` (or
+   `since = syncTimestamp - 1000` to cover the server's overlap window). The
+   pull itself is idempotent, so replaying an overlapping window is safe.
 
 ### 5.4 Server-Side Error Propagation
 
@@ -886,7 +901,7 @@ WebSocket is not guaranteed delivery. After reconnection:
 ├── gallery/
 │   └── {galleryId}/
 │       └── enhanced                  [IMPLEMENTED]  image.enhanced.ready (envelope)
-├── sync                              [PLANNED]  sync.update + sync.conflict
+├── sync                              [IMPLEMENTED]  sync.update (envelope, v1.3)
 ├── system/
 │   ├── health                        [PLANNED]  periodic health metrics
 │   └── error                         [PLANNED]  server errors
@@ -917,7 +932,8 @@ The frontend manager registers subscriptions as consumers request them
 | Job progress panel (admin backup/server) | `/topic/jobs/{jobId}` and/or `/topic/jobs/all` |
 | Dashboard/downloads | `/topic/download/all` and/or `/topic/download/{gid}` |
 
-(`/topic/sync`, `/topic/system/health` remain planned — see §3.4, §3.5.)
+(`/topic/system/health` remains planned — see §3.5; `/topic/sync` is implemented
+since v1.3 — see §3.4.)
 
 ### 6.4 Gallery-Specific Filtering
 
@@ -937,6 +953,7 @@ no server-side throttling to them; the exception is `job.progress` (enforced):
 | `download.progress` (bare DTO) | 2/sec per task | No throttle in `DownloadProgressHandler`; forwards every event |
 | `process.progress` | 5/sec per task | No throttle; one event per processed page |
 | `job.progress` | 2/sec per job (500 ms) | **Enforced**: `JobService.publishThrottled` drops events within 500 ms of the last publish per jobId (§3.6) |
+| `sync.update` | No throttle | At most one event per sync push transaction (AFTER_COMMIT; v1.3 §3.4) |
 | `system.health` | 1/30sec | Topic not implemented |
 | `image.enhanced.ready` | No throttle | One per page completion (naturally bounded by GPU) |
 
@@ -954,7 +971,14 @@ The protocol follows **semantic versioning** (MAJOR.MINOR.PATCH):
   Backward compatible; old clients ignore unknown types.
 - **PATCH**: Documentation fixes, no wire changes.
 
-Current version: **1.1.0**
+Current version: **1.3.0**
+
+**1.3.0** makes `sync.update` **implemented** on `/topic/sync` (§3.4): it is
+published AFTER_COMMIT following each sync push transaction, carries envelope
+`version: "1.3"`, has no throttling (at most one event per push), and its
+`entities` payload is widened to the 8 sync collections (incl. `preferences`).
+The previously planned `sync.conflict` type is **removed** — conflict
+resolution v4 (`sync-conflict-rules.md` v4.0) has no conflict notification.
 
 **1.1.0** adds the `job.*` event family (§3.6) on `/topic/jobs/{jobId}` and
 `/topic/jobs/all`; its envelopes carry `version: "1.1"`. New message types are
@@ -964,7 +988,8 @@ announced one MINOR version ahead per semver; the existing `process.*` /
 ### 7.2 Version Negotiation
 
 1. The `version` field in every envelope carries the protocol version (the
-   server sends `"1.0"` on process./image. topics and `"1.1"` on job.* topics).
+   server sends `"1.0"` on process./image. topics, `"1.1"` on job.* topics and
+   `"1.3"` on sync.update).
 2. Clients SHOULD ignore messages with a MAJOR version higher than supported.
 3. Clients SHOULD handle unknown `type` values gracefully (log + discard).
 4. New optional fields in payloads MUST NOT break clients that don't read them.
@@ -1119,28 +1144,25 @@ export interface ImageEnhancedReadyPayload {
 }
 
 // === Sync ===
-// PLANNED — no publisher yet.
+// IMPLEMENTED (v1.3): sync.update is published, enveloped (version "1.3"), on
+// /topic/sync — AFTER_COMMIT per sync push transaction, no throttling.
+// sync.conflict is REMOVED in v4 (no conflict notification).
 
 export type SyncEntity =
   | 'favorites'
   | 'history'
   | 'downloads'
-  | 'reading-progress'
+  | 'bookmarks'
   | 'filters'
+  | 'quickSearches'
+  | 'downloadLabels'
+  | 'preferences'
 
 export interface SyncUpdatePayload {
   entities: SyncEntity[]
   deviceId: string
   counts: Record<string, number>
   syncTimestamp: number
-}
-
-export interface SyncConflictPayload {
-  entity: SyncEntity
-  localVersion: number
-  remoteVersion: number
-  resolution: 'local-wins' | 'remote-wins' | 'union-merge'
-  description: string
 }
 
 // === System ===
@@ -1262,8 +1284,7 @@ export interface WsMessageMap {
   'job.progress': JobProgressPayload                // IMPLEMENTED
   'job.completed': JobCompletedPayload              // IMPLEMENTED
   'job.failed': JobFailedPayload                    // IMPLEMENTED
-  'sync.update': SyncUpdatePayload                  // PLANNED
-  'sync.conflict': SyncConflictPayload              // PLANNED
+  'sync.update': SyncUpdatePayload                  // IMPLEMENTED (v1.3)
   'system.health': SystemHealthPayload              // PLANNED
   'system.error': SystemErrorPayload                // PLANNED
 }
@@ -1290,7 +1311,7 @@ export type TypedWsEnvelope<T extends WsMessageType> = WsEnvelope<WsMessageMap[T
 | `/topic/jobs/all` | `job.started`, `job.progress`, `job.completed`, `job.failed` (enveloped, version "1.1") | IMPLEMENTED |
 | `/topic/jobs/{jobId}` | `job.started`, `job.progress`, `job.completed`, `job.failed` (enveloped, version "1.1") | IMPLEMENTED |
 | `/topic/gallery/{galleryId}/enhanced` | `image.enhanced.ready` (enveloped) | IMPLEMENTED |
-| `/topic/sync` | `sync.update`, `sync.conflict` | PLANNED |
+| `/topic/sync` | `sync.update` (enveloped, version "1.3") | IMPLEMENTED |
 | `/topic/system/health` | `system.health` | PLANNED |
 | `/topic/system/error` | `system.error` | PLANNED |
 | `/topic/pong` | (PongResponse — not enveloped, direct reply) | PLANNED |

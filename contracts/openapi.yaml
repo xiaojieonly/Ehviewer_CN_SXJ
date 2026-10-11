@@ -2436,6 +2436,106 @@ paths:
           description: Invalid or missing API token
 
   # ============================================================
+  # Recycle Bin (v4, ADR-0006 D4)
+  # ============================================================
+  /api/v1/recycle/list:
+    get:
+      tags: [Sync]
+      operationId: listRecycleBin
+      summary: List recycle bin entries (tombstones within the 7-day retention window, ADR-0006 D4)
+      description: |
+        Paged listing of deleted records retained in the recycle bin
+        (RECYCLE_RETENTION_DAYS = 7, counted from the tombstone row's
+        server-stamped lastModified). Scope: favorites, history, downloads,
+        bookmarks, filters, quickSearches, downloadLabels; ehSession tombstones
+        never enter the recycle bin (sync-conflict-rules v4 §9).
+      parameters:
+        - name: entity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [favorites, history, downloads, bookmarks, filters, quickSearches, downloadLabels]
+          description: Filter by entity type (omit = all recyclable types)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Zero-based page index
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+          description: Page size (clamped by the server)
+      responses:
+        '200':
+          description: Recycle bin page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecycleListResponse'
+        '401':
+          description: Invalid or missing API token
+
+  /api/v1/recycle/restore:
+    post:
+      tags: [Sync]
+      operationId: restoreRecycleItems
+      summary: Restore recycle bin entries (deleted=false + fresh server stamp; propagates as an ordinary LWW record)
+      description: |
+        Sets each requested tombstone row back to deleted=false and stamps it
+        with a fresh server timestamp, so the restore propagates to all devices
+        through the ordinary LWW merge (ADR-0006 D4; sync-conflict-rules v4 §9).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecycleRestoreRequest'
+      responses:
+        '200':
+          description: Restore result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecycleRestoreResponse'
+        '401':
+          description: Invalid or missing API token
+
+  /api/v1/recycle/purge:
+    post:
+      tags: [Sync]
+      operationId: purgeRecycleItems
+      summary: Hard-delete recycle bin entries (default = all expired)
+      description: |
+        Permanently purges tombstone rows. With no request body, every entry
+        whose RECYCLE_RETENTION_DAYS (7) has elapsed is purged; download files
+        of purged entries move to <dataDir>/trash for a further 7 days
+        (ADR-0006 D5). ehSession tombstones are purged silently (never listed).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecyclePurgeRequest'
+      responses:
+        '200':
+          description: Purge result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecyclePurgeResponse'
+        '401':
+          description: Invalid or missing API token
+
+  # ============================================================
   # Backup (local zip export/restore, R4-5)
   # ============================================================
   /api/v1/backup/export:
@@ -4787,12 +4887,13 @@ components:
         conflictStrategy:
           type: string
           enum: [device_priority, lww, web_priority]
-          default: device_priority
+          default: lww
           description: >-
-            Conflict arbitration strategy (sync-conflict-rules v2 §1.4):
-            device_priority = android wins cross-platform same-key conflicts;
-            lww = v1 last-write-wins + skew tie-break (full fallback);
-            web_priority = web wins.
+            Conflict arbitration strategy (sync-conflict-rules v4 §1.4):
+            lww = server-stamped last-write-wins, equal stamps resolve to the
+            later-arriving write (default since v4, ADR-0006 D2);
+            device_priority / web_priority are retained for legacy deployments
+            but not recommended.
         clientTier:
           type: integer
           enum: [0, 1, 2, 3]
@@ -5483,6 +5584,106 @@ components:
         downloadLabels:
           type: integer
           format: int64
+
+    RecycleItem:
+      type: object
+      description: One tombstone row shown in the recycle bin (v4, ADR-0006 D4). Retention = RECYCLE_RETENTION_DAYS (7) counted from the tombstone's server-stamped lastModified. ehSession tombstones never appear here (purged silently).
+      required: [entity, key, title, deletedAt, remainingDays]
+      properties:
+        entity:
+          type: string
+          enum: [favorites, history, downloads, bookmarks, filters, quickSearches, downloadLabels]
+          description: Entity type of the deleted record
+        key:
+          type: string
+          description: Entity idempotency key (sync-conflict-rules §2), serialized as a string
+        title:
+          type: string
+          nullable: true
+          description: Human-readable display title of the deleted record; null when the row has no displayable title
+        deletedAt:
+          type: integer
+          format: int64
+          description: Epoch ms when the row was tombstoned — equals the tombstone row's server-stamped lastModified (retention clock starts here)
+        remainingDays:
+          type: integer
+          description: Whole days remaining before the entry becomes purge-eligible; 0 = expiring
+
+    RecycleListResponse:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecycleItem'
+        total:
+          type: integer
+          format: int64
+          description: Total entries matching the filter (across all pages)
+        page:
+          type: integer
+          description: Echoed zero-based page index
+        pageSize:
+          type: integer
+          description: Echoed (clamped) page size
+
+    RecycleRestoreRequest:
+      type: object
+      description: Body of POST /api/v1/recycle/restore — entries to restore, addressed by entity type + idempotency key.
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [entity, key]
+            properties:
+              entity:
+                type: string
+                enum: [favorites, history, downloads, bookmarks, filters, quickSearches, downloadLabels]
+              key:
+                type: string
+                description: Entity idempotency key (sync-conflict-rules §2), serialized as a string
+
+    RecycleRestoreResponse:
+      type: object
+      description: Result of POST /api/v1/recycle/restore.
+      required: [restored, failed]
+      properties:
+        restored:
+          type: integer
+          description: Number of entries successfully restored (deleted=false + fresh server stamp)
+        failed:
+          type: integer
+          description: Number of requested entries that could not be restored (already purged / unknown key)
+
+    RecyclePurgeRequest:
+      type: object
+      description: Body of POST /api/v1/recycle/purge. Optional — omit to purge all expired entries (RECYCLE_RETENTION_DAYS elapsed). Download files move to <dataDir>/trash for a further 7 days (ADR-0006 D5).
+      properties:
+        items:
+          type: array
+          description: Specific entries to purge (including not-yet-expired ones); omit = purge all expired
+          items:
+            type: object
+            required: [entity, key]
+            properties:
+              entity:
+                type: string
+                enum: [favorites, history, downloads, bookmarks, filters, quickSearches, downloadLabels]
+              key:
+                type: string
+                description: Entity idempotency key (sync-conflict-rules §2), serialized as a string
+
+    RecyclePurgeResponse:
+      type: object
+      description: Result of POST /api/v1/recycle/purge.
+      required: [purged]
+      properties:
+        purged:
+          type: integer
+          description: Number of tombstone rows hard-deleted
 
     # ----------------------------------------------------------
     # Archive

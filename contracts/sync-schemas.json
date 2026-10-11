@@ -120,12 +120,12 @@
       "properties": {
         "lastModified": {
           "type": "integer",
-          "description": "Epoch milliseconds when this entity was last modified on the source device. Used for last-write-wins conflict resolution.",
+          "description": "Epoch milliseconds when this entity row was last written. Since sync protocol v4 (ADR-0006 D1) this value is stamped by the SERVER's monotonic clock at write time (push merge and WebUI REST writes alike); the client-supplied lastModified is transport metadata only and is never persisted. Later writes are strictly >= earlier writes; LWW compares rows in this single server clock domain, with equal stamps resolving to the later-arriving write (sync-conflict-rules v4 §1.2/§1.3/§5.1).",
           "minimum": 0
         },
         "deviceId": {
           "type": "string",
-          "description": "Unique identifier of the device that last modified this entity. Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
+          "description": "Identifier of the device that originated the last write (provenance only since v4 — the authoritative stamp is the server's). Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
           "minLength": 1,
           "maxLength": 128
         },
@@ -394,12 +394,12 @@
         },
         "lastModified": {
           "type": "integer",
-          "description": "Epoch milliseconds when this entity was last modified on the source device. Used for last-write-wins conflict resolution.",
+          "description": "Epoch milliseconds when this entity row was last written. Since sync protocol v4 (ADR-0006 D1) this value is stamped by the SERVER's monotonic clock at write time (push merge and WebUI REST writes alike); the client-supplied lastModified is transport metadata only and is never persisted. Later writes are strictly >= earlier writes; LWW compares rows in this single server clock domain, with equal stamps resolving to the later-arriving write (sync-conflict-rules v4 §1.2/§1.3/§5.1).",
           "minimum": 0
         },
         "deviceId": {
           "type": "string",
-          "description": "Unique identifier of the device that last modified this entity. Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
+          "description": "Identifier of the device that originated the last write (provenance only since v4 — the authoritative stamp is the server's). Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
           "minLength": 1,
           "maxLength": 128
         },
@@ -466,14 +466,14 @@
     "syncPolicy": {
       "$id": "https://anotherviewer.local/schemas/sync/policy.json",
       "title": "SyncPolicy",
-      "description": "Server-held sync policy (ADR-0003, sync-conflict-rules v2 §8). conflictStrategy arbitrates same-key conflicts; clientTier declares the pushing device's behavior tier; autoSyncIntervalSec drives network-aware auto-sync. A push carrying this field from an android-platform device is authoritative and overrides server-stored policy (D2).",
+      "description": "Server-held sync policy (ADR-0003, sync-conflict-rules v4 §8). conflictStrategy arbitrates same-key conflicts; clientTier declares the pushing device's behavior tier; autoSyncIntervalSec drives network-aware auto-sync. A push carrying this field from an android-platform device is authoritative and overrides server-stored policy (D2). Since v4 the server default is 'lww' (ADR-0006 D2).",
       "type": "object",
       "properties": {
         "conflictStrategy": {
           "type": "string",
           "enum": ["device_priority", "lww", "web_priority"],
-          "default": "device_priority",
-          "description": "device_priority (A): android wins cross-platform same-key conflicts unconditionally; lww (B): v1 last-write-wins + skew tie-break (full fallback); web_priority (C): web wins."
+          "default": "lww",
+          "description": "lww (B, default since v4): server-stamped last-write-wins — rows share one server clock domain and equal stamps resolve to the later-arriving write (ADR-0006 D2, sync-conflict-rules v4 §1.4/§5.1); device_priority (A) / web_priority (C): android/web wins cross-platform same-key conflicts unconditionally — retained at code level for legacy deployments but not recommended."
         },
         "clientTier": {
           "type": "integer",
@@ -484,8 +484,8 @@
         "autoSyncIntervalSec": {
           "type": "integer",
           "minimum": 0,
-          "default": 900,
-          "description": "Network-aware auto-sync interval in seconds (D4); 0 = trigger on network change only."
+          "default": 10,
+          "description": "Network-aware auto-sync interval in seconds (D4); 0 = trigger on network change only. v4 default is 10 (silent high-frequency cadence, ADR-0006 D7)."
         }
       },
       "required": ["conflictStrategy", "clientTier", "autoSyncIntervalSec"],
@@ -547,7 +547,7 @@
             },
             "lastModified": {
               "type": "integer",
-              "description": "Epoch milliseconds of the last preferences update",
+              "description": "Epoch milliseconds of the last preferences write. Since v4 (ADR-0006 D1) this is stamped by the server's monotonic clock at write time; the client-supplied value is transport metadata and is never persisted (same rule as entity rows, sync-conflict-rules v4 §1.3).",
               "minimum": 0
             },
             "deviceId": {
@@ -581,7 +581,7 @@
         },
         "timestamp": {
           "type": "integer",
-          "description": "Epoch milliseconds when this push was initiated by the client",
+          "description": "Epoch milliseconds when this push was initiated by the client. Transport metadata only (v4, ADR-0006 D1): the server never persists this value — all stored rows are stamped with the server's monotonic clock at write time (§1.3).",
           "minimum": 0
         },
         "policy": {
@@ -604,7 +604,7 @@
         },
         "serverTimestamp": {
           "type": "integer",
-          "description": "Epoch milliseconds of the server's current time. Client uses this as the 'since' value for the next pull.",
+          "description": "Epoch milliseconds of the server's clock at response time. Same server monotonic clock domain as every row's lastModified (v4, ADR-0006 D1) — the client uses this as the 'since' value for the next pull; the server filters with a 1-second overlap window (since-1000) that client-side idempotent merging absorbs (sync-conflict-rules v4 §6.2).",
           "minimum": 0
         },
         "policy": {
@@ -684,6 +684,196 @@
         }
       },
       "required": ["lastSyncTimestamp", "connectedDevices", "entityCounts"],
+      "additionalProperties": false
+    },
+    "recycleItem": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-item.json",
+      "title": "RecycleItem",
+      "description": "One tombstone row shown in the recycle bin (v4, ADR-0006 D4). Retained for RECYCLE_RETENTION_DAYS = 7 days counted from the tombstone's server-stamped lastModified. Scope: the 7 recyclable entity types; ehSession tombstones never enter the recycle bin (purged silently, sync-conflict-rules v4 §3.8/§9).",
+      "type": "object",
+      "properties": {
+        "entity": {
+          "type": "string",
+          "description": "Entity type of the deleted record",
+          "enum": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
+        },
+        "key": {
+          "type": "string",
+          "description": "Entity idempotency key (sync-conflict-rules §2), serialized as a string (e.g. gid for favorites/history/downloads/bookmarks, 'mode\\ntext' for filters, name for quickSearches, label for downloadLabels)"
+        },
+        "title": {
+          "type": ["string", "null"],
+          "description": "Human-readable display title of the deleted record (gallery title, filter text, label name, ...); null when the row carries no displayable title",
+          "maxLength": 512
+        },
+        "deletedAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the row was tombstoned — equals the tombstone row's server-stamped lastModified (v4 §1.3); the retention clock starts here",
+          "minimum": 0
+        },
+        "remainingDays": {
+          "type": "integer",
+          "description": "Whole days remaining before the item becomes eligible for purge (RECYCLE_RETENTION_DAYS minus elapsed days since deletedAt); 0 = expiring",
+          "minimum": 0
+        }
+      },
+      "required": ["entity", "key", "title", "deletedAt", "remainingDays"],
+      "additionalProperties": false
+    },
+    "recycleListResponse": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-list-response.json",
+      "title": "RecycleListResponse",
+      "description": "Paged recycle bin listing returned by GET /api/v1/recycle/list (v4 §9).",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Recycle bin entries for the requested page",
+          "items": { "$ref": "#/$defs/recycleItem" }
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total number of recycle bin entries matching the filter (across all pages)",
+          "minimum": 0
+        },
+        "page": {
+          "type": "integer",
+          "description": "Echoed zero-based page index",
+          "minimum": 0
+        },
+        "pageSize": {
+          "type": "integer",
+          "description": "Echoed (clamped) page size",
+          "minimum": 1
+        }
+      },
+      "required": ["items", "total", "page", "pageSize"],
+      "additionalProperties": false
+    },
+    "recycleRestoreRequest": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-restore-request.json",
+      "title": "RecycleRestoreRequest",
+      "description": "Body of POST /api/v1/recycle/restore (v4 §9). Each restored row is set deleted=false and stamped with a fresh server timestamp, i.e. it propagates as an ordinary LWW record to all devices (ADR-0006 D4).",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Recycle bin entries to restore, addressed by entity type + idempotency key",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
+              },
+              "key": {
+                "type": "string",
+                "description": "Entity idempotency key (sync-conflict-rules §2), serialized as a string"
+              }
+            },
+            "required": ["entity", "key"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    },
+    "recycleRestoreResponse": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-restore-response.json",
+      "title": "RecycleRestoreResponse",
+      "description": "Result of POST /api/v1/recycle/restore (v4 §9).",
+      "type": "object",
+      "properties": {
+        "restored": {
+          "type": "integer",
+          "description": "Number of entries successfully restored (deleted=false + fresh server stamp)",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "description": "Number of requested entries that could not be restored (e.g. already purged or unknown key)",
+          "minimum": 0
+        }
+      },
+      "required": ["restored", "failed"],
+      "additionalProperties": false
+    },
+    "recyclePurgeRequest": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-purge-request.json",
+      "title": "RecyclePurgeRequest",
+      "description": "Body of POST /api/v1/recycle/purge (v4 §9). Optional — when absent, all expired entries (past RECYCLE_RETENTION_DAYS) are purged. Download files of purged entries move to <dataDir>/trash for a further 7 days (ADR-0006 D5).",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Specific entries to purge (including not-yet-expired ones); omit to purge all expired entries",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
+              },
+              "key": {
+                "type": "string",
+                "description": "Entity idempotency key (sync-conflict-rules §2), serialized as a string"
+              }
+            },
+            "required": ["entity", "key"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "recyclePurgeResponse": {
+      "$id": "https://anotherviewer.local/schemas/sync/recycle-purge-response.json",
+      "title": "RecyclePurgeResponse",
+      "description": "Result of POST /api/v1/recycle/purge (v4 §9).",
+      "type": "object",
+      "properties": {
+        "purged": {
+          "type": "integer",
+          "description": "Number of tombstone rows hard-deleted",
+          "minimum": 0
+        }
+      },
+      "required": ["purged"],
+      "additionalProperties": false
+    },
+    "syncUpdateEvent": {
+      "$id": "https://anotherviewer.local/schemas/sync/sync-update-event.json",
+      "title": "SyncUpdateEvent",
+      "description": "Payload of the sync.update WebSocket message on /topic/sync (websocket-protocol v1.3 §3.4). Published AFTER_COMMIT, once per sync push transaction; tells connected clients which entity collections changed so they can invalidate caches and re-pull.",
+      "type": "object",
+      "properties": {
+        "entities": {
+          "type": "array",
+          "description": "Entity types touched by the push that triggered this event",
+          "items": {
+            "type": "string",
+            "enum": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels", "preferences"]
+          }
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Identifier of the device whose push triggered this event",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "counts": {
+          "type": "object",
+          "description": "Number of records changed per entity type in this push",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "syncTimestamp": {
+          "type": "integer",
+          "description": "Server clock epoch milliseconds for incremental pull — same server clock domain as row lastModified; clients may pull with since = syncTimestamp - 1000 (overlap window, sync-conflict-rules v4 §6.2)",
+          "minimum": 0
+        }
+      },
+      "required": ["entities", "deviceId", "counts", "syncTimestamp"],
       "additionalProperties": false
     }
   }
