@@ -478,8 +478,23 @@ class DownloadService(
 
     /**
      * 2026-08-30（用户裁决）：「全部下载」——无视现有状态（含已完成 3 / 失败 4 /
-     * 暂停 0）全部重新开始；磁盘上有完整页面文件且通过校验的行直接标记完成
-     * 并跳过（state=3, done=total, 零网络），缺失/损坏行走正常下载管线补下。
+     * 暂停 0）全部重新开始；磁盘上有完整页面文件的行直接标记完成并跳过
+     * （state=3, done=total, 零网络），缺失/损坏行走正常下载管线补下。
+     *
+     * 2026-10-11 增补（线上实例「状态重建卡住」的完整反演）：App 同步行不带
+     * 页数（total=0），旧逻辑对 total<=0 一律判「未决」→ 全部行走下载管线
+     * 重新排队——一次点击把 8700+ 行扔进 worker 队列逐个回源取页数，请求线程
+     * 自身也要在 8700 行的磁盘扫描/建表/落库上磨几分钟（实测 394s、准备对
+     * 8700 个画廊发起网络请求）。现在 total 未决的行以**磁盘为权威封存**：
+     * 索引页数（内存查表，零磁盘 IO）优先，索引未覆盖再直接列目录；磁盘有
+     * 内容的行落 total=done=磁盘页数、state=3（内容已在盘上就是「下载完成」
+     * ——用户对「状态重建」的期待；缺页由阅读路径的按需回源兜底），磁盘无
+     * 内容的行才真正走下载管线。App 恢复推送后其权威状态经 union-merge 覆盖
+     * 本封存（封存只动 mutable 字段，不碰墓碑语义）。
+     *
+     * 另：写入带差分短路（状态与目标一致时零落库）——重复点击「全部下载」
+     * 不再对 8800 行各写一次，也避开启动期 TOFU 回填的 SQLITE_BUSY_SNAPSHOT
+     * 写争用放大。
      */
     fun restartAllDownloads(): Int {
         // 2026-08-31：点击「全部下载」刷新导目录索引——用户复制/上传缓存后无需
@@ -487,11 +502,11 @@ class DownloadService(
         // 2026-10-11：改为**后台异步**重建。原先的同步全量 walk（9327 目录/
         // 64 万文件，实测 9.5s 起、冷盘分钟级）在请求线程上执行，前端 await
         // 该 POST 且无任何忙态反馈——用户观感即「全部下载卡住」。本方法的磁盘
-        // 校验（[isVerifiedOnDisk]）直接列目录、不依赖索引，异步调度不影响其
-        // 正确性；索引早一轮晚一轮只影响读取/服务路径的缓存新鲜度。
+        // 校验直接列目录/查索引、不依赖这次调度，异步不影响其正确性；索引早
+        // 一轮晚一轮只影响读取/服务路径的缓存新鲜度。
         // 索引刷新是只读感知；**不**为磁盘-only 目录建 DB 行（数据库是行数据
         // 的权威，只能由 App 推送/WebUI 添加/导入 .db 产生，磁盘文件夹不得
-        // 反向写库——2026-08-31 用户裁决）。
+        // 反向写库——2026-08-31 用户裁决）。total 未决行的封存只更新既有行。
         downloadDirIndex.refreshAsync()
         // 磁盘目录映射一次建表（gid → 既有目录）：行 downloadDir 为空/失效时
         // 校验按映射找回 `{gid}-{title}` 目录——否则 292MB/1984 页已落盘的行
@@ -499,23 +514,49 @@ class DownloadService(
         val diskDirs = DownloadDirs.listOurDirs(config.download.path)
         var restarted = 0
         var skippedVerified = 0
+        var sealedFromDisk = 0
         // A7-2（D6）：「全部下载」遍历仅存活行，墓碑不参与重启/完成化。
         downloadRepository.findAllByDeletedFalseOrderById().forEach { entity ->
             val total = entity.total
-            if (isVerifiedOnDisk(entity.gid, entity.downloadDir, total, diskDirs[entity.gid])) {
-                updateEntity(entity.id) {
-                    it.state = 3
-                    it.done = total
-                    it.error = null
+            if (total > 0 &&
+                isVerifiedOnDisk(entity.gid, entity.downloadDir, total, diskDirs[entity.gid])
+            ) {
+                // 差分短路：已是目标态的行零落库（8800 行全量写会与启动期
+                // TOFU 回填争 SQLite 写锁，放大 BUSY_SNAPSHOT）。
+                if (entity.state != 3 || entity.done != total || entity.error != null) {
+                    updateEntity(entity.id) {
+                        it.state = 3
+                        it.done = total
+                        it.error = null
+                    }
                 }
                 skippedVerified++
                 return@forEach
             }
+            if (total <= 0) {
+                // total 未决（App 同步行）：磁盘有内容即封存，零网络。
+                val diskPages = diskPageCount(entity.gid, diskDirs[entity.gid])
+                if (diskPages > 0) {
+                    if (entity.state != 3 || entity.total != diskPages ||
+                        entity.done != diskPages || entity.error != null
+                    ) {
+                        updateEntity(entity.id) {
+                            it.state = 3
+                            it.total = diskPages
+                            it.done = diskPages
+                            it.error = null
+                        }
+                    }
+                    sealedFromDisk++
+                    return@forEach
+                }
+            }
+            // 磁盘无内容，或 total 已知但校验未过（真实缺页/损坏）：正常管线补下。
             if (startDownload(entity.id)) restarted++
         }
         logger.info(
-            "restartAllDownloads: restarted={}, skippedVerified={}",
-            restarted, skippedVerified
+            "restartAllDownloads: restarted={}, skippedVerified={}, sealedFromDisk={}",
+            restarted, skippedVerified, sealedFromDisk
         )
         return restarted
     }
@@ -540,9 +581,24 @@ class DownloadService(
             fallbackDir?.isDirectory == true -> fallbackDir
             else -> return false
         }
-        val count = dir.listFiles { f -> f.isFile && f.name.matches(Regex("^\\d{4,}\\..+")) }
+        return countPageFiles(dir) >= total
+    }
+
+    /**
+     * 磁盘页数（封存口径）：索引页数（内存查表；索引每 30s 至多一次根指纹
+     * 检查）优先，索引无条目时对该 gid 的磁盘目录直接列一次。
+     */
+    private fun diskPageCount(gid: Long, fallbackDir: File?): Int {
+        val indexed = downloadDirIndex.pageCount(gid)
+        if (indexed > 0) return indexed
+        return fallbackDir?.let { countPageFiles(it) } ?: 0
+    }
+
+    /** 目录内 `%04d.*` 非空页文件计数（索引未覆盖时的直读口径，与 isVerifiedOnDisk 同式）。 */
+    private fun countPageFiles(dir: File): Int {
+        if (!dir.isDirectory) return 0
+        return dir.listFiles { f -> f.isFile && f.name.matches(VERIFY_PAGE_NAME) }
             ?.count { it.length() > 0 } ?: 0
-        return count >= total
     }
 
     /**
@@ -1411,6 +1467,9 @@ class DownloadService(
 
         /** 池页文件名：`{4,}位数字.{扩展}`，与 DownloadDirIndex/BackfillService 索引口径一致。 */
         private val POOL_PAGE_NAME = Regex("^(\\d{4,})\\.(jpg|jpeg|png|gif|webp)$", RegexOption.IGNORE_CASE)
+
+        /** 校验/封存口径的页文件：`{4,}位数字.任意扩展`（比 POOL_PAGE_NAME 宽——旧下载的异扩展名页也算数）。 */
+        private val VERIFY_PAGE_NAME = Regex("^\\d{4,}\\..+")
 
         /** 筛选槽位持久化键（serverConfig KV，随备份自动导出）。 */
         const val KEY_FILTER_SLOTS = "download.filterSlots"

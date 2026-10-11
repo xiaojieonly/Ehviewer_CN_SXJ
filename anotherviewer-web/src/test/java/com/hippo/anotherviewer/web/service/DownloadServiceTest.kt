@@ -244,7 +244,9 @@ class DownloadServiceTest {
             val restarted = service.restartAllDownloads()
 
             assertEquals(0, restarted) // verified 行跳过；无其他行可重下
-            verify(downloadRepository).save(verified) // 仍写回 state=3/done=3
+            // 差分短路（2026-10-11）：已是目标态的行零落库——重复点击不再对
+            // 8800 行各写一次，避开启动期回填的 SQLite 写争用。
+            verify(downloadRepository, never()).save(verified)
         } finally {
             dir.deleteRecursively()
         }
@@ -281,6 +283,58 @@ class DownloadServiceTest {
     }
 
     @Test
+    fun `restartAll seals total-unknown rows from disk without network (App-synced rows)`() {
+        // App 同步行不带页数（total=0）：磁盘有 N 个页文件 → 封存 total=done=N、
+        // state=3（磁盘为权威，零网络）。线上 8732 行即此形态——旧的「total 未决
+        // →重下」把它们全部扔进下载队列（394s 请求 + 回源风暴）。
+        `when`(availability.isBlocked()).thenReturn(false)
+        val downloadsRoot = java.io.File(tempDir, "downloads").apply { mkdirs() }
+        val dir = java.io.File(downloadsRoot, "12345-Titled").apply { mkdirs() }
+        repeat(4) { i -> java.io.File(dir, "%04d.jpg".format(i + 1)).writeBytes(ByteArray(10)) }
+        val row = DownloadInfoEntity().apply {
+            id = 21L; gid = 12345L; token = "t"; total = 0; done = 0; state = 1
+            downloadDir = ""
+        }
+        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(row))
+        `when`(downloadRepository.findById(21L)).thenReturn(Optional.of(row))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        val restarted = service.restartAllDownloads()
+
+        assertEquals(0, restarted)
+        verify(downloadRepository).save(
+            org.mockito.ArgumentMatchers.argThat<DownloadInfoEntity> {
+                it.id == 21L && it.state == 3 && it.total == 4 && it.done == 4
+            }
+        )
+    }
+
+    @Test
+    fun `restartAll seals via index page count without touching disk`() {
+        // 索引页数优先（内存查表；每 30s 至多一次根指纹检查）：索引已覆盖的行
+        // 不再列目录——8800 行规模下逐行列目录会把重建拖成分钟级。
+        `when`(availability.isBlocked()).thenReturn(false)
+        `when`(downloadDirIndex.pageCount(222L)).thenReturn(7)
+        val row = DownloadInfoEntity().apply {
+            id = 31L; gid = 222L; token = "t"; total = 0; done = 0; state = 0
+            // 磁盘上并不存在（索引是唯一证据来源 → 证明走了索引快路径）
+            downloadDir = java.io.File(tempDir, "downloads/222-NotOnDisk").absolutePath
+        }
+        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(row))
+        `when`(downloadRepository.findById(31L)).thenReturn(Optional.of(row))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        val restarted = service.restartAllDownloads()
+
+        assertEquals(0, restarted)
+        verify(downloadRepository).save(
+            org.mockito.ArgumentMatchers.argThat<DownloadInfoEntity> {
+                it.id == 31L && it.state == 3 && it.total == 7 && it.done == 7
+            }
+        )
+    }
+
+    @Test
     fun `startDownload restarts a zombie row in activity state without a live task`() {
         // 服务重启后 DB 残留 state=1/2 而没有任何任务（僵尸行）：旧守卫按状态
         // 一律拒绝 → 「开始」「全部下载」全是空操作。用 EH 熔断作探针——必须
@@ -301,22 +355,28 @@ class DownloadServiceTest {
     }
 
     @Test
-    fun `restartAll restarts a zombie row whose content is incomplete on disk`() {
-        // 僵尸行（state=1、无任务）+ 磁盘未完成 → 必须重新排队下载。
-        // 旧守卫下 state=1 一律拒绝 → restarted=0（行永远卡死）。
-        `when`(availability.isBlocked()).thenReturn(false)
+    fun `restartAll restarts rows whose disk content is short of a known total`() {
+        // total 已知但磁盘缺页（真实缺失行）：不走封存，必须重新排队下载。
+        // 用 EH 熔断作探针：必须进入 startDownload 才会写 FAILED——证明这是
+        // 下载管线路径而非封存路径（封存会写 state=3）。
+        `when`(availability.isBlocked()).thenReturn(true)
         val downloadsRoot = java.io.File(tempDir, "downloads").apply { mkdirs() }
-        val zombie = DownloadInfoEntity().apply {
-            id = 11L; gid = 777L; token = "t"; total = 0; done = 2; state = 1
-            downloadDir = java.io.File(downloadsRoot, "777-zombie").absolutePath
+        val dir = java.io.File(downloadsRoot, "777-Short").apply { mkdirs() }
+        java.io.File(dir, "0001.jpg").writeBytes(ByteArray(10))
+        val short = DownloadInfoEntity().apply {
+            id = 11L; gid = 777L; token = "t"; total = 10; done = 1; state = 1
+            downloadDir = dir.absolutePath
         }
-        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(zombie))
-        `when`(downloadRepository.findById(11L)).thenReturn(Optional.of(zombie))
+        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(short))
+        `when`(downloadRepository.findById(11L)).thenReturn(Optional.of(short))
         `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
 
         val restarted = service.restartAllDownloads()
 
-        assertEquals(1, restarted)
+        assertEquals(0, restarted) // 熔断拦截（探针口径）
+        verify(downloadRepository).save(
+            org.mockito.ArgumentMatchers.argThat<DownloadInfoEntity> { it.id == 11L && it.state == 4 }
+        )
     }
 
     @Test
