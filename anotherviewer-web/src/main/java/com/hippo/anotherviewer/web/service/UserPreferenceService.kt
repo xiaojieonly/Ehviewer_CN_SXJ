@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
@@ -11,7 +12,10 @@ import org.springframework.stereotype.Service
 private const val SKEW_TOLERANCE = 5000L
 
 @Service
-class UserPreferenceService(private val repo: UserPreferenceRepository) {
+class UserPreferenceService(
+    private val repo: UserPreferenceRepository,
+    private val serverConfig: ServerConfigService,
+) {
 
     // 容错读取: 未知字段忽略 + 缺省填充, 异构偏好串（如 {"theme":"dark"}）不会打挂 GET/PUT
     private val mapper = jacksonObjectMapper().apply {
@@ -22,15 +26,19 @@ class UserPreferenceService(private val repo: UserPreferenceRepository) {
     private val strictMapper = jacksonObjectMapper()
 
     fun get(username: String): PreferenceResponse {
-        val entity = repo.findByUsername(username) ?: return PreferenceResponse()
-        return readStored(entity)
+        val entity = repo.findByUsername(username) ?: return withLivePrivacyMask(PreferenceResponse())
+        return withLivePrivacyMask(readStored(entity))
     }
 
     fun update(username: String, request: PreferenceUpdateRequest, source: String): PreferenceResponse {
         val entity = repo.findByUsername(username)
             ?: UserPreferenceEntity().apply { this.username = username }
 
-        // 深度合并: 只覆盖 request 中非 null 的 section
+        // 深度合并: 只覆盖 request 中非 null 的 section。
+        // privacyMask 不在此处写穿透：DTO 缺省无法区分「字段缺省」与「显式 false」，
+        // WebUI 的节级合并会把缺省值误当显式值回写打码开关；WebUI 面板走
+        // /privacy/mask 端点，App 走 replace() 的显式字段写穿透。存储副本可能
+        // 过期——所有读取路径（get/getRaw）都以 ServerConfig 实时值投影覆盖。
         val current = readStored(entity)
         val merged = PreferenceResponse(
             general = request.general ?: current.general,
@@ -57,11 +65,36 @@ class UserPreferenceService(private val repo: UserPreferenceRepository) {
         entity.updatedAt = lastModified
         entity.updatedBy = source
         repo.save(entity)
+        // App push 写穿透内容打码开关：App 导出的隐私节总是携带 privacyMask（全量文档），
+        // 仅在字段显式出现时生效——旧版 App 的 push 没有该字段，绝不触碰打码开关
+        // （Jackson 缺省无法区分「缺字段」与「显式 false」，必须查原始树）。
+        val root = runCatching { strictMapper.readTree(json) }.getOrNull()
+        val maskNode = root?.path("privacy")?.path("privacyMask")
+        if (maskNode != null && maskNode.isBoolean) {
+            val current = serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK)
+            if (maskNode.booleanValue() != current) {
+                serverConfig.setBoolean(ServerConfigService.KEY_PRIVACY_MASK, maskNode.booleanValue())
+            }
+        }
     }
 
     fun getRaw(username: String): String {
-        return repo.findByUsername(username)?.preferences ?: "{}"
+        val raw = repo.findByUsername(username)?.preferences ?: "{}"
+        // sync/pull 读取路径：把 privacyMask 投影为 ServerConfig 的实时值，
+        // 让 WebUI 面板（/privacy/mask）侧的变更能到达 App。
+        val root = runCatching { strictMapper.readTree(raw) }.getOrNull() as? ObjectNode ?: return raw
+        val privacy = root.get("privacy") as? ObjectNode ?: root.putObject("privacy")
+        privacy.put("privacyMask", serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK))
+        return root.toString()
     }
+
+    /** 读取投影：privacy.privacyMask 一律以打码开关的权威实时值为准。 */
+    private fun withLivePrivacyMask(response: PreferenceResponse): PreferenceResponse =
+        response.copy(
+            privacy = response.privacy.copy(
+                privacyMask = serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK),
+            ),
+        )
 
     private fun readStored(entity: UserPreferenceEntity): PreferenceResponse = try {
         mapper.readValue(entity.preferences, PreferenceResponse::class.java)

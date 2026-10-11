@@ -20,7 +20,10 @@ import android.content.Context
 import android.content.SharedPreferences
 
 import com.hippo.anotherviewer.Settings
+import com.hippo.anotherviewer.event.PrivacyMaskChanged
 
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -142,7 +145,8 @@ class PreferenceSyncHelperTest {
         Spec("showProgress", "reader", "gallery_show_progress", Store.BOOL, false, false, true),
         Spec("showPageInterval", "reader", "gallery_show_page_interval", Store.BOOL, false, false, true),
         Spec("fullscreen", "reader", "reading_fullscreen", Store.BOOL, false, false, true),
-        Spec("enableAnalytics", "privacy", "enable_analytics", Store.BOOL, true, true, false)
+        Spec("enableAnalytics", "privacy", "enable_analytics", Store.BOOL, true, true, false),
+        Spec("privacyMask", "privacy", "privacy_mask", Store.BOOL, true, true, false)
     )
 
     private val numericSpecs = listOf(
@@ -176,7 +180,7 @@ class PreferenceSyncHelperTest {
             ),
             root.getJSONObject("reader").stringKeys()
         )
-        assertEquals(setOf("enableAnalytics"), root.getJSONObject("privacy").stringKeys())
+        assertEquals(setOf("enableAnalytics", "privacyMask"), root.getJSONObject("privacy").stringKeys())
     }
 
     @Test
@@ -210,7 +214,7 @@ class PreferenceSyncHelperTest {
             "fullscreen" to true,
             "brightness" to 0
         )
-        val expectedPrivacy = mapOf<String, Any>("enableAnalytics" to false)
+        val expectedPrivacy = mapOf<String, Any>("enableAnalytics" to false, "privacyMask" to false)
 
         val root = export()
 
@@ -413,7 +417,7 @@ class PreferenceSyncHelperTest {
 
     @Test
     fun pullBooleanFieldsAcceptStrictJsonBooleansOnly() {
-        val rows = listOf(boolSpecs[0], boolSpecs[10], boolSpecs[13])
+        val rows = listOf(boolSpecs[0], boolSpecs[10], boolSpecs[13], boolSpecs.last())
         val wrongTyped = listOf<Any>("true", 1, JSONObject.NULL, "false")
 
         for (spec in rows) {
@@ -607,5 +611,49 @@ class PreferenceSyncHelperTest {
         }
         assertEquals(true, prefs.getBoolean("custom_screen_lightness", false))
         assertEquals(77, prefs.getInt("screen_lightness", -1))
+    }
+
+    @Test
+    fun pullPrivacyMaskAppliesOnChangeAndBroadcastsOnlyOnRealChange() {
+        val events = mutableListOf<PrivacyMaskChanged>()
+        val subscriber = object : Any() {
+            @Subscribe
+            fun on(e: PrivacyMaskChanged) {
+                events.add(e)
+            }
+        }
+        EventBus.getDefault().register(subscriber)
+        try {
+            // 值变化：落库 + 广播一次
+            prefs.edit().clear().commit()
+            importJson(sectionDoc("privacy", "privacyMask" to true))
+            assertEquals(true, prefs.getBoolean("privacy_mask", false))
+            assertEquals(1, events.size)
+
+            // 同值再拉：不重复广播
+            importJson(sectionDoc("privacy", "privacyMask" to true))
+            assertEquals(1, events.size)
+
+            // false -> false：不算变化
+            prefs.edit().putBoolean("privacy_mask", false).commit()
+            importJson(sectionDoc("privacy", "privacyMask" to false))
+            assertEquals(false, prefs.getBoolean("privacy_mask", true))
+            assertEquals(1, events.size)
+
+            // 字段缺省：完全不动
+            prefs.edit().putBoolean("privacy_mask", true).commit()
+            importJson(sectionDoc("privacy"))
+            assertEquals(true, prefs.getBoolean("privacy_mask", false))
+            assertEquals(1, events.size)
+
+            // 非 JSON 布尔：忽略
+            prefs.edit().clear().commit()
+            prefs.edit().putBoolean("privacy_mask", true).commit()
+            importJson(sectionDoc("privacy", "privacyMask" to "yes"))
+            assertEquals(true, prefs.getBoolean("privacy_mask", false))
+            assertEquals(1, events.size)
+        } finally {
+            EventBus.getDefault().unregister(subscriber)
+        }
     }
 }

@@ -2,8 +2,13 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.entity.ServerConfigEntity
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
+import com.hippo.anotherviewer.web.repository.ServerConfigRepository
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
+import com.hippo.anotherviewer.web.service.EncryptionService
+import com.hippo.anotherviewer.web.service.ServerConfigService
 import com.hippo.anotherviewer.web.service.UserPreferenceService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,6 +26,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -42,7 +48,7 @@ class PreferenceControllerTest {
             e
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
-        service = UserPreferenceService(repo)
+        service = UserPreferenceService(repo, fakeServerConfig())
         mvc = MockMvcBuilders.standaloneSetup(PreferenceController(service))
             .setControllerAdvice(GlobalExceptionHandler())
             .build()
@@ -268,5 +274,43 @@ class PreferenceControllerTest {
     private fun push(username: String, json: String, lastModified: Long = System.currentTimeMillis() + 60_000) {
         // 走真实 service 的 replace, 等价于一次 sync push 写入偏好
         service.replace(username, json, "android-1", lastModified)
+    }
+
+    /** Real [ServerConfigService] over an in-memory [ServerConfigRepository] fake. */
+    private fun fakeServerConfig(): ServerConfigService {
+        val repo = mock(ServerConfigRepository::class.java)
+        val store = ConcurrentHashMap<String, ServerConfigEntity>()
+        `when`(repo.findById(anyString())).thenAnswer { inv ->
+            Optional.ofNullable(store[inv.getArgument<String>(0)])
+        }
+        `when`(repo.save(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
+            val e = inv.getArgument<ServerConfigEntity>(0)
+            store[e.key] = e
+            e
+        }
+        return ServerConfigService(repo, EncryptionService(), SiteCoreConfigProperties())
+    }
+
+    @Test
+    fun `privacyMask projects the live switch and an app push writes it through`() {
+        val base = System.currentTimeMillis()
+        // 存量文档没有 privacyMask —— GET 投影权威缺省 false
+        push("alice", """{"general":{"theme":"dark"}}""", base + 60_000)
+        mvc.perform(get("/api/v1/preferences").with(principal("alice")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.privacy.privacyMask").value(false))
+
+        // App push 携带 privacyMask=true —— 写穿透权威开关，GET 投影回 true
+        push("alice", """{"privacy":{"enableAnalytics":false,"privacyMask":true}}""", base + 120_000)
+        mvc.perform(get("/api/v1/preferences").with(principal("alice")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.privacy.privacyMask").value(true))
+
+        // 旧版 App（文档无该字段）push —— 不触碰打码开关
+        push("alice", """{"general":{"theme":"blue"}}""", base + 180_000)
+        mvc.perform(get("/api/v1/preferences").with(principal("alice")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.general.theme").value("blue"))
+            .andExpect(jsonPath("$.privacy.privacyMask").value(true))
     }
 }

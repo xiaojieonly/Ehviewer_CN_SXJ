@@ -70,7 +70,7 @@ class WebFavoriteTombstoneSyncTest {
             mock(DownloadLabelRepository::class.java),
             deviceRepo(),
             preferenceRepo,
-            UserPreferenceService(preferenceRepo),
+            UserPreferenceService(preferenceRepo, newServerConfigService()),
             serverConfig,
             mock(EhSessionRepository::class.java),
             mock(SiteSessionManager::class.java),

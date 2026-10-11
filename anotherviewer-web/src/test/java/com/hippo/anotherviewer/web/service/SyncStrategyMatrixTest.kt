@@ -107,7 +107,7 @@ class SyncStrategyMatrixTest {
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, fakeDeviceRepo(), preferenceRepo,
-            UserPreferenceService(preferenceRepo), fakeServerConfig(),
+            UserPreferenceService(preferenceRepo, fakeServerConfig()), fakeServerConfig(),
             mock(EhSessionRepository::class.java),
             mock(SiteSessionManager::class.java),
         )

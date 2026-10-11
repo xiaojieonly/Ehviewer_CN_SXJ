@@ -109,7 +109,7 @@ class SyncServiceTest {
         downloadLabelRepo = fakeDownloadLabelRepo()
         deviceRepo = fakeDeviceRepo()
         preferenceRepo = fakePreferenceRepo()
-        preferenceService = UserPreferenceService(preferenceRepo)
+        preferenceService = UserPreferenceService(preferenceRepo, fakeServerConfig())
         siteSessionManager = mock(SiteSessionManager::class.java)
         serverCfg = fakeServerConfig()
         service = SyncService(

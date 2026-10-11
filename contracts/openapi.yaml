@@ -6077,6 +6077,15 @@ components:
         enableAnalytics:
           type: boolean
           default: true
+        privacyMask:
+          type: boolean
+          default: false
+          description: >-
+            Content-mask mode sync projection. The authoritative state lives in
+            the server config (WebUI panel /privacy/mask, consumed by
+            PrivacyMaskFilter): GET /preferences and sync/pull project it live,
+            and an App sync/push carrying the field writes it through. Pushes
+            from App versions without the field never touch the switch.
 
     PrivacyMaskRequest:
       type: object

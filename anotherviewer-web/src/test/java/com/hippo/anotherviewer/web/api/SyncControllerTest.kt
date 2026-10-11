@@ -530,7 +530,7 @@ class SyncControllerTest {
             downloadLabelRepo(),
             deviceRepo,
             preferenceRepo,
-            UserPreferenceService(preferenceRepo),
+            UserPreferenceService(preferenceRepo, newServerConfigService()),
             newServerConfigService(),
             mock(EhSessionRepository::class.java),
             mock(SiteSessionManager::class.java),

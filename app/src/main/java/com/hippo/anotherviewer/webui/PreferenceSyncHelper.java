@@ -22,7 +22,9 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 
 import com.hippo.anotherviewer.Settings;
+import com.hippo.anotherviewer.event.PrivacyMaskChanged;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -97,6 +99,9 @@ public final class PreferenceSyncHelper {
 
     // privacy fields
     private static final String JSON_ENABLE_ANALYTICS = "enableAnalytics";
+    // 内容打码模式：与服务器 /api/v1/privacy/mask 的唯一权威状态联动
+    // （服务端读写穿透到 PrivacyMaskFilter 消费的 ServerConfig，见 ADR 同步注记）
+    private static final String JSON_PRIVACY_MASK = "privacyMask";
 
     // Preference keys mirroring Settings.java for keys that are private there
     private static final String KEY_LAUNCH_PAGE = "launch_page";
@@ -260,6 +265,7 @@ public final class PreferenceSyncHelper {
     private static JSONObject buildPrivacy() throws JSONException {
         JSONObject privacy = new JSONObject();
         privacy.put(JSON_ENABLE_ANALYTICS, Settings.getBoolean(Settings.KEY_ENABLE_ANALYTICS, false));
+        privacy.put(JSON_PRIVACY_MASK, Settings.getPrivacyMaskEnabled());
         return privacy;
     }
 
@@ -343,6 +349,13 @@ public final class PreferenceSyncHelper {
 
     private static void importPrivacy(JSONObject privacy) {
         putBooleanIfBoolean(privacy, JSON_ENABLE_ANALYTICS, Settings.KEY_ENABLE_ANALYTICS);
+        // 内容打码模式：仅在值真正变化时落库并发广播，避免无关的整页刷新；
+        // 本方法在同步后台线程执行，订阅端均为 ThreadMode.MAIN，EventBus 会切主线程投递。
+        Object mask = privacy.opt(JSON_PRIVACY_MASK);
+        if (mask instanceof Boolean && (Boolean) mask != Settings.getPrivacyMaskEnabled()) {
+            Settings.putPrivacyMaskEnabled((Boolean) mask);
+            EventBus.getDefault().post(new PrivacyMaskChanged());
+        }
     }
 
     // ---------------------------------------------------------------------------------------------

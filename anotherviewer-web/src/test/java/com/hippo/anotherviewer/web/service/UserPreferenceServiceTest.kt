@@ -1,11 +1,14 @@
 package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.any
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.GeneralPreferences
 import com.hippo.anotherviewer.web.dto.PreferenceResponse
 import com.hippo.anotherviewer.web.dto.PreferenceUpdateRequest
 import com.hippo.anotherviewer.web.dto.ReaderPreferences
+import com.hippo.anotherviewer.web.entity.ServerConfigEntity
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
+import com.hippo.anotherviewer.web.repository.ServerConfigRepository
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -31,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 class UserPreferenceServiceTest {
 
     private lateinit var repo: UserPreferenceRepository
+    private lateinit var serverConfig: ServerConfigService
     private lateinit var service: UserPreferenceService
 
     @BeforeEach
@@ -43,8 +47,26 @@ class UserPreferenceServiceTest {
             e
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
-        service = UserPreferenceService(repo)
+        serverConfig = fakeServerConfig()
+        service = UserPreferenceService(repo, serverConfig)
     }
+
+    /** Real [ServerConfigService] over an in-memory [ServerConfigRepository] fake. */
+    private fun fakeServerConfig(): ServerConfigService {
+        val configRepo = mock(ServerConfigRepository::class.java)
+        val store = ConcurrentHashMap<String, ServerConfigEntity>()
+        `when`(configRepo.findById(anyString())).thenAnswer { inv ->
+            java.util.Optional.ofNullable(store[inv.getArgument<String>(0)])
+        }
+        `when`(configRepo.save(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
+            val e = inv.getArgument<ServerConfigEntity>(0)
+            store[e.key] = e
+            e
+        }
+        return ServerConfigService(configRepo, EncryptionService(), SiteCoreConfigProperties())
+    }
+
+    private fun liveMask(): Boolean = serverConfig.getBoolean(ServerConfigService.KEY_PRIVACY_MASK)
 
     // ---- E2E-1: 读取侧容错 ----
 
@@ -180,7 +202,9 @@ class UserPreferenceServiceTest {
     fun `replace normalizes invalid json to an empty object`() {
         service.replace("alice", "not json", "android-1", System.currentTimeMillis() + 60_000)
 
-        assertEquals("{}", service.getRaw("alice"))
+        // 归一化发生在存储侧：实体原文是 "{}"（getRaw 读取时会把 privacyMask
+        // 投影为权威实时值，不再等于存储原文，故此处直接断言实体）。
+        assertEquals("{}", repo.findByUsername("alice")!!.preferences)
         assertEquals(PreferenceResponse(), service.get("alice"))
     }
 
@@ -249,5 +273,46 @@ class UserPreferenceServiceTest {
         val entity = repo.findByUsername("alice")!!
         // SyncService.pull 直接读 updatedAt 作为 preferences.lastModified
         assertEquals(lastModified, entity.updatedAt)
+    }
+
+    // ---- 内容打码模式：投影 / 写穿透 ----
+
+    @Test
+    fun `get and getRaw project the live privacy mask over any stored copy`() {
+        // 存量文档带过期副本（false），权威开关为 true —— 读取以权威为准
+        service.replace("alice", """{"privacy":{"privacyMask":false}}""", "android-1", System.currentTimeMillis() + 60_000)
+        serverConfig.setBoolean(ServerConfigService.KEY_PRIVACY_MASK, true)
+
+        assertTrue(service.get("alice").privacy.privacyMask)
+        // getRaw 是 sync/pull 的读路径：投影后的文档必须携带实时值
+        assertTrue(service.getRaw("alice").contains("\"privacyMask\":true"))
+    }
+
+    @Test
+    fun `replace writes an explicit privacyMask through to the switch`() {
+        service.replace("alice", """{"privacy":{"enableAnalytics":false,"privacyMask":true}}""", "android-1", System.currentTimeMillis() + 60_000)
+
+        assertTrue(liveMask())
+    }
+
+    @Test
+    fun `replace from a legacy client without the field never touches the switch`() {
+        serverConfig.setBoolean(ServerConfigService.KEY_PRIVACY_MASK, true)
+
+        // 旧版 App 的文档没有 privacyMask 字段（Jackson 缺省 false ≠ 显式 false）
+        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", System.currentTimeMillis() + 60_000)
+
+        assertTrue(liveMask())
+        // 无 LWW 拒绝时文档本身照常覆盖
+        assertEquals("dark", service.get("alice").general.theme)
+    }
+
+    @Test
+    fun `privacyMask writes are skipped entirely when the LWW gate rejects the push`() {
+        service.replace("alice", """{"privacy":{"privacyMask":true}}""", "android-1", 12_345L)
+        // 旧 push 被拒 —— 开关也不得被回写
+        service.replace("alice", """{"privacy":{"privacyMask":false}}""", "android-2", 12_000L)
+
+        assertTrue(liveMask())
     }
 }

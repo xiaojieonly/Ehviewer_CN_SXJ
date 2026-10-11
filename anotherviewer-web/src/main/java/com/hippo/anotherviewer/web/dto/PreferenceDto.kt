@@ -120,6 +120,12 @@ data class ReaderPreferences(
 
 data class PrivacyPreferences(
     val enableAnalytics: Boolean = true,
+    // 内容打码模式的同步投影。唯一权威状态在 ServerConfigService.KEY_PRIVACY_MASK
+    // （WebUI 面板 /privacy/mask 端点读写，PrivacyMaskFilter 消费）：本字段在
+    // GET /preferences 与 sync/pull 读取路径上由服务层实时投影覆盖，App 的
+    // sync/push 写穿透回写权威状态（仅当字段显式出现——旧版 App 无此字段，
+    // 不得触碰打码开关）。存储文档中的副本可能过期，一律以投影值为准。
+    val privacyMask: Boolean = false,
 )
 
 /** PUT /api/v1/preferences 请求 — 所有字段可选，深度合并 */
