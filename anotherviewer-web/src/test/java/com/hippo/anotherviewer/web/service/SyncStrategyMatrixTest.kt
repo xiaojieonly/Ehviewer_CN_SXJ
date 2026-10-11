@@ -55,15 +55,24 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Stream
 
 /**
- * 契约 v2 行为矩阵（docs/MASTER-2026-08-03.md §4.2 + contracts/sync-conflict-rules.md §3.8）：
+ * 契约 v4 行为矩阵（contracts/sync-conflict-rules.md §3.8/§5.1）：
  * 3 策略（device_priority A / lww B / web_priority C）× 7 实体 × 六行分歧逐案实测。
  *
- * 六行分歧：
- *  1. 同键同时编辑（双活，skew 内）：A=android 记录胜 / B=实体 tie-break / C=web 记录胜
- *  2. 优先端删 / 非优先端保留：A/C 删除传播；B soft 保留、B tombstone 实体仍传播
- *  3. 非优先端删 / 优先端保留：soft 全策略保留；tombstone 实体全策略传播
+ * v4 仲裁基线：push 入口把整批入参重打戳为服务器到达戳（§1.3，每请求一个），
+ * 全部比较两侧都是服务器时钟域（客户端上送戳不落库、不参与仲裁）。因此：
+ *  - 单线程内任何一次 push 对其键必然赢得与既有行的合并（到达戳 >= 既有戳）；
+ *    只有「后到达的 push」能胜过「先到达的 push」——本类期望结果全部按到达序表达。
+ *  - B（lww，v4 默认）无 skew 窗口、无实体 tie-break：删除/复活同样按到达序（§3.8）。
+ *  - A/C 跨平台同键无条件平台序胜（不变）；A/C 同平台回退保留 v1 判据（±5s 窗口 +
+ *    实体 tie-break），但窗口两侧同为到达戳——相邻两次 push 必落在窗口内。
+ *
+ * 六行分歧（v4 表达）：
+ *  1. 同键同时编辑（双活）：A=android 记录胜 / B=后到者胜 / C=web 记录胜
+ *  2. 优先端删 / 非优先端保留：墓碑后到=删除传播；非优先端 live 后到仅 LWW 下复活
+ *  3. 非优先端删 / 优先端保留：A/C 保留；B=后到者胜
  *  4. 各删不同键·tombstone 实体（history/bookmark）：全策略双向传播
- *  5. 各删不同键·soft 实体：A/C 优先端删传播、非优先端删在优先端不持有时传播；B 不传播
+ *  5. 各删不同键·soft 实体：墓碑后到即传播（A/C 优先端删无条件传播；非优先端删在
+ *     优先端不持有时传播；LWW 按到达序）
  *  6. 不相交新增：全策略 union
  *
  * 平台判定 = deviceId 前缀（§1.4）：`android-*` → android，其余 → web 侧。
@@ -124,12 +133,12 @@ class SyncStrategyMatrixTest {
         service.updatePolicy(SyncPolicyDto(conflictStrategy = strategy))
 
     /**
-     * 「晚于前一次写入」的客户端戳：v4 判据是客户端值 vs 服务器戳（≈ 墙钟，同毫秒内
-     * 会 +1 兜底），直接取墙钟可能因毫秒粒度判负——统一叠加 1s，保证严格晚于既有戳。
+     * v4：客户端上送戳不落库、不参与任何仲裁（push 入口以服务器到达戳覆盖全部入参），
+     * 本工具的取值仅作为 fixtures 的传输元数据/诊断字段保留——「更新」与否都不改变胜负。
      */
     private fun newer(): Long = System.currentTimeMillis() + 1_000
 
-    /** 明显旧于服务器戳的「陈旧副本」（用于不应对存量产生影响的回推）。 */
+    /** 陈旧客户端戳（同上：v4 下仅传输元数据——「旧副本」是否落败只看到达序）。 */
     private fun stale(): Long = System.currentTimeMillis() - 10_000
 
     // ==================== 行 1：同键同时编辑（双活） ====================
@@ -163,15 +172,24 @@ class SyncStrategyMatrixTest {
         val prio = if (strategy == ConflictStrategy.WEB_PRIORITY) web1 else android1
         val other = if (prio == web1) android1 else web1
 
+        // v4 到达戳：删除是否传播只看到达序（客户端上送戳不参与仲裁）。两个键覆盖两个到达序：
+        // K1 —— 墓碑后到（优先端删除落在最后）→ 删除传播（三策略一致）。
         pushLive(kind, device = prio, key = 1, lm = newer(), version = 1)   // 优先端持有该键
-        pushTomb(kind, device = prio, key = 1, lm = newer())                // 优先端删除（戳晚于持有）
-        // 非优先端仍持有旧副本，下一轮推送 live（其 lastModified 旧于删除）
-        pushLive(kind, device = other, key = 1, lm = stale(), version = 1)
+        pushTomb(kind, device = prio, key = 1, lm = newer())                // 优先端删除（后到）
+        assertTrue(readState(kind, 1).first, "墓碑后到 → 删除传播: strategy=$strategy kind=$kind")
 
-        val (deleted, _) = readState(kind, 1)
-        // v4 收敛：LWW 下墓碑按戳参与仲裁（新墓碑胜旧活行）→ 删除传播；
-        // A/C 优先端删除无条件传播。三策略一致：tombstone 胜。
-        assertTrue(deleted, "strategy=$strategy kind=$kind")
+        // K2 —— 非优先端仍持有旧副本并后到推送 live：
+        //  LWW：到达戳胜 → 复活（保留）——「旧副本」在 v4 下同样凭到达序胜出；
+        //  A/C：优先端删除无条件传播，非优先端（后到）live 也不复活。
+        pushLive(kind, device = prio, key = 2, lm = newer(), version = 1)   // 优先端持有该键
+        pushTomb(kind, device = prio, key = 2, lm = newer())                // 优先端删除
+        pushLive(kind, device = other, key = 2, lm = stale(), version = 1)  // 非优先端旧副本后到
+        val deletedK2 = readState(kind, 2).first
+        if (strategy == ConflictStrategy.LWW) {
+            assertFalse(deletedK2, "lww：后到的 live 复活墓碑（到达序胜）: kind=$kind")
+        } else {
+            assertTrue(deletedK2, "A/C：优先端删除无条件传播（非优先端 live 不复活）: strategy=$strategy kind=$kind")
+        }
     }
 
     // ==================== 行 3：非优先端删 / 优先端保留 ====================
@@ -294,37 +312,48 @@ class SyncStrategyMatrixTest {
 
     @ParameterizedTest(name = "[{0}] {1}")
     @MethodSource("strategyTombstoneMatrix")
-    fun `tombstone entity resurrection follows entity LWW like v1`(strategy: ConflictStrategy, kind: Kind) {
+    fun `tombstone entity resurrection follows the arrival order (v4)`(strategy: ConflictStrategy, kind: Kind) {
         setStrategy(strategy)
-        // tombstone 实体复活按实体专属 LWW（§3.8 镜像）：live 戳不旧于墓碑 → 复活；
-        // 明显更旧的 live 不复活。
+        // v4 到达戳：复活/删除只由 push 先后决定（客户端上送戳不参与仲裁）。
+        // ① 墓碑先到、live 后到 → 复活（任何策略）；后到的 live 客户戳陈旧（stale）同样复活
+        //    ——旧语义「明显更旧的 live 不复活」废除，唯一变量是到达序。
         pushTomb(kind, device = android1, key = 1, lm = newer())
-        pushLive(kind, device = web1, key = 1, lm = newer(), version = 2) // 戳晚于墓碑 → 复活（任何策略）
-        assertFalse(readState(kind, 1).first, "更新 live 应复活 tombstone 实体: strategy=$strategy kind=$kind")
+        pushLive(kind, device = web1, key = 1, lm = newer(), version = 2)
+        assertFalse(readState(kind, 1).first, "后到 live 应复活 tombstone 实体: strategy=$strategy kind=$kind")
 
         pushTomb(kind, device = android1, key = 2, lm = newer())
-        pushLive(kind, device = web1, key = 2, lm = stale(), version = 1) // 明显更旧 → 保持墓碑
-        assertTrue(readState(kind, 2).first, "更旧 live 不应复活: strategy=$strategy kind=$kind")
+        pushLive(kind, device = web1, key = 2, lm = stale(), version = 1) // 客户戳陈旧不阻后到复活
+        assertFalse(readState(kind, 2).first, "v4：stale 客户戳不阻后到 live 复活: strategy=$strategy kind=$kind")
+
+        // ② 到达序对照（交换先后）：live 先到、墓碑后到 → 删除传播（保持墓碑）。
+        pushLive(kind, device = web1, key = 3, lm = stale(), version = 1)
+        pushTomb(kind, device = android1, key = 3, lm = newer())
+        assertTrue(readState(kind, 3).first, "后到墓碑压 live（删除传播）: strategy=$strategy kind=$kind")
     }
 
     @ParameterizedTest(name = "[{0}] {1}")
     @MethodSource("strategyACPairs")
     fun `same platform same key falls back to LWW under A and C`(strategy: ConflictStrategy, kind: Kind) {
         setStrategy(strategy)
-        // 两个 android 设备同键（同平台）：回退 v1 语义——LWW ± skew + tie-break，而非无条件优先
+        // 两个 android 设备同键（同平台）：A/C 的平台序不适用 → 回退判据。
+        // v4：两侧 lastModified 均为服务器到达戳（相邻两次 push 的到达戳必落在 ±5s 回退窗口内），
+        // 客户戳（newer()/+61_000）只是传输元数据——旧用例「客户戳超出 skew 即胜」在 v4 不可达，
+        // 改为到达序对照。
         pushLive(kind, device = android1, key = 1, lm = newer(), version = 1)
-        // 明显更新：超出 5s skew 窗口（相对服务器戳），v1 判据下才可能胜出。
         pushLive(kind, device = android2, key = 1, lm = newer() + 61_000, version = 2)
-        assertEquals(2, readState(kind, 1).second, "同平台回退 LWW: strategy=$strategy kind=$kind")
-
-        // skew 内 first-received-wins（无实体 tie-break 的 union 实体）/ tie-break（history/bookmark/filter）
-        pushLive(kind, device = android1, key = 3, lm = newer(), version = 1)
-        pushLive(kind, device = android2, key = 3, lm = newer(), version = 2)
-        val expectedWithinSkew = when (kind) {
+        // 窗口内回退：union 实体保留先到记录（先到者胜，不做无条件平台覆盖）；
+        // history/bookmark/filter 走实体 tie-break（time/page/enabled 更高者胜）。
+        val expectedFirstArrival = when (kind) {
             Kind.HISTORY, Kind.BOOKMARK, Kind.FILTER -> 2
             else -> 1
         }
-        assertEquals(expectedWithinSkew, readState(kind, 3).second, "同平台 skew 内: strategy=$strategy kind=$kind")
+        assertEquals(expectedFirstArrival, readState(kind, 1).second, "同平台回退（v1 先到）: strategy=$strategy kind=$kind")
+
+        // 到达序对照（交换先后，key=3 由 v2 先到）：union 实体仍保留先到记录（v2）；
+        // tie-break 实体内容更高者（v2）保留——结论随后续到达序/内容，而非「后到即胜」。
+        pushLive(kind, device = android2, key = 3, lm = newer() + 61_000, version = 2)
+        pushLive(kind, device = android1, key = 3, lm = newer(), version = 1)
+        assertEquals(2, readState(kind, 3).second, "同平台回退（v2 先到）: strategy=$strategy kind=$kind")
     }
 
     @ParameterizedTest(name = "[{0}]")
@@ -403,19 +432,26 @@ class SyncStrategyMatrixTest {
 
     @Test
     fun `policy carried by an android push governs that same push's merges (immediate effect)`() {
-        // 当前策略 device_priority：android 墓碑会无条件压过 web 活记录（删除传播）。
-        // 本次 push 携带 policy=lww → 本次 merge 即按 lww 的按戳仲裁：陈旧墓碑（stale）
-        // 不敌新活行（服务器戳 ≈ now）→ 活记录保留。
+        // 同一载荷（android live 对存量 android 墓碑）在两种策略下结论相反——用于证明
+        // 「本次 push 携带的 policy 立即作用于本次 merge」：
+        //  · 切换前策略 A：优先端（android）墓碑无条件压制 android live → 保持删除；
+        //  · 本次 push 携带 policy=lww：立即生效——live 后到，到达戳胜 → 复活。
         setStrategy(ConflictStrategy.DEVICE_PRIORITY)
-        pushLive(Kind.FAVORITE, device = web1, key = 1, lm = newer(), version = 1) // web 持有活记录
+        pushTomb(Kind.FAVORITE, device = android1, key = 1, lm = newer()) // android 删除落墓碑
+        // 对照（不带 policy，当前策略 A）：同一 android live 载荷被优先端墓碑压制，仍删除。
+        pushLive(Kind.FAVORITE, device = android1, key = 1, lm = newer(), version = 1)
+        assertTrue(readState(Kind.FAVORITE, 1).first, "A：优先端墓碑压制 android live，保持删除")
+
+        // 本次 push 携带 policy=lww → 本次 merge 即按 lww 到达戳仲裁：live 后到 → 复活
+        //（客户戳在入口被重打戳，仅传输元数据）。
         push(
             deviceId = android1,
             policy = SyncPolicyDto(ConflictStrategy.LWW),
             favorites = listOf(
-                SyncFavoriteDto(gid = 1, token = "t1", title = "gone", lastModified = stale(), deviceId = android1, deleted = true)
+                SyncFavoriteDto(gid = 1, token = "t1", title = "revived", lastModified = stale(), deviceId = android1, deleted = false)
             ),
         )
-        assertFalse(readState(Kind.FAVORITE, 1).first, "本次 push 携带的 lww 应立即作用于本次 merge（旧墓碑被丢弃）")
+        assertFalse(readState(Kind.FAVORITE, 1).first, "本次 push 携带的 lww 立即生效：live 后到复活墓碑")
 
         // 对照：恢复缺省 device_priority 后，同样的墓碑 push 不带 policy → 删除传播
         setStrategy(ConflictStrategy.DEVICE_PRIORITY)

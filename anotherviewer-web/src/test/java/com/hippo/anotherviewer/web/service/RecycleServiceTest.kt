@@ -134,15 +134,19 @@ class RecycleServiceTest {
     }
 
     @Test
-    fun `list clamps pageSize and rejects unknown entities including ehSession`() {
+    fun `list clamps pageSize, mixes entities when omitted, rejects unknown entities including ehSession`() {
         seedFavorite(gid = 1, deleted = true, lastModified = clock.nowPlus(-1L))
 
         assertEquals(200, service.list("A", "favorites", 0, 9999).pageSize)
         assertEquals(1, service.list("A", "favorites", 0, 0).pageSize)
 
+        // entity 缺省 = 全实体混合列表（WebUI 回收站页为单列表视图；契约 §9 entity 可选）。
+        val mixed = service.list("A", null, 0, 20)
+        assertEquals(1, mixed.items.size)
+        assertEquals("favorites", mixed.items.single().entity)
+
         // ehSession 是服务器级单例会话：墓碑不进回收站（无 list 入口）→ 400 语义。
         assertThrows(IllegalArgumentException::class.java) { service.list("A", "ehSession", 0, 20) }
-        assertThrows(IllegalArgumentException::class.java) { service.list("A", null, 0, 20) }
     }
 
     // ── restore ─────────────────────────────────────────────────

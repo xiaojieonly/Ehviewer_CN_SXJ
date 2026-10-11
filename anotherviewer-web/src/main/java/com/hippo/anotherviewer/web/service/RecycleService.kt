@@ -81,15 +81,22 @@ class RecycleService(
 
     /**
      * 回收站列表：按 lastModified（= 删除时刻）倒序分页；pageSize 钳 1..200。
-     * @throws IllegalArgumentException entity 非法（控制器转 400 VALIDATION_ERROR）。
+     * entity 缺省（null/空）= 全实体混合列表（WebUI 回收站页为单列表视图，
+     * 契约 §9 中 entity 为可选参数）；显式取值时校验合法性。
+     * @throws IllegalArgumentException entity 显式给出但非法（控制器转 400 VALIDATION_ERROR）。
      */
     fun list(username: String, entity: String?, page: Int, pageSize: Int): RecycleListResponse {
-        val e = Entity.fromWire(entity)
-            ?: throw IllegalArgumentException("unknown recycle entity: ${entity ?: "(missing)"}")
         val size = pageSize.coerceIn(1, MAX_PAGE_SIZE)
         val start = page.coerceAtLeast(0)
         val now = System.currentTimeMillis()
-        val rows = tombstones(username, e).sortedByDescending { it.deletedAt }
+        val rows = if (entity.isNullOrBlank()) {
+            // 混合列表：跨全部回收站实体合并后统一按删除时刻倒序。
+            Entity.entries.flatMap { tombstones(username, it) }
+        } else {
+            val e = Entity.fromWire(entity)
+                ?: throw IllegalArgumentException("unknown recycle entity: $entity")
+            tombstones(username, e)
+        }.sortedByDescending { it.deletedAt }
         val items = rows.drop(start * size).take(size).map { row ->
             RecycleItem(
                 entity = row.entity,

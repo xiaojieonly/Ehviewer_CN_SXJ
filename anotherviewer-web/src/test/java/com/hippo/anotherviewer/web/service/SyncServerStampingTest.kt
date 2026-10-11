@@ -47,7 +47,8 @@ import java.util.concurrent.ConcurrentHashMap
  *  - push 同批多行落库戳严格递增且全部来自 SyncClock（客户端上送值不落库）；
  *  - 同戳后到胜（判据 `incoming >= existing`）；
  *  - pull 增量 overlap：行 lastModified == since - 500 仍返回（吸收并发提交）；
- *  - push 事务内聚合 8 类计数并发布 SyncUpdateEvent（含 preferences）。
+ *  - push 事务内聚合 8 类计数并发布 SyncUpdateEvent（含 preferences）。计数语义 =
+ *    「生效写入」（create/覆盖/复活均计 1；2026-10 保真度修复：create 此前计 0）。
  */
 class SyncServerStampingTest {
 
@@ -145,9 +146,9 @@ class SyncServerStampingTest {
                 favorites = listOf(
                     fav(1, 6_000, title = "win"), // 覆盖存量 → 计 1
                     fav(2, 6_000, title = "win"), // 覆盖存量 → 计 1
-                    fav(99, 1_000, title = "new"), // 新插 → 不计（无冲突）
+                    fav(99, 1_000, title = "new"), // 新插（create）→ 计 1（保真度修复：create 也是生效写入）
                 ),
-                history = listOf(hist(3, 1_000)), // 新插 → 不计
+                history = listOf(hist(3, 1_000)), // 新插（create）→ 计 1（同上）
                 preferences = SyncPreferencesDto(preferences = """{"general":{"lang":"zh"}}""", lastModified = 1L, deviceId = "android-x"),
             ),
             "A",
@@ -158,9 +159,11 @@ class SyncServerStampingTest {
         val event = captor.value
         assertEquals("android-x", event.deviceId)
         assertEquals(pushed.serverTimestamp, event.serverTimestamp)
-        assertEquals(2, event.counts["favorites"])
+        assertEquals(3, event.counts["favorites"], "2 覆盖 + 1 create")
         assertEquals(1, event.counts["preferences"], "preferences 实际写入（replace 生效）计 1")
-        assertFalse(event.counts.containsKey("history"), "仅计数 > 0 的实体入 counts")
+        assertEquals(1, event.counts["history"], "新建实体必须入 counts（保真度修复：create 返回 true）")
+        // conflicts = counts 派生和（不含 preferences）：3 favorites + 1 history。
+        assertEquals(4, pushed.conflicts)
         assertFalse(event.counts.containsKey("downloads"))
     }
 

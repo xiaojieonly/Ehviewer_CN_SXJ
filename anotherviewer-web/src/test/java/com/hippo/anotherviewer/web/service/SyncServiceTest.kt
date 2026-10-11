@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.captureK
+import com.hippo.anotherviewer.web.eq
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.ConflictStrategy
 import com.hippo.anotherviewer.web.dto.SyncBookmarkDto
@@ -60,18 +61,20 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Contract tests for [SyncService] merge semantics, per
- * `contracts/sync-conflict-rules.md`:
+ * `contracts/sync-conflict-rules.md` v4（服务器打戳 / 到达戳语义）：
  *
- *  - SKEW_TOLERANCE = 5000 ms; timestamps within the window are simultaneous.
- *  - Favorites / Downloads / Filters / QuickSearches / DownloadLabels: union
- *    merge with soft-delete tombstones (a tombstone never kills a live row;
- *    a live push resurrects a tombstone).
+ *  - v4 §1.3「到达戳」：push 入口对整批入参重打戳为服务器单调时钟值
+ *    （`syncClock.next()`，每请求一个），客户端上送的 lastModified 不落库、
+ *    不参与仲裁。单线程内来包的到达戳 >= 任何既有行戳 ⇒ 来包必赢；只有
+ *    「后到达的 push」能胜过「先到达的 push」。
+ *  - Favorites / Downloads / Filters / QuickSearches / DownloadLabels：union
+ *    合并；墓碑行按服务器戳参与 LWW（后到墓碑胜旧活行，后到活行复活旧墓碑）。
  *  - History / Bookmarks: LWW with server-side tombstone rows — a
- *    `deleted: true` push marks the stored row deleted and bumps
- *    `lastModified` (or stores the tombstone if none exists), so incremental
- *    pulls (`since > 0`) propagate deletions; a newer live push resurrects.
- *  - Within-skew tie-breakers: history keeps the later view time, bookmarks
- *    the higher page, filters enabled=true.
+ *    `deleted: true` push marks the stored row deleted and 由服务器打新戳
+ *    (or stores the tombstone if none exists), so incremental
+ *    pulls (`since > 0`) propagate deletions; a later live push resurrects.
+ *  - B（lww，v4 默认）无 skew 窗口、无实体 tie-break；A/C 同平台回退与
+ *    softDeleteLiveWins 的按戳仲裁同样使用到达戳（§5.1）。
  *  - Entities are scoped per user; legacy null-username rows are claimed by
  *    the first user to push.
  *
@@ -79,8 +82,7 @@ import java.util.concurrent.ConcurrentHashMap
  * (gid / (mode,text) / name / label / deviceId), so assertions read back the
  * persisted state through the mocked repository interface.
  *
- * v2 注：契约 v2 缺省策略为 device_priority（A）；本套件断言的是 v1.0 语义，
- * 即策略 B（lww）路径，故 setUp 显式把策略钉为 lww——v1 完整回退兜底（契约 §1.4）。
+ * v4 注：契约缺省策略为 lww（B）；setUp 显式钉为 lww 以固定基线（§1.4）。
  * A/C 与 policy 端点的行为矩阵见 SyncStrategyMatrixTest。
  */
 class SyncServiceTest {
@@ -131,9 +133,8 @@ class SyncServiceTest {
     }
 
     /**
-     * v4 判据是「incoming.lastModified vs existing.lastModified」：existing 是服务器戳
-     * （≈当前墙钟），因此表达「晚于既有写入的新包」必须用真实时钟值（玩具值会被服务器
-     * 戳压过）。
+     * 客户端域墙钟值（fixture 元数据）。v4 起客户端上送戳不落库、不参与任何仲裁
+     * （push 入口以到达戳覆盖），此值仅用于演示「客户戳多大都不改变胜负」。
      */
     private fun nowMs(): Long = System.currentTimeMillis()
 
@@ -527,7 +528,9 @@ class SyncServiceTest {
         assertTrue(stored.deleted)
         verify(downloadRepo).save(any(DownloadInfoEntity::class.java))
         verify(downloadRepo, never()).delete(any(DownloadInfoEntity::class.java))
-        assertEquals(0, response.conflicts)
+        // 墓碑 create（未知键的删除传播载体）也是「生效写入」→ 计 1。
+        // 2026-10 保真度修复：此前 create 路径返回 false（漏报）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -579,16 +582,17 @@ class SyncServiceTest {
     // ==================== mergeFilter ====================
 
     @Test
-    fun `filter deduplicates on the mode plus text key`() {
+    fun `filter deduplicates on the mode plus text key and the later push wins (v4)`() {
         push("A", filters = listOf(flt(mode = 1, text = "artist:foo", enabled = true, lastModified = 1_000)))
         val firstStamp = filterRepo.findAll().single().lastModified
-        // v4：存量是服务器戳（≈now）>> 玩具客户端戳 2000 → 来包被丢弃（无 skew 放宽）。
+        // v4 到达戳：同键就地更新（不新增行）；后到包以到达序胜出——客户戳 2_000 只是
+        // 传输元数据，不参与仲裁（旧语义「存量是服务器戳 ⇒ 来包被丢弃」废除）。
         push("A", filters = listOf(flt(mode = 1, text = "artist:foo", enabled = false, lastModified = 2_000)))
 
         val rows = filterRepo.findAll()
-        assertEquals(1, rows.size)
-        assertTrue(rows[0].enabled)
-        assertEquals(firstStamp, rows[0].lastModified)
+        assertEquals(1, rows.size) // 键去重：仍是一行
+        assertFalse(rows[0].enabled) // 后到包胜
+        assertTrue(rows[0].lastModified > firstStamp, "行水位应推进为后到批的服务器戳")
     }
 
     @Test
@@ -621,11 +625,13 @@ class SyncServiceTest {
 
     @Test
     fun `filter tombstone is stored for an unknown key`() {
-        push("A", filters = listOf(flt(mode = 9, text = "zzz", deleted = true, lastModified = 2_000)))
+        val response = push("A", filters = listOf(flt(mode = 9, text = "zzz", deleted = true, lastModified = 2_000)))
 
         val row = filterRepo.findAll().single()
         assertTrue(row.deleted)
         assertEquals("A", row.username)
+        // 墓碑 create 成功 = 生效写入 → 计 1（保真度修复）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -660,12 +666,20 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `filter keeps the local version when it is much newer`() {
-        seedFilter(mode = 4, text = "q", lastModified = 6_001, enabled = true)
+    fun `filter arrival order decides the winner (client stamps do not arbitrate, v4)`() {
+        // v4 翻转：旧语义「存量客户戳更新 ⇒ 保留存量」废除——来包以到达序胜出
+        // （到达戳 >= 任何已发出的服务器戳；客户端上送值仅作传输元数据）。
+        push("A", filters = listOf(flt(mode = 4, text = "q", enabled = true, lastModified = 6_001)))
+        val firstStamp = filterRepo.findAll().single().lastModified
         push("A", filters = listOf(flt(mode = 4, text = "q", enabled = false, lastModified = 1_000)))
 
+        val row = filterRepo.findAll().single()
+        assertFalse(row.enabled) // 后到包胜（客户戳 1_000「更旧」不影响胜负）
+        assertTrue(row.lastModified > firstStamp, "行水位应推进为后到批的服务器戳")
+
+        // 对照：交换到达序——后到的是 enabled=true，则 true 胜（胜者随到达序反转，与戳值无关）。
+        push("A", filters = listOf(flt(mode = 4, text = "q", enabled = true, lastModified = 6_001)))
         assertTrue(filterRepo.findAll().single().enabled)
-        verify(filterRepo, never()).save(any(FilterEntity::class.java))
     }
 
     // ==================== mergeBookmark ====================
@@ -680,16 +694,20 @@ class SyncServiceTest {
         // v4：墓碑 bump 走服务器打戳（不再是 maxOf 客户端值）。
         assertClockStamped(stored.lastModified, 2_000L, 0L)
         verify(bookmarkRepo, never()).delete(any(BookmarkInfoEntity::class.java))
-        assertEquals(0, response.conflicts)
+        // 存量行墓碑化（bump）= 生效写入 → 计 1（删必须计入 sync.update，
+        // 否则 WebUI 书签列表收不到实时移除通知）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
     fun `bookmark delete of an unknown gid stores a tombstone`() {
-        push("A", bookmarks = listOf(bm(12, page = 3, lastModified = 2_000, deleted = true)))
+        val response = push("A", bookmarks = listOf(bm(12, page = 3, lastModified = 2_000, deleted = true)))
 
         val stored = bookmarkRepo.findByGid(12)!!
         assertTrue(stored.deleted)
         assertClockStamped(stored.lastModified, 2_000L, 0L)
+        // 墓碑 create 成功 = 生效写入 → 计 1（与存量行 bump 同为 true）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -749,9 +767,11 @@ class SyncServiceTest {
 
     @Test
     fun `quick search tombstone is stored for an unknown name`() {
-        push("A", quickSearches = listOf(qs("preset2", deleted = true, lastModified = 2_000)))
+        val response = push("A", quickSearches = listOf(qs("preset2", deleted = true, lastModified = 2_000)))
 
         assertTrue(quickSearchRepo.findByName("preset2")!!.deleted)
+        // 墓碑 create 成功 = 生效写入 → 计 1（保真度修复）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -771,25 +791,30 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `quick search keeps the local version when it is much newer`() {
+    fun `quick search arrival order decides the winner (client stamps do not arbitrate, v4)`() {
+        // v4 翻转：单线程内来包以到达序必赢——存量客户戳「更新」（6_001）不再保留存量；
+        // 来包自身上送的客户戳（1_000）同样不落库、不参与仲裁。
         seedQuickSearch("preset5", lastModified = 6_001, keyword = "old")
         push("A", quickSearches = listOf(qs("preset5", lastModified = 1_000, keyword = "new")))
+        assertEquals("new", quickSearchRepo.findByName("preset5")!!.keyword)
 
+        // 对照：交换到达序——后到的是 "old"，old 以到达序胜出（胜者随到达序反转）。
+        push("A", quickSearches = listOf(qs("preset5", lastModified = 6_001, keyword = "old")))
         assertEquals("old", quickSearchRepo.findByName("preset5")!!.keyword)
-        verify(quickSearchRepo, never()).save(any(QuickSearchEntity::class.java))
     }
 
     // ==================== mergeDownloadLabel ====================
 
     @Test
-    fun `download label deduplicates on the label key and survives tombstone pushes`() {
+    fun `download label deduplicates on the label key and the later tombstone push wins (v4)`() {
         push("A", downloadLabels = listOf(lbl("L1", lastModified = 1_000)))
-        // v4：存量水位是服务器戳（≈now）>> 玩具戳 2000 → 旧墓碑来包被 LWW 丢弃，行保持存活。
+        // v4 到达戳：同名键就地更新（不新增行）；后到的墓碑以到达序胜出（客户戳 2_000
+        // 只是传输元数据，不参与仲裁）——旧语义「活行不为墓碑所动」废除。
         push("A", downloadLabels = listOf(lbl("L1", lastModified = 2_000, deleted = true)))
 
         val rows = downloadLabelRepo.findAll()
-        assertEquals(1, rows.size)
-        assertFalse(rows[0].deleted)
+        assertEquals(1, rows.size) // 键去重：仍是一行
+        assertTrue(rows[0].deleted) // 后到墓碑胜 = 删除传播
     }
 
     @Test
@@ -802,9 +827,11 @@ class SyncServiceTest {
 
     @Test
     fun `download label tombstone is stored for an unknown label`() {
-        push("A", downloadLabels = listOf(lbl("L2", deleted = true, lastModified = 2_000)))
+        val response = push("A", downloadLabels = listOf(lbl("L2", deleted = true, lastModified = 2_000)))
 
         assertTrue(downloadLabelRepo.findByLabel("L2")!!.deleted)
+        // 墓碑 create 成功 = 生效写入 → 计 1（保真度修复）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -839,12 +866,18 @@ class SyncServiceTest {
             deviceId = "android-test",
             deleted = false,
         )
-        `when`(siteSessionManager.applySyncEhSession(incoming, "android-test")).thenReturn(true)
+        `when`(siteSessionManager.applySyncEhSession(any(SyncEhSessionDto::class.java), anyString())).thenReturn(true)
 
         val response = push("A", ehSession = listOf(incoming))
 
-        verify(siteSessionManager).applySyncEhSession(incoming, "android-test")
-        // 覆盖存量行计一次冲突，与其它 merge 的 conflicts 语义一致。
+        // v4：委托的 DTO 已被 push 入口重打戳——到达戳由服务器生成（每请求一个），
+        // 不再是客户端上送值，故 verify 不绑定具体戳值：捕获器断言委托发生 + 戳值非客户端值。
+        // （显式类型实参：captor 来自 ArgumentCaptor.forClass 的平台类型推断，
+        //  `captureK<T>()` 契约才免掉 Kotlin 非空检查——同 ImageProxyControllerTest 惯例。）
+        val captor = ArgumentCaptor.forClass(SyncEhSessionDto::class.java)
+        verify(siteSessionManager).applySyncEhSession(captureK<SyncEhSessionDto>(captor), eq("android-test"))
+        assertNotEquals(1_000L, captor.value.lastModified, "到达戳由服务器生成，客户端上送值不参与")
+        // 覆盖存量行计一次「生效写入」，与其它 merge 的 conflicts 语义一致。
         assertEquals(1, response.conflicts)
     }
 
@@ -902,11 +935,13 @@ class SyncServiceTest {
 
     @Test
     fun `favorite tombstone is stored for an unknown gid`() {
-        push("A", favorites = listOf(fav(40, lastModified = 2_000, deleted = true)))
+        val response = push("A", favorites = listOf(fav(40, lastModified = 2_000, deleted = true)))
 
         val stored = favoriteRepo.findByGid(40)!!
         assertTrue(stored.deleted)
         assertEquals("A", stored.username)
+        // 墓碑 create 成功 = 生效写入 → 计 1（保真度修复）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -920,15 +955,15 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `favorite older tombstone loses to a newer alive row under v4 lww`() {
-        // 反向：活行戳更新（nowMs）→ 墓碑被丢弃，行保持存活（soft 实体不再「删除恒不传播」，
-        // 但旧墓碑同样不能杀新活行）。
+    fun `favorite tombstone wins by arrival over a much newer client-stamped alive row (v4)`() {
+        // v4 翻转：存量活行的客户戳即便「更新」（nowMs）也不参与仲裁——来包（墓碑）以到达序
+        // 胜出（到达戳 >= 任何既有戳，§1.3）；旧语义「旧墓碑不敌新活行／被丢弃」废除。
         seedFavorite(gid = 46, lastModified = nowMs())
         val response = push("A", favorites = listOf(fav(46, lastModified = 1_000, deleted = true)))
 
         val stored = favoriteRepo.findByGid(46)!!
-        assertFalse(stored.deleted)
-        assertEquals(0, response.conflicts)
+        assertTrue(stored.deleted) // 后到墓碑胜 = 删除传播
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -971,17 +1006,21 @@ class SyncServiceTest {
         // v4：墓碑 bump 走服务器打戳（不再是 maxOf 客户端值）。
         assertClockStamped(stored.lastModified, 2_000L, 0L)
         verify(historyRepo, never()).delete(any(HistoryInfoEntity::class.java))
-        assertEquals(0, response.conflicts)
+        // 存量行墓碑化（bump）= 生效写入 → 计 1（删必须计入 sync.update，
+        // 否则 WebUI 历史列表收不到实时移除通知）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
     fun `history delete of an unknown gid stores a tombstone`() {
-        push("A", history = listOf(hist(54, lastModified = 2_000, deleted = true)))
+        val response = push("A", history = listOf(hist(54, lastModified = 2_000, deleted = true)))
 
         val stored = historyRepo.findByGid(54)!!
         assertTrue(stored.deleted)
         assertClockStamped(stored.lastModified, 2_000L, 0L)
         assertEquals("A", stored.username)
+        // 墓碑 create 成功 = 生效写入 → 计 1（与存量行 bump 同为 true）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -1073,7 +1112,8 @@ class SyncServiceTest {
 
         val stored = historyRepo.findByGid(60)!!
         assertEquals(42, stored.page)
-        assertTrue(response.conflicts >= 0)
+        // 未知 gid 的活行 create = 生效写入 → 计 1（2026-10 保真度修复前为 0）。
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -1107,13 +1147,18 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `row loss leaves page untouched`() {
+    fun `row win applies the incoming row while page keeps the max progress (v4 arrival order)`() {
         seedHistory(gid = 64, lastModified = 6_000, page = 42)
+        val clockBefore = syncClock.current()
         push("A", history = listOf(hist(64, time = 50, lastModified = 500, page = 3)))
 
-        // 行负（existing 远新于 incoming）：整行忽略（含 page），D3 明确不做行负抬升。
-        assertEquals(42, historyRepo.findByGid(64)!!.page)
-        assertEquals(6_000L, historyRepo.findByGid(64)!!.lastModified)
+        // v4 翻转：来包以到达序整行胜（客户戳 500「更旧」不参与仲裁）——旧语义「行负保留存量
+        // 水位 6_000」废除，水位同为服务器到达戳；唯一保留的合并细节是 applyHistoryFields 的
+        // page = max（D3：进度不回退，也不做行负抬升）。
+        val stored = historyRepo.findByGid(64)!!
+        assertEquals(50, stored.time) // 整行应用：业务字段落库（time = incoming.time）
+        assertEquals(42, stored.page) // page 取 max(42, 3)：进度不回退
+        assertClockStamped(stored.lastModified, 500L, clockBefore)
     }
 
     @Test
@@ -1123,6 +1168,58 @@ class SyncServiceTest {
         val pulled = service.pull(0, "A", "android-test").entities.history.single { it.gid == 65L }
 
         assertEquals(42, pulled.page)
+    }
+
+    // ==================== sync.update 计数（生效写入保真度） ====================
+
+    @Test
+    fun `create-only push counts every entity as an effective write in conflicts and the sync update event`() {
+        // 2026-10 保真度修复：create 成功路径返回 true —— 新建实体必须进入
+        // counts/conflicts（此前为 0 / 缺键，WebUI 收不到新建实体的失效通知）。
+        val response = push(
+            "A",
+            favorites = listOf(fav(80)),
+            history = listOf(hist(81)),
+            downloads = listOf(dl(82)),
+            bookmarks = listOf(bm(83)),
+            filters = listOf(flt(mode = 1, text = "create-only")),
+            quickSearches = listOf(qs("create-only")),
+            downloadLabels = listOf(lbl("create-only")),
+        )
+
+        // conflicts = counts 派生和：7 类实体各 1 次 create → 7。
+        assertEquals(7, response.conflicts)
+
+        val captor = ArgumentCaptor.forClass(SyncUpdateEvent::class.java)
+        verify(eventPublisher).publishEvent(captureK(captor))
+        assertEquals(
+            mapOf(
+                "favorites" to 1,
+                "history" to 1,
+                "downloads" to 1,
+                "bookmarks" to 1,
+                "filters" to 1,
+                "quickSearches" to 1,
+                "downloadLabels" to 1,
+            ),
+            captor.value.counts,
+            "create 也是生效写入：新建实体必须出现在失效广播中（仅 >0 的键入 counts）",
+        )
+    }
+
+    @Test
+    fun `create blocked by another user's row stays uncounted`() {
+        // 属主隔离优先：他人已占该键时不插不覆盖、不算生效写入（create 返回值的
+        // 修复不得把「无写入」误计为生效）——锚定 create 路径修复的边界。
+        seedFavorite(gid = 90, lastModified = 1_000, username = "B")
+        val response = push("A", favorites = listOf(fav(90)))
+
+        verify(favoriteRepo, never()).save(any(LocalFavoriteInfoEntity::class.java))
+        assertEquals(0, response.conflicts)
+
+        val captor = ArgumentCaptor.forClass(SyncUpdateEvent::class.java)
+        verify(eventPublisher).publishEvent(captureK(captor))
+        assertTrue(captor.value.counts.isEmpty(), "无生效写入 → counts 为空（事件仍发布，由 WebUI 幂等忽略）")
     }
 
     // ==================== per-user isolation & ownership ====================

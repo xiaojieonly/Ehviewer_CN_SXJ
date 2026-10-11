@@ -36,6 +36,7 @@ All timestamps in the sync protocol are **epoch milliseconds** (Unix timestamp �
 - **业务时间字段不被改写**: 实体自身的业务时间（`history.time`、`bookmark.time`、`favorite.time`、`download.time` 等）是用户数据；服务器打戳只作用于 `lastModified` 同步元数据字段，**绝不**改写业务时间字段。
 - **preferences 同受此规则**: preferences 的 `lastModified` 同样由服务器打戳（客户端上送值不落库）；判定为同戳后到胜（§5.1），不参与 conflictStrategy（单用户设置，后同步者即最终意图，见 ADR-0001）。
 - **LWW 语义（策略 B，v4 默认）**: 双行 `lastModified` 直接比较（同一服务器时钟域，无 skew）：`incoming.lastModified >= existing.lastModified` → incoming 胜；相等（同戳）= 后到者胜（§5.1/§5.2）。
+- **到达戳（merge 的 incoming 侧取值）**: push 到达时服务器**先**以单调时钟为整批入参重打戳 `lastModified`（每请求一个到达戳），merge 比较中的 `incoming.lastModified` 即该到达戳——与存量行同域；客户端上送值在任何路径都不参与仲裁。时钟漂移不影响胜负；胜负严格等于服务器收到先后（`clock.next()` 单调 ⇒ 后到批的到达戳大于先到批）。A/C 同平台回退分支的比较同样使用到达戳。
 
 ### 1.4 Conflict Strategy（conflictStrategy，v2 新增；v4 默认值变更）
 

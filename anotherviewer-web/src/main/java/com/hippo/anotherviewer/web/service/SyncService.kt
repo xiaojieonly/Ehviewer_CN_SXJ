@@ -88,11 +88,35 @@ class SyncService(
         val strategy = currentPolicy().conflictStrategy
 
         adoptNullOwnership(username)
+        // 生效写入数 = counts 派生和（见下）：merge 返回 true = 该键本次生效写入，
+        // 返回 false = 未生效。create（活行/墓碑新建）/覆盖存量/复活墓碑/存量行墓碑化
+        // （bump）均计 true，不再区分「create」与「冲突性覆盖」（2026-10 保真度修复前
+        // create 路径返回 false，新建实体的 push 事件 counts 为空，WebUI 收不到失效通知）。
         var conflicts = 0
-        val e = request.entities
+        // v4 §1.3/§5.1「到达戳」：每请求一个服务器单调时钟值，到达即重打戳全部
+        // 入参的 lastModified。此后所有合并比较（B 判据 / soft 删除仲裁 / A/C
+        // 同平台回退 / preferences 门控）的两侧都在同一服务器时钟域（契约要求
+        // 「双行直接比较，无 skew」）；客户端上送值仅作诊断参考，不参与任何
+        // 仲裁——时钟漂移不再影响胜负，且每批事务共享同一到达戳，落库比较
+        // 严格按服务器收到的先后（clock.next() 单调 ⇒ 后到批的到达戳 > 先到批）。
+        val arrival = syncClock.next()
+        val e = request.entities.copy(
+            favorites = request.entities.favorites.map { it.copy(lastModified = arrival) },
+            history = request.entities.history.map { it.copy(lastModified = arrival) },
+            downloads = request.entities.downloads.map { it.copy(lastModified = arrival) },
+            bookmarks = request.entities.bookmarks.map { it.copy(lastModified = arrival) },
+            filters = request.entities.filters.map { it.copy(lastModified = arrival) },
+            quickSearches = request.entities.quickSearches.map { it.copy(lastModified = arrival) },
+            downloadLabels = request.entities.downloadLabels.map { it.copy(lastModified = arrival) },
+            ehSession = request.entities.ehSession.map { it.copy(lastModified = arrival) },
+            preferences = request.entities.preferences?.copy(lastModified = arrival),
+        )
         val pushDeviceId = request.deviceId
-        // v4（WP2）：本次 push 各实体「生效合并」计数（merge 返回 true / preferences
+        // v4（WP2）：本次 push 各实体「生效写入」计数（merge 返回 true / preferences
         // 实际写入），事务提交后随 SyncUpdateEvent 广播到 /topic/sync（SyncUpdateHandler）。
+        // 2026-10 保真度修复：merge 的 true 语义统一为「该键本次生效写入」——create
+        // （活行/墓碑 create）/覆盖/复活均计 1；此前 create 成功路径返回 false，
+        // 新建实体不进 counts，WebUI 收不到失效通知。
         val counts = LinkedHashMap<String, Int>()
         fun count(key: String, applied: Int) {
             if (applied > 0) counts[key] = applied
@@ -116,6 +140,8 @@ class SyncService(
         } ?: false
         count("preferences", if (prefApplied) 1 else 0)
 
+        // conflicts 字段 = counts 的派生和（生效写入数，不再区分 create/覆盖）；
+        // preferences 计 1 仅供失效广播，不计入 conflicts（保持 v2 响应语义）。
         conflicts = counts.filterKeys { it != "preferences" }.values.sum()
         // v4：serverTimestamp 与 updateDevice 用同一 clock.next() 值（保持等式：
         // push 响应的 serverTimestamp == 设备行 lastSyncTimestamp == 本次写入水位）。
@@ -279,8 +305,19 @@ class SyncService(
     // （同戳后到胜，无 skew 容忍、无实体 tie-break、无 union 保留：删除墓碑与活行
     // 同样按戳仲裁，新墓碑胜旧活行、新活行胜旧墓碑）。A/C 策略代码级保留：跨平台
     // 无条件优先端胜；同平台回退保留 v1 完整语义（skew ±5s 比较 + 实体 tie-break/bias）。
+    //
+    // 返回值约定（2026-10 保真度修复）：true = 该键本次生效写入——create（活行/墓碑
+    // 新建）、覆盖存量、复活墓碑、存量行墓碑化（bump）均计 true；false = 未生效（仲裁
+    // 失败/保留存量/优先端保留/他人已占该键）。push 的 counts/conflicts 即 true 的
+    // 派生和，不再区分「create」与「冲突性覆盖」（旧惯例 true = 与存量冲突性覆盖，
+    // create 路径返回 false，新建实体的失效通知因此丢失）。已知例外（保持现状）：
+    // mergeEhSession 委托的 [SiteSessionManager.applySyncEhSession]（其 create/墓碑
+    // 路径返回 false；ehSession 无 WebUI 列表消费方，失效通知缺位无实害）。
 
-    /** Favorites: union merge with soft-delete tombstones; 删除/复活按 §3.8 soft 实体规则。 */
+    /**
+     * Favorites: union merge with soft-delete tombstones; 删除/复活按 §3.8 soft 实体规则。
+     * 返回值 = 该键本次生效写入（create/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeFavorite(incoming: SyncFavoriteDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -296,8 +333,10 @@ class SyncService(
             if (rows.isEmpty()) {
                 favoriteRepository.save(incoming.toFavoriteEntity(username))
                 recordProvenance(username, TAG_FAVORITE, naturalKey, incomingDevice)
+                // create 成功 = 该键本次生效写入（活行/墓碑同路，2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_FAVORITE, naturalKey))
 
@@ -356,7 +395,10 @@ class SyncService(
         return false
     }
 
-    /** History: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。 */
+    /**
+     * History: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。
+     * 返回值 = 该键本次生效写入（create（活行/墓碑）/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeHistory(incoming: SyncHistoryDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -373,10 +415,15 @@ class SyncService(
                 existing.lastModified = syncClock.next()
                 historyRepository.save(existing)
                 recordProvenance(username, TAG_HISTORY, naturalKey, incomingDevice)
+                // 存量活行→墓碑同为该键本次生效写入（删除必须计入 sync.update，
+                // 否则 WebUI 历史列表收不到实时移除通知）。
+                return true
             } else if (rows.isEmpty()) {
                 // 未知 gid 也存墓碑，删除同样能传播到其他设备
                 historyRepository.save(incoming.toHistoryEntity(username))
                 recordProvenance(username, TAG_HISTORY, naturalKey, incomingDevice)
+                // 墓碑 create 成功 = 该键本次生效写入（2026-10 保真度修复）。
+                return true
             }
             return false
         }
@@ -384,8 +431,10 @@ class SyncService(
             if (rows.isEmpty()) {
                 historyRepository.save(incoming.toHistoryEntity(username))
                 recordProvenance(username, TAG_HISTORY, naturalKey, incomingDevice)
+                // 活行 create 成功 = 该键本次生效写入（2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         if (!existing.deleted) {
             // 双活同键：A/C 跨平台无条件优先端胜（§1.4）；存量是墓碑时不走策略序——
@@ -426,7 +475,10 @@ class SyncService(
         return false
     }
 
-    /** Downloads: union merge + status sync (soft delete, tombstone stored); 删除/复活按 §3.8 soft 实体规则。 */
+    /**
+     * Downloads: union merge + status sync (soft delete, tombstone stored); 删除/复活按 §3.8 soft 实体规则。
+     * 返回值 = 该键本次生效写入（create（活行/墓碑）/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeDownload(incoming: SyncDownloadDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -443,8 +495,10 @@ class SyncService(
                 if (created.deleted) {
                     eventPublisher.publishEvent(DownloadTombstonedEvent(created.gid, created.downloadDir))
                 }
+                // create 成功 = 该键本次生效写入（活行/墓碑同路，2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_DOWNLOAD, naturalKey))
 
@@ -504,7 +558,10 @@ class SyncService(
         return false
     }
 
-    /** Bookmarks: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。 */
+    /**
+     * Bookmarks: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。
+     * 返回值 = 该键本次生效写入（create（活行/墓碑）/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeBookmark(incoming: SyncBookmarkDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -521,10 +578,15 @@ class SyncService(
                 existing.lastModified = syncClock.next()
                 bookmarkRepository.save(existing)
                 recordProvenance(username, TAG_BOOKMARK, naturalKey, incomingDevice)
+                // 存量活行→墓碑同为该键本次生效写入（删除必须计入 sync.update，
+                // 否则 WebUI 书签列表收不到实时移除通知）。
+                return true
             } else if (rows.isEmpty()) {
                 // 未知 gid 也存墓碑，删除同样能传播到其他设备
                 bookmarkRepository.save(incoming.toBookmarkEntity(username))
                 recordProvenance(username, TAG_BOOKMARK, naturalKey, incomingDevice)
+                // 墓碑 create 成功 = 该键本次生效写入（2026-10 保真度修复）。
+                return true
             }
             return false
         }
@@ -532,8 +594,10 @@ class SyncService(
             if (rows.isEmpty()) {
                 bookmarkRepository.save(incoming.toBookmarkEntity(username))
                 recordProvenance(username, TAG_BOOKMARK, naturalKey, incomingDevice)
+                // 活行 create 成功 = 该键本次生效写入（2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         if (!existing.deleted) {
             // 双活同键：A/C 跨平台无条件优先端胜（§1.4）；存量是墓碑时不走策略序——
@@ -575,7 +639,11 @@ class SyncService(
         return false
     }
 
-    /** Filters: union merge keyed by (mode, text); local-wins outside skew, additive bias inside; 删除/复活按 §3.8 soft 实体规则。 */
+    /**
+     * Filters: union merge keyed by (mode, text); local-wins outside skew, additive bias inside;
+     * 删除/复活按 §3.8 soft 实体规则。
+     * 返回值 = 该键本次生效写入（create/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeFilter(incoming: SyncFilterDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -592,8 +660,10 @@ class SyncService(
             if (raw == null) {
                 filterRepository.save(incoming.toFilterEntity(username))
                 recordProvenance(username, TAG_FILTER, naturalKey, incomingDevice)
+                // create 成功 = 该键本次生效写入（活行/墓碑同路，2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_FILTER, naturalKey))
 
@@ -658,7 +728,10 @@ class SyncService(
         return false
     }
 
-    /** QuickSearches: union merge keyed by name; local-wins outside skew; 删除/复活按 §3.8 soft 实体规则。 */
+    /**
+     * QuickSearches: union merge keyed by name; local-wins outside skew; 删除/复活按 §3.8 soft 实体规则。
+     * 返回值 = 该键本次生效写入（create/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeQuickSearch(incoming: SyncQuickSearchDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -669,8 +742,10 @@ class SyncService(
             if (raw == null) {
                 quickSearchRepository.save(incoming.toQuickSearchEntity(username))
                 recordProvenance(username, TAG_QUICK_SEARCH, naturalKey, incomingDevice)
+                // create 成功 = 该键本次生效写入（活行/墓碑同路，2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_QUICK_SEARCH, naturalKey))
 
@@ -728,7 +803,10 @@ class SyncService(
         return false
     }
 
-    /** DownloadLabels: union merge keyed by label name; local-wins outside skew; 删除/复活按 §3.8 soft 实体规则。 */
+    /**
+     * DownloadLabels: union merge keyed by label name; local-wins outside skew; 删除/复活按 §3.8 soft 实体规则。
+     * 返回值 = 该键本次生效写入（create/覆盖/复活均计 true），详见 merge 段约定。
+     */
     private fun mergeDownloadLabel(incoming: SyncDownloadLabelDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
         val incomingDevice = incoming.deviceId.ifEmpty { pushDeviceId }
         val incomingPlatform = platformOf(incomingDevice)
@@ -739,8 +817,10 @@ class SyncService(
             if (raw == null) {
                 downloadLabelRepository.save(incoming.toDownloadLabelEntity(username))
                 recordProvenance(username, TAG_DOWNLOAD_LABEL, naturalKey, incomingDevice)
+                // create 成功 = 该键本次生效写入（活行/墓碑同路，2026-10 保真度修复）。
+                return true
             }
-            return false
+            return false // 他人已占该键：不插不覆盖，不算生效写入
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_DOWNLOAD_LABEL, naturalKey))
 
@@ -801,7 +881,13 @@ class SyncService(
     /**
      * ehSession（ADR-0004）：单例实体，LWW ±skew、策略独立（与 preferences 同级，A/C 平台序不适用）；
      * deleted=true tombstone 无条件传播。合并逻辑委托 [SiteSessionManager.applySyncEhSession]
-     * （写库 + 生效到内存 cookieStore），返回 true = 覆盖了存量行（冲突计数）。
+     * （写库 + 生效到内存 cookieStore）。
+     *
+     * 返回值由委托方定义，与 7 类实体的「create 也计生效写入」约定**不同**：
+     * [SiteSessionManager.applySyncEhSession] 仅在「live 覆盖存量行」时返回 true；
+     * create（含墓碑 create）与墓碑 bump 均返回 false。这是本次 sync.update 保真度
+     * 修复的已知遗留（2026-10）：新建/墓碑化的 ehSession 不计入 counts——保持现状
+     * （不定制 [SiteSessionManager] 的既有语义），报告已说明。
      */
     private fun mergeEhSession(incoming: SyncEhSessionDto, pushDeviceId: String): Boolean =
         siteSessionManager.applySyncEhSession(incoming, pushDeviceId)

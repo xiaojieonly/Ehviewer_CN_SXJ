@@ -355,7 +355,9 @@ class SyncControllerTest {
         val pushed = service.push(pushRequest("android-t1"), "alice")
 
         assertTrue(pushed.success)
-        assertEquals(0, pushed.conflicts)
+        // 2026-10 保真度修复：create 成功路径返回 true —— 7 类实体各 1 次新建 = 生效
+        // 写入数 7（conflicts = counts 派生和；此前 create 漏报为 0）。
+        assertEquals(7, pushed.conflicts)
 
         val e = service.pull(0L, "alice").entities
         assertEquals(1, e.favorites.size)
