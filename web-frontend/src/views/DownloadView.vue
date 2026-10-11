@@ -711,6 +711,11 @@ function onRetry(): void {
 /**
  * Runs a per-item API action with an optimistic state flip; on failure the
  * previous state is restored and a toast explains what happened.
+ *
+ * 服务端返回 `false`（HTTP 200 但动作未执行，如 EH 熔断把行即时标 FAILED、
+ * 队列拒绝）同样是「没做成」：必须还原乐观态并以服务端行状态对账——否则行
+ * 停在乐观的 Waiting/Downloading 且没有任务、不会有任何进度帧来纠正
+ * （2026-10-11 线上「点开始卡 Waiting」的直接原因）。
  */
 async function runItemAction(
   id: number,
@@ -722,11 +727,31 @@ async function runItemAction(
   const previousState = item?.state
   if (item) item.state = nextState
   try {
-    await action(id)
+    const accepted = await action(id)
+    if (accepted === false) {
+      if (item && previousState !== undefined) item.state = previousState
+      await refreshRowFromServer(id)
+    }
   } catch (error) {
     console.error('Download action failed', error)
     if (item && previousState !== undefined) item.state = previousState
     showToast('Operation failed')
+    await refreshRowFromServer(id)
+  }
+}
+
+/** 单行对账：拉取服务端行状态覆盖本地（含错误文案）；失败静默，下次列表加载兜底。 */
+async function refreshRowFromServer(id: number): Promise<void> {
+  try {
+    const fresh = await downloadApi.getInfo(id)
+    const item = itemsById.value.get(id)
+    if (!item || !fresh) return
+    item.state = fresh.state
+    item.done = fresh.done
+    item.total = fresh.total
+    item.error = fresh.error
+  } catch {
+    /* 单行对账失败静默——下一次列表加载会还原真实状态。 */
   }
 }
 
@@ -959,11 +984,10 @@ function onFabAction(action: FabAction): void {
 async function startAll(): Promise<void> {
   try {
     await downloadApi.startAll()
-    for (const item of downloads.value) {
-      if (item.state === STATE_NONE || item.state === STATE_FAILED) {
-        item.state = STATE_WAIT
-      }
-    }
+    // 以服务端为准重拉（保留当前页）：EH 熔断等场景下服务端会拒绝并即时把行
+    // 标 FAILED（无任务无进度帧），乐观翻转会把这类行显示成 Waiting 且再无
+    // 事件纠正——与单行动作的 accepted===false 盲区同源。
+    await loadPage(currentPage.value, { silent: true })
     showToast('All downloads started')
   } catch (error) {
     console.error('Failed to start all downloads', error)
@@ -975,9 +999,10 @@ async function startAll(): Promise<void> {
 async function restartAll(): Promise<void> {
   try {
     await downloadApi.restartAll()
-    // 以服务端为准重拉:服务端可能把「磁盘校验通过」的行直接标记完成(无任务
-    // 无进度帧)——原乐观翻转会把这类行显示成 Waiting 且再无事件纠正。
-    await load({ silent: true })
+    // 以服务端为准重拉（保留当前页）:服务端可能把「磁盘校验通过」的行直接
+    // 标记完成(无任务无进度帧)——原乐观翻转会把这类行显示成 Waiting 且再无
+    // 事件纠正。
+    await loadPage(currentPage.value, { silent: true })
     showToast('All downloads restarted')
   } catch (error) {
     console.error('Failed to restart all downloads', error)
@@ -1001,7 +1026,7 @@ async function pauseAll(): Promise<void> {
   } catch (error) {
     console.error('Failed to pause downloads', error)
     showToast('Failed to pause downloads')
-    await load({ silent: true })
+    await loadPage(currentPage.value, { silent: true })
   }
 }
 

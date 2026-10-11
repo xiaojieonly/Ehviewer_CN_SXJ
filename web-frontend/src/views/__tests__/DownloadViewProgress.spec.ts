@@ -371,6 +371,31 @@ describe('DownloadView — WS 进度合帧与索引 (P-F2 ①②)', () => {
     expect(row?.props('item').done).toBe(10)
   })
 
+  it('单行「开始」被服务端拒绝（false）时不卡乐观 Waiting——还原并以服务端对账', async () => {
+    // 线上症状：EH 熔断期间点「开始」→ 服务端即时把行标 FAILED 并返回 false
+    // （HTTP 200）；旧 runItemAction 不看返回值 → 乐观 Waiting 永久停留（无任务
+    // 无进度帧）。修复：false 还原乐观态 + 拉取单行信息覆盖（含错误文案）。
+    await mountWithRows([makeDownload(1, { state: 4, error: 'EH_UNAVAILABLE: 旧错误' })])
+    vi.mocked(downloadApi.start).mockResolvedValue(false)
+    vi.mocked(downloadApi.getInfo).mockResolvedValue(
+      makeDownload(1, { state: 4, error: 'EH_UNAVAILABLE: EH 平台当前不可达' }),
+    )
+
+    const row = wrapper.findAllComponents(DownloadProgressRow)[0]
+    const startBtn = row!
+      .findAll('button')
+      .find((b) => b.attributes('aria-label') === 'Start download')
+    expect(startBtn).toBeDefined()
+    await startBtn!.trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(vi.mocked(downloadApi.start)).toHaveBeenCalledWith(1)
+    expect(vi.mocked(downloadApi.getInfo)).toHaveBeenCalledWith(1)
+    expect(row!.props('item').state).toBe(4)
+    expect(row!.props('item').error).toContain('EH 平台当前不可达')
+  })
+
   it('buildItemIndex matches Array#find for every key, first hit wins on duplicates (等价断言)', () => {
     // 重复 gid（9001）：Map 首中语义必须与 find 一致（同键只留首条）。
     const items = [makeDownload(1), makeDownload(2), makeDownload(3, { gid: 9001 })]

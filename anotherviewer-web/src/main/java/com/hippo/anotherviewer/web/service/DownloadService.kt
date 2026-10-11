@@ -602,6 +602,20 @@ class DownloadService(
     }
 
     /**
+     * 目录一次扫描 → 已有非空页号集合（任意白名单扩展名，与索引口径同源）。
+     * 断点续传快路径专用：原子写的 temp（`.{name}.{uuid}.tmp`，点前缀）
+     * 不匹配 [POOL_PAGE_NAME]，不会被误判为已有页。
+     */
+    private fun collectExistingPages(dir: File): Set<Int> =
+        dir.listFiles()
+            ?.mapNotNull { f ->
+                if (!f.isFile || f.length() <= 0L) return@mapNotNull null
+                POOL_PAGE_NAME.matchEntire(f.name)?.groupValues?.get(1)?.toIntOrNull()
+            }
+            ?.toSet()
+            .orEmpty()
+
+    /**
      * 阅读命中存储池推送文件后的「完成化」（需求 1）：下载行存在、当前非完成态、
      * 且磁盘校验（%04d.* 文件数 == total）通过 → 置 3（已完成）。
      * 调用点：ImageProxyController.servePushedPage（阅读器读到推送文件即标记）。
@@ -840,11 +854,16 @@ class DownloadService(
         publishProgress(task, 2, 0, totalPages)
 
         val done = AtomicInteger(0)
+        // 断点续传判据：目录一次扫描 → 已有非空页号集合（任意扩展名）。
+        // 旧快路径只认 `%08d.jpg` 名——App/站点下载的 `.webp` 页被误判缺失，
+        // 「开始/全部下载」会把整册慢速全网重下，并在 .webp 旁写 .jpg 重复体
+        // （2026-10-11 线上：1984 页的库已有 1932 个 .webp，done 长时间为 0）。
+        val existingPages = collectExistingPages(downloadDir)
         val submissions = ArrayList<Future<*>>(totalPages)
         for (page in 1..totalPages) {
             if (task.stopRequested.get()) break
             submissions.add(task.pageExecutor.submit {
-                downloadPage(task, downloadDir, page, done, totalPages)
+                downloadPage(task, downloadDir, page, done, totalPages, existingPages)
             })
         }
 
@@ -895,24 +914,29 @@ class DownloadService(
      * Download a single page. The stop flag is checked before resolving the
      * image URL and immediately before writing the file, so a paused task
      * never writes additional files.
+     *
+     * [existingPages]：任务启动时一次性扫描的已有非空页号集合（任意扩展名）
+     * ——断点续传快路径的 O(1) 判据。
      */
     private fun downloadPage(
         task: DownloadTask,
         downloadDir: File,
         page: Int,
         done: AtomicInteger,
-        totalPages: Int
+        totalPages: Int,
+        existingPages: Set<Int>,
     ) {
         try {
             if (task.stopRequested.get()) return
 
-            val fileName = "%08d.jpg".format(page)
-            val file = File(downloadDir, fileName)
-            if (file.exists() && file.length() > 0) {
+            if (page in existingPages) {
                 val current = done.incrementAndGet()
                 persistProgress(task, current)
                 return
             }
+
+            val fileName = "%08d.jpg".format(page)
+            val file = File(downloadDir, fileName)
 
             val imageUrl = fetchImageUrl(task, page) ?: return
             if (task.stopRequested.get()) return

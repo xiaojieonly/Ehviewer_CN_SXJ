@@ -632,7 +632,10 @@ class DownloadServiceTest {
         `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(emptyList())
         `when`(downloadRepository.findById(1L)).thenReturn(Optional.of(waiting.copyLike()))
         `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
-        `when`(availability.isBlocked()).thenReturn(false)
+        // EH 熔断短路 startDownload：本用例只钉生命周期查询口径——若放行会派生
+        // 异步 worker 在 @TempDir 里跑 runDownload，清理与 worker 写目录竞态
+        // （全量并行下偶发 "Failed to delete temp directory"）。
+        `when`(availability.isBlocked()).thenReturn(true)
 
         service.startAllDownloads()
         service.pauseAllDownloads()
@@ -803,6 +806,44 @@ class DownloadServiceTest {
             assertTrue(row.error!!.contains("incomplete"))
             assertFalse(java.io.File(row.downloadDir, "00000001.jpg").exists())
             assertTrue(hashStore.isEmpty())
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun `resume fast-path skips existing pages under any extension (webp) without network`() {
+        // 旧快路径只认 `%08d.jpg`：App/站点下载的 .webp 页被误判缺失 → 「开始/
+        // 全部下载」整册慢速全网重下并写 .jpg 重复体（2026-10-11 线上 1984 页
+        // 库、1932 个 .webp，done 长期为 0）。断点续传必须任意扩展名判在。
+        val dir = java.io.File(java.io.File(tempDir, "downloads"), "42")
+        dir.mkdirs()
+        java.io.File(dir, "00000001.webp").writeBytes(ByteArray(32) { 7 }) // 非空即已有
+        val server = startPageServer(fixture("valid.jpg"))
+        try {
+            val row = DownloadInfoEntity().apply {
+                id = 1L; gid = 42L; token = "tok"; title = "T"; state = 0
+                downloadDir = dir.absolutePath
+            }
+            `when`(availability.isBlocked()).thenReturn(false)
+            `when`(downloadRepository.findById(1L)).thenReturn(Optional.of(row))
+            `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+            `when`(galleryLookup.fetchPageCount(42L, "tok")).thenReturn(2)
+            `when`(galleryLookup.fetchImageUrl(42L, "tok", 2)).thenReturn(server.url("/2.jpg").toString())
+            `when`(sessionManager.okHttpClient).thenReturn(OkHttpClient())
+
+            assertTrue(service.startDownload(1L))
+            awaitUntil { row.state == 3 }
+
+            assertEquals(3, row.state)
+            assertEquals(2, row.done)
+            // 已有 .webp 页零网络：fetchImageUrl 只对缺页 2 发生。
+            verify(galleryLookup, never()).fetchImageUrl(42L, "tok", 1)
+            verify(galleryLookup).fetchImageUrl(42L, "tok", 2)
+            // 只补缺页：不产生 00000001.jpg 重复体，原 .webp 原样保留。
+            assertFalse(java.io.File(dir, "00000001.jpg").exists())
+            assertTrue(java.io.File(dir, "00000001.webp").isFile)
+            assertTrue(java.io.File(dir, "00000002.jpg").isFile)
         } finally {
             server.shutdown()
         }
