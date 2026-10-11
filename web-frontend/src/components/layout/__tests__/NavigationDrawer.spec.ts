@@ -5,10 +5,10 @@ import type { NavItem } from '@/types/components'
 
 describe('NavigationDrawer', () => {
   describe('menu items', () => {
-    it('renders exactly the canonical 8 menu items in order', () => {
+    it('renders exactly the canonical 9 menu items in order (WP8: 回收站 in)', () => {
       const wrapper = mount(NavigationDrawer, { props: { open: true } })
       const items = wrapper.findAll('[data-testid="drawer-item"]')
-      expect(items).toHaveLength(8)
+      expect(items).toHaveLength(9)
       expect(items.map((i) => i.text())).toEqual([
         '首页',
         '订阅',
@@ -17,11 +17,12 @@ describe('NavigationDrawer', () => {
         '收藏',
         '历史',
         '下载',
+        '回收站',
         '设置',
       ])
     })
 
-    it('uses the Android nav_drawer_main.xml ids', () => {
+    it('uses the Android nav_drawer_main.xml ids plus the web-only recycle id', () => {
       expect(DEFAULT_NAV_ITEMS.map((i) => i.id)).toEqual([
         'homepage',
         'subscription',
@@ -30,6 +31,7 @@ describe('NavigationDrawer', () => {
         'favourite',
         'history',
         'downloads',
+        'recycle',
         'settings',
       ])
     })
@@ -45,7 +47,7 @@ describe('NavigationDrawer', () => {
     it('renders an icon for every item', () => {
       const wrapper = mount(NavigationDrawer, { props: { open: true } })
       const icons = wrapper.findAll('[data-testid="drawer-item"] .app-icon')
-      expect(icons).toHaveLength(8)
+      expect(icons).toHaveLength(9)
     })
 
     it('renders menu items as real `<a>` links with the target path as href (B2)', () => {
@@ -56,7 +58,8 @@ describe('NavigationDrawer', () => {
       expect(items[1].attributes('href')).toBe('/?feed=subscription')
       expect(items[3].attributes('href')).toBe('/?feed=toplist')
       expect(items[4].attributes('href')).toBe('/favorites')
-      expect(items[7].attributes('href')).toBe('/settings')
+      expect(items[7].attributes('href')).toBe('/recycle') // recycle（WP8）
+      expect(items[8].attributes('href')).toBe('/settings')
     })
 
     it('accepts custom items via the items prop', () => {

@@ -43,6 +43,11 @@ export const routes: RouteRecordRaw[] = [
       name: 'Search',
       component: () => import('@/views/SearchView.vue'),
     },
+    {
+      path: '/recycle',
+      name: 'Recycle',
+      component: () => import('@/views/RecycleView.vue'),
+    },
     /**
      * A5-1: 统一设置面板 —— 原 /settings（偏好，preferencesApi）与 /admin
      * （服务器，settingsApi/backupApi 等）双面板合并。分组：

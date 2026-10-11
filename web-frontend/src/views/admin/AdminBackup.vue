@@ -248,7 +248,7 @@ let snackTimer: number | undefined
 
 /* ---------------------- Job 进度跟踪器（plan A6） ---------------------- */
 
-const { subscribeJob } = useWebSocket()
+const { subscribeJob, connect } = useWebSocket()
 
 /** 当前跟踪的任务（RUNNING 时渲染 JobProgressPanel，终态落各结果面板）。 */
 const activeJob = ref<Job | null>(null)
@@ -492,6 +492,8 @@ function showSnack(message: string, duration = 2600): void {
 
 /** 挂载时读取 restore 运行态；失败（如旧服务器无该端点）则静默不显示横幅。 */
 onMounted(async () => {
+  // Job 进度 WS 需要 active 连接：页面不依赖其他视图代为 connect（WP8 任务 3）。
+  connect()
   try {
     const state = await backupApi.getBackupState()
     restorePending.value = state.restorePending

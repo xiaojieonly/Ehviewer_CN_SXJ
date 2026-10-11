@@ -251,6 +251,8 @@ import { historyApi } from '@/api/history'
 import type { HistoryItem } from '@/api/history'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import { usePagedList } from '@/composables/usePagedList'
+import { useWebSocket } from '@/composables/useWebSocket'
+import { syncInvalidation } from '@/stores/syncInvalidation'
 import { maskedTitle, privacyMaskEnabled } from '@/utils/privacyMask'
 import { isJpnSubtitleVisible } from '@/utils/jpnSubtitle'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -652,6 +654,18 @@ async function confirmClear(): Promise<void> {
     clearing.value = false
   }
 }
+
+/* ------------------------------------ 实时对账（WP8 任务 2） -------------- */
+
+/** 本视图只消费连接态（connect 由 App 壳持有——只解构 connected 不 connect）。 */
+const { connected } = useWebSocket()
+
+// /topic/sync 广播 history 实体变更（他端或本端写）→ 静默重拉当前页；
+// watch 默认非 immediate——首帧不触发。WS 重连成功（断线窗口内可能漏帧）同款。
+watch(() => syncInvalidation.consume('history'), () => void load({ silent: true }))
+watch(connected, (up, was) => {
+  if (up && was === false) void load({ silent: true })
+})
 
 onMounted(() => {
   void load()

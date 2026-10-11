@@ -317,6 +317,8 @@ import { galleryApi, type FeedMode } from '@/api/gallery'
 import { isOfflineError, isEhUnavailableError } from '@/api/client'
 import { availability, loadAvailability, markDown } from '@/stores/availability'
 import { usePagedList } from '@/composables/usePagedList'
+import { useWebSocket } from '@/composables/useWebSocket'
+import { syncInvalidation } from '@/stores/syncInvalidation'
 import { maskedTitle, privacyMaskEnabled } from '@/utils/privacyMask'
 import { isJpnSubtitleVisible } from '@/utils/jpnSubtitle'
 import AvailabilityBanner from '@/components/common/AvailabilityBanner.vue'
@@ -538,9 +540,12 @@ const {
   },
 })
 
-/** 视图层加载入口：按当前模式选择数据源，回第 1 页。 */
-function loadFirstPage(): Promise<void> {
-  return feedMode.value === 'toplist' ? loadToplistPage(1) : loadGalleryPage(1)
+/** 视图层加载入口：按当前模式选择数据源，回第 1 页。`silent: true` 不切
+ *  loading 态（WS 重连后的静默对账重载用）。 */
+function loadFirstPage(opts?: { silent?: boolean }): Promise<void> {
+  return feedMode.value === 'toplist'
+    ? loadToplistPage(1, opts)
+    : loadGalleryPage(1, opts)
 }
 
 /** Pull-to-refresh / error retry / empty tip retry / FAB refresh. */
@@ -895,6 +900,22 @@ function openDetail(gid: number, wide: boolean): void {
 }
 
 /* --------------------------------- lifecycle ---------------------------- */
+
+/* ------------------------------------ 实时对账（WP8 任务 2） -------------- */
+
+/** 本视图只消费连接态（connect 由 App 壳持有——只解构 connected 不 connect）。 */
+const { connected } = useWebSocket()
+
+// /topic/sync 广播 quickSearches 实体变更 → 作废已加载标记并静默重拉建议
+// 列表；watch 默认非 immediate——首帧不触发。WS 重连成功（断线窗口内可能
+// 漏帧）→ 静默重载当前模式当前页。
+watch(() => syncInvalidation.consume('quickSearches'), () => {
+  quickSearchesLoaded = false
+  void loadQuickSearches()
+})
+watch(connected, (up, was) => {
+  if (up && was === false) void loadFirstPage({ silent: true })
+})
 
 onMounted(() => {
   // Warm the preferences store early: HistoryView rows (read-progress badge)

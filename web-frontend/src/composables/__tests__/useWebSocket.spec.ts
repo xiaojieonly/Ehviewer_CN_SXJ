@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SyncUpdateEnvelope } from '../useWebSocket'
 
 const NUL = '\u0000'
 
@@ -472,6 +473,70 @@ describe('useWebSocket — 真实 @stomp/stompjs + 假传输（原生优先/Sock
     sock3.open()
     expect(sentOf(sock3, 'SUBSCRIBE')).toHaveLength(0)
     expect(ws.connectionState.value).toBe('connected')
+  })
+
+  it('/topic/sync（WP8）：断连前注册的订阅在 CONNECTED 后由 resubscribeAll 补挂，sync.update 信封分发到回调且重连后重订阅', async () => {
+    const ws = await loadWs(false)
+    const seen: Array<{ type: string; entities: string[]; deviceId: string }> = []
+
+    // 订阅先于连接注册（App 壳 onMounted 的顺序）——registry 记录，等
+    // CONNECTED 后由 resubscribeAll 补挂。
+    const unsubscribe = ws.subscribe<SyncUpdateEnvelope>(ws.TOPIC_SYNC, (env) => {
+      if (env?.type === 'sync.update') {
+        seen.push({
+          type: env.type,
+          entities: env.payload.entities,
+          deviceId: env.payload.deviceId,
+        })
+      }
+    })
+
+    const sock1 = await startConnected(ws)
+    expect(subIdFor(sock1, ws.TOPIC_SYNC)).toBe('sub-0')
+
+    deliver(sock1, ws.TOPIC_SYNC, {
+      type: 'sync.update',
+      timestamp: 1728600000000,
+      version: '1.3',
+      payload: {
+        entities: ['history', 'favorites'],
+        deviceId: 'device-a',
+        counts: { history: 1, favorites: 2 },
+        syncTimestamp: 1728600000000,
+      },
+    })
+    expect(seen).toEqual([{ type: 'sync.update', entities: ['history', 'favorites'], deviceId: 'device-a' }])
+
+    // 断线重连：同回调在新会话上重订阅并续收 sync.update。
+    sock1.refuse()
+    await vi.advanceTimersByTimeAsync(1000)
+    const sock2 = lastSocket()
+    sock2.open()
+    expect(ws.connectionState.value).toBe('connected')
+    expect(subIdFor(sock2, ws.TOPIC_SYNC)).toBe('sub-0')
+
+    deliver(sock2, ws.TOPIC_SYNC, {
+      type: 'sync.update',
+      timestamp: 1728600001000,
+      version: '1.3',
+      payload: {
+        entities: ['downloads', 'downloadLabels', 'preferences'],
+        deviceId: 'device-b',
+        counts: { downloads: 1 },
+        syncTimestamp: 1728600001000,
+      },
+    })
+    expect(seen).toEqual([
+      { type: 'sync.update', entities: ['history', 'favorites'], deviceId: 'device-a' },
+      {
+        type: 'sync.update',
+        entities: ['downloads', 'downloadLabels', 'preferences'],
+        deviceId: 'device-b',
+      },
+    ])
+
+    unsubscribe()
+    expect(sentOf(sock2, 'UNSUBSCRIBE')).toHaveLength(1)
   })
 
   it('tab 隐藏暂停：立即断开且隐藏期零重连；恢复可见自动重连并重建注册表订阅', async () => {

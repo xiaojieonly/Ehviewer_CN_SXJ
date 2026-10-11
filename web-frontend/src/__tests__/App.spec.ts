@@ -17,6 +17,34 @@ vi.mock('vue-router', () => ({
 }))
 
 /**
+ * WP8：App 壳现在持有 /topic/sync 订阅与 connect()——mock 掉整个模块，避免
+ * 单测里拉起真实 STOMP 客户端/网络。ConnectionBanner 也从本模块读共享 refs，
+ * mock 需提供同形导出。
+ */
+vi.mock('@/composables/useWebSocket', async () => {
+  const { ref, computed } = await import('vue')
+  const connectionState = ref('disconnected')
+  const lastError = ref(null)
+  const authError = ref(null)
+  const connected = computed(() => connectionState.value === 'connected')
+  const makeApi = () => ({
+    connectionState,
+    lastError,
+    authError,
+    connected,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    subscribeAll: vi.fn(),
+    subscribeDownload: vi.fn(),
+    subscribeProcessing: vi.fn(),
+    subscribeJob: vi.fn(() => vi.fn()),
+    subscribeJobs: vi.fn(),
+  })
+  return { TOPIC_SYNC: '/topic/sync', connectionState, lastError, authError, connected, useWebSocket: vi.fn(makeApi) }
+})
+
+/**
  * App 的 router-view 用了 v-slot（KeepAlive 列表缓存）；mock 掉 vue-router
  * 后 `<router-view>` 无法解析，注册一个最小 stub：把 slot props 原样回传
  * （Component 恒 undefined → 不渲染视图）。

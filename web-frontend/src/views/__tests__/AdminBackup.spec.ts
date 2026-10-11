@@ -26,6 +26,8 @@ vi.mock('@/components/jobs/JobProgressPanel.vue', () => ({
 
 const ws = vi.hoisted(() => ({
   subscribeJob: vi.fn((_jobId: string, _cb: unknown) => vi.fn()),
+  // WP8 任务 3：AdminBackup onMounted 显式 connect()（Job 进度 WS 需要 active 连接）。
+  connect: vi.fn(),
 }))
 vi.mock('@/composables/useWebSocket', () => ({
   useWebSocket: vi.fn(() => ws),

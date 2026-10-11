@@ -35,9 +35,9 @@
         </div>
       </slot>
 
-      <!-- Menu: 8-item single-select group (nav_drawer_main.xml).
-           A5-2: the web-only admin entry (and its divider) is retired —
-           admin merged into /settings (统一设置面板). -->
+      <!-- Menu: 9-item single-select group (nav_drawer_main.xml 8 + web-only
+           回收站, WP8). A5-2: the web-only admin entry (and its divider) is
+           retired — admin merged into /settings (统一设置面板). -->
       <nav class="navigation-drawer__menu" role="menu" aria-label="菜单">
         <template v-for="item in items" :key="item.id">
           <slot name="item" :item="item" :active="item.id === activeId">
@@ -108,12 +108,14 @@
 import type { NavItem } from '@/types/components'
 
 /**
- * The canonical 8 drawer menu entries — exact ids/titles from Android
+ * The canonical 9 drawer menu entries — the 8 exact ids/titles from Android
  * `res/menu/nav_drawer_main.xml` (homepage / subscription / whats_hot /
- * top_lists / favourite / history / downloads / settings), Chinese labels
- * per the CN fork's strings, icons from the converted VectorDrawable
- * registry (`v_*_black_x24.svg`). A5-2: the former 9th web-only entry
- * (admin panel) was retired — admin lives in the unified /settings panel.
+ * top_lists / favourite / history / downloads / settings) plus the web-only
+ * 回收站 entry (WP8: deleted favorites/history/downloads… kept 7 days),
+ * inserted between downloads and settings. Chinese labels per the CN fork's
+ * strings, icons from the converted VectorDrawable registry
+ * (`v_*_black_x24.svg`). A5-2: the former web-only admin entry remains
+ * retired — admin lives in the unified /settings panel.
  */
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'homepage', label: '首页', icon: 'homepage-black' },
@@ -123,6 +125,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'favourite', label: '收藏', icon: 'heart-black' },
   { id: 'history', label: '历史', icon: 'history-black' },
   { id: 'downloads', label: '下载', icon: 'download-black' },
+  { id: 'recycle', label: '回收站', icon: 'delete-dark' },
   { id: 'settings', label: '设置', icon: 'settings-black' },
 ]
 
@@ -141,6 +144,7 @@ export const NAV_TARGET_PATHS: Readonly<Record<string, string>> = {
   favourite: '/favorites',
   history: '/history',
   downloads: '/downloads',
+  recycle: '/recycle',
   settings: '/settings',
 }
 </script>
@@ -177,7 +181,7 @@ const props = withDefaults(
   defineProps<{
     /** Whether the drawer is open. v-model:open. */
     open: boolean
-    /** Menu entries. @default DEFAULT_NAV_ITEMS (the canonical 8) */
+    /** Menu entries. @default DEFAULT_NAV_ITEMS (the canonical 9) */
     items?: NavItem[]
     /** `id` of the selected item (contract style), or null when none. */
     activeItemId?: string | null

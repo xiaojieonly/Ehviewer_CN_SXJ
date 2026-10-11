@@ -137,7 +137,7 @@ function showSnack(message: string): void {
 
 /* ---------------------- Job 进度跟踪器（plan A6） ---------------------- */
 
-const { subscribeJob } = useWebSocket()
+const { subscribeJob, connect } = useWebSocket()
 
 /** 当前跟踪的 CACHE_CLEAR 任务（RUNNING 时渲染 JobProgressPanel「清缓存」）。 */
 const activeJob = ref<Job | null>(null)
@@ -369,6 +369,8 @@ async function clearCache(): Promise<void> {
 /* ---------------------------------- boot ---------------------------------- */
 
 onMounted(async () => {
+  // Job 进度 WS 需要 active 连接：页面不依赖其他视图代为 connect（WP8 任务 3）。
+  connect()
   try {
     server.value = await settingsApi.get()
     pathDraft.value = server.value.cache.path

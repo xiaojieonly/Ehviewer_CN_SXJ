@@ -27,6 +27,9 @@
     </button>
 
     <main class="app-content">
+      <!-- 实时连接状态横幅（WP8 任务 3）：断线 / 鉴权失败可见化。正常连接
+           不占位（v-if），不挤列表布局。 -->
+      <ConnectionBanner />
       <router-view v-slot="{ Component, route }">
         <KeepAlive :include="CACHED_VIEWS" :max="8">
           <component :is="Component" :key="cachedViewKey(Component, route)" />
@@ -37,9 +40,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, type Component } from 'vue'
+import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useRoute, useRouter, type RouteLocationNormalized } from 'vue-router'
 import NavigationDrawer, { DEFAULT_NAV_ITEMS, NAV_TARGET_PATHS } from '@/components/layout/NavigationDrawer.vue'
+import ConnectionBanner from '@/components/common/ConnectionBanner.vue'
+import { useWebSocket, TOPIC_SYNC, type SyncUpdateEnvelope } from '@/composables/useWebSocket'
+import { syncInvalidation } from '@/stores/syncInvalidation'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import type { NavItem } from '@/types/components'
@@ -51,7 +57,7 @@ const themeStore = useThemeStore()
 
 const drawerOpen = ref(false)
 
-/** Use the canonical 8-item list from NavigationDrawer (single source of truth). */
+/** Use the canonical 9-item list from NavigationDrawer (single source of truth). */
 const navItems = DEFAULT_NAV_ITEMS
 
 /**
@@ -67,7 +73,7 @@ const CHROME_HIDDEN_ROUTES = new Set(['Login', 'Reader', 'Search', 'SmbBackup'])
  * 已加载的分页与滚动位置原位还原，不重新加载。详情/阅读器刻意不缓存
  * （每次进入都要新鲜数据——收藏态、阅读进度）。:max 防缓存膨胀。
  */
-const CACHED_VIEWS = ['HomeView', 'DownloadView', 'FavoriteView', 'HistoryView', 'SearchView']
+const CACHED_VIEWS = ['HomeView', 'DownloadView', 'FavoriteView', 'HistoryView', 'SearchView', 'RecycleView']
 
 /**
  * 仅缓存视图按 fullPath 分实例（`/` 与 `/?feed=popular` 是两个独立列表，
@@ -96,6 +102,7 @@ const routeToNav: Record<string, string> = {
   '/favorites': 'favourite',
   '/history': 'history',
   '/downloads': 'downloads',
+  '/recycle': 'recycle',
   '/settings': 'settings',
   '/search': 'homepage',
 }
@@ -124,6 +131,22 @@ function handleNavSelect(item: NavItem) {
 // Close drawer on navigation (mobile)
 watch(() => route.path, () => {
   drawerOpen.value = false
+})
+
+/**
+ * 实时对账（WP8 任务 2）：应用壳持有唯一的 /topic/sync 订阅——多端写操作
+ * 广播 `sync.update`（payload.entities 列出被改动的实体），各列表视图经
+ * syncInvalidation.consume(entity) 感知并静默重拉。订阅先于 connect 注册
+ * （registry 记录后由 CONNECTED 回调的 resubscribeAll 补挂；断线重连自动
+ * 重订阅）。App 壳不卸载，引用计数随进程存续。
+ */
+const ws = useWebSocket()
+
+onMounted(() => {
+  ws.subscribe<SyncUpdateEnvelope>(TOPIC_SYNC, (env) => {
+    if (env?.type === 'sync.update') syncInvalidation.bump(env.payload?.entities ?? [])
+  })
+  ws.connect()
 })
 
 // Keep data-theme in sync

@@ -183,6 +183,29 @@ export function isJobEventType(type: string): type is JobEventType {
   )
 }
 
+/**
+ * `sync.update` payload (WP8, protocol v1.3)：多端同步广播。任何设备的写
+ * 操作（收藏/历史/下载/书签/过滤/快速搜索/下载标签/preferences 共 8 类）
+ * 落库后服务器向 `/topic/sync` 广播本信封，`entities` 列出被改动的实体名
+ * （与服务端实体命名一致，如 `favorites` / `history` / `preferences`）。
+ */
+export interface SyncUpdatePayload {
+  /** 被本次写操作改动的实体名列表（消费方逐实体失效）。 */
+  entities: string[]
+  /** 发起写操作的设备 id（本端写入也会广播——消费方按实体对账，不按设备豁免）。 */
+  deviceId: string
+  /** 各实体的变更条数（提示性元数据，对账逻辑不依赖）。 */
+  counts: Record<string, number>
+  /** 服务端同步水位时间戳（epoch 毫秒）。 */
+  syncTimestamp: number
+}
+
+/**
+ * An enveloped `sync.update` event as delivered on {@link TOPIC_SYNC}.
+ * Discriminate on {@link WsEnvelope.type} (`=== 'sync.update'`).
+ */
+export type SyncUpdateEnvelope = WsEnvelope<SyncUpdatePayload>
+
 /* ------------------------------------------------------------------ */
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
@@ -224,6 +247,13 @@ const topicDownloadOne = (gid: number): string => `/topic/download/${gid}`
 const TOPIC_PROCESS_ALL = '/topic/process/all'
 /** All job events topic (plan-2026-08-06 A3, mirrors process events). */
 const TOPIC_JOBS_ALL = '/topic/jobs/all'
+/**
+ * Cross-device sync topic (WP8, protocol v1.3): the server broadcasts a
+ * `sync.update` envelope here after any mutating write (any device,
+ * including this one's REST writes), listing the affected entities so every
+ * open list view can silently re-pull (实时对账).
+ */
+export const TOPIC_SYNC = '/topic/sync'
 
 /* ------------------------------------------------------------------ */
 /* Shared reactive state — single source of truth                      */

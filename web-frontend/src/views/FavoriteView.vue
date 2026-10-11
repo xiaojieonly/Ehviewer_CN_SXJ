@@ -263,6 +263,8 @@ import { favoriteApi } from '@/api/favorite'
 import type { FavoriteItem } from '@/api/favorite'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import { usePagedList } from '@/composables/usePagedList'
+import { useWebSocket } from '@/composables/useWebSocket'
+import { syncInvalidation } from '@/stores/syncInvalidation'
 import { maskedTitle, privacyMaskEnabled } from '@/utils/privacyMask'
 import { isJpnSubtitleVisible } from '@/utils/jpnSubtitle'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
@@ -667,6 +669,18 @@ onDeactivated(() => {
 onUnmounted(() => {
   if (searchTimer) clearTimeout(searchTimer)
   clearTimeout(toastTimer)
+})
+
+/* ------------------------------------ 实时对账（WP8 任务 2） -------------- */
+
+/** 本视图只消费连接态（connect 由 App 壳持有——只解构 connected 不 connect）。 */
+const { connected } = useWebSocket()
+
+// /topic/sync 广播 favorites 实体变更 → 静默重拉当前页；WS 重连成功同款。
+// watch 默认非 immediate——首帧不触发。
+watch(() => syncInvalidation.consume('favorites'), () => void load({ silent: true }))
+watch(connected, (up, was) => {
+  if (up && was === false) void load({ silent: true })
 })
 
 onMounted(() => {

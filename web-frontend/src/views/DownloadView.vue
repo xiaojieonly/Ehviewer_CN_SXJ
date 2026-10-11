@@ -407,6 +407,7 @@ import type { DownloadProgress } from '@/composables/useWebSocket'
 import { useFilterSlots } from '@/composables/useFilterSlots'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePcInput } from '@/composables/usePcInput'
+import { syncInvalidation } from '@/stores/syncInvalidation'
 import FilterSlotBar from '@/components/FilterSlotBar.vue'
 import type { FabAction } from '@/types/components'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -1228,6 +1229,19 @@ onMounted(() => {
   // 深链直入时无其他视图代为预热偏好；不加载则 showReadProgress 角标
   // 按空 prefs 的防御默认隐藏（HomeView 同款守卫）。
   if (!preferencesStore.prefs && !preferencesStore.loading) void preferencesStore.load()
+})
+
+/* ------------------------------------ 实时对账（WP8 任务 2） -------------- */
+
+// /topic/sync 广播 downloads / downloadLabels 任一实体变更 → 静默重拉当前页
+// （单回调——两实体同帧变更只重拉一次）；WS 重连成功（断线窗口内可能漏帧）
+// 同款。watch 默认非 immediate——首帧不触发。
+watch(
+  () => syncInvalidation.consume('downloads') + syncInvalidation.consume('downloadLabels'),
+  () => void load({ silent: true }),
+)
+watch(connected, (up, was) => {
+  if (up && was === false) void load({ silent: true })
 })
 
 onUnmounted(() => {

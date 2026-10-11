@@ -42,6 +42,7 @@ const ROUTES: RouteEntry[] = [
   { path: '/favorites', slug: 'favorites' },
   { path: '/history', slug: 'history' },
   { path: '/downloads', slug: 'downloads' },
+  { path: '/recycle', slug: 'recycle' },
   { path: '/settings', slug: 'settings' },
   { path: '/login', slug: 'login' },
   { path: '/settings/general', slug: 'settings-general' },
