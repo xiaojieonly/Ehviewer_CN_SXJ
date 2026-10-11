@@ -94,7 +94,9 @@ public class WebUiSyncHistoryPageTest {
 
     @Test
     public void pushCarriesPage() throws IOException {
-        store.history.put(1L, history(1, 1000, 12));
+        // 经 store 的写方法种数据（镜像生产 SiteDB.applySyncedHistory 的置脏），
+        // 否则无脏快路径会按「干净设备」跳过 push。
+        store.applySyncedHistory(history(1, 1000, 12));
 
         engine.syncInternal(config, ANDROID, 0);
 
@@ -121,7 +123,7 @@ public class WebUiSyncHistoryPageTest {
     @Test
     public void pageRoundTripBetweenTwoDevices() throws IOException {
         // Device A reads to page 12 and pushes.
-        store.history.put(3L, history(3, 1000, 12));
+        store.applySyncedHistory(history(3, 1000, 12));
         engine.syncInternal(config, ANDROID, 0);
 
         // Device B pulls: the adopted row carries page 12.
@@ -131,7 +133,7 @@ public class WebUiSyncHistoryPageTest {
         assertEquals(12, storeB.history.get(3L).page);
 
         // Device B reads further to page 30 (newer view time wins the LWW merge).
-        storeB.history.put(3L, history(3, 5000, 30));
+        storeB.applySyncedHistory(history(3, 5000, 30));
         engineB.syncInternal(config, ANDROID_OTHER, 0);
 
         // Device A pulls again: progress does not regress.

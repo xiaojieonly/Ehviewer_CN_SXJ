@@ -29,12 +29,15 @@ import org.json.JSONObject
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+
+import java.io.IOException
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -654,6 +657,96 @@ class PreferenceSyncHelperTest {
             assertEquals(1, events.size)
         } finally {
             EventBus.getDefault().unregister(subscriber)
+        }
+    }
+
+    // ==================== pullPreferencesOnly（自动周期偏好腿，经 LocalHttpServer） ====================
+
+    private fun webuiSettingsPrefs(): SharedPreferences =
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+
+    private fun serverConfig(server: LocalHttpServer): WebUiConfig =
+        WebUiConfig("http", server.host(), server.port(), "", "token")
+
+    @Test
+    fun pullPreferencesOnlyConsumesOnlyThePreferencesEntityAndReturnsIt() {
+        // 响应混入 favorites/history 实体：偏好腿必须只消费 preferences，
+        // 其余实体原样留在响应里（本地不产生任何对应状态）。
+        val innerDoc = JSONObject().put("general", JSONObject().put("theme", "dark"))
+        var capturedPath: String? = null
+        var capturedQuery: String? = null
+        val server = LocalHttpServer.start { request ->
+            capturedPath = request.path
+            capturedQuery = request.query
+            val body = JSONObject()
+                .put(
+                    "entities", JSONObject()
+                        .put("preferences", JSONObject().put("preferences", innerDoc.toString()))
+                        .put("favorites", JSONObject().put("items", JSONArray().put(1L)))
+                        .put("history", JSONObject().put("items", JSONArray().put(2L)))
+                )
+            LocalHttpServer.Response.json(200, body.toString())
+        }
+        try {
+            val baseUrl = "http://${server.host()}:${server.port()}"
+            // 预置 scoped 水位：pull 应带真实水位而非字面 since=0（有意偏离点：
+            // 列表实体按水位过滤使载荷 KB 级，preferences 恒返全量语义等价）。
+            webuiSettingsPrefs().edit()
+                .putLong("$baseUrl.last_sync_timestamp", 12345L).commit()
+
+            val consumed = PreferenceSyncHelper.pullPreferencesOnly(
+                serverConfig(server), context, "android-test"
+            )
+
+            server.awaitHandled()
+            assertEquals("/api/v1/sync/pull", capturedPath)
+            assertEquals("since 携带 scoped 水位（只读不推进）", "since=12345", capturedQuery)
+            assertEquals("返回被消费的偏好文档", innerDoc.toString(), consumed)
+            assertEquals("偏好文档已应用", Settings.THEME_DARK, Settings.getIntFromStr("theme", -1))
+            assertEquals(
+                "水位不被偏好腿推进",
+                12345L,
+                webuiSettingsPrefs().getLong("$baseUrl.last_sync_timestamp", -1L)
+            )
+        } finally {
+            server.stop()
+        }
+    }
+
+    @Test
+    fun pullPreferencesOnlyReturnsNullAndTouchesNothingWhenEntityMissing() {
+        seedStrRaw("theme", "-99") // 哨兵：实体缺失时必须原样保留
+        val server = LocalHttpServer.start { _ ->
+            val body = JSONObject()
+                .put("entities", JSONObject().put("favorites", JSONObject().put("items", JSONArray())))
+            LocalHttpServer.Response.json(200, body.toString())
+        }
+        try {
+            val consumed = PreferenceSyncHelper.pullPreferencesOnly(
+                serverConfig(server), context, "android-test"
+            )
+
+            server.awaitHandled()
+            assertEquals("实体缺失返回 null（本轮无可采纳偏好）", null, consumed)
+            assertEquals("本地偏好完全不动", "-99", prefs.getString("theme", null))
+        } finally {
+            server.stop()
+        }
+    }
+
+    @Test
+    fun pullPreferencesOnlyThrowsIOExceptionOnHttpError() {
+        val server = LocalHttpServer.start { _ -> LocalHttpServer.Response.json(500, "{}") }
+        try {
+            try {
+                PreferenceSyncHelper.pullPreferencesOnly(serverConfig(server), context, "android-test")
+                fail("HTTP 500 必须以 IOException 浮出")
+            } catch (expected: IOException) {
+                // 预期路径
+            }
+            server.awaitHandled()
+        } finally {
+            server.stop()
         }
     }
 }

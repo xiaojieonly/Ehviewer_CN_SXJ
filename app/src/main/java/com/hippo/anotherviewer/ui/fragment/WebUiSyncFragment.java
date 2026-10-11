@@ -65,15 +65,25 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_REMOTE_READ = "webui_remote_read";
     private static final String KEY_CONFLICT_STRATEGY = "webui_conflict_strategy";
     private static final String KEY_AUTO_SYNC_INTERVAL = "webui_auto_sync_interval";
+    private static final String KEY_AUTO_UPLOAD = "webui_auto_upload";
     private static final String KEY_PAIR = "webui_pair";
+    private static final String KEY_UNPAIR = "webui_unpair";
     private static final String KEY_SYNC_PREFERENCES = "webui_sync_preferences";
     private static final String KEY_PULL_PREFERENCES = "webui_pull_preferences";
+
+    // 下载自动上传开关的存储契约：与 WebUiSettings.PREFS / upload 泳道的
+    // AutoUploadPrefs 严格一致（prefs 文件 "webui_settings"、布尔键
+    // "webui_auto_upload"、默认 true）。两处均不在本文件所有权内，故镜像
+    // 字面量并以注释锚定契约，改动需三处同步。
+    private static final String AUTO_UPLOAD_PREFS = "webui_settings";
+    private static final String AUTO_UPLOAD_KEY = "webui_auto_upload";
 
     private Preference mConfigure;
     private Preference mStatus;
     private Preference mSyncNow;
     private Preference mSyncPreferences;
     private Preference mPullPreferences;
+    private Preference mUnpair;
 
     private ExecutorService mExecutor;
     private Handler mMainHandler;
@@ -90,6 +100,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         mSyncNow = findPreference(KEY_SYNC_NOW);
         mSyncPreferences = findPreference(KEY_SYNC_PREFERENCES);
         mPullPreferences = findPreference(KEY_PULL_PREFERENCES);
+        mUnpair = findPreference(KEY_UNPAIR);
 
         if (mConfigure != null) {
             mConfigure.setOnPreferenceClickListener(p -> {
@@ -129,6 +140,12 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+        if (mUnpair != null) {
+            mUnpair.setOnPreferenceClickListener(p -> {
+                showUnpairDialog();
+                return true;
+            });
+        }
 
         // Wave-2 advanced sync panel (ADR-0003 D1/D3/D4). Everything below —
         // including the roadmap §2.4 remote reading toggle — persists through
@@ -151,13 +168,15 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         }
         ListPreference strategy = findPreference(KEY_CONFLICT_STRATEGY);
         if (strategy != null) {
+            // entries 重排 lww 在首：默认策略翻转为 lww（WebUiSettings 侧），
+            // 列表把推荐项放第一位，兼容策略殿后。
             strategy.setEntries(new CharSequence[]{
-                    getString(R.string.settings_webui_strategy_device_priority),
                     getString(R.string.settings_webui_strategy_lww),
+                    getString(R.string.settings_webui_strategy_device_priority),
                     getString(R.string.settings_webui_strategy_web_priority)});
             strategy.setEntryValues(new CharSequence[]{
-                    WebUiSettings.STRATEGY_DEVICE_PRIORITY,
                     WebUiSettings.STRATEGY_LWW,
+                    WebUiSettings.STRATEGY_DEVICE_PRIORITY,
                     WebUiSettings.STRATEGY_WEB_PRIORITY});
             strategy.setValue(policySettings.conflictStrategy());
             strategy.setPersistent(false);
@@ -185,6 +204,24 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 } catch (NumberFormatException e) {
                     return false;
                 }
+            });
+        }
+
+        // 下载自动上传开关：本体 setPersistent(false)（androidx preference 的
+        // 持久化与手工 prefs 双写会漂移），初始与变更直连 webui_settings prefs
+        // 的布尔键，契约见 AUTO_UPLOAD_PREFS/AUTO_UPLOAD_KEY 常量注释。upload
+        // 泳道的调度读取同一键，本页只负责展示与写入。
+        SwitchPreferenceCompat autoUpload = findPreference(KEY_AUTO_UPLOAD);
+        if (autoUpload != null) {
+            autoUpload.setPersistent(false);
+            android.content.SharedPreferences uploadPrefs =
+                    requireContext().getSharedPreferences(AUTO_UPLOAD_PREFS, Context.MODE_PRIVATE);
+            autoUpload.setChecked(uploadPrefs.getBoolean(AUTO_UPLOAD_KEY, true));
+            autoUpload.setOnPreferenceChangeListener((pref, newValue) -> {
+                uploadPrefs.edit()
+                        .putBoolean(AUTO_UPLOAD_KEY, Boolean.TRUE.equals(newValue))
+                        .apply();
+                return true;
             });
         }
 
@@ -234,6 +271,51 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         } else {
             mConfigure.setSummary(getString(R.string.settings_webui_configured, config.displayAddress()));
         }
+        // 解除配对入口与配置状态联动：置灰而非隐藏（可发现性更好），
+        // 避免用户在未配置时点进一个必然空操作的流程。
+        if (mUnpair != null) {
+            mUnpair.setEnabled(unpairAvailable(config));
+        }
+    }
+
+    /** 解除配对入口仅在已配置服务器时可用（包私有供单测）。 */
+    static boolean unpairAvailable(@Nullable WebUiConfig config) {
+        return config != null;
+    }
+
+    /**
+     * 解除配对：确认后后台执行 {@link WebUiSettings#clearConfig()}（内含按
+     * baseUrl 清空同步状态分片、向服务器注销令牌的网络调用），完成后回主线程
+     * 刷新两处 summary 并提示。runnable 内 {@code isAdded()} 防泄漏——后台
+     * 执行期间 Fragment 可能已销毁。
+     */
+    private void showUnpairDialog() {
+        final WebUiConfig config = new WebUiSettings(requireContext()).loadConfig();
+        if (!unpairAvailable(config)) {
+            return;
+        }
+        final Context appContext = requireContext().getApplicationContext();
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_webui_unpair)
+                .setMessage(R.string.settings_webui_unpair_confirm)
+                .setPositiveButton(R.string.settings_webui_unpair, (dialog, which) -> {
+                    ExecutorService executor = mExecutor;
+                    Handler handler = mMainHandler;
+                    if (executor == null || handler == null) return;
+                    executor.execute(() -> {
+                        new WebUiSettings(appContext).clearConfig();
+                        handler.post(() -> {
+                            // 后台任务期间 Fragment 可能已 detach：先判 isAdded。
+                            if (!isAdded()) return;
+                            updateConfigureSummary();
+                            updateLastSyncSummary();
+                            Toast.makeText(requireActivity(),
+                                    R.string.settings_webui_unpair_done, Toast.LENGTH_LONG).show();
+                        });
+                    });
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void updateLastSyncSummary() {
@@ -826,6 +908,12 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 new WebUiSettings(fragment.requireContext())
                         .setLastSyncTimestamp(config.baseUrl(), result.serverTimestamp);
                 fragment.updateLastSyncSummary();
+                // skipped（引擎字段）：本轮被一个并发周期代表、水位已由对方安全
+                // 回填。静默处理：不弹同步完成统计，也不安排立即重试（并发周期
+                // 还在跑，立刻重试只会撞车）；水位照常持久化、按钮照常恢复。
+                if (result.skipped) {
+                    return;
+                }
                 Toast.makeText(fragment.requireActivity(),
                         appendExtraSyncCounts(fragment.getString(R.string.settings_webui_sync_done,
                                 result.pushedFavorites, result.pulledFavorites,

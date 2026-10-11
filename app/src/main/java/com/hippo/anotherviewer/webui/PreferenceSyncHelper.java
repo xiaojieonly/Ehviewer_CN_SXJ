@@ -20,6 +20,7 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.event.PrivacyMaskChanged;
@@ -699,6 +700,45 @@ public final class PreferenceSyncHelper {
             return;
         }
         importPreferences(context, preferences);
+    }
+
+    /**
+     * 自动周期偏好腿专用的轻量拉取：只消费 {@code response.entities.preferences}
+     * 并应用到本地（{@link #importPreferences}），不碰 favorites/history 等其余
+     * 实体、不推进任何水位。返回被消费的偏好文档字符串；实体缺失或为空时返回
+     * {@code null}（调用方据此判断「本轮无可采纳的偏好」，不产生副作用）。
+     *
+     * <p>有意偏离字面 {@code since=0}：preferences 实体在服务器端恒返全量
+     * （与 since 无关，见 {@link #pullFromServer} 注记），{@code since} 实际只
+     * 过滤 favorites/history 等列表实体。偏好腿以约周期/6 的频率运行，若字面
+     * 传 0 会每次拖回全量列表；传真实 scoped 水位让载荷保持 KB 级，而偏好全量
+     * 语义完全等价。水位只读不推进（{@link WebUiSettings#lastSyncTimestamp}
+     * 的 scoped 重载）——水位由主同步周期独占推进，偏好腿提前推进会让主周期
+     * 跳过尚未拉到的 favorites/history。
+     *
+     * <p>{@code deviceId} 在 pull 传输中不使用（GET 无 body），保留在签名里以
+     * 与 {@link #pushToServer} 对称，并为将来服务端按设备过滤留位。
+     */
+    @Nullable
+    public static String pullPreferencesOnly(@NonNull WebUiConfig config, @NonNull Context context,
+            @NonNull String deviceId) throws IOException {
+        long since = new WebUiSettings(context).lastSyncTimestamp(config.baseUrl());
+        String json = get(config.baseUrl() + PATH_PULL + "?since=" + since, config.getToken());
+        JSONObject root = parseResponse(json);
+        if (root == null) {
+            throw new IOException("Empty pull response");
+        }
+        JSONObject entities = root.optJSONObject("entities");
+        JSONObject entity = entities != null ? entities.optJSONObject("preferences") : null;
+        if (entity == null) {
+            return null;
+        }
+        String preferences = entity.optString("preferences");
+        if (TextUtils.isEmpty(preferences)) {
+            return null;
+        }
+        importPreferences(context, preferences);
+        return preferences;
     }
 
     private static JSONObject parseResponse(String json) {

@@ -40,10 +40,11 @@ public class WebUiSettingsTest {
     private WebUiSettings settings;
     private WebUiConfig serverA;
     private WebUiConfig serverB;
+    private Context context;
 
     @Before
     public void setUp() {
-        Context context = RuntimeEnvironment.application;
+        context = RuntimeEnvironment.application;
         context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
                 .edit().clear().commit();
         settings = new WebUiSettings(context);
@@ -140,9 +141,11 @@ public class WebUiSettingsTest {
 
     @Test
     public void testPolicyDefaultsAndRoundTrip() {
-        assertEquals("device_priority", settings.conflictStrategy());
-        assertEquals(1, settings.clientTier());
-        assertEquals(900, settings.autoSyncIntervalSec());
+        // WP5-4 v4 默认值：conflictStrategy=lww（服务端裁决）、周期 10s。
+        // clientTier 默认 2（Tier-2 默认，本次不改；断言与生产默认对齐）。
+        assertEquals("lww", settings.conflictStrategy());
+        assertEquals(2, settings.clientTier());
+        assertEquals(10, settings.autoSyncIntervalSec());
 
         settings.setConflictStrategy("web_priority");
         settings.setClientTier(2);
@@ -154,10 +157,17 @@ public class WebUiSettingsTest {
     }
 
     @Test
+    public void testLegacyDevicePriorityStillSelectable() {
+        // A/C 旧版兼容策略保留可选（契约 v4 §1.4）：显式选择必须原样保存，
+        // 不能被 lww 默认吞掉——设置 UI 仍提供「Android 优先（旧版兼容）」条目。
+        settings.setConflictStrategy("device_priority");
+        assertEquals("device_priority", settings.conflictStrategy());
+    }
+
+    @Test
     public void testPolicyInvalidValuesFallBack() {
         settings.setConflictStrategy("bogus");
-        assertEquals("device_priority", settings.conflictStrategy());
-
+        assertEquals("lww", settings.conflictStrategy());
         settings.setClientTier(7);
         assertEquals(3, settings.clientTier());
         settings.setClientTier(-2);
@@ -165,6 +175,19 @@ public class WebUiSettingsTest {
 
         settings.setAutoSyncIntervalSec(-5);
         assertEquals(0, settings.autoSyncIntervalSec());
+    }
+
+    /**
+     * WP5-4：落库值非法/越界时的读取回退。autoSyncIntervalSec 的 setter 会
+     * clamp，负值只能从旧版本数据或外部写坏的分片里出现——直接写裸 pref
+     * 覆盖读取侧的 {@code value >= 0 ? value : 10} 回退分支。
+     */
+    @Test
+    public void testAutoSyncIntervalNegativeStoredValueFallsBackToDefault() {
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+                .edit().putInt("auto_sync_interval_sec", -30).commit();
+
+        assertEquals(10, settings.autoSyncIntervalSec());
     }
 
     @Test
@@ -187,14 +210,29 @@ public class WebUiSettingsTest {
     @Test
     public void testClearConfigRestoresPolicyDefaults() {
         settings.setConflictStrategy("web_priority");
-        settings.setClientTier(2);
+        settings.setClientTier(3);
         settings.setAutoSyncIntervalSec(60);
         settings.saveConfig(serverA);
 
         settings.clearConfig();
 
-        assertEquals("device_priority", settings.conflictStrategy());
+        assertEquals("lww", settings.conflictStrategy());
+        assertEquals("clientTier 默认 2（Tier-2 默认，本次不改）", 2, settings.clientTier());
+        assertEquals(10, settings.autoSyncIntervalSec());
+    }
+
+    /**
+     * clientTier 越界落库值的读取回退（setter clamp 不到的分片）：读取侧
+     * {@code tier >= 0 && tier <= 3 ? tier : 1} 回退到 1。直接写裸 pref 覆盖。
+     */
+    @Test
+    public void testClientTierOutOfRangeStoredValueFallsBack() {
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+                .edit().putInt("client_tier", 9).commit();
         assertEquals(1, settings.clientTier());
-        assertEquals(900, settings.autoSyncIntervalSec());
+
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+                .edit().putInt("client_tier", -1).commit();
+        assertEquals(1, settings.clientTier());
     }
 }

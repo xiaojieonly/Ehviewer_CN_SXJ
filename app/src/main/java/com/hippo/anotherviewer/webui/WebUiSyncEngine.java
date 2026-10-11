@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
@@ -245,6 +247,9 @@ public final class WebUiSyncEngine {
      * the priority platform — in that case the local copy survives and is
      * re-pushed alive next cycle so the server resurrects it. Tombstone
      * entities (history/bookmark) always propagate and bypass this guard.
+     *
+     * <p>WP5-3：这是 <b>legacy（pull 无 policy）</b>服务器的旧公式；v4 服务器
+     * 一律走 {@link #honorTombstone}，删除统一传播。保留本函数供旧公式与单测。
      */
     static boolean honorSoftTombstone(ConflictStrategy strategy, String tombstoneDeviceId,
             String localDeviceId, boolean localAlive) {
@@ -253,6 +258,21 @@ public final class WebUiSyncEngine {
         if (priority.equals(platformOf(tombstoneDeviceId))) return true;
         if (localAlive && priority.equals(platformOf(localDeviceId))) return false;
         return true;
+    }
+
+    /**
+     * WP5-3 墓碑恒遵守：pull 携带 {@code policy} 说明对端是 v4 服务器——它已经
+     * 在服务端完成了冲突裁决（ADR-0003 D2 / contract v4），pull 回来的墓碑就是
+     * 服务端的最终状态，客户端无条件遵守（删除统一传播，不再做 §3.8 优先端
+     * 保留）；{@code policy} 缺失（legacy v2/v3 服务器）退回旧公式
+     * {@link #honorSoftTombstone}，保持优先端保留行为不变。
+     */
+    static boolean honorTombstone(ConflictStrategy strategy, String tombstoneDeviceId,
+            String localDeviceId, boolean localAlive, boolean serverPolicyPresent) {
+        if (serverPolicyPresent) {
+            return true;
+        }
+        return honorSoftTombstone(strategy, tombstoneDeviceId, localDeviceId, localAlive);
     }
 
     /**
@@ -313,6 +333,43 @@ public final class WebUiSyncEngine {
     private final WebUiSyncStore mStore;
     private final WebUiSyncTransport mTransport;
     private final EhSessionSource mEhSessionSource;
+
+    // --- WP5-2 周期互斥：同一实例同时只允许一个周期在跑（调度器节拍、
+    // --- 手动「立即同步」、偏好腿可能并发触发）。tryLock 失败方不排队等待，
+    // --- 而是置位重跑请求（持锁线程在当前周期结束后立即补跑一轮）并返回
+    // --- skipped 结果——比阻塞等待更贴合「合并触发」的语义。
+    private final ReentrantLock mCycleLock = new ReentrantLock();
+    private final AtomicBoolean mRerunRequested = new AtomicBoolean(false);
+
+    // --- WP5-5 无脏快路径 ---
+    /**
+     * 脏标志注入点：默认全局 {@link SiteDB#SYNC_DIRTY}（同步范围内任一写方法
+     * 置位）。测试注入独立实例以精确控制快/全量路径。置位是 getAndSet(false)
+     * 读+清语义：周期头取走，周期进行中的并发写留下给下个周期。
+     */
+    private volatile AtomicBoolean mDirtyFlag = SiteDB.SYNC_DIRTY;
+
+    /** 实例内周期序号：每第 {@link #FULL_DIFF_INTERVAL} 个周期强制全量差分。 */
+    private int mCycleCount = 0;
+
+    /**
+     * 强制全量差分的周期间隔。兜底两类漂移：脏标志是全局共享的（多服务器
+     * 场景下另一台服务器的写入不会置位本服务器的差分需求），以及任何未被
+     * 置位的写路径。默认 10s 周期下最迟约 60s 收敛。
+     */
+    private static final int FULL_DIFF_INTERVAL = 6;
+
+    /**
+     * v4 时钟域偏移（WP4-2）：pull 成功后 = pull.serverTimestamp − 本地墙钟。
+     * v4 服务器的单调戳/服务端 lastModified 与本地时钟不是一个域，跨域比较
+     * 前必须减去本偏移归一化；同一周期内有效（周期头赋值、apply 阶段使用）。
+     */
+    private volatile long mClockOffset = 0L;
+
+    /** 包内测试注入点：换用独立的脏标志（见 {@link #mDirtyFlag}）。 */
+    void setDirtyFlagForTest(@NonNull AtomicBoolean dirtyFlag) {
+        mDirtyFlag = dirtyFlag;
+    }
 
     private WebUiSyncEngine() {
         this(new SiteDbWebUiSyncStore(), new WebUiApiSyncTransport(), new SiteEhSessionSource());
@@ -474,6 +531,26 @@ public final class WebUiSyncEngine {
         public int pushedDownloadLabels, pulledDownloadLabels;
         public int pushedEhSessions, pulledEhSessions;
         public long serverTimestamp;
+
+        /**
+         * WP5-2：本轮被一个并发周期代表（引擎侧互斥把它合并进了持锁线程的
+         * 紧邻下一轮）。置位时所有计数为 0、{@link #serverTimestamp} 是入参
+         * {@code since} 的原值回填——调用方
+         * （{@code WebUiAutoSyncScheduler} / {@code WebUiSyncFragment}）会无条件
+         * {@code setLastSyncTimestamp(result.serverTimestamp)}，回填旧值使这次
+         * 跳过成为无害 no-op（返回 0 会把水位清零、下个周期触发全量拉取）。
+         * 调用方应静默处理：不弹完成统计、不跑附加腿、不立即重试——代表性周期
+         * 已经带过这些动作，下一节拍自然重试即可。
+         */
+        public boolean skipped;
+
+        /**
+         * WP5-5：本轮走到无脏快路径、push 阶段被整体跳过（没有 collect / 删除
+         * 检测 / 写穿 / 任何 push 请求），只做了 pull + apply + 尾部分片保存
+         * 与完整性证据排水。供调用方/日志反映本轮的实际阶段；不改变其它字段
+         * 语义（计数照常反映实际发生的收发包）。
+         */
+        public boolean pushSkipped;
     }
 
     /**
@@ -489,11 +566,56 @@ public final class WebUiSyncEngine {
     /**
      * Instance sync entry point: the static facade delegates here. Tests drive
      * this directly against an in-memory store/transport.
+     *
+     * <p>WP5-2 周期互斥：tryLock 失败 → 置位重跑请求并立即返回 skipped 结果
+     * （见 {@link Result#skipped}）；成功 → 持锁跑周期，若持锁期间有并发触发
+     * （mRerunRequested），紧接着用最新水位补跑一轮，把并发触发合并为紧邻的
+     * 两轮（第二轮吃上第一轮的成果）。
      */
     @NonNull
     Result syncInternal(@NonNull WebUiConfig config, @NonNull String deviceId, long since) throws IOException {
+        if (!mCycleLock.tryLock()) {
+            // 并发周期在跑：本轮被代表。serverTimestamp 回填入参 since（见
+            // Result#skipped 的语义说明）——绝不能回填 0 或上一轮值。
+            mRerunRequested.set(true);
+            Result represented = new Result();
+            represented.skipped = true;
+            represented.serverTimestamp = since;
+            return represented;
+        }
+        try {
+            Result result;
+            long currentSince = since;
+            do {
+                result = runCycle(config, deviceId, currentSince);
+                currentSince = result.serverTimestamp;
+            } while (mRerunRequested.getAndSet(false));
+            return result;
+        } finally {
+            mCycleLock.unlock();
+        }
+    }
+
+    /**
+     * One push → pull → apply cycle (the former body of {@code syncInternal}).
+     * WP5-5: when the device is clean (no dirty flag, no pending tombstones,
+     * no ehSession content to push) and the forced-full-diff interval is not
+     * due, the push phase is skipped entirely and only pull + apply + the
+     * tail bookkeeping run ({@link Result#pushSkipped}).
+     */
+    @NonNull
+    Result runCycle(@NonNull WebUiConfig config, @NonNull String deviceId, long since) throws IOException {
         Result result = new Result();
         String serverKey = config.baseUrl();
+
+        // WP5-5 无脏快路径：周期头读+清脏标志（getAndSet(false)——读走本轮，
+        // 周期进行中的并发写以 set(true) 粘性留下给下个周期）；每第
+        // FULL_DIFF_INTERVAL 个周期强制全量差分：脏标志全局共享（多服务器共用
+        // 一份 SYNC_DIRTY，另一台服务器的写入不置位本服务器的差分需求），强制
+        // 全量差分兜底标志/账本漂移，默认 10s 周期下最迟约 60s 收敛。
+        boolean dirty = mDirtyFlag.getAndSet(false);
+        mCycleCount++;
+        boolean forceFullDiff = mCycleCount % FULL_DIFF_INTERVAL == 0;
 
         // Keys pushed by the last successful sync, plus deletions detected but
         // not yet delivered. Diffed against the current local keys to find keys
@@ -523,50 +645,23 @@ public final class WebUiSyncEngine {
         Set<String> pendingDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS);
         Set<String> pendingEhSession = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION);
 
-        Set<Long> currentFavorites = collectFavoriteKeys();
-        Set<Long> currentHistory = collectHistoryKeys();
-        Set<Long> currentDownloads = collectDownloadKeys();
-        Set<Long> currentBookmarks = collectBookmarkKeys();
-        Set<String> currentFilters = collectFilterKeys();
-        Set<String> currentQuickSearches = collectQuickSearchKeys();
-        Set<String> currentDownloadLabels = collectDownloadLabelKeys();
-        WebUiSyncModels.SyncEhSession localEhSession = mEhSessionSource.loadLocal();
-        Set<String> currentEhSession = localEhSession != null
-                ? Collections.singleton(KEY_EH_SESSION)
-                : Collections.<String>emptySet();
-
-        pendingFavorites = detectDeletions(snapshotFavorites, pendingFavorites, currentFavorites);
-        pendingHistory = detectDeletions(snapshotHistory, pendingHistory, currentHistory);
-        pendingDownloads = detectDeletions(snapshotDownloads, pendingDownloads, currentDownloads);
-        pendingBookmarks = detectDeletions(snapshotBookmarks, pendingBookmarks, currentBookmarks);
-        pendingFilters = detectDeletions(snapshotFilters, pendingFilters, currentFilters);
-        pendingQuickSearches = detectDeletions(snapshotQuickSearches, pendingQuickSearches, currentQuickSearches);
-        pendingDownloadLabels = detectDeletions(snapshotDownloadLabels, pendingDownloadLabels, currentDownloadLabels);
-        pendingEhSession = detectDeletions(snapshotEhSession, pendingEhSession, currentEhSession);
-
-        // W5 write-through (R4-15 audit §2.1 hardening): persist the detected
-        // pending tombstones NOW — at detection time, before the push — not
-        // only via the end-of-cycle save block. If the process dies anywhere
-        // between detection and save (in particular the ack-after/save-before
-        // window), the tombstones are already durable and the next cycle
-        // re-delivers them from the pending sets alone, without depending on
-        // the persisted snapshot still containing the keys. The
-        // ack-before-clear main order is unchanged: pending is only CLEARED
-        // in the save block after every push batch was acked, and the B9
-        // ledgers are untouched here; a failed cycle simply leaves the
-        // written-through tombstones in place for the retry.
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, pendingFavorites);
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, pendingHistory);
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, pendingDownloads);
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, pendingBookmarks);
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, pendingFilters);
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, pendingQuickSearches);
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, pendingDownloadLabels);
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, pendingEhSession);
+        // 期初 pending（删除检测写入前的持久化值）：周期尾补记的并集项，见
+        // retainUndeliveredDeletions。detectDeletions 返回新集、不改写它们，
+        // 因此这里可以在检测之后再用于尾部补算。
+        Set<Long> initialPendingFavorites = new LinkedHashSet<>(pendingFavorites);
+        Set<Long> initialPendingHistory = new LinkedHashSet<>(pendingHistory);
+        Set<Long> initialPendingDownloads = new LinkedHashSet<>(pendingDownloads);
+        Set<Long> initialPendingBookmarks = new LinkedHashSet<>(pendingBookmarks);
+        Set<String> initialPendingFilters = new LinkedHashSet<>(pendingFilters);
+        Set<String> initialPendingQuickSearches = new LinkedHashSet<>(pendingQuickSearches);
+        Set<String> initialPendingDownloadLabels = new LinkedHashSet<>(pendingDownloadLabels);
+        Set<String> initialPendingEhSession = new LinkedHashSet<>(pendingEhSession);
 
         // B9: the push ledgers (key -> lastModified last delivered/adopted).
         // A null (corrupt/unreadable) ledger normalizes to empty, which marks
         // every live record as new — the full-push fallback (safe default).
+        // 读点提前到快路径判据之前：判据需要 ledgerEhSession 的指纹，尾部保存
+        // 块需要全部账本（快路径下账本原样回存，绝不能被空账本覆盖）。
         Map<String, Long> ledgerFavorites = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_FAVORITES);
         Map<String, Long> ledgerHistory = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_HISTORY);
         Map<String, Long> ledgerBookmarks = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_BOOKMARKS);
@@ -575,93 +670,156 @@ public final class WebUiSyncEngine {
         // change timestamp exists), so unchanged content is not re-pushed and a
         // pulled session is not echoed back.
         Map<String, Long> ledgerEhSession = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_EH_SESSION);
+
+        WebUiSyncModels.SyncEhSession localEhSession = mEhSessionSource.loadLocal();
         boolean pushLiveEhSession = localEhSession != null
                 && isEhSessionChanged(ledgerEhSession, localEhSession);
 
-        // 1. Push local state, including tombstones for pending deletions.
-        // B9 incremental: only new/changed live records (per the ledgers) and
-        // tombstones are sent; the small timestamp-less entities (filters,
-        // quick searches, download labels) ride along in full. Downloads are
-        // chunked so no request carries more than PUSH_BATCH_SIZE of them;
-        // the push succeeds only if every batch is accepted, otherwise no
-        // bookkeeping (ledgers, snapshot, pending) is saved and the next
-        // cycle retries.
-        long now = System.currentTimeMillis();
-        List<GalleryInfo> favoritesToPush = selectChangedFavorites(ledgerFavorites, now);
-        List<HistoryInfo> historyToPush = selectChangedHistory(ledgerHistory);
-        List<BookmarkInfo> bookmarksToPush = selectChangedBookmarks(ledgerBookmarks);
-        List<DownloadInfo> downloadsToPush = selectChangedDownloads(ledgerDownloads);
+        // WP5-5 快路径判据：无脏 + 8 个 pending 全空 + ehSession 无待推内容。
+        // ehSession 逐项：
+        //  - 本地有会话：内容指纹与账本一致（未变化）→ 无待推内容；
+        //  - 本地无会话：账本或快照仍留有会话痕迹 → 可能刚登出，必须走全量差分
+        //    让检测点生成登出墓碑（跳过检测会漏；补齐由尾部补记完成但会慢一拍）；
+        //    两者皆空 → 从未同步过会话，无待推内容。
+        // 快路径跳过：collect、删除检测、检测点写穿、实体 push（push 完全不发）；
+        // pull/apply/尾部快照重收集/尾部补记/save 块/完整性证据排水在两条路径下
+        // 统一执行（快路径下 pendingPushed = ∅）。
+        boolean pendingAllEmpty = pendingFavorites.isEmpty() && pendingHistory.isEmpty()
+                && pendingDownloads.isEmpty() && pendingBookmarks.isEmpty()
+                && pendingFilters.isEmpty() && pendingQuickSearches.isEmpty()
+                && pendingDownloadLabels.isEmpty() && pendingEhSession.isEmpty();
+        boolean ehSessionNeedsDetection = localEhSession != null
+                ? isEhSessionChanged(ledgerEhSession, localEhSession)
+                : !ledgerEhSession.isEmpty() || !snapshotEhSession.isEmpty();
+        boolean skipPush = !forceFullDiff && !dirty && pendingAllEmpty && !ehSessionNeedsDetection;
+        result.pushSkipped = skipPush;
 
-        List<WebUiSyncModels.PushRequest> requests = buildPushRequests(deviceId, now,
-                favoritesToPush, historyToPush, bookmarksToPush, downloadsToPush,
-                pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
-                pendingFilters, pendingQuickSearches, pendingDownloadLabels,
-                pendingEhSession, localEhSession, pushLiveEhSession);
-        for (int i = 0; i < requests.size(); i++) {
-            WebUiSyncModels.PushRequest push = requests.get(i);
-            WebUiSyncModels.PushResponse pushResponse = mTransport.push(config, push);
-            if (!pushResponse.success) {
-                // A5: carry the failing batch position and its entity counts in
-                // the message — a bare "Server rejected push" gives no clue
-                // which chunk or how many records to look at.
-                WebUiSyncModels.EntityCollection failed = push.entities;
-                throw new IOException("Server rejected push batch " + (i + 1) + "/"
-                        + requests.size()
-                        + " (favorites=" + failed.favorites.size()
-                        + ", history=" + failed.history.size()
-                        + ", downloads=" + failed.downloads.size()
-                        + ", bookmarks=" + failed.bookmarks.size()
-                        + ", filters=" + failed.filters.size()
-                        + ", quickSearches=" + failed.quickSearches.size()
-                        + ", downloadLabels=" + failed.downloadLabels.size()
-                        + ", ehSession=" + failed.ehSession.size() + ")");
+        if (!skipPush) {
+            Set<Long> currentFavorites = collectFavoriteKeys();
+            Set<Long> currentHistory = collectHistoryKeys();
+            Set<Long> currentDownloads = collectDownloadKeys();
+            Set<Long> currentBookmarks = collectBookmarkKeys();
+            Set<String> currentFilters = collectFilterKeys();
+            Set<String> currentQuickSearches = collectQuickSearchKeys();
+            Set<String> currentDownloadLabels = collectDownloadLabelKeys();
+            Set<String> currentEhSession = localEhSession != null
+                    ? Collections.singleton(KEY_EH_SESSION)
+                    : Collections.<String>emptySet();
+
+            pendingFavorites = detectDeletions(snapshotFavorites, pendingFavorites, currentFavorites);
+            pendingHistory = detectDeletions(snapshotHistory, pendingHistory, currentHistory);
+            pendingDownloads = detectDeletions(snapshotDownloads, pendingDownloads, currentDownloads);
+            pendingBookmarks = detectDeletions(snapshotBookmarks, pendingBookmarks, currentBookmarks);
+            pendingFilters = detectDeletions(snapshotFilters, pendingFilters, currentFilters);
+            pendingQuickSearches = detectDeletions(snapshotQuickSearches, pendingQuickSearches, currentQuickSearches);
+            pendingDownloadLabels = detectDeletions(snapshotDownloadLabels, pendingDownloadLabels, currentDownloadLabels);
+            pendingEhSession = detectDeletions(snapshotEhSession, pendingEhSession, currentEhSession);
+
+            // W5 write-through (R4-15 audit §2.1 hardening): persist the detected
+            // pending tombstones NOW — at detection time, before the push — not
+            // only via the end-of-cycle save block. If the process dies anywhere
+            // between detection and save (in particular the ack-after/save-before
+            // window), the tombstones are already durable and the next cycle
+            // re-delivers them from the pending sets alone, without depending on
+            // the persisted snapshot still containing the keys. The
+            // ack-before-clear main order is unchanged: pending is only CLEARED
+            // in the save block after every push batch was acked, and the B9
+            // ledgers are untouched here; a failed cycle simply leaves the
+            // written-through tombstones in place for the retry.
+            mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, pendingFavorites);
+            mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, pendingHistory);
+            mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, pendingDownloads);
+            mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, pendingBookmarks);
+            mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, pendingFilters);
+            mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, pendingQuickSearches);
+            mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, pendingDownloadLabels);
+            mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, pendingEhSession);
+
+            // 1. Push local state, including tombstones for pending deletions.
+            // B9 incremental: only new/changed live records (per the ledgers) and
+            // tombstones are sent; the small timestamp-less entities (filters,
+            // quick searches, download labels) ride along in full. Downloads are
+            // chunked so no request carries more than PUSH_BATCH_SIZE of them;
+            // the push succeeds only if every batch is accepted, otherwise no
+            // bookkeeping (ledgers, snapshot, pending) is saved and the next
+            // cycle retries.
+            long now = System.currentTimeMillis();
+            List<GalleryInfo> favoritesToPush = selectChangedFavorites(ledgerFavorites, now);
+            List<HistoryInfo> historyToPush = selectChangedHistory(ledgerHistory);
+            List<BookmarkInfo> bookmarksToPush = selectChangedBookmarks(ledgerBookmarks);
+            List<DownloadInfo> downloadsToPush = selectChangedDownloads(ledgerDownloads);
+
+            List<WebUiSyncModels.PushRequest> requests = buildPushRequests(deviceId, now,
+                    favoritesToPush, historyToPush, bookmarksToPush, downloadsToPush,
+                    pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
+                    pendingFilters, pendingQuickSearches, pendingDownloadLabels,
+                    pendingEhSession, localEhSession, pushLiveEhSession);
+            for (int i = 0; i < requests.size(); i++) {
+                WebUiSyncModels.PushRequest push = requests.get(i);
+                WebUiSyncModels.PushResponse pushResponse = mTransport.push(config, push);
+                if (!pushResponse.success) {
+                    // A5: carry the failing batch position and its entity counts in
+                    // the message — a bare "Server rejected push" gives no clue
+                    // which chunk or how many records to look at.
+                    WebUiSyncModels.EntityCollection failed = push.entities;
+                    throw new IOException("Server rejected push batch " + (i + 1) + "/"
+                            + requests.size()
+                            + " (favorites=" + failed.favorites.size()
+                            + ", history=" + failed.history.size()
+                            + ", downloads=" + failed.downloads.size()
+                            + ", bookmarks=" + failed.bookmarks.size()
+                            + ", filters=" + failed.filters.size()
+                            + ", quickSearches=" + failed.quickSearches.size()
+                            + ", downloadLabels=" + failed.downloadLabels.size()
+                            + ", ehSession=" + failed.ehSession.size() + ")");
+                }
+                WebUiSyncModels.EntityCollection entities = push.entities;
+                result.pushedFavorites += entities.favorites.size();
+                result.pushedHistory += entities.history.size();
+                result.pushedDownloads += entities.downloads.size();
+                result.pushedBookmarks += entities.bookmarks.size();
+                result.pushedFilters += entities.filters.size();
+                result.pushedQuickSearches += entities.quickSearches.size();
+                result.pushedDownloadLabels += entities.downloadLabels.size();
+                result.pushedEhSessions += entities.ehSession.size();
             }
-            WebUiSyncModels.EntityCollection entities = push.entities;
-            result.pushedFavorites += entities.favorites.size();
-            result.pushedHistory += entities.history.size();
-            result.pushedDownloads += entities.downloads.size();
-            result.pushedBookmarks += entities.bookmarks.size();
-            result.pushedFilters += entities.filters.size();
-            result.pushedQuickSearches += entities.quickSearches.size();
-            result.pushedDownloadLabels += entities.downloadLabels.size();
-            result.pushedEhSessions += entities.ehSession.size();
-        }
 
-        // The push is the new baseline; the pending deletions were delivered.
-        // Advance the ledgers to what the server now holds from this device:
-        // pushed live records at their effective lastModified, tombstoned
-        // keys dropped (a later re-add pushes as new again).
-        for (GalleryInfo gi : favoritesToPush) {
-            ledgerFavorites.put(Long.toString(gi.gid), favoriteLastModified(gi, now));
-        }
-        for (long gid : pendingFavorites) {
-            ledgerFavorites.remove(Long.toString(gid));
-        }
-        for (HistoryInfo hi : historyToPush) {
-            ledgerHistory.put(Long.toString(hi.gid), hi.time);
-        }
-        for (long gid : pendingHistory) {
-            ledgerHistory.remove(Long.toString(gid));
-        }
-        for (BookmarkInfo bi : bookmarksToPush) {
-            ledgerBookmarks.put(Long.toString(bi.gid), bi.time);
-        }
-        for (long gid : pendingBookmarks) {
-            ledgerBookmarks.remove(Long.toString(gid));
-        }
-        for (DownloadInfo info : downloadsToPush) {
-            ledgerDownloads.put(Long.toString(info.gid), downloadLastModified(info));
-        }
-        for (long gid : pendingDownloads) {
-            ledgerDownloads.remove(Long.toString(gid));
-        }
-        if (pushLiveEhSession) {
-            ledgerEhSession.put(KEY_EH_SESSION, fingerprintEhSession(localEhSession));
-        }
-        if (pendingEhSession.contains(KEY_EH_SESSION)) {
-            // The logged-out tombstone was delivered; a later re-login pushes
-            // as new again.
-            ledgerEhSession.remove(KEY_EH_SESSION);
+            // The push is the new baseline; the pending deletions were delivered.
+            // Advance the ledgers to what the server now holds from this device:
+            // pushed live records at their effective lastModified, tombstoned
+            // keys dropped (a later re-add pushes as new again).
+            for (GalleryInfo gi : favoritesToPush) {
+                ledgerFavorites.put(Long.toString(gi.gid), favoriteLastModified(gi, now));
+            }
+            for (long gid : pendingFavorites) {
+                ledgerFavorites.remove(Long.toString(gid));
+            }
+            for (HistoryInfo hi : historyToPush) {
+                ledgerHistory.put(Long.toString(hi.gid), hi.time);
+            }
+            for (long gid : pendingHistory) {
+                ledgerHistory.remove(Long.toString(gid));
+            }
+            for (BookmarkInfo bi : bookmarksToPush) {
+                ledgerBookmarks.put(Long.toString(bi.gid), bi.time);
+            }
+            for (long gid : pendingBookmarks) {
+                ledgerBookmarks.remove(Long.toString(gid));
+            }
+            for (DownloadInfo info : downloadsToPush) {
+                ledgerDownloads.put(Long.toString(info.gid), downloadLastModified(info));
+            }
+            for (long gid : pendingDownloads) {
+                ledgerDownloads.remove(Long.toString(gid));
+            }
+            if (pushLiveEhSession) {
+                ledgerEhSession.put(KEY_EH_SESSION, fingerprintEhSession(localEhSession));
+            }
+            if (pendingEhSession.contains(KEY_EH_SESSION)) {
+                // The logged-out tombstone was delivered; a later re-login pushes
+                // as new again.
+                ledgerEhSession.remove(KEY_EH_SESSION);
+            }
         }
 
         // The snapshot is finalized at save time (re-collected from the local
@@ -670,25 +828,61 @@ public final class WebUiSyncEngine {
         // 2. Pull server changes since the high-water mark.
         WebUiSyncModels.PullResponse pull = mTransport.pull(config, since);
 
+        // WP4-2 v4 时钟域归一：v4 服务器的 serverTimestamp / lastModified 都按
+        // 服务器自己的时钟打戳，与本地墙钟不是一个域。offset = pull 的服务器
+        // 戳 − 本地墙钟；跨域比较时（favorites/bookmarks 的 LWW、downloads 的
+        // alive 守卫）把服务器域的值减去 offset 归一到本地域再比较。周期头
+        // pull 后赋值、apply 阶段使用，周期结束即失效（下一个周期重新校准）。
+        mClockOffset = pull.serverTimestamp - System.currentTimeMillis();
+
         // Contract v2 §6.2: strategy rides on the pull; legacy servers (no
         // policy) fall back to lww without error (compat matrix §4.2).
         ConflictStrategy strategy = pull.policy != null
                 ? ConflictStrategy.parse(pull.policy.conflictStrategy)
                 : ConflictStrategy.LWW;
+        // WP5-3：pull 携带 policy = v4 服务器（服务端已完成裁决），墓碑统一传播。
+        boolean serverPolicyPresent = pull.policy != null;
 
         // 3. Apply pulled changes locally. The ledgered entities also record
         // the applied records' effective local lastModified so the next push
         // does not echo them back to the server.
-        applyFavorites(pull.entities.favorites, result, snapshotFavorites, ledgerFavorites, strategy, deviceId);
+        applyFavorites(pull.entities.favorites, result, snapshotFavorites, ledgerFavorites, strategy, deviceId,
+                serverPolicyPresent);
         applyHistory(pull.entities.history, result, snapshotHistory, ledgerHistory);
-        applyDownloads(pull.entities.downloads, result, snapshotDownloads, ledgerDownloads, strategy, deviceId);
-        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks, ledgerBookmarks, strategy, deviceId);
-        applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
-        applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
-        applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
+        applyDownloads(pull.entities.downloads, result, snapshotDownloads, ledgerDownloads, strategy, deviceId,
+                serverPolicyPresent);
+        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks, ledgerBookmarks, strategy, deviceId,
+                serverPolicyPresent);
+        applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId, serverPolicyPresent);
+        applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId,
+                serverPolicyPresent);
+        applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId,
+                serverPolicyPresent);
         // ehSession follows the server unconditionally (the server already
         // resolved the LWW merge); a pulled tombstone signs the device out.
         applyEhSession(pull.entities.ehSession, result, snapshotEhSession, ledgerEhSession);
+
+        // WP4 周期中删除丢失窗口：删除检测只在周期头做一次，周期中途消失的
+        // 记录（用户在传输进行时删除本地行，检测点之后才发生）若不在尾部
+        // 补记，下面重收集出的快照会覆盖旧快照、pending 又被清空，删除从此
+        // 不可见（下个周期快照已不含该键）。因此在重收集之前捕获 8 个
+        // 「apply 后快照」引用（honored 墓碑的删除在 apply 中就地 remove，
+        // 这些键天然不在快照里——不会把服务器墓碑反推成本地墓碑），重收集
+        // 之后逐实体补算：
+        //   diff = (apply后快照 ∪ 期初pending) ∖ 重收集current ∖ 本轮已推pending
+        // 三个排除项：重收集 current 排除「中途又回来的键」（re-add 不应推
+        // 墓碑）；已推 pending 排除「本轮已经送达的墓碑」（不重复发）；apply
+        // 后快照里被 honored 删掉的键也已不在集合中（不重复发）。补算结果
+        // 紧跟计算点在下面的 save 块写穿；失败周期到不了这里——期初的检测点
+        // 写穿仍然兜底。
+        Set<Long> appliedSnapshotFavorites = snapshotFavorites;
+        Set<Long> appliedSnapshotHistory = snapshotHistory;
+        Set<Long> appliedSnapshotDownloads = snapshotDownloads;
+        Set<Long> appliedSnapshotBookmarks = snapshotBookmarks;
+        Set<String> appliedSnapshotFilters = snapshotFilters;
+        Set<String> appliedSnapshotQuickSearches = snapshotQuickSearches;
+        Set<String> appliedSnapshotDownloadLabels = snapshotDownloadLabels;
+        Set<String> appliedSnapshotEhSession = snapshotEhSession;
 
         // R4-15 W1/W2: the snapshot is finalized HERE — re-collected from the
         // local store at save time, after apply — instead of reusing the
@@ -715,6 +909,36 @@ public final class WebUiSyncEngine {
         snapshotDownloadLabels = collectDownloadLabelKeys();
         snapshotEhSession = collectEhSessionKeys();
 
+        // WP4 尾部补记：本轮已推的 pending（检测点写穿后交给 push 的集合）。
+        // 快路径下它们全为空集；补算的排除项语义见上面的窗口注释。
+        Set<Long> pushedPendingFavorites = pendingFavorites;
+        Set<Long> pushedPendingHistory = pendingHistory;
+        Set<Long> pushedPendingDownloads = pendingDownloads;
+        Set<Long> pushedPendingBookmarks = pendingBookmarks;
+        Set<String> pushedPendingFilters = pendingFilters;
+        Set<String> pushedPendingQuickSearches = pendingQuickSearches;
+        Set<String> pushedPendingDownloadLabels = pendingDownloadLabels;
+        Set<String> pushedPendingEhSession = pendingEhSession;
+
+        pendingFavorites = retainUndeliveredDeletions(
+                appliedSnapshotFavorites, initialPendingFavorites, snapshotFavorites, pushedPendingFavorites);
+        pendingHistory = retainUndeliveredDeletions(
+                appliedSnapshotHistory, initialPendingHistory, snapshotHistory, pushedPendingHistory);
+        pendingDownloads = retainUndeliveredDeletions(
+                appliedSnapshotDownloads, initialPendingDownloads, snapshotDownloads, pushedPendingDownloads);
+        pendingBookmarks = retainUndeliveredDeletions(
+                appliedSnapshotBookmarks, initialPendingBookmarks, snapshotBookmarks, pushedPendingBookmarks);
+        pendingFilters = retainUndeliveredDeletions(
+                appliedSnapshotFilters, initialPendingFilters, snapshotFilters, pushedPendingFilters);
+        pendingQuickSearches = retainUndeliveredDeletions(
+                appliedSnapshotQuickSearches, initialPendingQuickSearches, snapshotQuickSearches,
+                pushedPendingQuickSearches);
+        pendingDownloadLabels = retainUndeliveredDeletions(
+                appliedSnapshotDownloadLabels, initialPendingDownloadLabels, snapshotDownloadLabels,
+                pushedPendingDownloadLabels);
+        pendingEhSession = retainUndeliveredDeletions(
+                appliedSnapshotEhSession, initialPendingEhSession, snapshotEhSession, pushedPendingEhSession);
+
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOADS, snapshotDownloads);
@@ -723,14 +947,14 @@ public final class WebUiSyncEngine {
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES, snapshotQuickSearches);
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS, snapshotDownloadLabels);
         mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_EH_SESSION, snapshotEhSession);
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, Collections.emptySet());
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, Collections.emptySet());
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, Collections.emptySet());
-        mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, Collections.emptySet());
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, Collections.emptySet());
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, Collections.emptySet());
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, Collections.emptySet());
-        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, Collections.emptySet());
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, pendingFavorites);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, pendingHistory);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, pendingDownloads);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, pendingBookmarks);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, pendingFilters);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, pendingQuickSearches);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, pendingDownloadLabels);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_EH_SESSION, pendingEhSession);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_FAVORITES, ledgerFavorites);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_HISTORY, ledgerHistory);
         mStore.savePushLedger(serverKey, SUFFIX_LEDGER_BOOKMARKS, ledgerBookmarks);
@@ -1218,14 +1442,15 @@ public final class WebUiSyncEngine {
      */
     private void applyFavorites(List<WebUiSyncModels.SyncFavorite> favorites,
             Result result, Set<Long> snapshotFavorites, Map<String, Long> ledger,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         for (WebUiSyncModels.SyncFavorite fav : favorites) {
             String ledgerKey = Long.toString(fav.gid);
             if (fav.deleted) {
-                // §3.8: a non-priority deletion does not remove the priority
-                // platform's live copy — skip and let the next push resurrect.
-                if (!honorSoftTombstone(strategy, fav.deviceId, localDeviceId,
-                        mStore.loadLocalFavorite(fav.gid) != null)) {
+                // §3.8/v4：v4 服务器（有 policy）的墓碑统一传播；legacy 服务器
+                // 的非优先端删除不删优先端的 live 拷贝——跳过并让下个周期的
+                // push 复活（见 honorTombstone）。
+                if (!honorTombstone(strategy, fav.deviceId, localDeviceId,
+                        mStore.loadLocalFavorite(fav.gid) != null, serverPolicyPresent)) {
                     // B9: drop the ledger entry so the surviving live record
                     // is re-sent next cycle and resurrects the server record
                     // (full-push used to do this implicitly every cycle).
@@ -1250,7 +1475,10 @@ public final class WebUiSyncEngine {
                 // value so the next push does not echo it back.
                 ledger.put(ledgerKey, info.time);
                 result.pulledFavorites++;
-            } else if (aliveRecordWins(strategy, fav.deviceId, localDeviceId, fav.lastModified > local.time)) {
+            } else if (aliveRecordWins(strategy, fav.deviceId, localDeviceId,
+                    // WP4-2 跨域归一：wire lastModified 是服务器域，减 offset 后
+                    // 与本地 add time 同域可比。
+                    (fav.lastModified - mClockOffset) > local.time)) {
                 // §3.8 double-alive: the priority platform's record wins
                 // unconditionally under A/C; otherwise last-write-wins (the
                 // local favorite's push lastModified is its add time, so time
@@ -1306,7 +1534,7 @@ public final class WebUiSyncEngine {
      */
     private void applyDownloads(List<WebUiSyncModels.SyncDownload> downloads,
             Result result, Set<Long> snapshotDownloads, Map<String, Long> ledger,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         Map<Long, DownloadInfo> locals = new HashMap<>();
         for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             locals.put(info.gid, info);
@@ -1315,8 +1543,8 @@ public final class WebUiSyncEngine {
         for (WebUiSyncModels.SyncDownload dto : downloads) {
             String ledgerKey = Long.toString(dto.gid);
             if (dto.deleted) {
-                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
-                        locals.containsKey(dto.gid))) {
+                if (!honorTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.gid), serverPolicyPresent)) {
                     // B9: drop the ledger entry so the surviving live record
                     // is re-sent next cycle and resurrects the server record.
                     ledger.remove(ledgerKey);
@@ -1338,11 +1566,15 @@ public final class WebUiSyncEngine {
                 // Keep the local archive URI (not part of the wire model).
                 info.archiveUri = existing.archiveUri;
                 // U3: a local alive row at or ahead of the server survives the
-                // pull. The ledger still adopts the wire stamp (A3 semantics:
-                // an equal stamp stays silent, a newer local row re-pushes
-                // once and converges).
+                // pull. WP4-2 跨域归一：服务器域的 wire 戳减去 mClockOffset 才
+                // 与本地戳同域可比。
+                // 账本仍采纳 wire 戳（服务器域，A3 语义）：本地新建的行用本地
+                // 墙钟戳，与账本里的 wire 戳不同域、必然不等 → 该行每个周期
+                // 被 selectChangedDownloads 视为「已变」重推一次；服务器用推上
+                // 去的 lastModified 重打戳后回声（apply 采纳 wire 戳）使账本收敛。
+                // 多推一次是两域账本并存的收敛代价，数据无损，可接受。
                 if (shouldKeepLocalDownload(downloadLastModified(existing), existing.state,
-                        existing.finished, downloadLastModified(info), info.finished)) {
+                        existing.finished, downloadLastModified(info) - mClockOffset, info.finished)) {
                     ledger.put(ledgerKey, downloadLastModified(info));
                     continue;
                 }
@@ -1356,7 +1588,9 @@ public final class WebUiSyncEngine {
             // same-cycle self-push echo) never rewrites a local row with a
             // wiped (0) stamp. Ledger at the row's effective push value
             // (= what this device would send for it), which keeps the
-            // no-echo guarantee intact.
+            // no-echo guarantee intact. 账本存 wire（服务器域）戳：本地编辑用
+            // 客户端墙钟戳时每周期重推一次、回声后归账本收敛（同上的可接受
+            // 代价，见上面的注释）。
             ledger.put(ledgerKey, downloadLastModified(info));
             result.pulledDownloads++;
         }
@@ -1391,7 +1625,7 @@ public final class WebUiSyncEngine {
      */
     private void applyBookmarks(List<WebUiSyncModels.SyncBookmark> bookmarks,
             Result result, Set<Long> snapshotBookmarks, Map<String, Long> ledger,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         Map<Long, BookmarkInfo> locals = new HashMap<>();
         for (BookmarkInfo bi : mStore.getAllBookmark()) {
             locals.put(bi.gid, bi);
@@ -1417,7 +1651,10 @@ public final class WebUiSyncEngine {
                 snapshotBookmarks.add(dto.gid);
                 ledger.put(ledgerKey, info.time);
                 result.pulledBookmarks++;
-            } else if (aliveRecordWins(strategy, dto.deviceId, localDeviceId, dto.lastModified > local.time)) {
+            } else if (aliveRecordWins(strategy, dto.deviceId, localDeviceId,
+                    // WP4-2 跨域归一：wire lastModified 是服务器域，减 offset 后
+                    // 与本地 time 同域可比。
+                    (dto.lastModified - mClockOffset) > local.time)) {
                 // §3.8 double-alive: priority platform wins unconditionally
                 // under A/C; otherwise last-write-wins on lastModified.
                 copyDtoToGallery(dto, local);
@@ -1440,12 +1677,13 @@ public final class WebUiSyncEngine {
      */
     private void applyFilters(List<WebUiSyncModels.SyncFilter> filters,
             Result result, Set<String> snapshotFilters,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         for (WebUiSyncModels.SyncFilter dto : filters) {
             String key = filterKey(dto.mode, dto.text);
             Filter existing = mStore.findFilterByKey(dto.mode, dto.text);
             if (dto.deleted) {
-                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId, existing != null)) {
+                if (!honorTombstone(strategy, dto.deviceId, localDeviceId, existing != null,
+                        serverPolicyPresent)) {
                     continue;
                 }
                 // Soft tombstone: remove the local row without re-adding it.
@@ -1497,15 +1735,15 @@ public final class WebUiSyncEngine {
      */
     private void applyQuickSearches(List<WebUiSyncModels.SyncQuickSearch> searches,
             Result result, Set<String> snapshotQuickSearches,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         Map<String, QuickSearch> locals = new HashMap<>();
         for (QuickSearch qs : mStore.getAllQuickSearch()) {
             locals.put(qs.name, qs);
         }
         for (WebUiSyncModels.SyncQuickSearch dto : searches) {
             if (dto.deleted) {
-                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
-                        locals.containsKey(dto.name))) {
+                if (!honorTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.name), serverPolicyPresent)) {
                     continue;
                 }
                 QuickSearch existing = locals.remove(dto.name);
@@ -1538,15 +1776,15 @@ public final class WebUiSyncEngine {
      */
     private void applyDownloadLabels(List<WebUiSyncModels.SyncDownloadLabel> labels,
             Result result, Set<String> snapshotDownloadLabels,
-            ConflictStrategy strategy, String localDeviceId) {
+            ConflictStrategy strategy, String localDeviceId, boolean serverPolicyPresent) {
         Map<String, DownloadLabel> locals = new HashMap<>();
         for (DownloadLabel dl : mStore.getAllDownloadLabelList()) {
             locals.put(dl.getLabel(), dl);
         }
         for (WebUiSyncModels.SyncDownloadLabel dto : labels) {
             if (dto.deleted) {
-                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
-                        locals.containsKey(dto.label))) {
+                if (!honorTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.label), serverPolicyPresent)) {
                     continue;
                 }
                 DownloadLabel existing = locals.remove(dto.label);
@@ -1611,6 +1849,28 @@ public final class WebUiSyncEngine {
         deletions.addAll(pending);
         deletions.removeAll(current);
         return deletions;
+    }
+
+    /**
+     * WP4 周期中删除补记（runCycle 尾部）：重收集之后要持久化的 pending =
+     * {@code (apply后快照 ∪ 期初pending) ∖ 重收集current ∖ 本轮已推pending}。
+     * <ul>
+     *   <li>apply 后快照：周期头收集过的键基（剔除 honored 墓碑就地删除的键，
+     *       因此不会把服务器墓碑反推为本地墓碑）；</li>
+     *   <li>期初 pending：上一周期遗留的待推键，若本轮被 re-add 又再删（不在
+     *       已推集合里）也要重新登记；</li>
+     *   <li>重收集 current：周期中途 re-add 回来的键不需要墓碑；</li>
+     *   <li>本轮已推 pending：已送达服务器的墓碑不重复发。</li>
+     * </ul>
+     * 结果为空集时落盘即空串，与旧行为一致。
+     */
+    private static <T> Set<T> retainUndeliveredDeletions(Set<T> appliedSnapshot,
+            Set<T> initialPending, Set<T> currentTail, Set<T> pendingPushed) {
+        Set<T> retained = new LinkedHashSet<>(appliedSnapshot);
+        retained.addAll(initialPending);
+        retained.removeAll(currentTail);
+        retained.removeAll(pendingPushed);
+        return retained;
     }
 
     private Set<Long> collectFavoriteKeys() {

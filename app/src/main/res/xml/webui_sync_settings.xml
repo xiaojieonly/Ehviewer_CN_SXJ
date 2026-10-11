@@ -57,6 +57,13 @@
         android:title="@string/settings_webui_pull_preferences"
         app:iconSpaceReserved="false" />
 
+    <Preference
+        android:key="webui_unpair"
+        android:summary="@string/settings_webui_unpair_confirm"
+        android:title="@string/settings_webui_unpair"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
     <SwitchPreferenceCompat
         android:key="webui_remote_read"
         android:summary="@string/settings_webui_remote_read_summary"
@@ -74,6 +81,17 @@
         android:key="webui_auto_sync_interval"
         android:summary="@string/settings_webui_auto_sync_interval_summary"
         android:title="@string/settings_webui_auto_sync_interval"
+        app:iconSpaceReserved="false" />
+
+    <!-- 下载自动上传开关：本体不落 androidx preference 存储（Fragment 里
+         setPersistent(false)），直连 "webui_settings" prefs 的
+         webui_auto_upload 布尔键，与 upload 泳道的 AutoUploadPrefs 契约一致。 -->
+    <SwitchPreferenceCompat
+        android:key="webui_auto_upload"
+        android:defaultValue="true"
+        android:summary="@string/settings_webui_auto_upload_summary"
+        android:title="@string/settings_webui_auto_upload"
+        app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
 </PreferenceScreen>

@@ -1167,10 +1167,10 @@
     <string name="settings_webui_remote_read">远程阅读</string>
     <string name="settings_webui_remote_read_summary">连接服务器时，从服务器流式加载图片（而非直连 EH）；已读页面保留在本地缓存</string>
     <string name="settings_webui_conflict_strategy">同步冲突策略</string>
-    <string name="settings_webui_strategy_device_priority">Android 优先（默认）</string>
-    <string name="settings_webui_strategy_lww">最后写入胜出</string>
-    <string name="settings_webui_strategy_web_priority">WebUI 优先</string>
-    <string name="settings_webui_strategy_d2_hint">策略以 App 为准；WebUI 的修改将被下次 App 同步覆盖</string>
+    <string name="settings_webui_strategy_lww">最后写入胜出（推荐）</string>
+    <string name="settings_webui_strategy_device_priority">Android 优先（旧版兼容）</string>
+    <string name="settings_webui_strategy_web_priority">WebUI 优先（旧版兼容）</string>
+    <string name="settings_webui_strategy_d2_hint">服务器为每次同步写入打时间戳：「最后写入胜出」下时间戳最晚者生效；兼容策略仍以单侧为准</string>
     <string name="settings_webui_client_tier">客户端模式</string>
     <string name="settings_webui_client_tier_summary">App 进入 WebUI 网络时的行为档位</string>
     <string name="settings_webui_tier_0">Tier-0 独立（不连服务器）</string>
@@ -1179,11 +1179,16 @@
     <string name="settings_webui_tier_3">Tier-3 下载托管（押后）</string>
     <string name="settings_webui_tier_3_deferred_note">Tier-3 下载托管押后至独立波；当前按 Tier-2 浏览代理生效；画廊详情页已有手动委托下载入口可用</string>
     <string name="settings_webui_auto_sync_interval">自动同步间隔（秒）</string>
-    <string name="settings_webui_auto_sync_interval_summary">进入已配对网络后的周期同步间隔；0=仅网络变化时同步</string>
+    <string name="settings_webui_auto_sync_interval_summary">进入已配对网络后的周期同步间隔，默认 10 秒；0=仅网络变化时触发同步</string>
+    <string name="settings_webui_auto_upload">下载完成自动上传到 WebUI</string>
+    <string name="settings_webui_auto_upload_summary">下载完成后在局域网内静默上传到服务器，无需手动推送</string>
     <string name="settings_webui_sync_preferences">同步配置</string>
     <string name="settings_webui_sync_preferences_summary">将本机设置上传到 WebUI 服务器</string>
     <string name="settings_webui_pull_preferences">拉取配置</string>
     <string name="settings_webui_pull_preferences_summary">从 WebUI 服务器恢复设置</string>
+    <string name="settings_webui_unpair">解除配对</string>
+    <string name="settings_webui_unpair_confirm">清除本机的服务器连接与同步进度，并向服务器注销本机令牌。确定解除？</string>
+    <string name="settings_webui_unpair_done">已解除配对</string>
     <string name="settings_webui_preferences_syncing">正在同步配置…</string>
     <string name="settings_webui_preferences_pushed">本机设置已上传</string>
     <string name="settings_webui_preferences_pulled">设置已从服务器恢复</string>

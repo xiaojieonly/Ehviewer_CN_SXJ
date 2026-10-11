@@ -55,6 +55,10 @@ public class WebUiSyncStrategyTest {
 
     @Before
     public void setUp() {
+        // 防御性复位：生产装配（SiteApplication.onCreate）的 settings-backed 策略源
+        // 可能在 Robolectric 同 sandbox 内泄漏到本类（其默认已随 WebUiSettings 变为
+        // lww/10），「未装配默认」用例必须看到真正的契约缺省，不被泄漏源污染。
+        WebUiSyncEngine.setPolicySource(null);
         config = new WebUiConfig("http", "127.0.0.1", 8080, "user", "token");
         store = new InMemoryWebUiSyncStore();
         server = new InMemorySyncServer();
@@ -124,6 +128,102 @@ public class WebUiSyncStrategyTest {
                 WebUiSyncEngine.ConflictStrategy.WEB_PRIORITY, ANDROID_OTHER, ANDROID, true));
     }
 
+    /**
+     * WP5-3：honorTombstone 新重载矩阵。policy 存在（v4 服务器）→ 恒 true，
+     * 删除统一传播，优先端保留不再适用；policy 缺失（legacy）→ 与旧公式
+     * {@link WebUiSyncEngine#honorSoftTombstone} 逐格一致。
+     */
+    @Test
+    public void honorTombstoneMatrix_policyPresentAlwaysHonors_legacyFallsBack() {
+        WebUiSyncEngine.ConflictStrategy[] strategies = {
+                WebUiSyncEngine.ConflictStrategy.DEVICE_PRIORITY,
+                WebUiSyncEngine.ConflictStrategy.LWW,
+                WebUiSyncEngine.ConflictStrategy.WEB_PRIORITY,
+        };
+        String[] tombDevices = {ANDROID, ANDROID_OTHER, WEB, "ios-device-9", ""};
+        String[] localDevices = {ANDROID, WEB};
+        for (WebUiSyncEngine.ConflictStrategy strategy : strategies) {
+            for (String tomb : tombDevices) {
+                for (String local : localDevices) {
+                    for (boolean alive : new boolean[] {true, false}) {
+                        String ctx = "strategy=" + strategy + " tomb=" + tomb
+                                + " local=" + local + " alive=" + alive;
+                        // v4（pull 携带 policy）：恒遵守，与策略/平台/存活无关。
+                        assertTrue(ctx, WebUiSyncEngine.honorTombstone(
+                                strategy, tomb, local, alive, true));
+                        // legacy（无 policy）：旧公式逐格一致。
+                        assertEquals(ctx,
+                                WebUiSyncEngine.honorSoftTombstone(strategy, tomb, local, alive),
+                                WebUiSyncEngine.honorTombstone(strategy, tomb, local, alive, false));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * WP5-3 engine 级：v4（policy 存在）下拉到的 web 墓碑无条件传播——本地
+     * live 拷贝被删，不再有 §3.8 优先端保留。用例把墓碑种在首周期水位之上，
+     * 且本地记录已在首周期入账（第二周期无新内容可推），确保 pull 真的能
+     * 拿到墓碑（而不是被客户端的 live 重推先复活）。
+     */
+    @Test
+    public void policyPresent_pulledWebTombstone_localFavoriteDeleted() throws IOException {
+        server.policy = policy("device_priority");
+        store.putLocalFavorite(favorite(12));
+        WebUiSyncEngine.Result first = engine.syncInternal(config, ANDROID, 0);
+        assertEquals(1, first.pushedFavorites);
+        assertNotNull(store.loadLocalFavorite(12));
+
+        // Web 在首周期之后删除：墓碑落在水位之上，必然被 pull 拉到。
+        WebUiSyncModels.SyncFavorite tomb = new WebUiSyncModels.SyncFavorite();
+        tomb.gid = 12;
+        tomb.token = "tok12";
+        tomb.lastModified = 5000;
+        tomb.deviceId = WEB;
+        tomb.deleted = true;
+        server.favorites.put(12L, new InMemorySyncServer.Record(first.serverTimestamp + 1, true, tomb));
+
+        engine.syncInternal(config, ANDROID, first.serverTimestamp);
+
+        assertNull("v4 删除统一传播：优先端 live 拷贝也被遵守",
+                store.loadLocalFavorite(12));
+    }
+
+    /**
+     * legacy（policy=null）engine 级回退：pull 不携带策略 → 客户端按 LWW 旧
+     * 公式（priority==null → 恒遵守）处理墓碑，删除同样传播，且不走任何
+     * v4 分支（回归保护：老服务器行为不变）。
+     */
+    @Test
+    public void legacyServer_nullPolicy_tombstoneStillHonoredAsLww() throws IOException {
+        server.policy = null;
+        store.putLocalFavorite(favorite(13));
+        WebUiSyncEngine.Result first = engine.syncInternal(config, ANDROID, 0);
+        assertEquals(1, first.pushedFavorites);
+
+        WebUiSyncModels.SyncFavorite tomb = new WebUiSyncModels.SyncFavorite();
+        tomb.gid = 13;
+        tomb.token = "tok13";
+        tomb.lastModified = 5000;
+        tomb.deviceId = WEB;
+        tomb.deleted = true;
+        server.favorites.put(13L, new InMemorySyncServer.Record(first.serverTimestamp + 1, true, tomb));
+
+        engine.syncInternal(config, ANDROID, first.serverTimestamp);
+
+        assertNull("legacy 回退：LWW 下墓碑传播（旧公式 priority==null 恒遵守）",
+                store.loadLocalFavorite(13));
+    }
+
+    /**
+     * WP5-3 之后的语义说明：v4（policy 存在）下服务器墓碑统一传播（见
+     * {@link #policyPresent_pulledWebTombstone_localFavoriteDeleted}）。本用例
+     * 里墓碑种在 since=0 的水位之上，但同步顺序是 push 先行——客户端自己的
+     * live 记录先把服务端墓碑复活（device_priority 下 android live 胜 web
+     * 墓碑），pull 拉回的是复活后的 live 行，所以本地保留。保留本用例作为
+     * 「push 先行 + 优先端 live 复活」组合的回归保护。
+     */
     @Test
     public void devicePriority_webTombstone_localFavoriteRetained() throws IOException {
         server.policy = policy("device_priority");
@@ -221,6 +321,9 @@ public class WebUiSyncStrategyTest {
         mine.clientTier = 2;
         mine.autoSyncIntervalSec = 300;
         WebUiSyncEngine.setPolicySource(() -> mine);
+        // 种一条本地数据（写方法置脏）确保走完整周期：无脏 + pending 空时的
+        // 快路径会整体跳过 push（策略也就无从携带）。
+        store.putLocalFavorite(favorite(1));
 
         engine.syncInternal(config, ANDROID, 0);
 
@@ -232,12 +335,15 @@ public class WebUiSyncStrategyTest {
 
     @Test
     public void pushCarriesContractDefaultsWithoutSource() throws IOException {
+        store.putLocalFavorite(favorite(2));
+
         engine.syncInternal(config, ANDROID, 0);
 
         assertNotNull(server.lastPushPolicy);
-        assertEquals("device_priority", server.lastPushPolicy.conflictStrategy);
+        // v4 契约缺省（sync-conflict-rules §7）：lww / clientTier 1 / 10s 节拍。
+        assertEquals("lww", server.lastPushPolicy.conflictStrategy);
         assertEquals(1, server.lastPushPolicy.clientTier);
-        assertEquals(900, server.lastPushPolicy.autoSyncIntervalSec);
+        assertEquals(10, server.lastPushPolicy.autoSyncIntervalSec);
     }
 
     @Test

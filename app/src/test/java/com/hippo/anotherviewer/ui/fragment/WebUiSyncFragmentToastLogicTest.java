@@ -17,9 +17,11 @@
 package com.hippo.anotherviewer.ui.fragment;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiSyncEngine;
 
 import org.junit.Test;
@@ -103,5 +105,18 @@ public class WebUiSyncFragmentToastLogicTest {
         String message = WebUiSyncFragment.appendExtraSyncCounts("base",
                 result(0, 0, 7, 0, 0, 0, 0, 0));
         assertEquals("base、quickSearches×7", message);
+    }
+
+    @Test
+    public void testUnpairUnavailableWithoutConfig() {
+        assertFalse("未配置服务器时不能解除配对（无连接可清、无令牌可注销）",
+                WebUiSyncFragment.unpairAvailable(null));
+    }
+
+    @Test
+    public void testUnpairAvailableWithConfig() {
+        assertTrue("已配置服务器即可解除配对；token 是否有效不影响入口可用性",
+                WebUiSyncFragment.unpairAvailable(
+                        new WebUiConfig("http", "127.0.0.1", 8080, "user", "token")));
     }
 }

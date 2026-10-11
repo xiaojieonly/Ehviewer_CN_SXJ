@@ -96,6 +96,8 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     public int pushRequestCount = 0;
     /** Total entity records (live + tombstone) accepted across all pushes. */
     public long totalPushedEntities = 0;
+    /** Number of pull calls (WP5-5 fast-path assertions: pull still happens). */
+    public int pullCount = 0;
 
     public final Map<Long, Record> favorites = new LinkedHashMap<>();
     public final Map<Long, Record> history = new LinkedHashMap<>();
@@ -118,10 +120,13 @@ public class InMemorySyncServer implements WebUiSyncTransport {
             return response;
         }
         lastPushPolicy = request.policy;
-        // Strictly monotonic server clock (independent of the pushed wall-clock
-        // timestamp) so a record's serverModified is always greater than any
-        // watermark a device previously pulled with.
-        serverTimestamp++;
+        // 墙钟锚定的严格单调服务器时钟。WP5 之前是 0,1,2… 的纯计数器，与
+        // v4 的时钟域归一冲突：引擎会把 pull.serverTimestamp − 本地墙钟 当作
+        // 时钟偏移，纯计数器下该偏移 ≈ −now，所有跨域 lastModified 比较都被
+        // 推向「服务器更新」，击穿既有 LWW/守卫断言。墙钟锚定使同机测试里
+        // 偏移 ≈ 0（两域重合），同时严格单调保持「watermark 大于任何此前
+        // 拉取过的值」的语义。
+        serverTimestamp = Math.max(serverTimestamp + 1, System.currentTimeMillis());
         WebUiSyncModels.EntityCollection e = request.entities;
         pushRequestCount++;
         totalPushedEntities += e.favorites.size() + e.history.size() + e.downloads.size()
@@ -394,6 +399,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     @NonNull
     @Override
     public WebUiSyncModels.PullResponse pull(@NonNull WebUiConfig config, long since) {
+        pullCount++;
         WebUiSyncModels.PullResponse response = new WebUiSyncModels.PullResponse();
         fillFavoritePull(response.entities.favorites, favorites, since);
         fillHistoryPull(response.entities.history, history, since);

@@ -58,6 +58,10 @@ public final class WebUiSettings {
         this.appContext = context.getApplicationContext();
         this.preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         this.credentialStore = new WebUiCredentialStore();
+        // WP4-1 启动时序第一路：上限裁剪白名单的落盘通道在这里接线（另一路
+        // 在 SiteDbWebUiSyncStore 构造器）。静态幂等守卫保证只注册一次；本
+        // 调用不得创建 SiteDbWebUiSyncStore 实例，避免类初始化循环。
+        SiteDbWebUiSyncStore.wireCapPrunedPersistence();
     }
 
     /**
@@ -223,17 +227,29 @@ public final class WebUiSettings {
     public static final String STRATEGY_LWW = "lww";
     public static final String STRATEGY_WEB_PRIORITY = "web_priority";
 
-    /** Conflict strategy (D1); invalid stored values fall back to the default. */
+    /**
+     * Conflict strategy (D1); invalid stored values fall back to the default.
+     * WP5-4：默认值从 {@code device_priority} 改为 {@code lww} —— v4 服务器
+     * 自己在服务端完成冲突裁决，客户端默认不再做平台优先级仲裁。A/C 均保留
+     * 可选（旧版兼容，设置 UI 仍提供条目；常量与字符串值不动，仅默认与回退
+     * 目标变为 lww）。
+     */
     @NonNull
     public String conflictStrategy() {
-        String value = preferences.getString(KEY_CONFLICT_STRATEGY, STRATEGY_DEVICE_PRIORITY);
-        if (STRATEGY_LWW.equals(value) || STRATEGY_WEB_PRIORITY.equals(value)) return value;
-        return STRATEGY_DEVICE_PRIORITY;
+        String value = preferences.getString(KEY_CONFLICT_STRATEGY, STRATEGY_LWW);
+        if (STRATEGY_DEVICE_PRIORITY.equals(value) || STRATEGY_LWW.equals(value)
+                || STRATEGY_WEB_PRIORITY.equals(value)) {
+            return value;
+        }
+        return STRATEGY_LWW;
     }
 
     public void setConflictStrategy(@NonNull String strategy) {
-        String value = STRATEGY_DEVICE_PRIORITY;
-        if (STRATEGY_LWW.equals(strategy) || STRATEGY_WEB_PRIORITY.equals(strategy)) value = strategy;
+        String value = STRATEGY_LWW;
+        if (STRATEGY_DEVICE_PRIORITY.equals(strategy) || STRATEGY_LWW.equals(strategy)
+                || STRATEGY_WEB_PRIORITY.equals(strategy)) {
+            value = strategy;
+        }
         preferences.edit().putString(KEY_CONFLICT_STRATEGY, value).apply();
     }
 
@@ -249,10 +265,15 @@ public final class WebUiSettings {
         preferences.edit().putInt(KEY_CLIENT_TIER, Math.max(0, Math.min(3, tier))).apply();
     }
 
-    /** Auto-sync interval seconds (D4); 0 = network-change only; negative clamps to 0. */
+    /**
+     * Auto-sync interval seconds (D4); 0 = network-change only; negative clamps
+     * to the default. WP5-4：默认 900→10 —— v4 的同步周期变廉价（无脏快路径
+     * 不发 push），短周期（约 10s）让跨设备收敛更快；0 仍是「仅网络变化触发」，
+     * 负值回退到默认 10。
+     */
     public int autoSyncIntervalSec() {
-        int value = preferences.getInt(KEY_AUTO_SYNC_INTERVAL_SEC, 900);
-        return value >= 0 ? value : 900;
+        int value = preferences.getInt(KEY_AUTO_SYNC_INTERVAL_SEC, 10);
+        return value >= 0 ? value : 10;
     }
 
     public void setAutoSyncIntervalSec(int seconds) {

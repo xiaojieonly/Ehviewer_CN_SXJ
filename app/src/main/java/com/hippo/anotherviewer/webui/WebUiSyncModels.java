@@ -159,11 +159,11 @@ public final class WebUiSyncModels {
         public List<SyncEhSession> ehSession = new ArrayList<>();
     }
 
-    /** syncPolicy (sync-schemas.json syncPolicy, ADR-0003 / contract v2 §8). */
+    /** syncPolicy (sync-schemas.json syncPolicy；v4 缺省 lww/10s，ADR-0006 D2/D7). */
     public static class SyncPolicy {
-        public String conflictStrategy = "device_priority";
+        public String conflictStrategy = "lww";
         public int clientTier = 1;
-        public int autoSyncIntervalSec = 900;
+        public int autoSyncIntervalSec = 10;
     }
 
     /** POST /api/v1/sync/push body. */

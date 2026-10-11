@@ -81,10 +81,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SiteDB {
 
     private static final String TAG = SiteDB.class.getSimpleName();
+
+    /**
+     * 同步范围内任一公开写方法的「脏」标志（WP5-4 无脏快路径判据）。
+     * WebUiSyncEngine 在每个周期头部 getAndSet(false) 取走：false 且 8 个
+     * pending 集合全空时走快路径（只 pull+apply，不发 push）。所有会改变
+     * 同步实体集合/内容的写路径都必须置位，否则对应的本地变更会被快路径
+     * 漏推一个周期（删除检测靠快照差分，快路径跳过该差分）。置位用
+     * set(true) 保持粘性——周期进行中的并发写入不会被周期尾的读取吞掉。
+     */
+    public static final AtomicBoolean SYNC_DIRTY = new AtomicBoolean(false);
+
+    /** 置位同步脏标志；引擎据此决定下个周期走全量差分还是快路径。 */
+    public static void markSyncDirty() {
+        SYNC_DIRTY.set(true);
+    }
 
     /**
      * 因 MAX_HISTORY_COUNT 上限被裁剪的历史 gid。这些行本地已不存在但并非
@@ -94,6 +110,67 @@ public class SiteDB {
      * 重新阅读同一画廊时行会回到本地现存集，排除项只是冗余不再生效）。
      */
     private static final Set<Long> sCapPrunedHistoryGids = new HashSet<>();
+
+    /**
+     * 白名单的持久化通道（WP4-1）。sCapPrunedHistoryGids 是进程内存活集合，
+     * 进程重启即清零——若不落盘，重启后「上限裁剪」会被删除检测当成用户删除
+     * 推墓碑给服务器。由 SiteDbWebUiSyncStore.wireCapPrunedPersistence 注册
+     * 生产实现（webui_sync_state prefs）；测试注册内存假实现。
+     * {@link #save} 全量落盘（幂等）；{@link #load} 在注册时被调用一次。
+     */
+    public interface CapPrunedPersistence {
+        void save(Set<Long> gids);
+
+        Set<Long> load();
+    }
+
+    private static volatile CapPrunedPersistence sCapPrunedPersistence;
+
+    /**
+     * 注册白名单持久化回调；传 {@code null} 撤销（回到纯内存行为）。
+     * 注册时立即 load 一次并把结果<b>并集灌入</b>内存集合：不覆盖会话内
+     * 已登记的新条目（注册可能发生在若干裁剪之后），异常静默——持久化通道
+     * 故障只损失重启恢复能力，不得影响主流程。
+     */
+    public static void setCapPrunedPersistence(@Nullable CapPrunedPersistence persistence) {
+        synchronized (SiteDB.class) {
+            sCapPrunedPersistence = persistence;
+            if (persistence == null) {
+                return;
+            }
+            try {
+                Set<Long> persisted = persistence.load();
+                if (persisted != null) {
+                    sCapPrunedHistoryGids.addAll(persisted);
+                }
+            } catch (Exception e) {
+                // 静默：load 失败保持内存现状（等价旧版无持久化行为）。
+            }
+        }
+    }
+
+    /** 清空内存白名单。仅供测试模拟进程重启后的空集起点。 */
+    public static void clearCapPrunedHistoryGids() {
+        synchronized (SiteDB.class) {
+            sCapPrunedHistoryGids.clear();
+        }
+    }
+
+    /**
+     * 全量落盘当前白名单。必须在持有 SiteDB.class 锁的写点调用（与登记
+     * 原子）；失败静默——内存白名单仍然有效，下次登记会重试落盘。
+     */
+    private static void saveCapPrunedHistoryGidsLocked() {
+        CapPrunedPersistence persistence = sCapPrunedPersistence;
+        if (persistence == null) {
+            return;
+        }
+        try {
+            persistence.save(new HashSet<>(sCapPrunedHistoryGids));
+        } catch (Exception e) {
+            // 静默：落盘失败不影响内存白名单与裁剪本身。
+        }
+    }
 
     /** 供同步引擎把上限裁剪的 gid 并入删除检测的「本地现存」集合。 */
     public static Set<Long> getCapPrunedHistoryGids() {
@@ -348,6 +425,24 @@ public class SiteDB {
         MAX_HISTORY_COUNT = Settings.getHistoryInfoSize();
     }
 
+    /**
+     * 仅供测试：关闭并丢弃共享 DaoSession 与底层连接，释放 eh.db 的文件句柄。
+     * Windows 下打开中的文件无法被 deleteDatabase 删除，遗留的 v10 文件会让
+     * 「模拟旧版 v9」的 helper 走进降级路径（Can't downgrade 10→9）。生产路径
+     * 不调用（单进程常驻会话，随进程退出释放）。
+     */
+    static synchronized void closeForTest() {
+        DaoSession session = sDaoSession;
+        sDaoSession = null;
+        if (session != null) {
+            try {
+                session.getDatabase().close();
+            } catch (Exception ignored) {
+                // 释放失败只影响测试清理，不影响任何生产语义。
+            }
+        }
+    }
+
     public static boolean needMerge() {
         return sNewDB && sHasOldDB;
     }
@@ -562,6 +657,7 @@ public class SiteDB {
         if (fromPosition == toPosition) {
             return;
         }
+        markSyncDirty(); // 顺序调整会改 time（推送 lastModified），同步范围写
         DownloadsDao dao = sDaoSession.getDownloadsDao();
         boolean reverse = fromPosition > toPosition;
         int offset = reverse ? toPosition : fromPosition;
@@ -582,6 +678,7 @@ public class SiteDB {
 
     // Insert or update
     public static synchronized void putDownloadInfo(DownloadInfo downloadInfo) {
+        markSyncDirty(); // 下载行新增/状态变化是同步实体的核心写路径
         DownloadsDao dao = sDaoSession.getDownloadsDao();
         if (null != dao.load(downloadInfo.gid)) {
             // Update
@@ -593,6 +690,7 @@ public class SiteDB {
     }
 
     public static synchronized void removeDownloadInfo(long gid) {
+        markSyncDirty(); // 删除必须进入快照差分 → 墓碑推送
         sDaoSession.getDownloadsDao().deleteByKey(gid);
     }
 
@@ -611,6 +709,7 @@ public class SiteDB {
      * Insert or update
      */
     public static synchronized void putDownloadDirname(long gid, String dirname) {
+        markSyncDirty(); // 同步范围写（下载目录名随下载行走线）
         DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
         DownloadDirname raw = dao.load(gid);
         if (raw != null) { // Update
@@ -625,11 +724,13 @@ public class SiteDB {
     }
 
     public static synchronized void removeDownloadDirname(long gid) {
+        markSyncDirty();
         DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
         dao.deleteByKey(gid);
     }
 
     public static synchronized void updateDownloadDirname(long removeGid, long newGid, String dirname) {
+        markSyncDirty();
         DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
         dao.deleteByKey(removeGid);
         DownloadDirname raw = dao.load(newGid);
@@ -645,6 +746,7 @@ public class SiteDB {
     }
 
     public static synchronized void clearDownloadDirname() {
+        markSyncDirty();
         DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
         dao.deleteAll();
     }
@@ -664,6 +766,7 @@ public class SiteDB {
             return result.get(0);
         }
 
+        markSyncDirty(); // 新标签是同步实体写
         DownloadLabel raw = new DownloadLabel();
         raw.setLabel(label);
         raw.setTime(System.currentTimeMillis());
@@ -679,11 +782,13 @@ public class SiteDB {
         if (label != null) {
             return label;
         }
+        markSyncDirty();
         raw.setId(dao.insert(raw));
         return raw;
     }
 
     public static synchronized void updateDownloadLabel(DownloadLabel raw) {
+        markSyncDirty();
         DownloadLabelDao dao = sDaoSession.getDownloadLabelDao();
         dao.update(raw);
     }
@@ -692,6 +797,7 @@ public class SiteDB {
         if (fromPosition == toPosition) {
             return;
         }
+        markSyncDirty(); // 顺序调整改 time
 
         boolean reverse = fromPosition > toPosition;
         int offset = reverse ? toPosition : fromPosition;
@@ -714,6 +820,7 @@ public class SiteDB {
     }
 
     public static synchronized void removeDownloadLabel(DownloadLabel raw) {
+        markSyncDirty(); // 删除必须进墓碑推送
         DownloadLabelDao dao = sDaoSession.getDownloadLabelDao();
         dao.delete(raw);
     }
@@ -759,10 +866,15 @@ public class SiteDB {
     }
 
     public static synchronized void removeLocalFavorites(long gid) {
+        markSyncDirty(); // 删除必须进墓碑推送
         sDaoSession.getLocalFavoritesDao().deleteByKey(gid);
     }
 
     public static synchronized void removeLocalFavorites(long[] gidArray) {
+        if (gidArray.length == 0) {
+            return;
+        }
+        markSyncDirty();
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         for (long gid : gidArray) {
             dao.deleteByKey(gid);
@@ -777,6 +889,7 @@ public class SiteDB {
     public static synchronized void putLocalFavorite(GalleryInfo galleryInfo) {
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         if (null == dao.load(galleryInfo.gid)) {
+            markSyncDirty(); // 收藏为 union 合并实体：新增必须推送
             LocalFavoriteInfo info;
             if (galleryInfo instanceof LocalFavoriteInfo) {
                 info = (LocalFavoriteInfo) galleryInfo;
@@ -867,6 +980,7 @@ public class SiteDB {
     }
 
     public static synchronized void insertQuickSearch(QuickSearch quickSearch) {
+        markSyncDirty();
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         quickSearch.id = null;
         if (quickSearch.time==0L){
@@ -876,6 +990,10 @@ public class SiteDB {
     }
 
     public static synchronized void insertQuickSearchList(List<QuickSearch> quickSearchList) {
+        if (quickSearchList.isEmpty()) {
+            return;
+        }
+        markSyncDirty();
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         for (int i = 0; i < quickSearchList.size(); i++) {
             QuickSearch search = quickSearchList.get(i);
@@ -888,6 +1006,7 @@ public class SiteDB {
     public static synchronized void takeOverQuickSearchList(List<QuickSearch> quickSearchList) {
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         List<QuickSearch> allList = dao.queryBuilder().orderAsc(QuickSearchDao.Properties.Time).list();
+        boolean inserted = false;
         for (int i = 0; i < quickSearchList.size(); i++) {
             QuickSearch newSearch = quickSearchList.get(i);
             if (newSearch == null) {
@@ -902,19 +1021,26 @@ public class SiteDB {
                 }
             }
             if (insert) {
+                inserted = true;
                 newSearch.id = null;
                 newSearch.time = System.currentTimeMillis();
                 newSearch.id = dao.insert(newSearch);
             }
         }
+        // 接管路径直接 dao.insert（不经 insertQuickSearch），必须显式置脏。
+        if (inserted) {
+            markSyncDirty();
+        }
     }
 
     public static synchronized void updateQuickSearch(QuickSearch quickSearch) {
+        markSyncDirty();
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         dao.update(quickSearch);
     }
 
     public static synchronized void deleteQuickSearch(QuickSearch quickSearch) {
+        markSyncDirty(); // 删除必须进墓碑推送
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         dao.delete(quickSearch);
     }
@@ -931,6 +1057,8 @@ public class SiteDB {
         if (fromPosition == toPosition) {
             return;
         }
+    // 顺序调整改 time（推送 lastModified）
+        markSyncDirty();
 
     // 判断是否需要反向移动
         boolean reverse = fromPosition > toPosition;
@@ -986,6 +1114,7 @@ public class SiteDB {
         if (info == null) {
             return;
         }
+        markSyncDirty(); // 阅读进度刷新会改 time（推送 lastModified）
         info.page = page;
         info.time = System.currentTimeMillis();
         dao.update(info);
@@ -995,10 +1124,11 @@ public class SiteDB {
         HistoryDao dao = sDaoSession.getHistoryDao();
         HistoryInfo info = dao.load(galleryInfo.gid);
         if (null != info) {
-            // Update time
+            markSyncDirty(); // 重读：time 前移即推送 lastModified 前移
             info.time = System.currentTimeMillis();
             dao.update(info);
         } else {
+            markSyncDirty();
             // New history
             info = new HistoryInfo(galleryInfo);
             info.time = System.currentTimeMillis();
@@ -1011,19 +1141,26 @@ public class SiteDB {
                 list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
                         .limit(-1).offset(MAX_HISTORY_COUNT).list();
             }
-            // 记录因上限被裁剪的 gid：这些行本地已不存在但并非用户主动删除，
+            // 记录因上限被裁剪的 gid：这些行本地已不存在但并非用户删除，
             // 同步引擎不得把它们当作删除推给服务器（否则配对后历史被裁到
             // 上限并逐条硬删服务器端，表现为「历史被清空」）。
             synchronized (SiteDB.class) {
                 for (HistoryInfo pruned : list) {
                     sCapPrunedHistoryGids.add(pruned.gid);
                 }
+                // WP4-1：登记后立即全量落盘（幂等），否则进程重启后白名单
+                // 清零，被裁剪的行仍会被当成删除推送。
+                saveCapPrunedHistoryGidsLocked();
             }
             dao.deleteInTx(list);
         }
     }
 
     public static synchronized void putHistoryInfo(List<HistoryInfo> historyInfoList) {
+        if (historyInfoList.isEmpty()) {
+            return;
+        }
+        markSyncDirty(); // 批量导入的新历史行是同步实体写（与裁剪分支无关）
         HistoryDao dao = sDaoSession.getHistoryDao();
         for (HistoryInfo info : historyInfoList) {
             if (null == dao.load(info.gid)) {
@@ -1033,15 +1170,29 @@ public class SiteDB {
 
         List<HistoryInfo> list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
                 .limit(-1).offset(MAX_HISTORY_COUNT).list();
+        if (list.isEmpty()) {
+            return;
+        }
+        // 修复既有 bug：批量导入路径（导入 DB）此前只裁剪不登记白名单——
+        // 导入大库后超出上限的历史会在下个同步周期被快照差分当成用户删除，
+        // 逐条硬删服务器端。与单条版同一处理：登记 + 立即落盘。
+        synchronized (SiteDB.class) {
+            for (HistoryInfo pruned : list) {
+                sCapPrunedHistoryGids.add(pruned.gid);
+            }
+            saveCapPrunedHistoryGidsLocked();
+        }
         dao.deleteInTx(list);
     }
 
     public static synchronized void deleteHistoryInfo(HistoryInfo info) {
+        markSyncDirty(); // 删除必须进墓碑推送
         HistoryDao dao = sDaoSession.getHistoryDao();
         dao.delete(info);
     }
 
     public static synchronized void clearHistoryInfo() {
+        markSyncDirty();
         HistoryDao dao = sDaoSession.getHistoryDao();
         dao.deleteAll();
     }
@@ -1073,6 +1224,9 @@ public class SiteDB {
      * {@code time} when lastModified is absent or 0.
      */
     public static synchronized void applySyncedHistory(HistoryInfo incoming) {
+        // apply 也是写路径：即使 LWW 落选也置脏代价极小（下个周期多一次全量
+        // 差分），而落选判定在 dao 层不可见，宁可保守。
+        markSyncDirty();
         HistoryDao dao = sDaoSession.getHistoryDao();
         HistoryInfo existing = dao.load(incoming.gid);
         if (existing == null) {
@@ -1132,6 +1286,7 @@ public class SiteDB {
      * Inserts instead when the row no longer exists (removed concurrently).
      */
     public static synchronized void updateLocalFavorite(LocalFavoriteInfo info) {
+        markSyncDirty(); // 收藏元数据刷新（同步 apply 与本地编辑共用入口）
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         LocalFavoriteInfo existing = dao.load(info.gid);
         if (existing == null) {

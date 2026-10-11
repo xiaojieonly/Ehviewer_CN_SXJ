@@ -31,6 +31,7 @@ import com.hippo.anotherviewer.dao.DaoMaster;
 import com.hippo.anotherviewer.dao.PageHashStore;
 
 import org.greenrobot.greendao.database.StandardDatabase;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +59,13 @@ import java.util.Locale;
  *       version, with pre-existing rows and the user_version bump surviving.</li>
  * </ul>
  */
-@Config(manifest = Config.NONE)
+// application 强制为朴素 Application：二进制资源模式下 manifest 的
+// SiteApplication 仍会被实例化（Config.NONE 不再禁用它），其 onCreate 里的
+// SiteDB.initialize 会预打开 v10 的 eh.db 并持句柄——Windows 下
+// deleteDatabase 静默失败，testExistingV9File... 的旧版 helper 会撞上
+// 降级保护（Can't downgrade 10→9）。本类自行初始化所需组件，不需要
+// SiteApplication。
+@Config(manifest = Config.NONE, application = android.app.Application.class)
 @RunWith(RobolectricTestRunner.class)
 public class SiteDbPageFileHashTest {
 
@@ -87,6 +94,14 @@ public class SiteDbPageFileHashTest {
         Context context = RuntimeEnvironment.application;
         AppConfig.initialize(context);
         Settings.initialize(context);
+    }
+
+    @After
+    public void tearDown() {
+        // 释放 eh.db 句柄：用例里 SiteDB.initialize 打开的连接在此 JVM 内常驻，
+        // Windows 下句柄未释放时 deleteDatabase 静默失败，下一个用例的旧版
+        // helper 会撞上遗留的 v10 文件（Can't downgrade 10→9）。
+        SiteDB.closeForTest();
     }
 
     private static SQLiteDatabase newDb() {

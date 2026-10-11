@@ -37,6 +37,9 @@ import com.hippo.anotherviewer.dao.DownloadLabel;
 import com.hippo.anotherviewer.spider.SpiderDen;
 import com.hippo.anotherviewer.spider.SpiderInfo;
 import com.hippo.anotherviewer.spider.SpiderQueen;
+import com.hippo.anotherviewer.upload.AutoUploadPrefs;
+import com.hippo.anotherviewer.upload.DownloadUploadService;
+import com.hippo.anotherviewer.webui.WebUiSettings;
 import com.hippo.anotherviewer.webui.WebUiSyncEngine;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.Image1;
@@ -186,6 +189,28 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     private void saveDownloadInfo(DownloadInfo info) {
         info.lastModified = System.currentTimeMillis();
         SiteDB.putDownloadInfo(info);
+    }
+
+    /**
+     * WP7：把单个 gid 交给 WebUI 推送服务精推（下载完成/导入完成钩子）。
+     * 依次过两道门：服务器已配置（host 非空即可，token 未配也不会崩）→
+     * 自动上传开关（默认开）；pushGids 内部还会再查一次配置并静默短路。
+     * 整体 try/catch(Throwable)：该钩子绝不影响下载主流程——最坏只是丢
+     * 一次自动推送，由周期对账补漏；后台线程场景下系统拒绝 startService
+     * 的异常也在这里吞掉，而不是打断下载/导入调用方。
+     */
+    private void maybeAutoUploadToWebUi(long gid) {
+        try {
+            if (!new WebUiSettings(mContext).isConfigured()) {
+                return;
+            }
+            if (!AutoUploadPrefs.isEnabled(mContext)) {
+                return;
+            }
+            DownloadUploadService.pushGids(mContext, Collections.singletonList(gid));
+        } catch (Throwable t) {
+            Log.e(TAG, "Auto upload to WebUI skipped for gid " + gid, t);
+        }
     }
 
     public void replaceInfo(DownloadInfo newInfo, DownloadInfo oldInfo) {
@@ -804,6 +829,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         // Save to
         saveDownloadInfo(info);
+
+        // WP7：经 WebUI 同步落成本机的 FINISH 行也走同一自动上传钩子；
+        // 其他 state（NONE/WAIT…）不触发。放在 saveDownloadInfo 之后，
+        // 行已落库，推送服务消费时读内存态能拿到完整数据。
+        if (state == DownloadInfo.STATE_FINISH) {
+            maybeAutoUploadToWebUi(galleryInfo.gid);
+        }
 
         // Notify
         for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -1484,6 +1516,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             // Original SMB backup logic for local paths
                             new com.hippo.anotherviewer.smb.SmbBackupManager(mContext).syncGalleryToBackup(info);
                         }
+                        // WP7：转 FINISH 即自动上传到 WebUI 服务器（可开关，默认开）。
+                        // 钩子插在 SMB 钩子闭合处、saveDownloadInfo 之前，仍在
+                        // legacy==0 块内：state 已是 FINISH，Intent 只带 gid，推送
+                        // 服务消费时再读内存态，不依赖此处与落库的先后顺序。
+                        maybeAutoUploadToWebUi(info.gid);
                     } else {
                         info.state = DownloadInfo.STATE_FAILED;
                     }

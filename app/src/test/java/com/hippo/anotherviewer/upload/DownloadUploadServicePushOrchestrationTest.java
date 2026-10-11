@@ -18,15 +18,21 @@ package com.hippo.anotherviewer.upload;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.util.SparseArray;
 
 import com.hippo.anotherviewer.AppConfig;
 import com.hippo.anotherviewer.Settings;
 import com.hippo.anotherviewer.SiteDB;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
+import com.hippo.anotherviewer.dao.DownloadInfo;
+import com.hippo.anotherviewer.download.DownloadManager;
 import com.hippo.anotherviewer.spider.SpiderInfo;
 import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiUploadClient;
@@ -39,6 +45,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import java.io.File;
@@ -51,12 +58,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Interceptor;
@@ -89,6 +99,7 @@ public class DownloadUploadServicePushOrchestrationTest {
 
     private File tempRoot;
     private File downloadDir;
+    private Context context;
     private DownloadUploadService service;
     private WebUiConfig config;
     private Method pushOneMethod;
@@ -106,7 +117,7 @@ public class DownloadUploadServicePushOrchestrationTest {
         downloadDir = new File(tempRoot, "dl");
         assertTrue(downloadDir.mkdirs());
 
-        Context context = RuntimeEnvironment.application;
+        context = RuntimeEnvironment.application;
         AppConfig.initialize(context);
         Settings.initialize(context);
         SiteDB.initialize(context);
@@ -127,6 +138,10 @@ public class DownloadUploadServicePushOrchestrationTest {
         keyField.setAccessible(true);
         prefsKey = (String) keyField.get(null);
         clearPushedPrefs();
+        // WP7：webui_settings（host/自动开关，与 AutoUploadPrefs 同文件）整文件
+        // 清空，逐用例隔离；需要「已配置」的用例各自 seedWebUiHost()。
+        clearWebUiSettingsPrefs();
+        drainStartedServices();
 
         injectFakeClient();
     }
@@ -572,8 +587,283 @@ public class DownloadUploadServicePushOrchestrationTest {
     }
 
     // ------------------------------------------------------------------
+    // WP7：pushGids 精推入口（静态，经 ShadowApplication 验证）
+    // ------------------------------------------------------------------
+
+    @Test
+    public void pushGidsWithoutConfiguredServerIsNoOp() {
+        // 不 seed host：isConfigured()==false → 静默返回（自动钩子高频调用，
+        // 不得 Toast，也不得拉起服务）。
+        DownloadUploadService.pushGids(context, Collections.singletonList(1L));
+        assertNull(Shadows.shadowOf((Application) context).getNextStartedService());
+    }
+
+    @Test
+    public void pushGidsWithEmptyListIsNoOpEvenWhenConfigured() {
+        seedWebUiHost();
+        DownloadUploadService.pushGids(context, Collections.<Long>emptyList());
+        assertNull("空表（对账无缺漏的常见路径）不发 Intent",
+                Shadows.shadowOf((Application) context).getNextStartedService());
+    }
+
+    @Test
+    public void pushGidsWhenConfiguredStartsServiceWithGidsExtra() {
+        seedWebUiHost();
+        DownloadUploadService.pushGids(context, Arrays.asList(7L, 8L));
+
+        Intent intent = Shadows.shadowOf((Application) context).getNextStartedService();
+        assertNotNull(intent);
+        assertEquals(DownloadUploadService.ACTION_PUSH_GIDS, intent.getAction());
+        assertEquals(DownloadUploadService.class.getName(),
+                intent.getComponent().getClassName());
+        assertEquals(Arrays.asList(7L, 8L),
+                intent.getSerializableExtra(DownloadUploadService.EXTRA_GIDS));
+    }
+
+    // ------------------------------------------------------------------
+    // WP7：runPushLoop 队列消费（精推只推指定 gid + FINISH 复核）
+    // ------------------------------------------------------------------
+
+    @Test
+    public void runPushLoopPushesOnlyEnqueuedGidsAndValidatesFinishState() throws Exception {
+        seedWebUiHost();
+        DownloadManager dm = downloadManagerWithLabel("auto");
+        // A：完整布局 + 排队响应，应全流程推送；B：在册 FINISH 但无 spider 文件
+        //（pushOne 本地判失败、零网络）；999：入队后从管理器消失 → 循环复核跳过。
+        dm.addDownload(makeGallery(301L, "tok301", 1, true), "auto", DownloadInfo.STATE_FINISH);
+        dm.addDownload(newGalleryInfo(302L, "tok302"), "auto", DownloadInfo.STATE_FINISH);
+        enqueue(200, "{\"success\":true}");
+        enqueue(200, "{}");   // page 1
+        enqueue(200, "true"); // complete
+
+        enqueueViaReflection(Arrays.asList(301L, 302L, 999L));
+        runPushLoopInBackground(dm);
+
+        assertEquals("只有 A 发起网络请求", 3, requests.size());
+        assertTrue(requests.get(0).isPutInit(301L));
+        assertTrue(requests.get(1).isPage(1));
+        assertTrue(requests.get(2).isComplete());
+        for (RecordedRequest request : requests) {
+            assertFalse("B/999 的 gid 不得出现在任何请求里", request.path.contains("302"));
+        }
+        assertTrue("排队响应应全部消费", queued.isEmpty());
+    }
+
+    @Test
+    public void runPushLoopWithoutConfiguredServerFinishesWithoutRequests() throws Exception {
+        // 不 seed host：loadConfig()==null → Toast + finish(null)；
+        // 关键不变量：worker 结束必须复位 sRunning，否则后续推送假死。
+        DownloadManager dm = downloadManagerWithLabel("idle");
+        runPushLoopInBackground(dm);
+        assertEquals(0, requests.size());
+        assertFalse("结束后必须复位运行标记（防假死）", DownloadUploadService.isRunning());
+    }
+
+    // ------------------------------------------------------------------
+    // WP7：入队去重/追加合并 + 全量扫描
+    // ------------------------------------------------------------------
+
+    @Test
+    public void enqueueGidsDeduplicatesAcrossAppendsAndPreservesOrder() throws Exception {
+        enqueueViaReflection(Arrays.asList(5L, 6L, 5L));
+        enqueueViaReflection(Arrays.asList(6L, 7L)); // 运行中追加，含重复
+
+        Method poll = DownloadUploadService.class.getDeclaredMethod("pollNextGid");
+        poll.setAccessible(true);
+        List<Long> drained = new ArrayList<>();
+        Long gid;
+        while ((gid = (Long) poll.invoke(service)) != null) {
+            drained.add(gid);
+        }
+        assertEquals("各 gid 恰一次且顺序稳定", Arrays.asList(5L, 6L, 7L), drained);
+    }
+
+    @Test
+    public void scanFinishedGidsCollectsOnlyFinishedInMemoryOrder() {
+        // 先登记 label 再 addDownload（构造器只登记既有 label）。
+        DownloadManager dm = downloadManagerWithLabel("scan");
+        dm.addDownload(newGalleryInfo(401L, "tok401"), "scan", DownloadInfo.STATE_FINISH);
+        dm.addDownload(newGalleryInfo(402L, "tok402"), "scan", DownloadInfo.STATE_NONE);
+        dm.addDownload(newGalleryInfo(403L, "tok403"), "scan", DownloadInfo.STATE_FINISH);
+        // addFirst 入列 → 内存序为倒序；只收 FINISH。
+        assertEquals(Arrays.asList(403L, 401L), DownloadUploadService.scanFinishedGids(dm));
+    }
+
+    @Test
+    public void onStartCommandWhileRunningOnlyEnqueuesWithoutStoppingWorker() throws Exception {
+        AtomicBoolean running = companionRunning();
+        running.set(true); // 强制「已在运行」，走 CAS 失败路径
+        try {
+            Intent intent = new Intent(context, DownloadUploadService.class);
+            intent.setAction(DownloadUploadService.ACTION_PUSH_GIDS);
+            intent.putExtra(DownloadUploadService.EXTRA_GIDS,
+                    new ArrayList<>(Arrays.asList(11L, 12L)));
+
+            service.onStartCommand(intent, 0, 1);
+
+            Method poll = DownloadUploadService.class.getDeclaredMethod("pollNextGid");
+            poll.setAccessible(true);
+            assertEquals(Long.valueOf(11L), poll.invoke(service));
+            assertEquals(Long.valueOf(12L), poll.invoke(service));
+            assertNull(poll.invoke(service));
+            assertTrue("入队路径不得复位运行标记", running.get());
+            assertNull("运行中追加不得再拉起服务", Shadows.shadowOf((Application) context).getNextStartedService());
+        } finally {
+            running.set(false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // WP7：AutoUploadPrefs / freshPushedGids / UploadReconciler
+    // ------------------------------------------------------------------
+
+    @Test
+    public void autoUploadPrefsDefaultEnabledAndRoundTrips() {
+        assertTrue("默认开", AutoUploadPrefs.isEnabled(context));
+        AutoUploadPrefs.setEnabled(context, false);
+        assertFalse(AutoUploadPrefs.isEnabled(context));
+        AutoUploadPrefs.setEnabled(context, true);
+        assertTrue(AutoUploadPrefs.isEnabled(context));
+    }
+
+    @Test
+    public void freshPushedGidsKeepsOnlyFreshWellFormedEntries() {
+        long now = System.currentTimeMillis();
+        seedPushedRaw(
+                DownloadUploadService.encodePushedEntry(61L, now - 1000L), // 鲜活
+                DownloadUploadService.encodePushedEntry(62L,
+                        now - DownloadUploadService.PUSHED_GID_TTL_MS - 1L), // 过期
+                "63",                                                      // 旧版裸 gid
+                "64:oops",                                                 // 损坏时间戳
+                DownloadUploadService.encodePushedEntry(62L, now - 2000L)); // 62 另一条鲜活
+
+        Set<Long> fresh = DownloadUploadService.freshPushedGids(context);
+        assertTrue(fresh.contains(61L));
+        assertTrue("同 gid 任一条目鲜活即算", fresh.contains(62L));
+        assertFalse(fresh.contains(63L));
+        assertFalse(fresh.contains(64L));
+    }
+
+    @Test
+    public void missingGidsDiffIsDistinctAndOrderPreserving() {
+        assertEquals(Arrays.asList(3L, 1L),
+                UploadReconciler.missingGids(Arrays.asList(3L, 1L, 3L, 2L), Arrays.asList(2L)));
+        assertEquals(Arrays.asList(9L), UploadReconciler.missingGids(
+                Arrays.asList(9L), Collections.<Long>emptyList()));
+        assertTrue(UploadReconciler.missingGids(
+                Collections.<Long>emptyList(), Arrays.asList(1L, 2L)).isEmpty());
+        assertTrue("全部已推送 → 空差集", UploadReconciler.missingGids(
+                Arrays.asList(1L, 2L), Arrays.asList(2L, 1L)).isEmpty());
+    }
+
+    @Test
+    public void maybeEnqueueMissingEnqueuesOnlyUnpushedFinishedGids() {
+        // 关掉下载钩子（并与「host 后 seed」双保险），隔离被测对象：
+        // addDownload(FINISH) 不再触发 DownloadManager 的自动上传。
+        AutoUploadPrefs.setEnabled(context, false);
+        DownloadManager dm = downloadManagerWithLabel("reconcile");
+        dm.addDownload(newGalleryInfo(501L, "tok501"), "reconcile", DownloadInfo.STATE_FINISH);
+        dm.addDownload(newGalleryInfo(502L, "tok502"), "reconcile", DownloadInfo.STATE_FINISH);
+        dm.addDownload(newGalleryInfo(503L, "tok503"), "reconcile", DownloadInfo.STATE_NONE);
+        seedPushedRaw(DownloadUploadService.encodePushedEntry(501L, System.currentTimeMillis()));
+        seedWebUiHost(); // pushGids 需要 isConfigured
+
+        UploadReconciler.maybeEnqueueMissing(context, dm);
+
+        Intent intent = Shadows.shadowOf((Application) context).getNextStartedService();
+        assertNotNull("存在缺漏就必须发 Intent", intent);
+        assertEquals(DownloadUploadService.ACTION_PUSH_GIDS, intent.getAction());
+        assertEquals("只差 502：501 已鲜活推送、503 非 FINISH",
+                Collections.singletonList(502L),
+                intent.getSerializableExtra(DownloadUploadService.EXTRA_GIDS));
+    }
+
+    @Test
+    public void maybeEnqueueMissingSendsNothingWhenNothingMissing() {
+        AutoUploadPrefs.setEnabled(context, false);
+        DownloadManager dm = downloadManagerWithLabel("reconcile2");
+        dm.addDownload(newGalleryInfo(511L, "tok511"), "reconcile2", DownloadInfo.STATE_FINISH);
+        seedPushedRaw(DownloadUploadService.encodePushedEntry(511L, System.currentTimeMillis()));
+        seedWebUiHost();
+
+        UploadReconciler.maybeEnqueueMissing(context, dm);
+        assertNull("全部已推送 → 空集不发", Shadows.shadowOf((Application) context).getNextStartedService());
+
+        // 全空下载列表同样静默。
+        DownloadManager empty = downloadManagerWithLabel("reconcile3");
+        UploadReconciler.maybeEnqueueMissing(context, empty);
+        assertNull(Shadows.shadowOf((Application) context).getNextStartedService());
+    }
+
+    // ------------------------------------------------------------------
     // helpers
     // ------------------------------------------------------------------
+
+    /** 与 WebUiSettings/AutoUploadPrefs 共用的偏好文件。 */
+    private void clearWebUiSettingsPrefs() {
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+                .edit().clear().commit();
+    }
+
+    /** isConfigured() = host 非空；token 可空（load 走降级，不触碰 KeyStore 生成）。 */
+    private void seedWebUiHost() {
+        context.getSharedPreferences("webui_settings", Context.MODE_PRIVATE)
+                .edit().putString("host", "127.0.0.1").commit();
+    }
+
+    private void drainStartedServices() {
+        while (Shadows.shadowOf((Application) context).getNextStartedService() != null) {
+            // 排空 shadow 队列，隔离用例间残留
+        }
+    }
+
+    /**
+     * 带预登记 label 的 DownloadManager：addDownload 只认构造时已存在的
+     * label（找不到直接 return），所以先 addLabel。
+     */
+    private DownloadManager downloadManagerWithLabel(String label) {
+        DownloadManager dm = new DownloadManager(context);
+        if (!dm.containLabel(label)) {
+            dm.addLabel(label);
+        }
+        return dm;
+    }
+
+    private void enqueueViaReflection(List<Long> gids) throws Exception {
+        Method enqueue = DownloadUploadService.class.getDeclaredMethod(
+                "enqueueGids", Collection.class);
+        enqueue.setAccessible(true);
+        enqueue.invoke(service, gids);
+    }
+
+    /** 反射 runPushLoop(dm)（后台线程，贴近生产 executor 语义）。 */
+    private void runPushLoopInBackground(final DownloadManager dm) throws Exception {
+        Method loop = DownloadUploadService.class.getDeclaredMethod(
+                "runPushLoop", DownloadManager.class);
+        loop.setAccessible(true);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        Thread worker = new Thread(() -> {
+            try {
+                loop.invoke(service, dm);
+            } catch (Throwable e) {
+                error.set(e);
+            }
+        }, "push-loop-test");
+        worker.start();
+        // 队列排空后有 3s GRACE 重查，放宽超时。
+        worker.join(TimeUnit.SECONDS.toMillis(30));
+        assertFalse("runPushLoop must terminate", worker.isAlive());
+        if (error.get() != null) {
+            throw new AssertionError("runPushLoop crashed", error.get());
+        }
+    }
+
+    /** sRunning 后备字段（Kotlin companion 的 private val 编译到外部类的静态字段）。 */
+    private static AtomicBoolean companionRunning() throws Exception {
+        Field field = DownloadUploadService.class.getDeclaredField("sRunning");
+        field.setAccessible(true);
+        return (AtomicBoolean) field.get(null);
+    }
 
     private static GalleryInfo newGalleryInfo(long gid, String token) {
         GalleryInfo info = new GalleryInfo();
