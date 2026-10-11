@@ -190,6 +190,9 @@ class MockClient {
 
 async function loadWs(mockStompClient: boolean): Promise<WsModule> {
   vi.doMock('sockjs-client/dist/sockjs', () => ({ default: FakeSockJS }))
+  // 原生传输（brokerURL）由 stompjs 经全局 WebSocket 构造——挂同一假体
+  // （事件 API 同形：onopen/onmessage/onclose/send/close）。
+  vi.stubGlobal('WebSocket', FakeSockJS as unknown as typeof WebSocket)
   if (mockStompClient) {
     MockClient.instances = []
     mockSubSeq = 0
@@ -255,10 +258,32 @@ afterEach(async () => {
   await flush()
   setVisibility('visible')
   localStorage.clear()
+  vi.unstubAllGlobals()
   vi.useRealTimers()
 })
 
-describe('useWebSocket — 真实 @stomp/stompjs + 假 SockJS 传输', () => {
+describe('useWebSocket — 真实 @stomp/stompjs + 假传输（原生优先/SockJS 回退）', () => {
+  it('传输回退：原生端点连续 2 次连不上 → 自动切 SockJS /ws 并完成握手', async () => {
+    const ws = await loadWs(false)
+    const base = baseline()
+    ws.connect()
+    await flush()
+
+    // 原生尝试 #1 被拒（未 open 即 close）。
+    nthSocket(base, 1).refuse()
+    await flush()
+    // stompjs 按初始退避 1s 重试原生 #2，同样被拒 → 触发回退。
+    await vi.advanceTimersByTimeAsync(1000)
+    nthSocket(base, 2).refuse()
+    await flush()
+
+    // 回退客户端经 SockJS 工厂建连（url=/ws），握手后状态 connected。
+    const fallback = nthSocket(base, 3)
+    expect(fallback.url).toBe('/ws')
+    fallback.open()
+    expect(ws.connectionState.value).toBe('connected')
+  })
+
   it('首连握手：状态机 disconnected→connecting→connected，CONNECT 帧携带令牌与心跳配置', async () => {
     const ws = await loadWs(false)
     expect(ws.connectionState.value).toBe('disconnected')
@@ -334,29 +359,38 @@ describe('useWebSocket — 真实 @stomp/stompjs + 假 SockJS 传输', () => {
     expect(ws.connectionState.value).not.toBe('error')
   })
 
-  it('冷启动连续 3 次连接失败后放弃并表面化 authError，重连循环终止', async () => {
+  it('冷启动连续失败后放弃并表面化 authError，重连循环终止（原生 2 败→切 SockJS，SockJS 预算 3 败）', async () => {
     const ws = await loadWs(false)
     const base = baseline()
 
     ws.connect()
     await flush()
+
+    // 原生预算：2 败 → 触发回退（第 3 只 socket 是 SockJS /ws）。
     nthSocket(base, 1).refuse()
     expect(ws.authError.value).toBeNull()
-
     await vi.advanceTimersByTimeAsync(1000)
     nthSocket(base, 2).refuse()
-    expect(ws.authError.value).toBeNull()
+    await flush()
+    expect(lastSocket().url).toBe('/ws')
 
-    await vi.advanceTimersByTimeAsync(2000)
-    nthSocket(base, 3).refuse()
+    // SockJS 预算：连续 3 败 → 放弃。每轮拒绝当前最新 socket（回退重试按
+    // 退避排钟），至多 6 轮覆盖 1000→2000→4000 的指数序列。
+    for (let i = 0; i < 6 && ws.connectionState.value !== 'error'; i++) {
+      lastSocket().refuse()
+      await flush()
+      await vi.advanceTimersByTimeAsync(1000)
+    }
 
     expect(ws.connectionState.value).toBe('error')
     expect(ws.authError.value).toContain('Connection failed 3 times in a row')
     expect(ws.authError.value).toContain('check your API token')
     expect(ws.lastError.value).toBe(ws.authError.value)
 
+    // 放弃后重连循环终止：时钟放跑 2 分钟不再新建 socket。
+    const socketsAtGiveUp = FakeSockJS.created.length
     await vi.advanceTimersByTimeAsync(120000)
-    expect(FakeSockJS.created.length).toBe(base + 3)
+    expect(FakeSockJS.created.length).toBe(socketsAtGiveUp)
   })
 
   it('失败计数器被成功连接重置：先败两次→连上→此后掉线永不累计放弃', async () => {
@@ -547,7 +581,7 @@ describe('useWebSocket — 真实 @stomp/stompjs + 假 SockJS 传输', () => {
 })
 
 describe('useWebSocket — mock Client：构造配置接线与过期会话帧守卫', () => {
-  it('Client 配置接线：指数退避参数、心跳、SockJS 端点 /ws、CONNECT 头随 token 轮换刷新', async () => {
+  it('Client 配置接线：指数退避参数、心跳、原生端点 /ws-native、CONNECT 头随 token 轮换刷新', async () => {
     const ws = await loadWs(true)
     ws.connect()
 
@@ -559,11 +593,10 @@ describe('useWebSocket — mock Client：构造配置接线与过期会话帧守
     expect(client.opts.heartbeatIncoming).toBe(10000)
     expect(client.opts.heartbeatOutgoing).toBe(10000)
 
-    const factory = client.opts.webSocketFactory
-    expect(typeof factory).toBe('function')
-    const socket = (factory as () => FakeSockJS)()
-    expect(socket).toBeInstanceOf(FakeSockJS)
-    expect(socket.url).toBe('/ws')
+    // 原生优先：brokerURL 指向 /ws-native，无 SockJS 工厂。
+    expect(typeof client.opts.brokerURL).toBe('string')
+    expect(client.opts.brokerURL as string).toMatch(/ws:\/\/[^/]+\/ws-native$/)
+    expect(client.opts.webSocketFactory).toBeUndefined()
     expect(client.connectHeaders).toEqual({
       passcode: '',
       login: 'tok-abc',

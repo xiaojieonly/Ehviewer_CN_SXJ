@@ -1,9 +1,14 @@
 /**
  * WebSocket connection manager (I2 — real-time feedback).
  *
- * A single, app-wide STOMP-over-SockJS client lives at module scope and is
+ * A single, app-wide STOMP WebSocket client lives at module scope and is
  * shared by every consumer through reference counting, so mounting/unmounting
  * views never tears down a connection another view still needs.
+ *
+ * Transport: native WebSocket `/ws-native` first (see WS_NATIVE_PATH — the
+ * SockJS websocket transport silently drops the server's open frame in the
+ * current deployment shape); after repeated native failures it falls back to
+ * SockJS `/ws` for servers that predate the native endpoint.
  *
  * Contract: `contracts/websocket-protocol.md` (FROZEN, v1.1.0).
  *
@@ -184,6 +189,18 @@ export function isJobEventType(type: string): type is JobEventType {
 
 /** SockJS endpoint — relative path, no hardcoded host (proxied to the server). */
 const WS_ENDPOINT = '/ws'
+/**
+ * Native (non-SockJS) STOMP WebSocket path — the PRIMARY transport.
+ *
+ * 背景：SockJS 的 websocket 传输在当前部署形态下握手成功但服务端首帧 `o`
+ * 静默丢失（101 后零字节；Tomcat 10.1.36/10.1.40 × Framework 6.2.6~6.2.8
+ * 全复现，见 anotherviewer-web `SockJsHandshakeE2ETest` 类注释），STOMP
+ * 永远握不上。服务端因此在 `/ws-native` 提供裸 STOMP WebSocket 端点作为
+ * 主通道；本管理器原生优先，连续失败后自动退回 SockJS `/ws`（旧端兼容）。
+ */
+const WS_NATIVE_PATH = '/ws-native'
+/** Native connect failures before falling back to the SockJS endpoint. */
+const NATIVE_FALLBACK_AFTER_FAILURES = 2
 /** localStorage key holding the bearer token (see `stores/auth.ts`). */
 const TOKEN_STORAGE_KEY = 'token'
 /** Backoff initial delay (contract §1.5). */
@@ -234,6 +251,20 @@ export const authError = ref<string | null>(null)
 
 let client: Client | null = null
 let refCount = 0
+
+/**
+ * Transport selector: native `/ws-native` first, SockJS `/ws` after repeated
+ * native connect failures (see WS_NATIVE_PATH). Flipped only forward
+ * (native → SockJS); a successful SockJS session keeps it for the page life.
+ */
+let preferSockJs = false
+
+/** ws(s):// URL of the native STOMP endpoint for the current origin. */
+function nativeWsUrl(): string {
+  if (typeof location === 'undefined') return 'ws://localhost/ws-native'
+  const scheme = location.protocol === 'https:' ? 'wss://' : 'ws://'
+  return scheme + location.host + WS_NATIVE_PATH
+}
 
 /** True once the first STOMP `CONNECTED` frame has been received. */
 let everConnected = false
@@ -315,11 +346,26 @@ function giveUp(reason: string): void {
 
 /**
  * Count a failed connect attempt (socket closed / errored before the first
- * STOMP `CONNECTED` frame). Gives up once the cap is reached.
+ * STOMP `CONNECTED` frame). After repeated native-endpoint failures switches
+ * to the SockJS fallback; gives up once the cap is reached on that transport.
  */
 function recordConnectFailure(): void {
   if (everConnected || gaveUp || visibilityPaused) return
   consecutiveConnectFailures++
+  // 原生端点连续连不上（如旧版服务端没有 /ws-native）→ 退回 SockJS /ws：
+  // 换传输、重建单例客户端（deactivate 停掉旧重试环），预算重新计数。
+  if (!preferSockJs && consecutiveConnectFailures >= NATIVE_FALLBACK_AFTER_FAILURES) {
+    preferSockJs = true
+    consecutiveConnectFailures = 0
+    lastError.value = 'Native WebSocket endpoint unreachable — falling back to SockJS'
+    const stale = client
+    client = createClient()
+    // force：同步丢弃旧实例的 pending 重连定时器，避免僵尸原生重试与
+    // 回退客户端的重试时钟交错（拆除事件已被 self 守卫忽略，无副作用）。
+    if (stale?.active) void stale.deactivate({ force: true })
+    if (refCount > 0) activateIfNeeded()
+    return
+  }
   if (consecutiveConnectFailures >= MAX_CONSECUTIVE_CONNECT_FAILURES) {
     giveUp(
       `Connection failed ${MAX_CONSECUTIVE_CONNECT_FAILURES} times in a row — ` +
@@ -406,11 +452,14 @@ function removeSubscription(id: number): void {
 }
 
 /** Lazily create the singleton STOMP client and wire its lifecycle callbacks. */
-function ensureClient(): Client {
-  if (client) return client
+function createClient(): Client {
+  // 原生 brokerURL 优先；回退时换 SockJS 工厂（stompjs 二选一）。
+  const transport = preferSockJs
+    ? { webSocketFactory: () => new SockJS(WS_ENDPOINT) }
+    : { brokerURL: nativeWsUrl() }
 
-  client = new Client({
-    webSocketFactory: () => new SockJS(WS_ENDPOINT),
+  const self = new Client({
+    ...transport,
     // Exponential backoff: 1s → 2s → 4s → 8s … capped at 30s; the library
     // resets to the initial delay on every successful connect (contract §1.5).
     reconnectDelay: INITIAL_RECONNECT_DELAY_MS,
@@ -420,10 +469,10 @@ function ensureClient(): Client {
     heartbeatOutgoing: HEARTBEAT_MS,
     connectHeaders: buildConnectHeaders(),
     onConnect: () => {
-      // Ignore a stale CONNECTED frame from a superseded session (e.g. the
-      // socket was deactivated mid-handshake and re-activated) — at most one
-      // active socket.
-      if (!client?.active) return
+      // Ignore a stale CONNECTED frame from a superseded session/instance
+      // (transport fallback swaps the client; the old one may still emit) —
+      // at most one active socket.
+      if (client !== self || !self.active) return
       connectionState.value = 'connected'
       lastError.value = null
       authError.value = null
@@ -435,6 +484,7 @@ function ensureClient(): Client {
       if (refCount === 0) connectionState.value = 'disconnected'
     },
     onStompError: (frame) => {
+      if (client !== self) return
       const message = frame.headers['message'] || frame.body || 'STOMP protocol error'
       if (!everConnected) {
         // The server rejected the CONNECT frame itself (bad/missing token,
@@ -447,6 +497,9 @@ function ensureClient(): Client {
       lastError.value = message
     },
     onWebSocketClose: () => {
+      // Superseded instance (transport swap): its teardown closes must not
+      // pollute the new transport's failure budget or state machine.
+      if (client !== self) return
       if (gaveUp || visibilityPaused) return
       if (!everConnected) {
         recordConnectFailure()
@@ -457,11 +510,13 @@ function ensureClient(): Client {
       connectionState.value = refCount > 0 ? 'connecting' : 'disconnected'
     },
     onWebSocketError: () => {
+      if (client !== self) return
       lastError.value = 'WebSocket transport error'
     },
   })
 
-  return client
+  client = self
+  return self
 }
 
 /* ------------------------------------------------------------------ */
@@ -474,7 +529,7 @@ function ensureClient(): Client {
  */
 export function connect(): void {
   refCount++
-  const c = ensureClient()
+  const c = client ?? createClient()
   // Refresh auth headers on each (re)activation in case the token rotated.
   c.connectHeaders = buildConnectHeaders()
   // An explicit connect() is a retry: re-arm the loop even after a previous

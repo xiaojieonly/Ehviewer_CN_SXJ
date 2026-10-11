@@ -1,9 +1,14 @@
 # WebSocket Message Protocol Specification
 
 > **Status**: Frozen (Wave 0 contract)
-> **Version**: 1.1.0
+> **Version**: 1.2.0
 > **Created**: 2026-07-28
-> **Last calibrated**: 2026-08-06 (v1.1.0: `job.*` event family — plan 2026-08-06); previously
+> **Last calibrated**: 2026-10-11 (v1.2.0: additive — `/ws-native` raw-STOMP WebSocket endpoint
+> becomes the primary transport; SockJS `/ws` demoted to fallback. Background: the SockJS
+> **websocket** transport silently drops the server's open frame after a successful 101
+> upgrade in the current deployment shape — reproduced across Tomcat 10.1.36/10.1.40 ×
+> Spring Framework 6.2.6/6.2.7/6.2.8, see `SockJsHandshakeE2ETest` for the regression nails;
+> previously 2026-08-06 (v1.1.0: `job.*` event family — plan 2026-08-06); previously
 > 2026-08-01 (against `WebSocketConfig.kt`, `WsAuthChannelInterceptor.kt`,
 > `DownloadProgressHandler.kt`, `ProcessingEventHandler.kt`, `ImageProcessingService.kt`,
 > `ImageProxyController.kt`, `web-frontend/src/composables/useWebSocket.ts`)
@@ -26,17 +31,20 @@ today from what the contract only specifies:
 
 ### 1.1 Transport
 
-The protocol uses **STOMP 1.2** over **SockJS** as the transport layer, matching the
-existing `WebSocketConfig.kt` implementation (`@EnableWebSocketMessageBroker`).
+The protocol uses **STOMP 1.2**. Two server endpoints expose it (v1.2.0):
 
 | Property | Value |
 |----------|-------|
-| Endpoint | `ws://{host}:{port}/ws` (native WebSocket) |
-| SockJS fallback | `http://{host}:{port}/ws` (auto-negotiated by SockJS client) |
+| **Primary endpoint** | `ws(s)://{host}:{port}/ws-native` — raw STOMP-over-WebSocket, **no SockJS session layer**. The web frontend connects here first. |
+| Fallback endpoint | `http://{host}:{port}/ws` — SockJS (auto-negotiated transports). Note: the SockJS **websocket** transport is broken in the current deployment shape (silent frame drop after 101, see version note) — SockJS clients effectively negotiate the HTTP streaming/polling transports. |
 | Broker prefix | `/topic` (server → client broadcasts) |
 | Application prefix | `/app` (client → server commands) |
 | Default port | `8080` (configurable via `server.port`) |
-| Allowed origins | `ANOTHERVIEWER_WS_ORIGINS` env var, comma-separated; default `*`. Passed to `setAllowedOriginPatterns` (`WebSocketConfig.kt:28-32`) |
+| Allowed origins | `ANOTHERVIEWER_WS_ORIGINS` env var, comma-separated; default `*`. Passed to `setAllowedOriginPatterns`, applies to both endpoints (`WebSocketConfig.kt`) |
+
+STOMP frames, topics, payloads, auth headers and heartbeats are byte-identical on
+both endpoints — only the transport framing differs (SockJS wraps frames in its
+session protocol; `/ws-native` carries bare STOMP frames).
 
 ### 1.2 Connection Lifecycle
 
@@ -120,13 +128,16 @@ If no data (including heart-beats) is received for **3× the negotiated interval
 ### 1.5 Reconnection Strategy **[IMPLEMENTED]**
 
 The frontend (`web-frontend/src/composables/useWebSocket.ts`) implements a
-single app-wide STOMP-over-SockJS client with reference counting. Its reconnection
+single app-wide STOMP WebSocket client with reference counting. Transport is
+**native `/ws-native` first**; after 2 consecutive failed connect attempts it
+falls back to SockJS `/ws` (servers predating v1.2.0). Its reconnection
 behavior:
 
 ```typescript
 // useWebSocket.ts — actual client configuration
 new Client({
-  webSocketFactory: () => new SockJS('/ws'),
+  brokerURL: 'ws(s)://{host}/ws-native',   // primary; after 2 failures:
+  webSocketFactory: () => new SockJS('/ws'), // transport switches to SockJS
   reconnectDelay: 1000,             // initial delay (INITIAL_RECONNECT_DELAY_MS)
   maxReconnectDelay: 30000,         // backoff cap (MAX_RECONNECT_DELAY_MS)
   reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,  // 1s → 2s → 4s → … → 30s
