@@ -76,6 +76,31 @@ class ServerConfigService(
             if (!repo.existsById(k)) repo.save(ServerConfigEntity().apply { key = k; value = v })
         }
         invalidate()
+        migrateV4SyncStrategy()
+    }
+
+    /**
+     * v4（WP2）一次性策略迁移：v4 默认策略 = lww（契约 §1.4 基线调整）。
+     *
+     * 存量库若还留着 v1/v2 时代的 `sync.conflict_strategy = device_priority`（当初的
+     * 出厂默认，而非用户显式选择），首次升级到 v4 时改写成 lww，否则老库永远停在
+     * A 策略而新装是 lww，行为不一致。**直接读 repository 防缓存**：initDefaults
+     * 刚写入的默认值必须被本次迁移看到（缓存 TTL 内 readCached 可能还是旧值）。
+     *
+     * 幂等：marker 存在即跳过——用户迁移后显式改回 device_priority 不再被改写
+     * （marker 与「用户选择」的语义区分即在此：迁移只做一次）。
+     */
+    private fun migrateV4SyncStrategy() {
+        if (repo.existsById(KEY_SYNC_V4_STRATEGY_MIGRATED)) return
+        val current = repo.findById(KEY_SYNC_CONFLICT_STRATEGY).map { it.value }.orElse(null)
+        if (current == "device_priority") {
+            val entity = repo.findById(KEY_SYNC_CONFLICT_STRATEGY).orElse(ServerConfigEntity().apply { key = KEY_SYNC_CONFLICT_STRATEGY })
+            entity.value = "lww"
+            repo.save(entity)
+            invalidate()
+        }
+        repo.save(ServerConfigEntity().apply { key = KEY_SYNC_V4_STRATEGY_MIGRATED; value = "true" })
+        invalidate()
     }
 
     /** TTL 内命中缓存直接返回；过期或未命中则 findById 回源。synchronized：读多写少，简单为上。 */
@@ -134,6 +159,8 @@ class ServerConfigService(
         const val KEY_SYNC_CONFLICT_STRATEGY = "sync.conflict_strategy"
         const val KEY_SYNC_CLIENT_TIER = "sync.client_tier"
         const val KEY_SYNC_AUTO_SYNC_INTERVAL_SEC = "sync.auto_sync_interval_sec"
+        /** v4（WP2）策略迁移完成标志：存在即表示存量 device_priority 已一次性改写为 lww。 */
+        const val KEY_SYNC_V4_STRATEGY_MIGRATED = "sync.v4_strategy_migrated"
 
         // Sync 行级来源（last-writer deviceId）命名空间前缀；具体键由 SyncService 生成。
         const val KEY_PREFIX_SYNC_PROVENANCE = "sync.prov."
@@ -166,10 +193,11 @@ class ServerConfigService(
             KEY_AUTO_PAIRING to "true",
             // App 推送下载默认开启。
             KEY_UPLOAD_ENABLED to "true",
-            // 策略缺省 = 契约 §7 常量（STRATEGY_DEFAULT / CLIENT_TIER_DEFAULT / AUTO_SYNC_INTERVAL_SEC_DEFAULT）
-            KEY_SYNC_CONFLICT_STRATEGY to "device_priority",
+            // 策略缺省 = v4 基线 lww（STRATEGY_DEFAULT 更名）；CLIENT_TIER=1、
+            // AUTO_SYNC=10s（ADR-0006 D7 静默节拍）对齐契约常量。
+            KEY_SYNC_CONFLICT_STRATEGY to "lww",
             KEY_SYNC_CLIENT_TIER to "1",
-            KEY_SYNC_AUTO_SYNC_INTERVAL_SEC to "900",
+            KEY_SYNC_AUTO_SYNC_INTERVAL_SEC to "10",
             KEY_SITE_GALLERY to "0",
             KEY_PRIVACY_MASK to "false",
             // EntryPoint 副武器（同机 141:9800）；token 默认空=未配置。

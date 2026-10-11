@@ -17,8 +17,14 @@ class FavoriteService(
     private val downloadRepository: com.hippo.anotherviewer.web.repository.DownloadInfoRepository,
     private val historyService: HistoryService,
     private val usernameProvider: CurrentUsernameProvider,
+    // v4（WP2）：WebUI 直写路径与 sync 合并共用服务器打戳时钟。可空缺省仅为既有
+    // 直构测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
     private val logger = LoggerFactory.getLogger(FavoriteService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     /**
      * List favorites with 1-based pagination (contract: `page` starts at 1)
@@ -135,6 +141,7 @@ class FavoriteService(
         slot: Int = SLOT_DEFAULT_FOLDER
     ): Boolean {
         val clampedSlot = slot.coerceIn(SLOT_NOT_FAVORITED, SLOT_MAX)
+        // time 是业务时间字段，保留墙钟；lastModified 是同步水位，v4 起走服务器打戳。
         val now = System.currentTimeMillis()
         // 打码边界（2026-10-11 用户裁决）：打码开关只应影响响应展示，绝不让脱敏
         // 数据落库——打码期间前端只持有 `#gid` 序列号标题，与历史回写同口径拒收
@@ -158,7 +165,7 @@ class FavoriteService(
                 this.time = now
                 // A7-1 stamping：新行当场落属主与同步水位（adoptNullOwnership 已短路）。
                 this.username = usernameProvider.currentUsername()
-                this.lastModified = now
+                this.lastModified = stamp()
             }
             existing.deleted -> existing.apply {
                 this.token = token
@@ -168,7 +175,7 @@ class FavoriteService(
                 this.time = now
                 this.deleted = false
                 if (this.username == null) this.username = usernameProvider.currentUsername()
-                this.lastModified = now
+                this.lastModified = stamp()
             }
             else -> return false
         }
@@ -186,7 +193,7 @@ class FavoriteService(
         // 不得复活删除）。A7-3：查找 List 化（见 addFavorite 顶部注释）。
         downloadRepository.findAllByGid(gid).firstOrNull()?.takeIf { !it.deleted }?.let {
             it.favoriteSlot = entity.favoriteSlot
-            it.lastModified = System.currentTimeMillis()
+            it.lastModified = stamp()
             downloadRepository.save(it)
         }
         return true
@@ -203,7 +210,7 @@ class FavoriteService(
         val existing = favoriteRepository.findAllByGid(gid).firstOrNull() ?: return false
         if (existing.deleted) return true
         existing.deleted = true
-        existing.lastModified = System.currentTimeMillis()
+        existing.lastModified = stamp()
         if (existing.username == null) existing.username = usernameProvider.currentUsername()
         favoriteRepository.save(existing)
         // 任务 D：对称清除来源历史行的 favoriteSlot（置回未收藏），重进详情
@@ -214,7 +221,7 @@ class FavoriteService(
         // D11：墓碑下载行跳过（回写不得复活删除）。A7-3：查找 List 化。
         downloadRepository.findAllByGid(gid).firstOrNull()?.takeIf { !it.deleted }?.let {
             it.favoriteSlot = SLOT_NOT_FAVORITED
-            it.lastModified = System.currentTimeMillis()
+            it.lastModified = stamp()
             downloadRepository.save(it)
         }
         return true

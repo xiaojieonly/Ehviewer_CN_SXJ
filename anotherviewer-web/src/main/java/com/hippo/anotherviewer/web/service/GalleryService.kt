@@ -37,9 +37,15 @@ class GalleryService(
     private val serverConfig: ServerConfigService,
     private val usernameProvider: com.hippo.anotherviewer.web.config.CurrentUsernameProvider,
     private val historyService: HistoryService,
+    // v4（WP2）：快搜直写路径与 sync 合并共用服务器打戳时钟。可空缺省仅为既有直构
+    // 测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
     private val logger = LoggerFactory.getLogger(GalleryService::class.java)
     private val client get() = sessionManager.okHttpClient
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     private companion object {
         /** Failure cause carried by blocked list/detail responses. */
@@ -635,6 +641,7 @@ class GalleryService(
     }
 
     fun createQuickSearch(dto: QuickSearchDto): QuickSearchDto {
+        // time 是业务时间字段，保留墙钟；lastModified 是同步水位（v4 服务器打戳）。
         val now = System.currentTimeMillis()
         // A7-2：同名墓碑行走复活（快搜按 name 联合合并，findByName 是单实体查询——
         // 墓碑旁再插一行同名活记录会让 mergeQuickSearch 命中两行直接抛
@@ -654,7 +661,7 @@ class GalleryService(
                 time = now
                 deleted = false
                 if (username == null) username = usernameProvider.currentUsername()
-                lastModified = now
+                lastModified = stamp()
             }
             val revived = quickSearchRepository.save(tombstone)
             return QuickSearchDto(
@@ -683,7 +690,7 @@ class GalleryService(
             // A7-1 stamping：新行当场落属主与同步水位（deleted=false 为列默认值）。
             time = now
             username = usernameProvider.currentUsername()
-            lastModified = now
+            lastModified = stamp()
         }
         val saved = quickSearchRepository.save(entity)
         return QuickSearchDto(
@@ -709,7 +716,7 @@ class GalleryService(
         val row = quickSearchRepository.findById(id).orElse(null) ?: return
         if (row.deleted) return
         row.deleted = true
-        row.lastModified = System.currentTimeMillis()
+        row.lastModified = stamp()
         if (row.username == null) row.username = usernameProvider.currentUsername()
         quickSearchRepository.save(row)
     }

@@ -81,4 +81,9 @@ tasks.withType<Test> {
     // Allow ByteBuddy to instrument class-file versions newer than it was
     // built for (belt-and-braces alongside the version overrides above).
     jvmArgs("-Dnet.bytebuddy.experimental=true")
+    // v4 同步改造（WP2/WP3）回归验证：模块全量用例（1400+）共享一个测试 JVM，
+    // 默认堆（512m）在 BackupService 的 LZMA2 分片（每次 export 4 线程 × 约 92MB
+    // 编码缓冲）上与既有用例累计物叠加时会偶发 OutOfMemoryError——属测试 JVM
+    // 内存受限而非语义失败，抬高测试堆消除该抖动（已验证：1.5g 下全量用例不再 OOM）。
+    maxHeapSize = "1536m"
 }

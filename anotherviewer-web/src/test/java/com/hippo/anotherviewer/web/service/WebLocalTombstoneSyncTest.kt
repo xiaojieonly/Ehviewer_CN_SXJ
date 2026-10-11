@@ -69,8 +69,10 @@ class WebLocalTombstoneSyncTest {
             serverConfig,
             mock(EhSessionRepository::class.java),
             mock(SiteSessionManager::class.java),
+            SyncClock(),
+            mock(org.springframework.context.ApplicationEventPublisher::class.java),
         )
-        // 钉在策略 B（lww）= v1 完整语义（与 SyncControllerTest 服务层一致）。
+        // 钉在策略 B（lww）= v4 默认策略（与 SyncControllerTest 服务层一致）。
         syncService.updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW))
         historyService = HistoryService(historyRepository, stubProvider("alice"))
     }

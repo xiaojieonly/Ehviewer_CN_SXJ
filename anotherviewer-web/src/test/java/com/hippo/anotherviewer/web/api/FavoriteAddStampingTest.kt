@@ -77,6 +77,11 @@ class FavoriteAddStampingTest {
     /** 真实 service 链（FavoriteService → HistoryService → Provider），仓储用 mock。 */
     @TestConfiguration
     class StampingConfig {
+        /** v4：WebUI 直写路径与 sync 合并共用服务器打戳时钟（补 bean 让切片里也走 clock）。 */
+        @Bean
+        fun syncClock(): com.hippo.anotherviewer.web.service.SyncClock =
+            com.hippo.anotherviewer.web.service.SyncClock()
+
         @Bean
         fun currentUsernameProvider(): CurrentUsernameProvider = CurrentUsernameProvider()
 
@@ -84,7 +89,8 @@ class FavoriteAddStampingTest {
         fun historyService(
             historyRepository: HistoryInfoRepository,
             provider: CurrentUsernameProvider,
-        ): HistoryService = HistoryService(historyRepository, provider)
+            syncClock: com.hippo.anotherviewer.web.service.SyncClock,
+        ): HistoryService = HistoryService(historyRepository, provider, syncClock)
 
         @Bean
         fun favoriteService(
@@ -93,6 +99,7 @@ class FavoriteAddStampingTest {
             downloadRepository: DownloadInfoRepository,
             historyService: HistoryService,
             provider: CurrentUsernameProvider,
-        ): FavoriteService = FavoriteService(favoriteRepository, historyRepository, downloadRepository, historyService, provider)
+            syncClock: com.hippo.anotherviewer.web.service.SyncClock,
+        ): FavoriteService = FavoriteService(favoriteRepository, historyRepository, downloadRepository, historyService, provider, syncClock)
     }
 }

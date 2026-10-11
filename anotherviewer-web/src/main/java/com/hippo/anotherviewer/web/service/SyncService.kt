@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.entity.*
 import com.hippo.anotherviewer.web.repository.*
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,20 +32,27 @@ class SyncService(
     private val serverConfig: ServerConfigService,
     private val ehSessionRepository: EhSessionRepository,
     private val siteSessionManager: SiteSessionManager,
+    // v4（WP2）：服务器统一打戳时钟 + 事务提交后广播 sync.update 的事件通道。
+    private val syncClock: SyncClock,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
 
     private val logger = org.slf4j.LoggerFactory.getLogger(SyncService::class.java)
 
     // ---- SyncPolicy（契约 v2 §8，ADR-0003 D1/D2/D3/D4） ----
 
-    /** 当前策略；存储值被篡改/越界时回退契约缺省（device_priority / 1 / 900）。 */
+    /**
+     * 当前策略；存储值被篡改/越界时回退契约缺省（v4: lww / 1 / 10s）。
+     * 缺省从 device_priority 改为 lww 属 v4 语义基线调整（ServerConfigService
+     * initDefaults 同步改默认值 + 一次性迁移存量 device_priority）。
+     */
     fun currentPolicy(): SyncPolicyDto = SyncPolicyDto(
         conflictStrategy = ConflictStrategy.fromWire(
-            serverConfig.get(ServerConfigService.KEY_SYNC_CONFLICT_STRATEGY, ConflictStrategy.DEVICE_PRIORITY.wire)
-        ) ?: ConflictStrategy.DEVICE_PRIORITY,
+            serverConfig.get(ServerConfigService.KEY_SYNC_CONFLICT_STRATEGY, ConflictStrategy.LWW.wire)
+        ) ?: ConflictStrategy.LWW,
         clientTier = serverConfig.get(ServerConfigService.KEY_SYNC_CLIENT_TIER, "1")
             .toIntOrNull()?.takeIf { it in CLIENT_TIER_RANGE } ?: CLIENT_TIER_DEFAULT,
-        autoSyncIntervalSec = serverConfig.get(ServerConfigService.KEY_SYNC_AUTO_SYNC_INTERVAL_SEC, "900")
+        autoSyncIntervalSec = serverConfig.get(ServerConfigService.KEY_SYNC_AUTO_SYNC_INTERVAL_SEC, "10")
             .toIntOrNull()?.takeIf { it >= 0 } ?: AUTO_SYNC_INTERVAL_SEC_DEFAULT,
     )
 
@@ -83,39 +91,57 @@ class SyncService(
         var conflicts = 0
         val e = request.entities
         val pushDeviceId = request.deviceId
-
-        conflicts += e.favorites.sumOf { if (mergeFavorite(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.history.sumOf { if (mergeHistory(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.downloads.sumOf { if (mergeDownload(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.bookmarks.sumOf { if (mergeBookmark(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.filters.sumOf { if (mergeFilter(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.quickSearches.sumOf { if (mergeQuickSearch(it, username, strategy, pushDeviceId)) 1 else 0 }
-        conflicts += e.downloadLabels.sumOf { if (mergeDownloadLabel(it, username, strategy, pushDeviceId)) 1 else 0 }
-        // ehSession（ADR-0004）：单例 LWW、策略独立，不参与 conflictStrategy。
-        conflicts += e.ehSession.sumOf { if (mergeEhSession(it, pushDeviceId)) 1 else 0 }
-
-        e.preferences?.let { pref ->
-            // last-write-wins: 仅当推送方 lastModified 明显新于存量 updatedAt 时覆盖（含时钟偏差容忍）。
-            // preferences 不受 conflictStrategy 影响（契约 §1.3，ADR-0001：后同步者即最终设置）。
-            preferenceService.replace(username, pref.preferences, pref.deviceId, pref.lastModified)
+        // v4（WP2）：本次 push 各实体「生效合并」计数（merge 返回 true / preferences
+        // 实际写入），事务提交后随 SyncUpdateEvent 广播到 /topic/sync（SyncUpdateHandler）。
+        val counts = LinkedHashMap<String, Int>()
+        fun count(key: String, applied: Int) {
+            if (applied > 0) counts[key] = applied
         }
 
-        val now = System.currentTimeMillis()
+        count("favorites", e.favorites.sumOf { if (mergeFavorite(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("history", e.history.sumOf { if (mergeHistory(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("downloads", e.downloads.sumOf { if (mergeDownload(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("bookmarks", e.bookmarks.sumOf { if (mergeBookmark(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("filters", e.filters.sumOf { if (mergeFilter(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("quickSearches", e.quickSearches.sumOf { if (mergeQuickSearch(it, username, strategy, pushDeviceId)) 1 else 0 })
+        count("downloadLabels", e.downloadLabels.sumOf { if (mergeDownloadLabel(it, username, strategy, pushDeviceId)) 1 else 0 })
+        // ehSession（ADR-0004）：单例 LWW、策略独立，不参与 conflictStrategy。
+        count("ehSession", e.ehSession.sumOf { if (mergeEhSession(it, pushDeviceId)) 1 else 0 })
+
+        val prefApplied = e.preferences?.let { pref ->
+            // v4：preferences 的 updatedAt 由服务器 syncClock 打戳（客户端上送值不落库），
+            // LWW 门 `incoming.lastModified < existing.updatedAt → 丢弃`（同戳后到胜）。
+            // preferences 不受 conflictStrategy 影响（契约 §1.3，ADR-0001：后同步者即最终设置）。
+            preferenceService.replace(username, pref.preferences, pref.deviceId, pref.lastModified)
+        } ?: false
+        count("preferences", if (prefApplied) 1 else 0)
+
+        conflicts = counts.filterKeys { it != "preferences" }.values.sum()
+        // v4：serverTimestamp 与 updateDevice 用同一 clock.next() 值（保持等式：
+        // push 响应的 serverTimestamp == 设备行 lastSyncTimestamp == 本次写入水位）。
+        val now = syncClock.next()
         updateDevice(request.deviceId, now, username)
 
+        // 事务提交后广播（handler 为 AFTER_COMMIT，回滚不发）。
+        eventPublisher.publishEvent(SyncUpdateEvent(deviceId = request.deviceId, counts = counts, serverTimestamp = now))
         return SyncPushResponse(success = true, serverTimestamp = now, conflicts = conflicts)
     }
 
     fun pull(since: Long, username: String, deviceId: String = ""): SyncPullResponse {
         adoptNullOwnership(username)
-        val now = System.currentTimeMillis()
+        val now = syncClock.next()
         if (deviceId.isNotEmpty()) updateDevice(deviceId, now, username)
         val prefEntity = preferenceRepository.findByUsername(username)
         // H-3: 增量拉取走 (username, lastModified) 派生查询，不再 findAll 全表扫描后内存过滤。
         // since == 0 是全量拉取：lastModified=0 的合法记录（如 time=0 的旧下载记录）必须一并
         // 返回，故用 findByUsername（不过滤 lastModified），不得回归 H-3 的 since=0 边界。
+        //
+        // v4（WP2）：增量下界回退 PULL_OVERLAP_MS——吸收「与上次 pull 并发提交」的行：那些行
+        // 的戳可能 <= 客户端水位（响应 serverTimestamp 在提交前分配），只按 since 严格过滤会
+        // 永久漏发。客户端按 (lastModified <= 自身水位) 幂等吸收回声，重复下发无副作用。
+        val sinceWithOverlap = (since - PULL_OVERLAP_MS).coerceAtLeast(0L)
         fun <T> select(full: (String) -> List<T>, delta: (String, Long) -> List<T>): List<T> =
-            if (since == 0L) full(username) else delta(username, since)
+            if (since == 0L) full(username) else delta(username, sinceWithOverlap)
         val favorites = select(favoriteRepository::findByUsername, favoriteRepository::findByUsernameAndLastModifiedGreaterThan)
         val history = select(historyRepository::findByUsername, historyRepository::findByUsernameAndLastModifiedGreaterThan)
         val downloads = select(downloadRepository::findByUsername, downloadRepository::findByUsernameAndLastModifiedGreaterThan)
@@ -125,9 +151,12 @@ class SyncService(
         val downloadLabels = select(downloadLabelRepository::findByUsername, downloadLabelRepository::findByUsernameAndLastModifiedGreaterThan)
         // M-14: wire 上的 label 是标签名，落库是 download_label.id；一次拉取只解析一次 id→名字映射。
         val labelNames = downloadLabels.mapNotNull { l -> if (l.id == 0L) null else l.id.toInt() to l.label }.toMap()
-        // ehSession（ADR-0004）：单例行；增量语义 = 仅当 lastModified > since 才返回（since=0 全量）。
+        // ehSession（ADR-0004）：单例行；增量语义 = 仅当 lastModified > since（含 overlap）才返回
+        // （since=0 全量）。与 7 类实体同一 overlap 口径，避免并发提交的会话行漏发。
         val ehSessionDto = siteSessionManager.loadSyncEhSession()
-        val ehSessions = if (ehSessionDto != null && (since == 0L || ehSessionDto.lastModified > since)) {
+        val ehSessions = if (ehSessionDto != null &&
+            (since == 0L || ehSessionDto.lastModified > sinceWithOverlap)
+        ) {
             listOf(ehSessionDto)
         } else {
             emptyList()
@@ -167,13 +196,14 @@ class SyncService(
                 )
             },
             entityCounts = EntityCountsDto(
-                favorites = favoriteRepository.countByUsername(username),
-                history = historyRepository.countByUsername(username),
-                downloads = downloadRepository.countByUsername(username),
-                bookmarks = bookmarkRepository.countByUsername(username),
-                filters = filterRepository.countByUsername(username),
-                quickSearches = quickSearchRepository.countByUsername(username),
-                downloadLabels = downloadLabelRepository.countByUsername(username),
+                // v4：status 只数存活行（墓碑是同步删除的传播载体，不是用户数据）。
+                favorites = favoriteRepository.countByUsernameAndDeletedFalse(username),
+                history = historyRepository.countByUsernameAndDeletedFalse(username),
+                downloads = downloadRepository.countByUsernameAndDeletedFalse(username),
+                bookmarks = bookmarkRepository.countByUsernameAndDeletedFalse(username),
+                filters = filterRepository.countByUsernameAndDeletedFalse(username),
+                quickSearches = quickSearchRepository.countByUsernameAndDeletedFalse(username),
+                downloadLabels = downloadLabelRepository.countByUsernameAndDeletedFalse(username),
                 ehSession = if (ehSessionRepository.findByUsername(SiteSessionManager.EH_SESSION_OWNER)?.deleted == false) 1 else 0,
             ),
         )
@@ -244,9 +274,11 @@ class SyncService(
 
     // ---- Merge strategies (per contracts/sync-conflict-rules.md v2) ----
     //
-    // 所有 merge 带 strategy 参数（§1.4）；策略 B（lww）路径与 v1.0 语义逐字等价，
-    // 完整回退兜底。A/C 下同键跨平台冲突无条件优先端胜，lastModified 不参与仲裁
-    // （仅高水位/增量 pull/展示）；同平台同键回退 B 语义。
+    // 所有 merge 带 strategy 参数（§1.4）。v4 基线：默认策略 = B（lww），其判据改为
+    // 纯服务器戳 LWW —— `lwwIncomingWins` = `incoming.lastModified >= existing.lastModified`
+    // （同戳后到胜，无 skew 容忍、无实体 tie-break、无 union 保留：删除墓碑与活行
+    // 同样按戳仲裁，新墓碑胜旧活行、新活行胜旧墓碑）。A/C 策略代码级保留：跨平台
+    // 无条件优先端胜；同平台回退保留 v1 完整语义（skew ±5s 比较 + 实体 tie-break/bias）。
 
     /** Favorites: union merge with soft-delete tombstones; 删除/复活按 §3.8 soft 实体规则。 */
     private fun mergeFavorite(incoming: SyncFavoriteDto, username: String, strategy: ConflictStrategy, pushDeviceId: String): Boolean {
@@ -269,15 +301,15 @@ class SyncService(
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_FAVORITE, naturalKey))
 
-        // delete vs alive（soft 实体，§3.8）
+        // delete vs alive（soft 实体，§3.8；v4：LWW 下墓碑按戳参与仲裁）
         if (incoming.deleted != existing.deleted) {
             val incomingIsTomb = incoming.deleted
             val tombPlatform = if (incomingIsTomb) incomingPlatform else existingPlatform
             val livePlatform = if (incomingIsTomb) existingPlatform else incomingPlatform
-            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
+            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform, incomingIsTomb, incoming.lastModified >= existing.lastModified)
             if (liveWins) {
                 if (!incomingIsTomb) {
-                    // incoming live 复活墓碑（B：任何设备 live push 即复活；A/C：优先端 live 胜非优先端 tomb）
+                    // incoming live 复活墓碑（B：新 live（戳不旧于墓碑）胜；A/C：优先端 live 胜非优先端 tomb）
                     applyFavoriteFields(existing, incoming)
                     favoriteRepository.save(existing)
                     recordProvenance(username, TAG_FAVORITE, naturalKey, incomingDevice)
@@ -286,7 +318,7 @@ class SyncService(
                 return false // incoming tombstone + existing alive -> keep alive
             }
             if (incomingIsTomb) {
-                // 优先端删除无条件传播：覆盖非优先端活记录，落 deleted=true 行（§4.1）
+                // 优先端删除无条件传播 / v4 LWW 下新墓碑胜旧活行：落 deleted=true 行（§4.1）
                 applyFavoriteFields(existing, incoming)
                 favoriteRepository.save(existing)
                 recordProvenance(username, TAG_FAVORITE, naturalKey, incomingDevice)
@@ -305,7 +337,16 @@ class SyncService(
             }
             return false
         }
-        // B（v1 完整语义）或同平台回退：LWW ± skew。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中（同戳后到胜）走「incoming 胜」路径，
+        // 未命中丢弃来包（不 save / 不计冲突）。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyFavoriteFields(existing, incoming)
+            favoriteRepository.save(existing)
+            recordProvenance(username, TAG_FAVORITE, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退：v1 完整语义（LWW ± skew）。
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyFavoriteFields(existing, incoming)
             favoriteRepository.save(existing)
@@ -326,9 +367,10 @@ class SyncService(
         if (incoming.deleted) {
             // 软删: 不真删行，bump lastModified 使 since>0 的增量 pull 能取到墓碑。
             // tombstone 实体：删除任何策略下传播（§3.8），v1 行为保持不变。
+            // v4：bump 改为 syncClock.next()（服务器统一打戳，跨实体单调）。
             if (existing != null) {
                 existing.deleted = true
-                existing.lastModified = maxOf(existing.lastModified, incoming.lastModified)
+                existing.lastModified = syncClock.next()
                 historyRepository.save(existing)
                 recordProvenance(username, TAG_HISTORY, naturalKey, incomingDevice)
             } else if (rows.isEmpty()) {
@@ -358,7 +400,15 @@ class SyncService(
                 return false
             }
         }
-        // B（v1 完整语义）/ 同平台回退 / 墓碑复活：LWW ± skew。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中即整行 incoming 胜（不再有 time tie-break）。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyHistoryFields(existing, incoming)
+            historyRepository.save(existing)
+            recordProvenance(username, TAG_HISTORY, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退 / 墓碑复活：v1 完整语义（LWW ± skew + time tie-break）。
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyHistoryFields(existing, incoming)
             historyRepository.save(existing)
@@ -386,19 +436,24 @@ class SyncService(
         val existing = rows.firstOrNull { it.username == null || it.username == username }
         if (existing == null) {
             if (rows.isEmpty()) {
-                downloadRepository.save(incoming.toDownloadEntity(username))
+                val created = downloadRepository.save(incoming.toDownloadEntity(username))
                 recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
+                // v4（WP3）：未知 gid 的墓碑落库 = 这台服务器上用户的下载被删除——
+                // 内容目录（若有）交回收站。同态双墓碑不重复发（见下）。
+                if (created.deleted) {
+                    eventPublisher.publishEvent(DownloadTombstonedEvent(created.gid, created.downloadDir))
+                }
             }
             return false
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_DOWNLOAD, naturalKey))
 
-        // delete vs alive（soft 实体，§3.8）
+        // delete vs alive（soft 实体，§3.8；v4：LWW 下墓碑按戳参与仲裁）
         if (incoming.deleted != existing.deleted) {
             val incomingIsTomb = incoming.deleted
             val tombPlatform = if (incomingIsTomb) incomingPlatform else existingPlatform
             val livePlatform = if (incomingIsTomb) existingPlatform else incomingPlatform
-            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
+            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform, incomingIsTomb, incoming.lastModified >= existing.lastModified)
             if (liveWins) {
                 if (!incomingIsTomb) {
                     applyDownloadFields(existing, incoming, username)
@@ -409,10 +464,12 @@ class SyncService(
                 return false // incoming tombstone + existing alive -> keep alive
             }
             if (incomingIsTomb) {
-                // 优先端删除无条件传播，落 deleted=true 行（§4.1）
+                // 优先端删除无条件传播 / v4 LWW 新墓碑胜旧活行，落 deleted=true 行（§4.1）
                 applyDownloadFields(existing, incoming, username)
                 downloadRepository.save(existing)
                 recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
+                // v4（WP3）：alive→tombstone 转换 = 内容目录进回收站（提交后移动）。
+                eventPublisher.publishEvent(DownloadTombstonedEvent(existing.gid, existing.downloadDir))
                 return true
             }
             return false // 非优先端 live vs 优先端 tomb → tomb 胜
@@ -428,7 +485,16 @@ class SyncService(
             }
             return false
         }
-        // B（v1 完整语义）或同平台回退：last-write-wins。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中走「incoming 胜」路径；未命中丢弃来包
+        // （同态双墓碑在此被丢弃，墓碑事件不重复发）。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyDownloadFields(existing, incoming, username)
+            downloadRepository.save(existing)
+            recordProvenance(username, TAG_DOWNLOAD, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退：v1 完整语义（last-write-wins ± skew）。
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyDownloadFields(existing, incoming, username)
             downloadRepository.save(existing)
@@ -449,9 +515,10 @@ class SyncService(
         if (incoming.deleted) {
             // 软删: 不真删行，bump lastModified 使 since>0 的增量 pull 能取到墓碑。
             // tombstone 实体：删除任何策略下传播（§3.8），v1 行为保持不变。
+            // v4：bump 改为 syncClock.next()（服务器统一打戳，跨实体单调）。
             if (existing != null) {
                 existing.deleted = true
-                existing.lastModified = maxOf(existing.lastModified, incoming.lastModified)
+                existing.lastModified = syncClock.next()
                 bookmarkRepository.save(existing)
                 recordProvenance(username, TAG_BOOKMARK, naturalKey, incomingDevice)
             } else if (rows.isEmpty()) {
@@ -481,7 +548,15 @@ class SyncService(
                 return false
             }
         }
-        // B（v1 完整语义）/ 同平台回退 / 墓碑复活：LWW ± skew。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中即整行 incoming 胜（不再有 page tie-break）。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyBookmarkFields(existing, incoming)
+            bookmarkRepository.save(existing)
+            recordProvenance(username, TAG_BOOKMARK, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退 / 墓碑复活：v1 完整语义（LWW ± skew + page tie-break）。
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyBookmarkFields(existing, incoming)
             bookmarkRepository.save(existing)
@@ -522,12 +597,12 @@ class SyncService(
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_FILTER, naturalKey))
 
-        // delete vs alive（soft 实体，§3.8）
+        // delete vs alive（soft 实体，§3.8；v4：LWW 下墓碑按戳参与仲裁）
         if (incoming.deleted != existing.deleted) {
             val incomingIsTomb = incoming.deleted
             val tombPlatform = if (incomingIsTomb) incomingPlatform else existingPlatform
             val livePlatform = if (incomingIsTomb) existingPlatform else incomingPlatform
-            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
+            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform, incomingIsTomb, incoming.lastModified >= existing.lastModified)
             if (liveWins) {
                 if (!incomingIsTomb) {
                     applyFilterFields(existing, incoming)
@@ -538,7 +613,7 @@ class SyncService(
                 return false // incoming tombstone + existing alive -> keep alive
             }
             if (incomingIsTomb) {
-                // 优先端删除无条件传播，落 deleted=true 行（§4.1）
+                // 优先端删除无条件传播 / v4 LWW 新墓碑胜旧活行，落 deleted=true 行（§4.1）
                 applyFilterFields(existing, incoming)
                 filterRepository.save(existing)
                 recordProvenance(username, TAG_FILTER, naturalKey, incomingDevice)
@@ -557,7 +632,15 @@ class SyncService(
             }
             return false
         }
-        // B（v1 完整语义）或同平台回退：local-wins outside skew, additive bias inside.
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中即 incoming 胜（不再有 enabled bias）。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyFilterFields(existing, incoming)
+            filterRepository.save(existing)
+            recordProvenance(username, TAG_FILTER, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退：v1 完整语义（local-wins outside skew, additive bias inside）。
         if (existing.lastModified > incoming.lastModified + SKEW_TOLERANCE) return false
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyFilterFields(existing, incoming)
@@ -591,12 +674,12 @@ class SyncService(
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_QUICK_SEARCH, naturalKey))
 
-        // delete vs alive（soft 实体，§3.8）
+        // delete vs alive（soft 实体，§3.8；v4：LWW 下墓碑按戳参与仲裁）
         if (incoming.deleted != existing.deleted) {
             val incomingIsTomb = incoming.deleted
             val tombPlatform = if (incomingIsTomb) incomingPlatform else existingPlatform
             val livePlatform = if (incomingIsTomb) existingPlatform else incomingPlatform
-            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
+            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform, incomingIsTomb, incoming.lastModified >= existing.lastModified)
             if (liveWins) {
                 if (!incomingIsTomb) {
                     applyQuickSearchFields(existing, incoming)
@@ -607,7 +690,7 @@ class SyncService(
                 return false // incoming tombstone + existing alive -> keep alive
             }
             if (incomingIsTomb) {
-                // 优先端删除无条件传播，落 deleted=true 行（§4.1）
+                // 优先端删除无条件传播 / v4 LWW 新墓碑胜旧活行，落 deleted=true 行（§4.1）
                 applyQuickSearchFields(existing, incoming)
                 quickSearchRepository.save(existing)
                 recordProvenance(username, TAG_QUICK_SEARCH, naturalKey, incomingDevice)
@@ -626,7 +709,15 @@ class SyncService(
             }
             return false
         }
-        // B（v1 完整语义）或同平台回退：local-wins outside skew。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中即 incoming 胜。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyQuickSearchFields(existing, incoming)
+            quickSearchRepository.save(existing)
+            recordProvenance(username, TAG_QUICK_SEARCH, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退：v1 完整语义（local-wins outside skew）。
         if (existing.lastModified > incoming.lastModified + SKEW_TOLERANCE) return false
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyQuickSearchFields(existing, incoming)
@@ -653,12 +744,12 @@ class SyncService(
         }
         val existingPlatform = platformOf(provenanceOf(username, TAG_DOWNLOAD_LABEL, naturalKey))
 
-        // delete vs alive（soft 实体，§3.8）
+        // delete vs alive（soft 实体，§3.8；v4：LWW 下墓碑按戳参与仲裁）
         if (incoming.deleted != existing.deleted) {
             val incomingIsTomb = incoming.deleted
             val tombPlatform = if (incomingIsTomb) incomingPlatform else existingPlatform
             val livePlatform = if (incomingIsTomb) existingPlatform else incomingPlatform
-            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform)
+            val liveWins = softDeleteLiveWins(strategy, tombPlatform, livePlatform, incomingIsTomb, incoming.lastModified >= existing.lastModified)
             if (liveWins) {
                 if (!incomingIsTomb) {
                     applyDownloadLabelFields(existing, incoming)
@@ -669,7 +760,7 @@ class SyncService(
                 return false // incoming tombstone + existing alive -> keep alive
             }
             if (incomingIsTomb) {
-                // 优先端删除无条件传播，落 deleted=true 行（§4.1）
+                // 优先端删除无条件传播 / v4 LWW 新墓碑胜旧活行，落 deleted=true 行（§4.1）
                 applyDownloadLabelFields(existing, incoming)
                 downloadLabelRepository.save(existing)
                 recordProvenance(username, TAG_DOWNLOAD_LABEL, naturalKey, incomingDevice)
@@ -688,7 +779,15 @@ class SyncService(
             }
             return false
         }
-        // B（v1 完整语义）或同平台回退：local-wins outside skew。
+        // v4 策略 B（lww）：纯服务器戳 LWW —— 命中即 incoming 胜。
+        if (strategy == ConflictStrategy.LWW) {
+            if (!lwwIncomingWins(strategy, incoming.lastModified, existing.lastModified)) return false
+            applyDownloadLabelFields(existing, incoming)
+            downloadLabelRepository.save(existing)
+            recordProvenance(username, TAG_DOWNLOAD_LABEL, naturalKey, incomingDevice)
+            return true
+        }
+        // A/C 同平台回退：v1 完整语义（local-wins outside skew）。
         if (existing.lastModified > incoming.lastModified + SKEW_TOLERANCE) return false
         if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) {
             applyDownloadLabelFields(existing, incoming)
@@ -710,13 +809,29 @@ class SyncService(
     // ---- Strategy arbitration helpers（契约 v2 §1.4 / §3.8） ----
 
     /**
+     * v4（策略 B / lww）唯一判据：服务器打戳下的纯 LWW —— 后到者（incoming）胜当且
+     * 仅当 `incoming.lastModified >= existing.lastModified`（同戳后到胜）。
+     * 删除=墓碑与活行同一判据（新墓碑胜旧活行、新活行胜旧墓碑，见 [softDeleteLiveWins]）。
+     */
+    private fun lwwIncomingWins(strategy: ConflictStrategy, incomingLastModified: Long, existingLastModified: Long): Boolean =
+        strategy == ConflictStrategy.LWW && incomingLastModified >= existingLastModified
+
+    /**
      * soft 实体（favorite/download/filter/quickSearch/downloadLabel）删除 vs 保留（§3.8）：
-     * B = live 胜（v1 union：单边删除不传播）；A/C = 优先端删除无条件传播，
-     * 非优先端删除 vs 优先端持有该键 → live 胜（保留），双方均非优先端 → 删除传播。
+     * - B（lww，v4）：墓碑按服务器戳参与 LWW —— incoming 侧胜出即 [lwwIncomingWins]，
+     *   墓碑与活行同一判据（新墓碑胜旧活行；incoming tomb 时 liveWins 取反）。
+     * - A/C：优先端删除无条件传播，非优先端删除 vs 优先端持有该键 → live 胜（保留），
+     *   双方均非优先端 → 删除传播。
      * 返回 true = 保留 live 记录，false = tombstone 胜。
      */
-    private fun softDeleteLiveWins(strategy: ConflictStrategy, tombPlatform: SyncPlatform, livePlatform: SyncPlatform): Boolean {
-        if (strategy == ConflictStrategy.LWW) return true
+    private fun softDeleteLiveWins(
+        strategy: ConflictStrategy,
+        tombPlatform: SyncPlatform,
+        livePlatform: SyncPlatform,
+        incomingIsTomb: Boolean,
+        incomingWinsLww: Boolean,
+    ): Boolean {
+        if (strategy == ConflictStrategy.LWW) return if (incomingIsTomb) !incomingWinsLww else incomingWinsLww
         val prio = priorityPlatformOf(strategy)
         return when {
             tombPlatform == prio -> false
@@ -754,6 +869,15 @@ class SyncService(
 
     private fun recordProvenance(username: String, tag: String, naturalKey: String, deviceId: String) {
         serverConfig.set(provenanceConfigKey(username, tag, naturalKey), deviceId)
+    }
+
+    /**
+     * v4（WP3）回收站恢复出口：把行级来源标记为 "server"（服务器自身动作，platformOf
+     * 归 web 侧）。tag/key 约定与 provenance 记录一致（TAG_* + filterKey 等），
+     * 供 [RecycleService] 复用而不必暴露内部键编码。
+     */
+    fun stampServerProvenance(username: String, tag: String, naturalKey: String) {
+        recordProvenance(username, tag, naturalKey, PROVENANCE_FALLBACK_DEVICE)
     }
 
     private fun provenanceConfigKey(username: String, tag: String, naturalKey: String): String {
@@ -798,9 +922,18 @@ class SyncService(
         if (removed > 0) logger.info("Pruned {} orphan sync provenance keys", removed)
     }
 
-    private fun filterKey(mode: Int, text: String): String = "$mode|$text"
-
     companion object {
+        /**
+         * v4（WP2）pull 增量 overlap：增量下界回退 1s，吸收「与上次 pull 并发提交」的行
+         * （其戳可能 <= 客户端水位，严格 since 过滤会永久漏发）；客户端按幂等吸收回声。
+         */
+        const val PULL_OVERLAP_MS = 1000L
+
+        /**
+         * filter 的自然键编码 `"{type}|{text}"`（provenance/回收站共用，故 internal 公开）。
+         */
+        internal fun filterKey(mode: Int, text: String): String = "$mode|$text"
+
         const val TAG_FAVORITE = "fav"
         const val TAG_HISTORY = "hist"
         const val TAG_DOWNLOAD = "dl"
@@ -817,7 +950,7 @@ class SyncService(
 
         // 契约 §7 缺省常量
         const val CLIENT_TIER_DEFAULT = 1
-        const val AUTO_SYNC_INTERVAL_SEC_DEFAULT = 900
+        const val AUTO_SYNC_INTERVAL_SEC_DEFAULT = 10
         val CLIENT_TIER_RANGE = 0..3
     }
 
@@ -873,7 +1006,9 @@ class SyncService(
         entity.favoriteName = dto.favoriteName
         entity.pages = dto.pages
         entity.time = dto.time
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 
@@ -909,7 +1044,9 @@ class SyncService(
         // 不碰 page。
         entity.page = maxOf(entity.page, dto.page)
         entity.time = dto.time
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 
@@ -944,9 +1081,11 @@ class SyncService(
         entity.total = dto.total
         entity.done = dto.finished
         entity.time = dto.time
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
-        entity.label = resolveLabelId(dto.label, dto.lastModified, username)
+        entity.label = resolveLabelId(dto.label, username)
     }
 
     /**
@@ -955,13 +1094,15 @@ class SyncService(
      * 的语义新建。MASTER-2026-08-22 P3：创建即落 username（此前留 NULL 依赖
      * adoptNullOwnership 认领；短路优化后不再有后续认养扫描，必须当场落属主）。
      */
-    private fun resolveLabelId(labelName: String?, lastModified: Long, username: String): Int {
+    private fun resolveLabelId(labelName: String?, username: String): Int {
         if (labelName.isNullOrEmpty()) return 0
         downloadLabelRepository.findByLabel(labelName)?.let { return it.id.toInt() }
+        // v4（WP2）：新建标签行的水位由服务器打戳（不再沿用下载行的客户端戳）。
+        val stamp = syncClock.next()
         val created = downloadLabelRepository.save(DownloadLabelEntity().apply {
             label = labelName
-            time = System.currentTimeMillis()
-            this.lastModified = lastModified
+            time = stamp
+            this.lastModified = stamp
             this.username = username
         })
         return created.id.toInt()
@@ -995,7 +1136,9 @@ class SyncService(
         entity.pages = dto.pages
         entity.time = dto.time
         entity.note = dto.page.toString()
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 
@@ -1008,7 +1151,9 @@ class SyncService(
         entity.type = dto.mode
         entity.text = dto.text
         entity.enabled = dto.enabled
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 
@@ -1027,7 +1172,9 @@ class SyncService(
         entity.pageFrom = dto.pageFrom
         entity.pageTo = dto.pageTo
         entity.time = dto.time
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 
@@ -1039,7 +1186,9 @@ class SyncService(
     private fun applyDownloadLabelFields(entity: DownloadLabelEntity, dto: SyncDownloadLabelDto) {
         entity.label = dto.label
         entity.time = dto.time
-        entity.lastModified = dto.lastModified
+        // v4（WP2）：lastModified 一律由服务器打戳（syncClock.next()，跨实体严格单调）；
+        // 客户端上送值不落库（判据仍在 lwwIncomingWins 里用 incoming 值比较）。
+        entity.lastModified = syncClock.next()
         entity.deleted = dto.deleted
     }
 

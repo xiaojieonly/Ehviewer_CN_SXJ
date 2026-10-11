@@ -26,6 +26,22 @@ interface LocalFavoriteInfoRepository : JpaRepository<LocalFavoriteInfoEntity, L
     @Transactional
     fun deleteByGid(gid: Long)
 
+    // ── v4 回收站 / status（WP3）──
+    // 注意：以下带 deleted 条件的查询**仅供回收站（list/restore/purge）与 status
+    // 计数使用**；merge/pull 查询（findByGid*/findByUsername*）仍不得加 deleted
+    // 条件（呼应 DownloadInfoRepository.kt:11-16 既有约定——墓碑行是同步删除的
+    // 唯一传播载体，过滤掉即等于删除永不传播）。
+
+    /** 回收站列表（本用户墓碑行，id 序；页面按 lastModified 倒序分页由服务层完成）。 */
+    fun findByUsernameAndDeletedTrueOrderById(username: String): List<LocalFavoriteInfoEntity>
+    /** 到期物理清除输入（deleted=true 且 lastModified < cutoff）。 */
+    fun findByDeletedTrueAndLastModifiedBefore(lastModified: Long): List<LocalFavoriteInfoEntity>
+    /** status 计数：只数存活行（墓碑不计入）。 */
+    fun countByUsernameAndDeletedFalse(username: String): Long
+    /** v4 服务器打戳：SyncClock 启动水位初始化。 */
+    @Query("SELECT COALESCE(MAX(e.lastModified), 0) FROM LocalFavoriteInfoEntity e")
+    fun maxLastModified(): Long
+
     /**
      * P2: 收藏列表过滤/分页下沉 DB——slot 语义见 FavoriteService.listFavorites
      * （<0 全部；0 = 默认夹 favoriteSlot in (-1, 0)；>0 = 恰好该夹），

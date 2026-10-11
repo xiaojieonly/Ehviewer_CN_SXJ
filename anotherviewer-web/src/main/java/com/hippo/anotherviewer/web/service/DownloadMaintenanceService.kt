@@ -9,7 +9,9 @@ import com.hippo.anotherviewer.web.dto.MaintenancePreviewResponse
 import com.hippo.anotherviewer.web.entity.DownloadInfoEntity
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.io.File
 
 /**
@@ -41,8 +43,17 @@ class DownloadMaintenanceService(
     private val downloadRepository: DownloadInfoRepository,
     private val config: SiteCoreConfigProperties,
     private val usernameProvider: com.hippo.anotherviewer.web.config.CurrentUsernameProvider,
+    // v4（WP3）：INVALID_DOWNLOADS 的内容目录改为移交回收站——事件在事务提交后由
+    // TrashMoveHandler 执行移动。参数带默认值仅为既有直构测试的源兼容保留
+    // （Spring 装配按类型注入真实 bean）。
+    private val eventPublisher: ApplicationEventPublisher = ApplicationEventPublisher {},
+    // v4（WP2）：行墓碑化的水位由服务器统一打戳。null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
     private val logger = LoggerFactory.getLogger(DownloadMaintenanceService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     /** 只读扫描：返回当前全部冗余文件与无效下载清单。 */
     fun preview(): MaintenancePreviewResponse {
@@ -59,7 +70,12 @@ class DownloadMaintenanceService(
      *
      * A7-2：扫描仅存活行；INVALID_DOWNLOADS 的 DB 行墓碑化（deleted=true +
      * lastModified bump，删除经增量 pull 传播）而非物理删，磁盘文件照删。
+     *
+     * v4（WP3）：内容目录不再物理删，改发布 [DownloadTombstonedEvent]（提交后由
+     * TrashMoveHandler 移入 {dataDir}/trash/，7 天内可恢复）。@Transactional 是
+     * AFTER_COMMIT 监听的前提；freedBytes 对移动语义记 0（目录进回收站并未释放空间）。
      */
+    @Transactional
     fun clean(kind: MaintenanceKind): MaintenanceCleanResponse = synchronized(this) {
         val rows = downloadRepository.findAllByDeletedFalseOrderById()
         var removedFiles = 0
@@ -74,22 +90,21 @@ class DownloadMaintenanceService(
             }
             MaintenanceKind.INVALID_DOWNLOADS -> scanInvalid(rows).forEach { issue ->
                 val row = rows.firstOrNull { it.id == issue.id } ?: return@forEach
-                // 内容目录若存在且已无可用页面，一并清掉（否则会转为冗余文件）。
+                // 内容目录若存在且已无可用页面，一并移交回收站（否则会转为冗余文件）。
                 run {
                     val dir = resolveDir(row)
                     if (dir.isDirectory && !isInsideRoot(dir)) {
                         // 目录指向 downloads 根之外（如 App 推流的任意路径）：
-                        // 只删 DB 行，绝不递归删除根外文件系统内容。
+                        // 只删 DB 行，绝不递归删除/移动根外文件系统内容（不发事件）。
                         logger.warn("Invalid download {} points outside the downloads root; row deleted, files kept", dir.absolutePath)
                     } else if (dir.exists()) {
-                        freedBytes += sizeOf(dir)
-                        if (!dir.deleteRecursively()) {
-                            logger.warn("Failed to delete content dir of invalid download {}", dir.absolutePath)
-                        }
+                        // v4（WP3）：移动语义 → 不释放磁盘空间（回收站保留 retentionDays 天，
+                        // 到期物理清除时才真正释放），freedBytes 记 0。
+                        eventPublisher.publishEvent(DownloadTombstonedEvent(row.gid, row.downloadDir))
                     }
                 }
                 row.deleted = true
-                row.lastModified = System.currentTimeMillis()
+                row.lastModified = stamp()
                 if (row.username == null) row.username = usernameProvider.currentUsername()
                 downloadRepository.save(row)
                 removedDownloads++

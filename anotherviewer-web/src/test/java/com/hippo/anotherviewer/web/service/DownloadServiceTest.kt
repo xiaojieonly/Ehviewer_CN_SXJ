@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.argThatK
+import com.hippo.anotherviewer.web.captureK
 import com.hippo.anotherviewer.web.eq
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.DownloadAddRequest
@@ -56,6 +57,8 @@ class DownloadServiceTest {
     private lateinit var sessionManager: SiteSessionManager
     private lateinit var hashStore: ConcurrentHashMap<PageFileHashId, PageFileHashEntity>
     private lateinit var service: DownloadService
+    private lateinit var config: SiteCoreConfigProperties
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     @BeforeEach
     fun setUp() {
@@ -78,13 +81,18 @@ class DownloadServiceTest {
         }
         galleryLookup = mock(GalleryLookupService::class.java)
         sessionManager = mock(SiteSessionManager::class.java)
+        // v4（WP3）：回收站根 = {dataDir}/trash——dataDir 指到 @TempDir，删除路径的事件
+        // 移动不会污染仓库工作目录。
+        config = SiteCoreConfigProperties().apply {
+            dataDir = tempDir.absolutePath
+            download.path = java.io.File(tempDir, "downloads").absolutePath
+        }
+        eventPublisher = mock(ApplicationEventPublisher::class.java)
         service = DownloadService(
             downloadRepository,
             labelRepository,
-            SiteCoreConfigProperties().apply {
-                download.path = java.io.File(tempDir, "downloads").absolutePath
-            },
-            mock(ApplicationEventPublisher::class.java),
+            config,
+            eventPublisher,
             mock(ImageCacheService::class.java),
             sessionManager,
             galleryLookup,
@@ -621,29 +629,39 @@ class DownloadServiceTest {
     // ── A7-2: 软删 / 复活 / 过滤 ──
 
     @Test
-    fun `deleteDownload deletes files but keeps a tombstoned row`() {
-        val dir = java.io.File("dl-test-del-7").apply { mkdirs() }
-        try {
-            java.io.File(dir, "0001.jpg").writeBytes(ByteArray(10))
-            val row = DownloadInfoEntity().apply {
-                id = 7L; gid = 71L; token = "tok"; state = 3
-                downloadDir = "dl-test-del-7"; lastModified = 3L
-            }
-            `when`(downloadRepository.findById(7L)).thenReturn(Optional.of(row))
-            `when`(downloadRepository.existsById(7L)).thenReturn(true)
-            `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
-
-            assertTrue(service.deleteDownload(7L))
-
-            // 磁盘文件照删（行为不变）。
-            assertFalse(dir.exists())
-            // DB 行墓碑化：行保留、deleted=true、水位 bump（不再物理删）。
-            assertTrue(row.deleted)
-            assertTrue(row.lastModified > 3L)
-            verify(downloadRepository, never()).deleteById(7L)
-        } finally {
-            java.io.File("dl-test-del-7").deleteRecursively()
+    fun `deleteDownload tombstones the row and hands the content dir to the trash handler (v4)`() {
+        // v4（WP3）：内容目录不再就地删除——发 DownloadTombstonedEvent，由
+        // TrashMoveHandler 在事务提交后移入 {dataDir}/trash（可恢复）。本用例用
+        // 直构 handler 模拟 AFTER_COMMIT 监听并断言目录确实进了回收站。
+        val dir = java.io.File(java.io.File(tempDir, "downloads"), "71-Del Title").apply { mkdirs() }
+        java.io.File(dir, "0001.jpg").writeBytes(ByteArray(10))
+        val row = DownloadInfoEntity().apply {
+            id = 7L; gid = 71L; token = "tok"; state = 3
+            downloadDir = dir.absolutePath; lastModified = 3L
         }
+        `when`(downloadRepository.findById(7L)).thenReturn(Optional.of(row))
+        `when`(downloadRepository.existsById(7L)).thenReturn(true)
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        assertTrue(service.deleteDownload(7L))
+
+        // 行墓碑化：行保留、deleted=true、水位 bump（不物理删）；目录原地未动
+        // （移动发生在事务提交后的监听器里）。
+        assertTrue(row.deleted)
+        assertTrue(row.lastModified > 3L)
+        verify(downloadRepository, never()).deleteById(7L)
+        assertTrue(dir.isDirectory)
+
+        // 事件发布（事务提交后由 handler 移动）。
+        val captor = org.mockito.ArgumentCaptor.forClass(DownloadTombstonedEvent::class.java)
+        verify(eventPublisher).publishEvent(captureK(captor))
+        assertEquals(71L, captor.value.gid)
+        assertEquals(dir.absolutePath, captor.value.downloadDir)
+
+        // 模拟 AFTER_COMMIT：目录被移入回收站，不再留在 downloads 根下。
+        TrashMoveHandler(config).onDownloadTombstoned(captor.value)
+        assertFalse(dir.exists())
+        assertTrue(java.io.File(java.io.File(tempDir, "trash"), "71-Del Title").isDirectory)
     }
 
     @Test

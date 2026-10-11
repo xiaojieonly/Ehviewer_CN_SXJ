@@ -46,8 +46,14 @@ class DownloadUploadService(
     // 默认直构（绑定本仓库）仅为既有直构测试的源兼容保留；Spring 装配按类型
     // 注入容器级单例（与 DownloadService 同款）。
     private val progressPersister: DownloadProgressPersister = DownloadProgressPersister(downloadRepository),
+    // v4（WP2）：上传写入路径与 sync 合并共用服务器打戳时钟。可空缺省仅为既有直构
+    // 测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
     private val logger = LoggerFactory.getLogger(DownloadUploadService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     /**
      * 页面文件名：`%04d` 历史布局与 `%08d` 现行布局都认（U2：写入端 2026-08-30
@@ -85,6 +91,8 @@ class DownloadUploadService(
         )
         downloadDir.mkdirs()
 
+        // time 是业务时间字段（上传时刻），保留墙钟；lastModified 是同步水位，
+        // v4 起由服务器打戳。
         val now = System.currentTimeMillis()
         val entity = existing ?: DownloadInfoEntity()
         entity.apply {
@@ -109,7 +117,7 @@ class DownloadUploadService(
             // 覆盖墓碑行必须复位 deleted，让重传的行回到 Web 列表（与
             // addDownload 的复活语义对齐）。
             deleted = false
-            lastModified = now
+            lastModified = stamp()
         }
         downloadRepository.save(entity)
         return UploadInitResponse(success = true, message = "ok", existingPages = existingPages(gid))
@@ -223,7 +231,7 @@ class DownloadUploadService(
             entity.state = 3
             entity.total = request.total
             entity.done = request.done
-            entity.lastModified = System.currentTimeMillis()
+            entity.lastModified = stamp()
             downloadRepository.save(entity)
         }
         return true

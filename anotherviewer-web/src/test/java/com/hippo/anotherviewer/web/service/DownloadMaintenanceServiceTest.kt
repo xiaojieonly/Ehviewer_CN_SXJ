@@ -1,5 +1,6 @@
 package com.hippo.anotherviewer.web.service
 
+import com.hippo.anotherviewer.web.captureK
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.MaintenanceKind
 import com.hippo.anotherviewer.web.entity.DownloadInfoEntity
@@ -20,13 +21,20 @@ class DownloadMaintenanceServiceTest {
     private lateinit var repository: DownloadInfoRepository
     private lateinit var service: DownloadMaintenanceService
     private lateinit var root: File
+    private lateinit var config: SiteCoreConfigProperties
+    private lateinit var publisher: org.springframework.context.ApplicationEventPublisher
 
     @BeforeEach
     fun setUp() {
         root = File(tempDir, "downloads").apply { mkdirs() }
-        val config = SiteCoreConfigProperties().apply { download.path = root.absolutePath }
+        // v4（WP3）：回收站在 {dataDir}/trash —— dataDir 指 @TempDir 隔离。
+        config = SiteCoreConfigProperties().apply {
+            dataDir = tempDir.absolutePath
+            download.path = root.absolutePath
+        }
         repository = mock(DownloadInfoRepository::class.java)
-        service = DownloadMaintenanceService(repository, config, stubProvider("test-user"))
+        publisher = mock(org.springframework.context.ApplicationEventPublisher::class.java)
+        service = DownloadMaintenanceService(repository, config, stubProvider("test-user"), publisher, SyncClock())
     }
 
     /** A7-1: 纯 Mockito 单测不碰 SecurityContext——注入固定用户的 Provider stub。 */
@@ -177,7 +185,7 @@ class DownloadMaintenanceServiceTest {
     }
 
     @Test
-    fun `clean INVALID_DOWNLOADS removes row plus its leftover dir`() {
+    fun `clean INVALID_DOWNLOADS tombstones the row and hands its dir to the trash handler (v4)`() {
         val dir = withContent(File(root, "600"), zeroByte = true)
         val row = finishedRow(9, 600)
         `when`(repository.findAllByDeletedFalseOrderById()).thenReturn(listOf(row))
@@ -194,8 +202,16 @@ class DownloadMaintenanceServiceTest {
             }
         )
         org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).deleteById(org.mockito.ArgumentMatchers.anyLong())
+        // v4（WP3）：内容目录交回收站（事件在提交后移动）；freedBytes 对移动语义记 0
+        // （回收站保留期内并不释放空间），目录此时仍原地存在。
+        assertTrue(result.freedBytes == 0L)
+        val captor = org.mockito.ArgumentCaptor.forClass(DownloadTombstonedEvent::class.java)
+        org.mockito.Mockito.verify(publisher).publishEvent(captureK(captor))
+        assertEquals(600L, captor.value.gid)
+
+        TrashMoveHandler(config).onDownloadTombstoned(captor.value)
         assertFalse(dir.exists())
-        assertTrue(result.freedBytes == 0L) // 全是 0 字节文件，释放字节数为 0
+        assertTrue(File(File(tempDir, "trash"), "600").isDirectory)
     }
 
     @Test
@@ -213,6 +229,25 @@ class DownloadMaintenanceServiceTest {
             org.mockito.ArgumentMatchers.argThat { r: DownloadInfoEntity -> r.id == 7L && r.deleted }
         )
         assertTrue(outsideRoot.exists()) // 根外内容只保留不删
+        // v4：根外目录不发墓碑事件（绝不搬移/删除 downloads 根之外的文件系统内容）。
+        org.mockito.Mockito.verify(publisher, org.mockito.Mockito.never())
+            .publishEvent(org.mockito.ArgumentMatchers.any(DownloadTombstonedEvent::class.java))
+    }
+
+    @Test
+    fun `trash dir under dataDir is outside the downloads root and never scanned (v4)`() {
+        // v4（WP3）设计前提：回收站放 {dataDir}/trash 而不是 downloads 根内——
+        // scanRedundant 把根下无行引用的直接子目录一律判冗余，trash 若在根内会被
+        // 下一次维护扫描当冗余清掉。本用例固化「trash 不在根内、不进 scans」。
+        val trash = File(tempDir, "trash").apply { mkdirs() }
+        withContent(File(trash, "600-Title"))
+        `when`(repository.findAllByDeletedFalseOrderById()).thenReturn(emptyList())
+
+        val preview = service.preview()
+
+        assertTrue(preview.redundantFiles.isEmpty(), "trash 不在 downloads 根下，扫描不到")
+        assertTrue(preview.invalidDownloads.isEmpty())
+        assertTrue(trash.isDirectory)
     }
 
     @Test

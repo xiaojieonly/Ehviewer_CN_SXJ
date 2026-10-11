@@ -50,6 +50,9 @@ class DownloadProgressPersister(
     private val scheduler: ScheduledExecutorService? = Executors.newSingleThreadScheduledExecutor { r ->
         Thread(r, "download-progress-persister").apply { isDaemon = true }
     },
+    // v4（WP2）：进度写的水位走服务器打戳时钟（可空缺省保留 [clock] 测试缝：null 时
+    // 回退原 clock()，既有直构测试的注入时钟断言不变）。
+    private val syncClock: SyncClock? = null,
 ) : InitializingBean, DisposableBean {
 
     private val logger = LoggerFactory.getLogger(DownloadProgressPersister::class.java)
@@ -119,7 +122,8 @@ class DownloadProgressPersister(
             downloadRepository.findById(taskId).ifPresent { e ->
                 if (!e.deleted && e.state != 0 && e.state != 4) {
                     e.done = done.toInt()
-                    e.lastModified = clock()
+                    // v4（WP2）：水位走服务器打戳；无 clock 的直构场景保留原测试缝。
+                    e.lastModified = syncClock?.next() ?: clock()
                     downloadRepository.save(e)
                 }
             }

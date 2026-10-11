@@ -9,13 +9,17 @@ import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import org.springframework.stereotype.Service
 
-private const val SKEW_TOLERANCE = 5000L
-
 @Service
 class UserPreferenceService(
     private val repo: UserPreferenceRepository,
     private val serverConfig: ServerConfigService,
+    // v4（WP2）：preferences 的 updatedAt 由服务器统一打戳（syncClock.next()）。
+    // 可空缺省仅为既有直构测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     // 容错读取: 未知字段忽略 + 缺省填充, 异构偏好串（如 {"theme":"dark"}）不会打挂 GET/PUT
     private val mapper = jacksonObjectMapper().apply {
@@ -47,22 +51,27 @@ class UserPreferenceService(
         )
 
         entity.preferences = mapper.writeValueAsString(merged)
-        entity.updatedAt = System.currentTimeMillis()
+        // v4（WP2）：updatedAt 由服务器打戳（统一水位，增量 pull 的 since 由此推进）。
+        entity.updatedAt = stamp()
         entity.updatedBy = source
         repo.save(entity)
         return merged
     }
 
-    /** 同步用: 全量覆盖，LWW —— 仅当 incoming.lastModified 明显新于存量 updatedAt（含时钟偏差容忍）或无存量时覆盖 */
-    fun replace(username: String, json: String, source: String, lastModified: Long) {
+    /**
+     * 同步用: 全量覆盖，LWW —— v4 判据：仅当 incoming.lastModified >= 存量 updatedAt
+     * （同戳后到胜）或无存量时覆盖；服务器打戳覆盖后 updatedAt = syncClock.next()。
+     * @return true = 本次写入生效（SyncService 用它聚合 preferences 的 sync.update 计数）。
+     */
+    fun replace(username: String, json: String, source: String, lastModified: Long): Boolean {
         val existing = repo.findByUsername(username)
-        // 旧设备的 push 不得覆盖新值
-        if (existing != null && lastModified <= existing.updatedAt + SKEW_TOLERANCE) return
+        // 旧设备的 push 不得覆盖新值；同戳放行（后到胜）。
+        if (existing != null && lastModified < existing.updatedAt) return false
         val entity = existing ?: UserPreferenceEntity().apply { this.username = username }
         entity.preferences = normalize(json)
-        // E2E-8: 与实体行为一致 —— 接受谁的记录就用谁的戳（保留客户端 lastModified），
-        // 不再被服务器重打戳为 serverTimestamp，否则 preferences 的高水位记账会错位。
-        entity.updatedAt = lastModified
+        // v4（WP2）：服务器统一打戳——不再保留客户端 lastModified（v4 语义基线：客户端
+        // 上送值不落库），pull 回显的水位即本次服务器戳，增量 pull 不会漏发。
+        entity.updatedAt = stamp()
         entity.updatedBy = source
         repo.save(entity)
         // App push 写穿透内容打码开关：App 导出的隐私节总是携带 privacyMask（全量文档），
@@ -76,6 +85,7 @@ class UserPreferenceService(
                 serverConfig.setBoolean(ServerConfigService.KEY_PRIVACY_MASK, maskNode.booleanValue())
             }
         }
+        return true
     }
 
     fun getRaw(username: String): String {

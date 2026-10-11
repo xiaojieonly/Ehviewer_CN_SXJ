@@ -26,6 +26,9 @@ class SiteSessionManagerTest {
     private var savedGallerySite: Int = 0
     private var keyPath: String = ""
 
+    /** v4：ehSession 行由服务器统一打戳——用真实 SyncClock 断言落库水位。 */
+    private val syncClock = SyncClock()
+
     /** In-memory EhSessionRepository fake: real persistence round-trip (encrypt/decrypt) without a DB. */
     private fun fakeEhSessionRepo(): EhSessionRepository {
         val store = java.util.concurrent.ConcurrentHashMap<String, EhSessionEntity>()
@@ -63,6 +66,7 @@ class SiteSessionManagerTest {
             ehSessionRepo,
             EncryptionService(),
             config,
+            syncClock,
         )
     }
 
@@ -252,7 +256,9 @@ class SiteSessionManagerTest {
 
         assertTrue(manager.hasSignedIn())
         val row = ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!
-        assertEquals(1_000L, row.lastModified)
+        // v4：客户端上送戳（1000）不落库——落库水位 = 服务器 syncClock 戳。
+        assertEquals(syncClock.current(), row.lastModified)
+        assertTrue(row.lastModified != 1_000L)
         assertEquals("tester", row.displayName)
         // gallerySite 必须同时落 entity（pull 回显）与 Settings（站点生效）。
         assertEquals(Settings.SITE_EX, row.gallerySite)
@@ -263,15 +269,31 @@ class SiteSessionManagerTest {
     }
 
     @Test
-    fun `applySyncEhSession rejects a stale session older than skew`() {
+    fun `applySyncEhSession rejects a stale session (v4 stamp gate)`() {
         manager.applySyncEhSession(syncSession(lastModified = 10_000, cookies = identityPair()), "android-test")
+        val storedStamp = ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!.lastModified
 
-        val stale = syncSession(lastModified = 1_000, cookies = identityPair())
+        // v4 判据：existing.lastModified > incoming.lastModified → 丢弃（不再有 ±5s skew 容忍，
+        // 存量戳是服务器打戳值）。
+        val stale = syncSession(lastModified = storedStamp - 1, cookies = identityPair())
         val applied = manager.applySyncEhSession(stale, "android-other")
 
         assertFalse(applied)
-        assertEquals(10_000L, ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!.lastModified)
+        assertEquals(storedStamp, ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!.lastModified)
         assertTrue(manager.hasSignedIn())
+    }
+
+    @Test
+    fun `applySyncEhSession accepts an equal lastModified (v4 同戳后到胜)`() {
+        manager.applySyncEhSession(syncSession(lastModified = 10_000, cookies = identityPair()), "android-test")
+        val storedStamp = ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!.lastModified
+
+        val applied = manager.applySyncEhSession(
+            syncSession(lastModified = storedStamp, cookies = identityPair()),
+            "android-other",
+        )
+
+        assertTrue(applied, "同戳来包必须放行（v4 门控为 `>` 而非 `>=`）")
     }
 
     @Test
@@ -285,7 +307,8 @@ class SiteSessionManagerTest {
         assertFalse(manager.hasSignedIn())
         val row = ehSessionRepo.findByUsername(SiteSessionManager.EH_SESSION_OWNER)!!
         assertTrue(row.deleted)
-        assertEquals(20_000L, row.lastModified)
+        // v4：墓碑 bump 走服务器打戳。
+        assertEquals(syncClock.current(), row.lastModified)
         // tombstone 落库但无存量冲突计数。
     }
 
@@ -313,6 +336,7 @@ class SiteSessionManagerTest {
             ehSessionRepo,
             EncryptionService(),
             config,
+            syncClock,
         )
         restarted.restorePersistedSession()
 

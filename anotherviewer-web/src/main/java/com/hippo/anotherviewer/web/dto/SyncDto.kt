@@ -7,17 +7,20 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Conflict arbitration strategy (contracts/sync-conflict-rules.md v2 §1.4).
  * Wire values are frozen by sync-schemas.json#syncPolicy / openapi.yaml.
+ *
+ * v4 基线：默认 lww（B）——服务器统一打戳下的纯 last-write-wins
+ * （`incoming.lastModified >= existing.lastModified`，同戳后到胜）。
  */
 enum class ConflictStrategy(val wire: String) {
-    /** A: 同键跨平台冲突无条件 android 胜（默认）。 */
+    /** A: 同键跨平台冲突无条件 android 胜（代码级保留，非默认）。 */
     @JsonProperty("device_priority")
     DEVICE_PRIORITY("device_priority"),
 
-    /** B: v1.0 完整语义（LWW ±5000ms skew + 实体 tie-break），回退兜底。 */
+    /** B: v4 默认——服务器打戳的 LWW（同戳后到胜）；A/C 同平台回退保留 v1 skew+实体 tie-break。 */
     @JsonProperty("lww")
     LWW("lww"),
 
-    /** C: 同键跨平台冲突无条件 web 胜。 */
+    /** C: 同键跨平台冲突无条件 web 胜（代码级保留，非默认）。 */
     @JsonProperty("web_priority")
     WEB_PRIORITY("web_priority"),
     ;
@@ -33,9 +36,10 @@ enum class ConflictStrategy(val wire: String) {
  * autoSyncIntervalSec: 网络感知自动同步间隔；0=仅网络变化触发。
  */
 data class SyncPolicyDto(
-    val conflictStrategy: ConflictStrategy = ConflictStrategy.DEVICE_PRIORITY,
+    /** v4 默认策略 = lww（与 ServerConfigService.defaults / SyncService.currentPolicy 回退一致）。 */
+    val conflictStrategy: ConflictStrategy = ConflictStrategy.LWW,
     val clientTier: Int = 1,
-    val autoSyncIntervalSec: Int = 900,
+    val autoSyncIntervalSec: Int = 10,
 )
 
 // --- Sync entity DTOs (per sync-schemas.json) ---

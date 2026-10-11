@@ -65,14 +65,14 @@ class PolicyControllerTest {
     }
 
     @Test
-    fun `GET policy defaults to device_priority`() {
+    fun `GET policy defaults to lww (v4 default)`() {
         `when`(syncService.currentPolicy()).thenReturn(SyncPolicyDto())
 
         mockMvc.perform(get("/api/v1/sync/policy").header("Authorization", "Bearer valid-token"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.conflictStrategy").value("device_priority"))
+            .andExpect(jsonPath("$.conflictStrategy").value("lww"))
             .andExpect(jsonPath("$.clientTier").value(1))
-            .andExpect(jsonPath("$.autoSyncIntervalSec").value(900))
+            .andExpect(jsonPath("$.autoSyncIntervalSec").value(10))
     }
 
     @Test

@@ -47,6 +47,7 @@ import com.hippo.anotherviewer.web.service.EncryptionService
 import com.hippo.anotherviewer.web.service.SiteAuthService
 import com.hippo.anotherviewer.web.service.ServerConfigService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
+import com.hippo.anotherviewer.web.service.SyncClock
 import com.hippo.anotherviewer.web.service.SyncService
 import com.hippo.anotherviewer.web.service.UserPreferenceService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -406,33 +407,47 @@ class SyncControllerTest {
     }
 
     @Test
-    fun `pull since the push server timestamp returns no new changes`() {
+    fun `pull at the push server timestamp re-delivers the overlap window for idempotent absorption (v4)`() {
+        // v4：增量下界回退 PULL_OVERLAP_MS=1000ms 吸收「与上次 pull 并发提交」的行——
+        // 水位（= 上次响应 serverTimestamp）落在窗口内，刚提交的行会作为回声再次下发；
+        // 回声行的戳都不晚于水位，客户端按幂等吸收（不做时间戳推进）。
         val service = newSyncService()
         val pushed = service.push(pushRequest("android-t2"), "alice")
 
         val e = service.pull(pushed.serverTimestamp, "alice").entities
-        assertTrue(e.favorites.isEmpty())
-        assertTrue(e.history.isEmpty())
-        assertTrue(e.downloads.isEmpty())
-        assertTrue(e.bookmarks.isEmpty())
-        assertTrue(e.filters.isEmpty())
-        assertTrue(e.quickSearches.isEmpty())
-        assertTrue(e.downloadLabels.isEmpty())
+        assertEquals(1, e.favorites.size)
+        assertTrue(e.favorites.all { it.lastModified <= pushed.serverTimestamp }, "回声行戳不得晚于水位")
+        assertTrue(e.history.all { it.lastModified <= pushed.serverTimestamp })
+
+        // 水位越过 overlap 窗口后，本轮变更不再重复下发（SyncClock 严格单调：
+        // 所有实体戳 <= clock.current()，since - overlap >= clock.current() 即空）。
+        val beyond = service.pull(pushed.serverTimestamp + 10_000, "alice").entities
+        assertTrue(beyond.favorites.isEmpty())
+        assertTrue(beyond.history.isEmpty())
+        assertTrue(beyond.downloads.isEmpty())
+        assertTrue(beyond.bookmarks.isEmpty())
+        assertTrue(beyond.filters.isEmpty())
+        assertTrue(beyond.quickSearches.isEmpty())
+        assertTrue(beyond.downloadLabels.isEmpty())
     }
 
     @Test
-    fun `pull since zero returns records with zero lastModified`() {
+    fun `full pull delivers pushed rows with a server stamp while incremental pull respects the watermark`() {
         val service = newSyncService()
-        // 手工构造 lastModified=0 的下载记录（如 time=0 的旧记录），经 push 入库。
+        // 客户端上送 lastModified=0（如 time=0 的旧记录）——v4 服务器统一打戳，
+        // 落库水位是 syncClock 戳（lastModified=0 的**存量行**由 SyncServiceTest 的
+        // 直接 seed 用例覆盖，push 路径不再产生 0 戳行）。
         val req = pushRequest("android-t2b")
         val zero = req.entities.downloads.map { it.copy(lastModified = 0L) }
         service.push(req.copy(entities = req.entities.copy(downloads = zero)), "alice")
 
         val e = service.pull(0, "alice").entities
         assertEquals(1, e.downloads.size)
-        assertEquals(0L, e.downloads[0].lastModified)
-        // since>0 时这些记录不再返回（增量语义不受影响）。
-        assertTrue(service.pull(1, "alice").entities.downloads.isEmpty())
+        assertTrue(e.downloads[0].lastModified > 0, "客户端 0 戳不落库，落库的是服务器戳")
+        // 水位越过 overlap 窗口后这些记录不再返回（增量语义不受影响）。
+        assertTrue(
+            service.pull(java.lang.System.currentTimeMillis() + 10_000, "alice").entities.downloads.isEmpty()
+        )
     }
 
     @Test
@@ -534,8 +549,10 @@ class SyncControllerTest {
             newServerConfigService(),
             mock(EhSessionRepository::class.java),
             mock(SiteSessionManager::class.java),
+            SyncClock(),
+            mock(org.springframework.context.ApplicationEventPublisher::class.java),
         )
-        // v1 回环套件钉在策略 B（lww）= v1.0 完整语义；v2 策略行为见 SyncStrategyMatrixTest。
+        // 回环套件钉在策略 B（lww）= v4 默认策略；策略行为矩阵见 SyncStrategyMatrixTest。
         return service.apply { updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW)) }
     }
 
@@ -572,6 +589,10 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
+        }
         // H-3: pull 现在走派生查询（全量/增量），stub 两个新方法。
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
@@ -599,6 +620,10 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
+        }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
         }
@@ -623,6 +648,10 @@ class SyncControllerTest {
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
@@ -649,6 +678,10 @@ class SyncControllerTest {
         doAnswer { inv -> store.values.remove(inv.getArgument(0)) }.`when`(repo).delete(any(BookmarkInfoEntity::class.java))
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
@@ -679,6 +712,10 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
+        }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
         }
@@ -704,6 +741,10 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
+        }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }
         }
@@ -728,6 +769,10 @@ class SyncControllerTest {
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        // v4：status 的 entityCounts 改数存活行（countByUsernameAndDeletedFalse）。
+        `when`(repo.countByUsernameAndDeletedFalse(anyString())).thenAnswer { inv ->
+            store.values.count { it.username == inv.getArgument<String>(0) && !it.deleted }.toLong()
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
             store.values.filter { it.username == inv.getArgument<String>(0) }

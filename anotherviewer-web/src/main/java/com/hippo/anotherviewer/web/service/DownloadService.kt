@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.AtomicMoveNotSupportedException
@@ -81,8 +82,15 @@ class DownloadService(
     // 保留——那些用例不触达后台调度（afterPropertiesSet 才启动）；Spring 装配按
     // 类型注入容器级单例。
     private val progressPersister: DownloadProgressPersister = DownloadProgressPersister(downloadRepository),
+    // v4（WP2）：WebUI 直写路径与 sync 合并共用服务器打戳时钟（time 业务字段保留墙钟，
+    // 只有 lastModified 水位换 clock）。可空缺省仅为既有直构测试的源兼容保留——
+    // null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     private val mapper = jacksonObjectMapper()
 
@@ -289,6 +297,8 @@ class DownloadService(
         // A7-3（P1-1）：List 化防同 gid 多行炸单实体派生查询；firstOrNull 与原
         // findByGid 等价（单行模型下语义不变，多行脏数据不再毒化请求）。
         val existing = downloadRepository.findAllByGid(request.gid).firstOrNull()
+        // time 是业务时间字段（加入下载的时刻），保留墙钟；lastModified 是同步水位，
+        // v4 起由服务器打戳（syncClock）。
         val now = System.currentTimeMillis()
         // 打码边界（2026-10-11 用户裁决）：打码开关只应影响**响应展示**，绝不让
         // 脱敏数据落库——打码期间客户端只持有 `#gid` 形态的序列号标题，与历史
@@ -317,7 +327,7 @@ class DownloadService(
                 // A7-1 stamping：新行当场落属主与同步水位（请求线程才有 SecurityContext，
                 // username 只在写入口落；worker 后续只 bump lastModified）。
                 username = usernameProvider.currentUsername()
-                lastModified = now
+                lastModified = stamp()
             }
             existing.deleted -> existing.apply {
                 token = request.token
@@ -332,7 +342,7 @@ class DownloadService(
                 time = now
                 deleted = false
                 if (username == null) username = usernameProvider.currentUsername()
-                lastModified = now
+                lastModified = stamp()
             }
             else -> return false
         }
@@ -448,27 +458,31 @@ class DownloadService(
     }
 
     /**
-     * A7-2：删除下载 = 磁盘文件照删（行为不变），DB 行墓碑化（deleted=true +
-     * lastModified bump）——行保留让删除经增量 pull 传播给 App；物理删会让删除
-     * 永不传播（§1.1），且 App 下次 push 同 gid 时 union-merge 静默重建。
+     * A7-2：删除下载 = 磁盘内容目录移交回收站（v4/WP3：{dataDir}/trash/，7 天内可恢复），
+     * DB 行墓碑化（deleted=true + lastModified bump）——行保留让删除经增量 pull 传播给
+     * App；物理删会让删除永不传播（§1.1），且 App 下次 push 同 gid 时 union-merge 静默重建。
      * cancelDownload 的终态写不复活墓碑（updateEntity 跳墓碑行已覆盖）。
+     *
+     * v4 事务化（@Transactional）：目录移动走 DownloadTombstonedEvent 的 AFTER_COMMIT 监听
+     * （TrashMoveHandler）——行墓碑化未提交前绝不移动文件，事务回滚时目录原样保留。
+     * 该方法内自调（deleteDownloads 批量路径）不经过代理、无事务，监听器 fallbackExecution
+     * 立即执行，行为等价「提交后」。
      */
+    @Transactional
     fun deleteDownload(id: Long): Boolean {
         val entity = downloadRepository.findById(id).orElse(null) ?: return false
         val task = tasks[id]
         task?.requestStop()
         task?.awaitFinished(90_000)
-        // Resolve through DownloadDirs so rows migrated from another host
-        // delete their files at the current-root location instead of no-oping
-        // on the old machine's path (which can never exist here).
-        val dirFile = DownloadDirs.resolve(config.download.path, entity.gid, entity.downloadDir)
-        if (dirFile.exists()) dirFile.deleteRecursively()
+        // v4（WP3）：内容目录不在此处物理删除——发布墓碑事件，由 TrashMoveHandler 在
+        // 事务提交后移入回收站（跨机器迁移行由 handler 经 DownloadDirs.resolve 归一）。
+        eventPublisher.publishEvent(DownloadTombstonedEvent(entity.gid, entity.downloadDir))
         // P-S8 批量：墓碑化前丢弃待写进度（行将删除，进度无意义；批量守卫本也
         // 跳过墓碑，这里只是把内存累计一并清掉）。
         progressPersister.discard(id)
         if (downloadRepository.existsById(id)) {
             entity.deleted = true
-            entity.lastModified = System.currentTimeMillis()
+            entity.lastModified = stamp()
             if (entity.username == null) entity.username = usernameProvider.currentUsername()
             downloadRepository.save(entity)
         }
@@ -716,11 +730,12 @@ class DownloadService(
         // 是单实体查询——墓碑旁再插同名行会让 mergeDownloadLabel 命中两行直接抛
         // IncorrectResultSizeDataAccessException）；活行仍拒绝。
         if (existing != null && !existing.deleted) return false
+        // time 是业务时间字段，保留墙钟；lastModified 是同步水位（v4 服务器打戳）。
         val now = System.currentTimeMillis()
         val entity = if (existing != null) {
             existing.apply {
                 deleted = false
-                lastModified = now
+                lastModified = stamp()
                 if (username == null) username = usernameProvider.currentUsername()
             }
         } else {
@@ -729,7 +744,7 @@ class DownloadService(
                 time = now
                 // A7-1 stamping：新行当场落属主与同步水位。
                 username = usernameProvider.currentUsername()
-                lastModified = now
+                lastModified = stamp()
             }
         }
         labelRepository.save(entity)
@@ -741,7 +756,7 @@ class DownloadService(
         val row = labelRepository.findById(id).orElse(null) ?: return false
         if (row.deleted) return true
         row.deleted = true
-        row.lastModified = System.currentTimeMillis()
+        row.lastModified = stamp()
         if (row.username == null) row.username = usernameProvider.currentUsername()
         labelRepository.save(row)
         return true
@@ -1380,7 +1395,9 @@ class DownloadService(
             downloadRepository.findById(id).ifPresent { e ->
                 if (e.deleted) return@ifPresent
                 transform(e)
-                e.lastModified = System.currentTimeMillis()
+                // v4：worker 线程无 SyncClock 依赖问题（clock 是进程级单例、线程安全），
+                // 水位一律走服务器打戳。
+                e.lastModified = stamp()
                 downloadRepository.save(e)
             }
         } catch (e: Exception) {

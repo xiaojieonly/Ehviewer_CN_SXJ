@@ -7,6 +7,7 @@ import com.hippo.anotherviewer.web.repository.PageFileHashRepository
 import com.hippo.anotherviewer.web.service.DownloadDirIndex
 import com.hippo.anotherviewer.web.service.DownloadDirs
 import com.hippo.anotherviewer.web.service.ServerConfigService
+import com.hippo.anotherviewer.web.service.SyncClock
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
@@ -41,8 +42,14 @@ class BackfillService(
     private val hashRepository: PageFileHashRepository,
     private val downloadRepository: DownloadInfoRepository,
     private val serverConfigService: ServerConfigService,
+    // v4（WP2）：pages 修正/完成化的水位由服务器统一打戳（业务时间字段不动）。
+    // 可空缺省仅为既有直构测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
     private val logger = LoggerFactory.getLogger(BackfillService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     // ── 公共结果类型（Wave 3 端点 / F1 面板直接序列化）──────────────────────
 
@@ -284,7 +291,7 @@ class BackfillService(
                     row.done = count
                     row.state = STATE_FINISHED
                 }
-                row.lastModified = System.currentTimeMillis()
+                row.lastModified = stamp()
                 downloadRepository.save(row)
             }
         }

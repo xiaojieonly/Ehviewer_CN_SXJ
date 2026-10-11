@@ -122,6 +122,11 @@ class BackupServiceTest {
         val cacheDir = dataDir.resolve("cache/abc")
         Files.createDirectories(cacheDir)
         Files.write(cacheDir.resolve("thumb.jpg"), byteArrayOf(9, 9, 9))
+        // v4（WP3）：回收站在 {dataDir}/trash —— downloads/cache 之外，备份只打包这两个
+        // 根的直接子目录，回收站内容天然不进分片（同一 export 内断言，避免共享测试
+        // JVM 上再起一轮 LZMA2 线程池的内存压力）。
+        Files.createDirectories(dataDir.resolve("trash/654-Title"))
+        Files.write(dataDir.resolve("trash/654-Title/0001.jpg"), byteArrayOf(1, 2, 3))
 
         val result = service.export(includeDownloads = true)
 
@@ -130,6 +135,7 @@ class BackupServiceTest {
         val entryNames = result.slices.flatMap { extractEntryNames(it) }
         assertTrue(entryNames.any { it.startsWith("downloads/123456/") })
         assertTrue(entryNames.any { it.startsWith("cache/abc/") })
+        assertTrue(entryNames.none { it.contains("trash") }, "回收站内容不得进备份分片: $entryNames")
     }
 
     @Test

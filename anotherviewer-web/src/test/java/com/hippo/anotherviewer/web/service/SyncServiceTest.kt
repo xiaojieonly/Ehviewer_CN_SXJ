@@ -40,6 +40,7 @@ import com.hippo.anotherviewer.web.repository.SyncDeviceRepository
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -96,6 +97,8 @@ class SyncServiceTest {
     private lateinit var preferenceService: UserPreferenceService
     private lateinit var siteSessionManager: SiteSessionManager
     private lateinit var serverCfg: com.hippo.anotherviewer.web.service.ServerConfigService
+    private lateinit var syncClock: SyncClock
+    private lateinit var eventPublisher: org.springframework.context.ApplicationEventPublisher
     private lateinit var service: SyncService
 
     @BeforeEach
@@ -112,15 +115,36 @@ class SyncServiceTest {
         preferenceService = UserPreferenceService(preferenceRepo, fakeServerConfig())
         siteSessionManager = mock(SiteSessionManager::class.java)
         serverCfg = fakeServerConfig()
+        syncClock = SyncClock()
+        eventPublisher = mock(org.springframework.context.ApplicationEventPublisher::class.java)
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
             serverCfg,
             mock(EhSessionRepository::class.java),
             siteSessionManager,
+            syncClock,
+            eventPublisher,
         )
-        // v1 回归套件钉在策略 B（lww）= v1.0 完整语义（契约 §1.4 回退兜底）。
+        // v1 回归套件钉在策略 B（lww）= v4 默认策略（契约 §1.4）。
         service.updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW))
+    }
+
+    /**
+     * v4 判据是「incoming.lastModified vs existing.lastModified」：existing 是服务器戳
+     * （≈当前墙钟），因此表达「晚于既有写入的新包」必须用真实时钟值（玩具值会被服务器
+     * 戳压过）。
+     */
+    private fun nowMs(): Long = System.currentTimeMillis()
+
+    /**
+     * v4 打戳断言：落库水位必须来自服务器 SyncClock —— 不等于客户端上送值（客户端值
+     * 不落库），且晚于 [clockBefore]（push 前的时钟水位；服务器戳严格单调，实体戳先于
+     * push 末尾的 serverTimestamp 发放）。
+     */
+    private fun assertClockStamped(stored: Long, clientValue: Long, clockBefore: Long) {
+        assertNotEquals(clientValue, stored, "客户端上送值 $clientValue 不得落库")
+        assertTrue(stored > clockBefore, "落库水位 $stored 必须晚于 push 前时钟水位 $clockBefore")
     }
 
     /** Real [ServerConfigService] over an in-memory [ServerConfigRepository] fake. */
@@ -491,7 +515,8 @@ class SyncServiceTest {
         assertEquals("A", saved.username)
         assertEquals(2, saved.state)
         assertFalse(saved.deleted)
-        assertEquals(1_000L, saved.lastModified)
+        // v4：客户端上送戳（1000）不落库——落库水位 = 服务器 syncClock 戳。
+        assertClockStamped(saved.lastModified, 1_000L, 0L)
     }
 
     @Test
@@ -506,15 +531,15 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `download union keeps an alive row when incoming is a tombstone`() {
+    fun `download tombstone wins over an older alive row (v4 lww stamp arbitration)`() {
+        // v4：删除=墓碑按戳参与 LWW——incoming 墓碑（2000）>= 存量活行（1000）→ 墓碑胜。
         seedDownload(gid = 3, lastModified = 1_000, state = 1)
         val response = push("A", downloads = listOf(dl(3, lastModified = 2_000, deleted = true)))
 
         val stored = downloadRepo.findByGid(3)!!
-        assertFalse(stored.deleted)
-        assertEquals(1, stored.state)
-        verify(downloadRepo, never()).save(any(DownloadInfoEntity::class.java))
-        assertEquals(0, response.conflicts)
+        assertTrue(stored.deleted)
+        assertEquals(1, response.conflicts)
+        verify(downloadRepo, never()).delete(any(DownloadInfoEntity::class.java))
     }
 
     @Test
@@ -529,25 +554,26 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `download LWW beyond skew applies incoming state fields`() {
+    fun `download newer incoming applies state fields`() {
         seedDownload(gid = 5, lastModified = 1_000, state = 1, title = "Old")
         val response = push("A", downloads = listOf(dl(5, lastModified = 6_001, state = 3, title = "New")))
 
         val stored = downloadRepo.findByGid(5)!!
         assertEquals(3, stored.state)
         assertEquals("New", stored.title)
-        assertEquals(6_001L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 6_001L, 0L)
         assertEquals(1, response.conflicts)
     }
 
     @Test
-    fun `download within skew keeps the existing record`() {
+    fun `download within overlap now applies the incoming row (v4 lww flip)`() {
+        // v4 翻转：旧 skew 语义「窗口内保留存量」被纯 LWW 取代——incoming(3000) >=
+        // 存量(1000) 即后到胜（不再要求超出 5s 窗口）。
         seedDownload(gid = 6, lastModified = 1_000, state = 1)
         val response = push("A", downloads = listOf(dl(6, lastModified = 3_000, state = 3)))
 
-        assertEquals(1, downloadRepo.findByGid(6)!!.state)
-        verify(downloadRepo, never()).save(any(DownloadInfoEntity::class.java))
-        assertEquals(0, response.conflicts)
+        assertEquals(3, downloadRepo.findByGid(6)!!.state)
+        assertEquals(1, response.conflicts)
     }
 
     // ==================== mergeFilter ====================
@@ -555,13 +581,14 @@ class SyncServiceTest {
     @Test
     fun `filter deduplicates on the mode plus text key`() {
         push("A", filters = listOf(flt(mode = 1, text = "artist:foo", enabled = true, lastModified = 1_000)))
+        val firstStamp = filterRepo.findAll().single().lastModified
+        // v4：存量是服务器戳（≈now）>> 玩具客户端戳 2000 → 来包被丢弃（无 skew 放宽）。
         push("A", filters = listOf(flt(mode = 1, text = "artist:foo", enabled = false, lastModified = 2_000)))
 
         val rows = filterRepo.findAll()
         assertEquals(1, rows.size)
-        // Within skew the additive bias keeps the enabled version.
         assertTrue(rows[0].enabled)
-        assertEquals(1_000L, rows[0].lastModified)
+        assertEquals(firstStamp, rows[0].lastModified)
     }
 
     @Test
@@ -579,15 +606,16 @@ class SyncServiceTest {
         }
         seed.forEach { duplicateSeed!!.invoke(it) }
 
-        // incoming.lastModified 远超 skew（> SKEW_TOLERANCE）→ 走 LWW 分支，
+        // incoming.lastModified 远超存量（> SKEW_TOLERANCE）→ 走 LWW 分支，
         // 即 merge 命中 lastModified=300 的历史行并应用 incoming（enabled=false）。
         val response = push("A", filters = listOf(flt(mode = 5, text = "old:dup", enabled = false, lastModified = 140_000)))
 
         assertTrue(response.success) // 核心：不再抛 NonUniqueResultException
-        // merge 命中 lastModified=300 的历史行：LWW(incoming=140000) 将其 enabled=false。
+        // merge 命中 lastModified=300 的历史行：LWW(incoming=140000) 将其 enabled=false，
+        // 行水位改由服务器打戳（v4）。
         // 其余重复历史行保持原样；save 可能新增规范化 key 行（fake repo 语义）。
         val merged = filterRepo.findAll().filter { it.text == "old:dup" }
-        assertTrue(merged.any { !it.enabled && it.lastModified == 140_000L })
+        assertTrue(merged.any { !it.enabled && it.lastModified != 140_000L && it.lastModified > 0 })
         assertTrue(merged.size in 3..4) // 3 注入 + 至多 1 规范化保存
     }
 
@@ -601,9 +629,21 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `filter within skew prefers enabled true (additive bias)`() {
+    fun `filter lww applies the incoming enabled flag (v4 without additive bias)`() {
         seedFilter(mode = 2, text = "bar", lastModified = 1_000, enabled = false)
         val response = push("A", filters = listOf(flt(mode = 2, text = "bar", enabled = true, lastModified = 2_000)))
+
+        assertTrue(filterRepo.findAll().single().enabled)
+        assertEquals(1, response.conflicts)
+    }
+
+    @Test
+    fun `filter additive bias still applies on the a-c same-platform fallback`() {
+        // 旧 bias 用例迁移到 A/C 同平台回退：存量 provenance="server"（web 侧）+
+        // web 设备推送 → 跨平台序不适用，回退 v1 skew+bias（窗口内 enabled=true 胜）。
+        seedFilter(mode = 2, text = "bias", lastModified = 1_000, enabled = false)
+        service.updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.DEVICE_PRIORITY))
+        val response = push("A", deviceId = "web-1", filters = listOf(flt(mode = 2, text = "bias", enabled = true, lastModified = 2_000)))
 
         assertTrue(filterRepo.findAll().single().enabled)
         assertEquals(1, response.conflicts)
@@ -616,7 +656,7 @@ class SyncServiceTest {
 
         val row = filterRepo.findAll().single()
         assertFalse(row.enabled)
-        assertEquals(6_001L, row.lastModified)
+        assertClockStamped(row.lastModified, 6_001L, 0L)
     }
 
     @Test
@@ -637,7 +677,8 @@ class SyncServiceTest {
 
         val stored = bookmarkRepo.findByGid(7)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        // v4：墓碑 bump 走服务器打戳（不再是 maxOf 客户端值）。
+        assertClockStamped(stored.lastModified, 2_000L, 0L)
         verify(bookmarkRepo, never()).delete(any(BookmarkInfoEntity::class.java))
         assertEquals(0, response.conflicts)
     }
@@ -648,7 +689,7 @@ class SyncServiceTest {
 
         val stored = bookmarkRepo.findByGid(12)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 2_000L, 0L)
     }
 
     @Test
@@ -662,18 +703,18 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `bookmark LWW beyond skew applies incoming fields`() {
+    fun `bookmark LWW applies incoming fields`() {
         seedBookmark(gid = 8, lastModified = 1_000, page = 5)
         val response = push("A", bookmarks = listOf(bm(8, page = 3, lastModified = 6_001)))
 
         val stored = bookmarkRepo.findByGid(8)!!
         assertEquals("3", stored.note)
-        assertEquals(6_001L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 6_001L, 0L)
         assertEquals(1, response.conflicts)
     }
 
     @Test
-    fun `bookmark within skew prefers the higher page`() {
+    fun `bookmark new incoming wins directly under v4 lww (no page tie-break)`() {
         seedBookmark(gid = 9, lastModified = 1_000, page = 10)
         val response = push("A", bookmarks = listOf(bm(9, page = 50, lastModified = 2_000)))
 
@@ -682,12 +723,14 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `bookmark within skew keeps the higher local page`() {
+    fun `bookmark v4 lww no longer keeps the higher local page`() {
+        // v4 翻转：纯 LWW 下 incoming(2000) >= 存量(1000) 即整行后到胜，
+        // 低页也照写（不在窗口内做 page tie-break）。
         seedBookmark(gid = 10, lastModified = 1_000, page = 40)
-        push("A", bookmarks = listOf(bm(10, page = 5, lastModified = 2_000)))
+        val response = push("A", bookmarks = listOf(bm(10, page = 5, lastModified = 2_000)))
 
-        assertEquals("40", bookmarkRepo.findByGid(10)!!.note)
-        verify(bookmarkRepo, never()).save(any(BookmarkInfoEntity::class.java))
+        assertEquals("5", bookmarkRepo.findByGid(10)!!.note)
+        assertEquals(1, response.conflicts)
     }
 
     // ==================== mergeQuickSearch ====================
@@ -696,7 +739,9 @@ class SyncServiceTest {
     fun `quick search deduplicates on the name key`() {
         push("A", quickSearches = listOf(qs("preset1", lastModified = 1_000)))
         // Same key, clearly newer: the row is updated in place, not duplicated.
-        push("A", quickSearches = listOf(qs("preset1", lastModified = 6_001, keyword = "new")))
+        // v4 判据是「服务器戳 vs 客户端戳」，玩具值会被首次写入的服务器戳压过 →
+        // 用真实时钟值表达「晚于首次写入」。
+        push("A", quickSearches = listOf(qs("preset1", lastModified = nowMs(), keyword = "new")))
 
         assertEquals(1, quickSearchRepo.findAll().size)
         assertEquals("new", quickSearchRepo.findByName("preset1")!!.keyword)
@@ -716,7 +761,6 @@ class SyncServiceTest {
 
         assertEquals("new", quickSearchRepo.findByName("preset3")!!.keyword)
     }
-
     @Test
     fun `quick search resurrects a tombstoned preset`() {
         seedQuickSearch("preset4", lastModified = 1_000, deleted = true)
@@ -740,12 +784,20 @@ class SyncServiceTest {
     @Test
     fun `download label deduplicates on the label key and survives tombstone pushes`() {
         push("A", downloadLabels = listOf(lbl("L1", lastModified = 1_000)))
+        // v4：存量水位是服务器戳（≈now）>> 玩具戳 2000 → 旧墓碑来包被 LWW 丢弃，行保持存活。
         push("A", downloadLabels = listOf(lbl("L1", lastModified = 2_000, deleted = true)))
 
         val rows = downloadLabelRepo.findAll()
         assertEquals(1, rows.size)
-        // Union: one side alive keeps the label alive.
         assertFalse(rows[0].deleted)
+    }
+
+    @Test
+    fun `download label newer tombstone wins under v4 lww`() {
+        push("A", downloadLabels = listOf(lbl("L1b", lastModified = 1_000)))
+        push("A", downloadLabels = listOf(lbl("L1b", lastModified = nowMs(), deleted = true)))
+
+        assertTrue(downloadLabelRepo.findByLabel("L1b")!!.deleted)
     }
 
     @Test
@@ -827,7 +879,7 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `ehSession pull applies the incremental since filter`() {
+    fun `ehSession pull applies the incremental since filter with overlap (v4)`() {
         val session = SyncEhSessionDto(lastModified = 2_000, deleted = false)
         `when`(siteSessionManager.loadSyncEhSession()).thenReturn(session)
 
@@ -835,10 +887,15 @@ class SyncServiceTest {
 
         assertEquals(1, pulled.entities.ehSession.size)
 
-        val stale = SyncEhSessionDto(lastModified = 500, deleted = false)
-        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(stale)
-        val pulledStale = service.pull(1_000, "A")
-        assertEquals(0, pulledStale.entities.ehSession.size)
+        // v4：增量下界 = since - PULL_OVERLAP_MS —— 水位 500 落在 overlap 窗口内仍返回
+        //（吸收并发提交），只有早于下界（0）的才被过滤。
+        val withinOverlap = SyncEhSessionDto(lastModified = 500, deleted = false)
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(withinOverlap)
+        assertEquals(1, service.pull(1_000, "A").entities.ehSession.size)
+
+        val belowBound = SyncEhSessionDto(lastModified = 0, deleted = false)
+        `when`(siteSessionManager.loadSyncEhSession()).thenReturn(belowBound)
+        assertEquals(0, service.pull(1_000, "A").entities.ehSession.size)
     }
 
     // ==================== favorites / history key semantics ====================
@@ -853,13 +910,24 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `favorite union keeps an alive row when incoming is a tombstone`() {
+    fun `favorite tombstone wins over an older alive row (v4 lww stamp arbitration)`() {
         seedFavorite(gid = 41, lastModified = 1_000)
         val response = push("A", favorites = listOf(fav(41, lastModified = 2_000, deleted = true)))
 
         val stored = favoriteRepo.findByGid(41)!!
+        assertTrue(stored.deleted)
+        assertEquals(1, response.conflicts)
+    }
+
+    @Test
+    fun `favorite older tombstone loses to a newer alive row under v4 lww`() {
+        // 反向：活行戳更新（nowMs）→ 墓碑被丢弃，行保持存活（soft 实体不再「删除恒不传播」，
+        // 但旧墓碑同样不能杀新活行）。
+        seedFavorite(gid = 46, lastModified = nowMs())
+        val response = push("A", favorites = listOf(fav(46, lastModified = 1_000, deleted = true)))
+
+        val stored = favoriteRepo.findByGid(46)!!
         assertFalse(stored.deleted)
-        verify(favoriteRepo, never()).save(any(LocalFavoriteInfoEntity::class.java))
         assertEquals(0, response.conflicts)
     }
 
@@ -870,18 +938,18 @@ class SyncServiceTest {
 
         val stored = favoriteRepo.findByGid(42)!!
         assertEquals("New", stored.title)
-        assertEquals(6_001L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 6_001L, 0L)
         assertEquals(1, response.conflicts)
     }
 
     @Test
-    fun `favorite within skew keeps the existing record`() {
+    fun `favorite v4 lww flips within-overlap to incoming wins`() {
+        // v4 翻转：窗口内不再保留存量——incoming(3000) >= 存量(1000) 即后到胜。
         seedFavorite(gid = 44, lastModified = 1_000, title = "Old")
-        push("A", favorites = listOf(fav(44, lastModified = 3_000, title = "New")))
+        val response = push("A", favorites = listOf(fav(44, lastModified = 3_000, title = "New")))
 
-        val stored = favoriteRepo.findByGid(44)!!
-        assertEquals("Old", stored.title)
-        verify(favoriteRepo, never()).save(any(LocalFavoriteInfoEntity::class.java))
+        assertEquals("New", favoriteRepo.findByGid(44)!!.title)
+        assertEquals(1, response.conflicts)
     }
 
     @Test
@@ -900,7 +968,8 @@ class SyncServiceTest {
 
         val stored = historyRepo.findByGid(50)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        // v4：墓碑 bump 走服务器打戳（不再是 maxOf 客户端值）。
+        assertClockStamped(stored.lastModified, 2_000L, 0L)
         verify(historyRepo, never()).delete(any(HistoryInfoEntity::class.java))
         assertEquals(0, response.conflicts)
     }
@@ -911,7 +980,7 @@ class SyncServiceTest {
 
         val stored = historyRepo.findByGid(54)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 2_000L, 0L)
         assertEquals("A", stored.username)
     }
 
@@ -919,11 +988,13 @@ class SyncServiceTest {
     fun `re-pushing the same history tombstone stays idempotent`() {
         seedHistory(gid = 59, lastModified = 1_000)
         push("A", history = listOf(hist(59, lastModified = 2_000, deleted = true)))
+        val firstStamp = historyRepo.findByGid(59)!!.lastModified
         push("A", history = listOf(hist(59, lastModified = 2_000, deleted = true)))
 
         val stored = historyRepo.findByGid(59)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        // v4：重复墓碑每次 bump 服务器戳（单调递增），行状态幂等（仍为墓碑）。
+        assertTrue(stored.lastModified >= firstStamp)
         verify(historyRepo, never()).delete(any(HistoryInfoEntity::class.java))
     }
 
@@ -935,7 +1006,7 @@ class SyncServiceTest {
         val pulled = service.pull(1_500, "A", "android-test").entities.history
         assertEquals(listOf(55L), pulled.map { it.gid })
         assertTrue(pulled[0].deleted)
-        assertEquals(2_000L, pulled[0].lastModified)
+        assertTrue(pulled[0].lastModified > 1_500)
     }
 
     @Test
@@ -956,23 +1027,26 @@ class SyncServiceTest {
         val all = service.pull(0, "A", "android-test").entities.history
         assertEquals(setOf(57L, 58L), all.map { it.gid }.toSet())
 
+        // v4：增量下界 = since - PULL_OVERLAP_MS（钳 0）——since=1 的下界为 0，
+        // lastModified=5 的行仍返回（overlap 吸收并发提交），lastModified=0 的行不返回。
         val incremental = service.pull(1, "A", "android-test").entities.history
         assertEquals(listOf(58L), incremental.map { it.gid })
     }
 
     @Test
-    fun `history LWW beyond skew applies incoming fields`() {
+    fun `history LWW applies incoming fields`() {
         seedHistory(gid = 51, lastModified = 1_000, time = 100, title = "Old")
         val response = push("A", history = listOf(hist(51, time = 50, lastModified = 6_001, title = "New")))
 
         val stored = historyRepo.findByGid(51)!!
         assertEquals("New", stored.title)
-        assertEquals(6_001L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 6_001L, 0L)
         assertEquals(1, response.conflicts)
     }
 
     @Test
-    fun `history within skew prefers the later view time`() {
+    fun `history v4 lww applies incoming row directly (no view-time tie-break)`() {
+        // v4：落库 time 是业务字段（客户端值），行胜与否只看戳——incoming 更晚即整行胜。
         seedHistory(gid = 52, lastModified = 1_000, time = 100)
         val response = push("A", history = listOf(hist(52, time = 200, lastModified = 2_000)))
 
@@ -982,12 +1056,13 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `history within skew keeps the later local view time`() {
+    fun `history v4 lww no longer keeps a larger local view time`() {
+        // v4 翻转：窗口内不再按 time tie-break 保留存量——incoming 戳更新即整行胜（含更小 time）。
         seedHistory(gid = 53, lastModified = 1_000, time = 300)
-        push("A", history = listOf(hist(53, time = 100, lastModified = 2_000)))
+        val response = push("A", history = listOf(hist(53, time = 100, lastModified = 2_000)))
 
-        assertEquals(300, historyRepo.findByGid(53)!!.time)
-        verify(historyRepo, never()).save(any(HistoryInfoEntity::class.java))
+        assertEquals(100, historyRepo.findByGid(53)!!.time)
+        assertEquals(1, response.conflicts)
     }
 
     // ==================== S8/S9: history page（阅读进度）同步 ====================
@@ -1094,7 +1169,9 @@ class SyncServiceTest {
         assertEquals(1_000L, rowB.lastModified)
         assertFalse(rowB.deleted)
         assertEquals("A v2", rowA.title)
-        assertEquals(6_001L, rowA.lastModified)
+        // v4：A 行水位由服务器打戳（客户端 6001 不落库）。
+        assertNotEquals(6_001L, rowA.lastModified)
+        assertTrue(rowA.lastModified > 1_000L)
 
         // 3) A push 墓碑 → 墓碑仲裁同样只落 A 的行，B 的活行不受牵连。
         push("A", history = listOf(hist(41, lastModified = 9_000, deleted = true)))
@@ -1166,14 +1243,15 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `push preferences round-trips lastModified through pull (E2E-8)`() {
+    fun `push preferences echoes the server stamp back through pull (v4 echo semantics)`() {
         val json = """{"general":{"lang":"zh"}}"""
-        val lastModified = 12_345L
-        push("A", deviceId = "android-pref", preferences = SyncPreferencesDto(preferences = json, lastModified = lastModified, deviceId = "android-pref"))
+        push("A", deviceId = "android-pref", preferences = SyncPreferencesDto(preferences = json, lastModified = 12_345L, deviceId = "android-pref"))
 
         val pulled = service.pull(0, "A", "android-test").entities.preferences!!
-        // E2E-8: 服务器保留客户端 lastModified，不回环重打戳
-        assertEquals(lastModified, pulled.lastModified)
+        // v4：preferences 的 updatedAt 由服务器打戳（客户端上送值不落库）——pull 回显的
+        // 是 push 期间发放的服务器戳，绝不是客户端上送的 12_345。
+        assertTrue(pulled.lastModified > 0)
+        assertNotEquals(12_345L, pulled.lastModified)
         assertTrue(pulled.preferences.contains("\"lang\":\"zh\""))
     }
 
@@ -1189,7 +1267,8 @@ class SyncServiceTest {
         val pulled = service.pull(3_000, "A", "android-test").entities.favorites
 
         assertEquals(setOf(61L, 62L), pulled.map { it.gid }.toSet())
-        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 3_000L)
+        // v4：增量下界 = since - PULL_OVERLAP_MS。
+        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 3_000L - SyncService.PULL_OVERLAP_MS)
         verify(favoriteRepo, never()).findByUsername("A")
         verify(favoriteRepo, never()).findAll()
     }
@@ -1202,7 +1281,7 @@ class SyncServiceTest {
         val pulled = service.pull(1_000, "A", "android-test").entities.favorites
 
         assertTrue(pulled.isEmpty())
-        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_000L)
+        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_000L - SyncService.PULL_OVERLAP_MS)
     }
 
     @Test
@@ -1233,12 +1312,13 @@ class SyncServiceTest {
 
         service.pull(1_500, "A", "android-test")
 
-        verify(historyRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
-        verify(downloadRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
-        verify(bookmarkRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
-        verify(filterRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
-        verify(quickSearchRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
-        verify(downloadLabelRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        val bound = 1_500L - SyncService.PULL_OVERLAP_MS
+        verify(historyRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
+        verify(downloadRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
+        verify(bookmarkRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
+        verify(filterRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
+        verify(quickSearchRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
+        verify(downloadLabelRepo).findByUsernameAndLastModifiedGreaterThan("A", bound)
     }
 
     // ==================== M-14: download label name <-> id 映射 ====================
@@ -1271,7 +1351,7 @@ class SyncServiceTest {
         verify(downloadLabelRepo).save(captureK(captor))
         val created = captor.value
         assertEquals("NewLabel", created.label)
-        assertEquals(2_000L, created.lastModified)
+        assertNotEquals(2_000L, created.lastModified)
         // 下载行引用新建标签的 id（与 DownloadService 的 id 约定一致）
         assertEquals(created.id.toInt(), downloadRepo.findByGid(71)!!.label)
     }
@@ -1348,8 +1428,8 @@ class SyncServiceTest {
         }
         `when`(historyRepo.findByUsername("A")).thenReturn(listOf(rowA))
         `when`(historyRepo.findByUsername("B")).thenReturn(listOf(rowB))
-        `when`(historyRepo.findByUsernameAndLastModifiedGreaterThan("A", 1_000L)).thenReturn(listOf(rowA))
-        `when`(historyRepo.findByUsernameAndLastModifiedGreaterThan("B", 1_000L)).thenReturn(listOf(rowB))
+        `when`(historyRepo.findByUsernameAndLastModifiedGreaterThan("A", 1_000L - SyncService.PULL_OVERLAP_MS)).thenReturn(listOf(rowA))
+        `when`(historyRepo.findByUsernameAndLastModifiedGreaterThan("B", 1_000L - SyncService.PULL_OVERLAP_MS)).thenReturn(listOf(rowB))
 
         // 全量（since=0）：A 只见 A 行，B 只见 B 行。
         val fullA = service.pull(0, "A", "android-test").entities.history
@@ -1360,7 +1440,7 @@ class SyncServiceTest {
         // 增量：同一约束，且锁住派生查询选择本身。
         val deltaA = service.pull(1_000, "A", "android-test").entities.history
         assertEquals(listOf("A row"), deltaA.map { it.title })
-        verify(historyRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_000L)
+        verify(historyRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_000L - SyncService.PULL_OVERLAP_MS)
     }
 
     @Test
@@ -1376,7 +1456,7 @@ class SyncServiceTest {
 
         val stored = historyRepo.findByGid(66)!!
         assertTrue(stored.deleted)
-        assertEquals(2_000L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 2_000L, 0L)
         assertEquals(42, stored.page)
     }
 
@@ -1402,7 +1482,7 @@ class SyncServiceTest {
         assertEquals("Revived", stored.title)
         // 复活走 applyHistoryFields：page = max(42, 5) 不回退。
         assertEquals(42, stored.page)
-        assertEquals(7_000L, stored.lastModified)
+        assertClockStamped(stored.lastModified, 7_000L, 0L)
         assertEquals(1, response.conflicts)
 
         val pulled = service.pull(1_500, "A", "android-test").entities.history
@@ -1411,21 +1491,15 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `exact lastModified tie keeps the stored row without a save`() {
-        // audit 固化（merge tie-break，以代码实际语义为准）：B（lww）±skew 仲裁下
-        // lastModified 完全相等时既有行胜——union 实体（favorite）同态分支在
-        // `incoming > existing + SKEW` 不成立即 return false（SyncService.kt
-        // mergeFavorite 末段）；history 再落 time tie-break，相等时同样既有行胜
-        // （SyncService.kt mergeHistory 末段）。现状：无 save、无冲突计数、无水位
-        // bump。lastModified 高者胜（beyond skew）由既有 LWW 用例固化，不重复。
+    fun `exact lastModified tie now lets the later arrival win (v4 同戳后到胜)`() {
+        // v4 翻转：判据是 `incoming.lastModified >= existing.lastModified`——完全同戳时
+        // 后到的包胜（旧语义「相等即既有行胜」只在 A/C 同平台 skew 回退里保留）。
         seedFavorite(gid = 45, lastModified = 1_000, title = "Old")
         push("A", favorites = listOf(fav(45, lastModified = 1_000, title = "New")))
-        assertEquals("Old", favoriteRepo.findByGid(45)!!.title)
-        verify(favoriteRepo, never()).save(any(LocalFavoriteInfoEntity::class.java))
+        assertEquals("New", favoriteRepo.findByGid(45)!!.title)
 
         seedHistory(gid = 68, lastModified = 1_000, time = 100)
         push("A", history = listOf(hist(68, time = 100, lastModified = 1_000, title = "New")))
-        assertEquals("Hist 68", historyRepo.findByGid(68)!!.title)
-        verify(historyRepo, never()).save(any(HistoryInfoEntity::class.java))
+        assertEquals("New", historyRepo.findByGid(68)!!.title)
     }
 }

@@ -14,9 +14,16 @@ import org.springframework.transaction.annotation.Transactional
 class HistoryService(
     private val historyRepository: HistoryInfoRepository,
     private val usernameProvider: CurrentUsernameProvider,
+    // v4（WP2）：WebUI 直写路径与 sync 合并共用服务器打戳时钟（SyncClock.next()），
+    // 保证落库水位全局单调、与 pull 的 since 语义一致。可空缺省仅为既有直构
+    // 测试的源兼容保留——null 时回退墙钟。
+    private val syncClock: SyncClock? = null,
 ) {
 
     private val logger = org.slf4j.LoggerFactory.getLogger(HistoryService::class.java)
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     /**
      * When both [page] and [pageSize] are absent, returns the full history
@@ -114,8 +121,9 @@ class HistoryService(
         val rows = historyRepository.findAllByGid(gid)
         val existing = rows.firstOrNull { it.username == null || it.username == user }
         if (existing != null) {
-            val now = System.currentTimeMillis()
-            existing.time = now
+            // time 是业务时间字段（浏览时刻），保留墙钟；lastModified 是同步水位，
+            // v4 起走服务器打戳（SyncClock）。
+            existing.time = System.currentTimeMillis()
             existing.mode = mode
             if (page != null) existing.page = page.coerceAtLeast(0)
             // A7-2：clearHistory 墓碑化后重读同一画廊必须复活历史行（对齐
@@ -125,7 +133,7 @@ class HistoryService(
             // A7-1 stamping：更新不覆盖属主（行上 NULL 才落当前用户）；lastModified
             // 必须 bump——它是 App 增量 pull 看到 Web 侧阅读进度/模式变更的唯一信号。
             if (existing.username == null) existing.username = user
-            existing.lastModified = now
+            existing.lastModified = stamp()
             historyRepository.save(existing)
         } else {
             if (rows.isNotEmpty()) {
@@ -149,9 +157,9 @@ class HistoryService(
                 this.page = page?.coerceAtLeast(0) ?: 0
                 this.time = System.currentTimeMillis()
                 // A7-1 stamping：新行当场落属主与同步水位（adoptNullOwnership 已短路，
-                // NULL 行不再有后续认养扫描）。
+                // NULL 行不再有后续认养扫描）。v4：水位走 syncClock（time 保留墙钟）。
                 this.username = user
-                this.lastModified = this.time
+                this.lastModified = stamp()
             }
             historyRepository.save(entity)
         }
@@ -173,7 +181,8 @@ class HistoryService(
      */
     @Transactional
     fun clearHistory() {
-        val now = System.currentTimeMillis()
+        // v4：整批墓碑共用一次 syncClock.next()——同批严格同戳、跨批单调。
+        val now = stamp()
         val user = usernameProvider.currentUsername()
         val mine = historyRepository.findByUsername(user) + historyRepository.findAllByUsernameIsNull()
         mine.filter { !it.deleted }.forEach { row ->
@@ -211,7 +220,7 @@ class HistoryService(
         if (existing.favoriteSlot == slot) return true
         existing.favoriteSlot = slot
         if (existing.username == null) existing.username = usernameProvider.currentUsername()
-        existing.lastModified = System.currentTimeMillis()
+        existing.lastModified = stamp()
         historyRepository.save(existing)
         return true
     }

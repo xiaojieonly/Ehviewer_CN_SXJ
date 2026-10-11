@@ -47,7 +47,13 @@ class SiteSessionManager(
     private val ehSessionRepository: EhSessionRepository,
     private val encryptionService: EncryptionService,
     private val config: SiteCoreConfigProperties,
+    // v4（WP2）：ehSession 行同样服务器统一打戳（saveSessionSnapshot/墓碑/LWW 胜/登出）。
+    // 可空缺省仅为既有直构测试的源兼容保留——null 时回退墙钟（System.currentTimeMillis()）。
+    private val syncClock: SyncClock? = null,
 ) {
+
+    /** v4 打戳助手：有 SyncClock 走服务器单调时钟，直构测试场景回落墙钟。 */
+    private fun stamp(): Long = syncClock?.next() ?: System.currentTimeMillis()
 
     private val logger = LoggerFactory.getLogger(SiteSessionManager::class.java)
 
@@ -178,7 +184,8 @@ class SiteSessionManager(
             cookies = encryptCookies(records)
             this.displayName = displayName ?: this.displayName
             gallerySite = getGallerySite()
-            lastModified = System.currentTimeMillis()
+            // v4（WP2）：服务器统一打戳。
+            lastModified = stamp()
             deleted = false
             updatedBy = SERVER_DEVICE_ID
         }
@@ -228,15 +235,16 @@ class SiteSessionManager(
 
         if (incoming.deleted) {
             // D3: tombstone 无条件传播（对齐 §3.8 history/bookmark），bump lastModified 供增量 pull。
+            // v4（WP2）：bump 改为服务器打戳（不再 maxOf 客户端值）。
             if (existing != null) {
                 existing.deleted = true
-                existing.lastModified = maxOf(existing.lastModified, incoming.lastModified)
+                existing.lastModified = stamp()
                 existing.updatedBy = incomingDevice
                 ehSessionRepository.save(existing)
             } else {
                 ehSessionRepository.save(EhSessionEntity().apply {
                     username = EH_SESSION_OWNER
-                    lastModified = incoming.lastModified
+                    lastModified = stamp()
                     deleted = true
                     updatedBy = incomingDevice
                 })
@@ -245,8 +253,9 @@ class SiteSessionManager(
             return false
         }
 
-        // D2: LWW ± skew，skew 内 last-received-wins；A/C 平台序不适用。
-        if (existing != null && existing.lastModified > incoming.lastModified + SYNC_SKEW_TOLERANCE) return false
+        // D2: LWW，v4（WP2）判据：existing.lastModified > incoming.lastModified → 丢弃
+        //（== 后到胜；服务器打戳下 A/C 平台序不适用）。
+        if (existing != null && existing.lastModified > incoming.lastModified) return false
 
         val entity = existing ?: EhSessionEntity()
         entity.apply {
@@ -259,7 +268,8 @@ class SiteSessionManager(
                 gallerySite = it
                 setGallerySite(it)
             }
-            lastModified = incoming.lastModified
+            // v4（WP2）：LWW 胜出的行由服务器统一打戳（客户端上送值不落库）。
+            lastModified = stamp()
             deleted = false
             updatedBy = incomingDevice
         }
@@ -293,7 +303,8 @@ class SiteSessionManager(
         entity.apply {
             username = EH_SESSION_OWNER
             deleted = true
-            lastModified = System.currentTimeMillis()
+            // v4（WP2）：登出墓碑同样走服务器打戳。
+            lastModified = stamp()
             updatedBy = SERVER_DEVICE_ID
         }
         ehSessionRepository.save(entity)
@@ -493,8 +504,6 @@ class SiteSessionManager(
         const val SERVER_DEVICE_ID = "server"
 
         const val ENC_PREFIX = "enc:v1:"
-
-        private const val SYNC_SKEW_TOLERANCE = 5000L
 
         private val SITE_DOMAINS = setOf("e-hentai.org", "exhentai.org", "ehgt.org", "forums.e-hentai.org")
     }

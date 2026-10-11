@@ -37,6 +37,9 @@ class UserPreferenceServiceTest {
     private lateinit var serverConfig: ServerConfigService
     private lateinit var service: UserPreferenceService
 
+    /** v4：updatedAt 由服务器统一打戳——用真实 SyncClock 断言落库水位。 */
+    private val syncClock = SyncClock()
+
     @BeforeEach
     fun setUp() {
         repo = mock(UserPreferenceRepository::class.java)
@@ -48,7 +51,7 @@ class UserPreferenceServiceTest {
         }
         `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
         serverConfig = fakeServerConfig()
-        service = UserPreferenceService(repo, serverConfig)
+        service = UserPreferenceService(repo, serverConfig, syncClock)
     }
 
     /** Real [ServerConfigService] over an in-memory [ServerConfigRepository] fake. */
@@ -247,32 +250,46 @@ class UserPreferenceServiceTest {
     // ---- E2E-8: 保留客户端 lastModified，服务器不再重打戳 ----
 
     @Test
-    fun `replace stamps updatedAt with the incoming lastModified (E2E-8)`() {
+    fun `replace stamps updatedAt with the server clock, not the client value (v4)`() {
         service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", 12_345L)
-
-        assertEquals(12_345L, repo.findByUsername("alice")!!.updatedAt)
-    }
-
-    @Test
-    fun `replace keeps the LWW gate when stamping the incoming lastModified (E2E-8)`() {
-        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", 12_345L)
-        clearInvocations(repo)
-        service.replace("alice", """{"general":{"theme":"blue"}}""", "android-2", 12_000L)
-
-        // LWW 判定不变: 明显旧于存量 updatedAt 的 push 仍被拒
-        assertEquals("dark", service.get("alice").general.theme)
-        verify(repo, org.mockito.Mockito.never()).save(any(UserPreferenceEntity::class.java))
-        assertEquals(12_345L, repo.findByUsername("alice")!!.updatedAt)
-    }
-
-    @Test
-    fun `replace round-trips the lastModified through getRaw callers (E2E-8)`() {
-        val lastModified = 99_000L
-        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", lastModified)
 
         val entity = repo.findByUsername("alice")!!
-        // SyncService.pull 直接读 updatedAt 作为 preferences.lastModified
-        assertEquals(lastModified, entity.updatedAt)
+        assertEquals(syncClock.current(), entity.updatedAt)
+        assertTrue(entity.updatedAt != 12_345L, "客户端上送值不落库")
+    }
+
+    @Test
+    fun `replace rejects an older incoming stamp (v4 gate)`() {
+        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", 12_345L)
+        val storedStamp = repo.findByUsername("alice")!!.updatedAt
+        clearInvocations(repo)
+        service.replace("alice", """{"general":{"theme":"blue"}}""", "android-2", storedStamp - 1)
+
+        // 旧于存量 updatedAt 的 push 仍被拒（v4 门控 `lastModified < existing.updatedAt`）
+        assertEquals("dark", service.get("alice").general.theme)
+        verify(repo, org.mockito.Mockito.never()).save(any(UserPreferenceEntity::class.java))
+        assertEquals(storedStamp, repo.findByUsername("alice")!!.updatedAt)
+    }
+
+    @Test
+    fun `replace accepts an equal stamp (v4 同戳后到胜)`() {
+        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", 12_345L)
+        val storedStamp = repo.findByUsername("alice")!!.updatedAt
+
+        service.replace("alice", """{"general":{"theme":"blue"}}""", "android-2", storedStamp)
+
+        assertEquals("blue", service.get("alice").general.theme)
+    }
+
+    @Test
+    fun `replace leaves a monotonic server stamp for pull callers (v4)`() {
+        service.replace("alice", """{"general":{"theme":"dark"}}""", "android-1", 99_000L)
+
+        val entity = repo.findByUsername("alice")!!
+        // SyncService.pull 直接读 updatedAt 作为 preferences.lastModified——
+        // v4 起该水位是服务器戳（客户端上送值不落库），增量 pull 的 since 由它推进。
+        assertEquals(syncClock.current(), entity.updatedAt)
+        assertTrue(entity.updatedAt != 99_000L)
     }
 
     // ---- 内容打码模式：投影 / 写穿透 ----

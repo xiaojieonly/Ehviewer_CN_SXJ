@@ -44,6 +44,21 @@ interface DownloadInfoRepository : JpaRepository<DownloadInfoEntity, Long> {
     /** H-3: 全量拉取 (since=0) —— 必须返回 lastModified=0 的合法记录，故不过滤 lastModified。 */
     fun findByUsername(username: String): List<DownloadInfoEntity>
 
+    // ── v4 回收站 / status（WP3）──
+    // 本文件头部的 A7-2 约定继续成立：以下带 deleted 条件的查询**仅供回收站
+    // （list/restore/purge）与 status 计数使用**；merge/pull 查询
+    // （findByGid*/findAllByGid/findByUsername*）仍不得加 deleted 条件。
+
+    /** 回收站列表（本用户墓碑行，id 序；页面按 lastModified 倒序分页由服务层完成）。 */
+    fun findByUsernameAndDeletedTrueOrderById(username: String): List<DownloadInfoEntity>
+    /** 到期物理清除输入（deleted=true 且 lastModified < cutoff）。 */
+    fun findByDeletedTrueAndLastModifiedBefore(lastModified: Long): List<DownloadInfoEntity>
+    /** status 计数：只数存活行（墓碑不计入）。 */
+    fun countByUsernameAndDeletedFalse(username: String): Long
+    /** v4 服务器打戳：SyncClock 启动水位初始化。 */
+    @Query("SELECT COALESCE(MAX(e.lastModified), 0) FROM DownloadInfoEntity e")
+    fun maxLastModified(): Long
+
     // ── 服务端搜索 + 过滤（label 空/0 → 全部；q 空 → 不过滤）──────────
 
     private companion object {
