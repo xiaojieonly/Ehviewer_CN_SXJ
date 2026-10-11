@@ -39,20 +39,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
-import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -97,10 +93,9 @@ import com.hippo.anotherviewer.gallery.GalleryProvider2;
 import com.hippo.anotherviewer.gallery.WebUiGalleryProvider;
 import com.hippo.anotherviewer.spider.SpiderDen;
 import com.hippo.anotherviewer.spider.SpiderInfo;
+import com.hippo.anotherviewer.ui.pane.DuoSupport;
 import com.hippo.anotherviewer.webui.WebUiConfig;
 import com.hippo.anotherviewer.webui.WebUiSettings;
-import com.hippo.anotherviewer.widget.DuoSimOverlay;
-import com.hippo.anotherviewer.widget.DuoSimProfiles;
 import com.hippo.anotherviewer.widget.FoldPolicy;
 import com.hippo.anotherviewer.widget.GalleryGuideView;
 import com.hippo.anotherviewer.widget.GalleryHeader;
@@ -173,10 +168,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
     private GalleryView mGalleryView;
 
     @Nullable
-    private DuoSimOverlay mDuoSimOverlay;
-    @Nullable
-    private View.OnLayoutChangeListener mDuoSimLayoutListener;
-    @Nullable
     private GalleryProvider2 mGalleryProvider;
     @Nullable
     private GalleryAdapter mGalleryAdapter;
@@ -209,14 +200,14 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
 
     private int mLayoutMode;
     private int mSpreadMode;
+    // 姿态切换重建视图时 GL 视图的瞬时 currentIndex 可能已被窗口重排重置（回到 0），
+    // 用翻页回调里最后已知的页码重建，保证跨屏/折回不丢位置
+    private int mLastKnownPageIndex = -1;
+    private int mLastRootWidth = -1;
+    private int mLastRootHeight = -1;
     private WindowInfoTrackerCallbackAdapter mWindowInfoTracker;
     private final Consumer<WindowLayoutInfo> mWindowLayoutInfoConsumer = info -> {
         if (mGalleryView == null) {
-            return;
-        }
-        if (Settings.getDuoSimEnabled()) {
-            // the simulated hinge replaces any real fold geometry
-            applyDuoSim();
             return;
         }
         int splitX = -1;
@@ -244,10 +235,25 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
                 break;
             }
         }
+        if (DuoSupport.isDuoHardware()) {
+            // Duo 真机：分离铰链（跨屏）= 双页，单屏/折叠 = 单页，姿态变化时自动切换
+            applyDuoPostureLayout(splitX >= 0);
+        }
         mGalleryView.setSplitX(splitX);
     };
     private int mSize;
     private int mCurrentIndex;
+
+    /**
+     * Page index last handed to the durable HISTORY-row persist path (page-turn
+     * bridge or exit flush). Volatile: written from the GL render thread when a
+     * page-turn write is enqueued, read on the main thread in the onPause /
+     * onDestroy flush. Lets the flush skip when a queued task already carries
+     * the exact same page (same value, same outcome) without regressing it.
+     */
+    private volatile int mLastPersistedIndex = Integer.MIN_VALUE;
+    /** Whether the HISTORY row for this gallery was verified/created this session. */
+    private volatile boolean mHistoryRowEnsured;
 
     private boolean canFinish = false;
     private boolean autoTransferring = false;
@@ -492,9 +498,11 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         boolean landscape = resources.getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         int layoutMode = readingDirection;
         int spreadMode = GalleryView.SPREAD_RIGHT_TO_LEFT;
-        // Duo simulation models the physical device: one page per panel,
-        // which is the dual-page layout; force it in landscape when on.
-        if (landscape && (Settings.getReadingDualPage() || Settings.getDuoSimEnabled())
+        // Duo 真机：双页/单页完全由折叠姿态决定（fold listener 到达后动态重建，
+        // 打开时先按单页渲染），不给用户选择；非 Duo 设备保留用户偏好。
+        boolean prefDual = Settings.getReadingDualPage();
+        // 双页仅在横屏 + 左右阅读方向下生效
+        if (landscape && prefDual
                 && (readingDirection == GalleryView.LAYOUT_LEFT_TO_RIGHT
                     || readingDirection == GalleryView.LAYOUT_RIGHT_TO_LEFT)) {
             layoutMode = GalleryView.LAYOUT_DUAL_PAGE;
@@ -502,13 +510,30 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
                     ? GalleryView.SPREAD_RIGHT_TO_LEFT
                     : GalleryView.SPREAD_LEFT_TO_RIGHT;
         }
-        mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(Settings.getReadingFirstPageCover()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
+        mGalleryView = buildGalleryView(layoutMode, spreadMode, startPage);
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
-        applyDuoSim();
         mWindowInfoTracker = new WindowInfoTrackerCallbackAdapter(WindowInfoTracker.getOrCreate(this));
         mWindowInfoTracker.addWindowLayoutInfoListener(this,
                 ContextCompat.getMainExecutor(this), mWindowLayoutInfoConsumer);
+        // Duo 上的 androidx.window 不因窗口尺寸变化重推折叠信息（只在铰链姿态
+        // 变化时推送），阅读中跨屏/折回会拿不到新几何：尺寸变化时重注册监听器
+        // 强制刷新一次，保证双页/单页即时切换。
+        View mainView = findViewById(R.id.main);
+        if (mainView != null) {
+            mainView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or2, ob) -> {
+                if (!DuoSupport.isDuoHardware()) {
+                    return;
+                }
+                int width = r - l;
+                int height = b - t;
+                if (mLastRootWidth != -1 && (width != mLastRootWidth || height != mLastRootHeight)) {
+                    reregisterWindowLayoutInfoListener();
+                }
+                mLastRootWidth = width;
+                mLastRootHeight = height;
+            });
+        }
         mGalleryProvider.setListener(mGalleryAdapter);
         mGalleryProvider.setGLRoot(mGLRootView);
 
@@ -592,6 +617,11 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
     }
 
+    private GalleryView buildGalleryView(int layoutMode, int spreadMode, int startPage) {
+        Resources resources = getResources();
+        return new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(Settings.getReadingFirstPageCover()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
+    }
+
     private boolean isEglAvailable() {
         EGL10 egl = (EGL10) EGLContext.getEGL();
         EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
@@ -616,68 +646,49 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
     }
 
     /**
-     * Surface Duo reading simulation: constrain the GL reader viewport to a
-     * virtual Duo layout (two panels with a hinge gap between them in
-     * landscape, a single panel in portrait), paint the letterbox and the
-     * hinge gap black, and feed the seam position to the dual-page layout.
-     * Pure view-level rendering trick; no system display settings change.
+     * Duo 真机姿态切换：跨屏（分离铰链）= 双页布局，单屏/折叠 = 单页布局。
+     * GalleryActivity 声明了 configChanges=screenSize 不会重建，因此布局互斥时
+     * 直接重建 GL 内容面板并保留当前页码。
      */
-    private void applyDuoSim() {
-        ViewGroup main = findViewById(R.id.main);
-        if (main == null || mGLRootView == null) {
-            return; // GL fallback layout
-        }
-        if (mDuoSimLayoutListener == null) {
-            mDuoSimLayoutListener = (v, l, t, r, b, ol, ot, orr, ob) -> applyDuoSim();
-            main.addOnLayoutChangeListener(mDuoSimLayoutListener);
-        }
-        if (!Settings.getDuoSimEnabled()) {
-            if (mDuoSimOverlay != null) {
-                main.removeView(mDuoSimOverlay);
-                mDuoSimOverlay = null;
-            }
-            setGLViewportSize(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-            if (mGalleryView != null) {
-                mGalleryView.setSplitX(-1);
-            }
+    private void applyDuoPostureLayout(boolean dual) {
+        if (mGalleryView == null || mGLRootView == null) {
             return;
         }
-        // one page per panel only applies to the dual-page layout; with any
-        // other layout fall back to a single panel so nothing sits under the hinge
-        boolean dualPage = mGalleryView != null
-                && mGalleryView.getLayoutMode() == GalleryView.LAYOUT_DUAL_PAGE;
-        DuoSimProfiles.Layout layout = DuoSimProfiles.fitLayout(
-                main.getWidth(), main.getHeight(), Settings.getDuoSimProfile(),
-                Math.round(Settings.getDuoSimHingeDp()
-                        * getResources().getDisplayMetrics().density),
-                dualPage);
-        if (layout.content.isEmpty()) {
-            return; // not laid out yet; re-applied by the layout listener
+        boolean isDual = mGalleryView.getLayoutMode() == GalleryView.LAYOUT_DUAL_PAGE;
+        if (dual == isDual) {
+            return;
         }
-        setGLViewportSize(layout.content.width(), layout.content.height());
-        if (mDuoSimOverlay == null) {
-            mDuoSimOverlay = new DuoSimOverlay(this);
-            // right above the GL view, below header/seek bar
-            main.addView(mDuoSimOverlay, 1, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // 窗口重排可能已把 GL 视图的瞬时页码重置为 0，用翻页回调的最后已知页码
+        int currentIndex = mLastKnownPageIndex >= 0
+                ? mLastKnownPageIndex
+                : mGalleryView.getCurrentIndex();
+        int layoutMode;
+        int spreadMode;
+        if (dual) {
+            boolean ltr = Settings.getReadingDirection() == GalleryView.LAYOUT_LEFT_TO_RIGHT;
+            layoutMode = GalleryView.LAYOUT_DUAL_PAGE;
+            spreadMode = ltr ? GalleryView.SPREAD_LEFT_TO_RIGHT : GalleryView.SPREAD_RIGHT_TO_LEFT;
+        } else {
+            layoutMode = GalleryView.sanitizeLayoutMode(Settings.getReadingDirection());
+            spreadMode = GalleryView.SPREAD_RIGHT_TO_LEFT;
         }
-        mDuoSimOverlay.configure(layout.content, layout.hinge);
-        if (mGalleryView != null) {
-            // seam sits at the middle of the hinge gap, in viewport coordinates
-            mGalleryView.setSplitX(layout.verticalHinge ? layout.content.width() / 2 : -1);
-        }
+        mGalleryView = buildGalleryView(layoutMode, spreadMode, currentIndex);
+        mGLRootView.setContentPane(mGalleryView);
+        mLastKnownPageIndex = currentIndex;
+        // 同步滑块方向的镜像字段，避免重建后 isRightToLeft() 用旧布局判断
+        mLayoutMode = layoutMode;
+        mSpreadMode = spreadMode;
+        updateSlider();
     }
 
-    private void setGLViewportSize(int w, int h) {
-        ViewGroup.LayoutParams lp = mGLRootView.getLayoutParams();
-        if (lp.width != w || lp.height != h) {
-            lp.width = w;
-            lp.height = h;
-            if (lp instanceof FrameLayout.LayoutParams) {
-                ((FrameLayout.LayoutParams) lp).gravity = Gravity.CENTER;
-            }
-            mGLRootView.setLayoutParams(lp);
+    /** 重注册折叠信息监听：Duo 上窗口尺寸变化不会触发推送，重注册可强制刷新一次几何。 */
+    private void reregisterWindowLayoutInfoListener() {
+        if (mWindowInfoTracker == null) {
+            return;
         }
+        mWindowInfoTracker.removeWindowLayoutInfoListener(mWindowLayoutInfoConsumer);
+        mWindowInfoTracker.addWindowLayoutInfoListener(this,
+                ContextCompat.getMainExecutor(this), mWindowLayoutInfoConsumer);
     }
 
     private void showGlFallbackView() {
@@ -690,6 +701,9 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
 
     @Override
     protected void onDestroy() {
+        // Durability: persist the final page before teardown (covers exits that
+        // race the async page-turn write, e.g. BACK-finish right after a turn).
+        flushReadingProgress();
         if (mWindowInfoTracker != null) {
             mWindowInfoTracker.removeWindowLayoutInfoListener(mWindowLayoutInfoConsumer);
             mWindowInfoTracker = null;
@@ -700,8 +714,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
         mGLRootView = null;
         mGalleryView = null;
-        mDuoSimOverlay = null;
-        mDuoSimLayoutListener = null;
         if (mGalleryAdapter != null) {
             mGalleryAdapter.clearUploader();
             mGalleryAdapter = null;
@@ -748,6 +760,10 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         if (mGLRootView != null) {
             mGLRootView.onPause();
         }
+        // Durability (plan D2): the GL surface is paused above, so no further
+        // page turns can enqueue writes behind this flush. Synchronous but
+        // cheap — primary-key history-row ops only.
+        flushReadingProgress();
     }
 
     @Override
@@ -1003,8 +1019,9 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
 
     @Override
     public void onUpdateCurrentIndex(int index) {
-        if (null != mGalleryProvider) {
+        if (index >= 0 && null != mGalleryProvider) {
             mGalleryProvider.putStartPage(index);
+            mLastKnownPageIndex = index;
         }
 
         // Bridge the reading progress into the HISTORY row (plan D2): store
@@ -1012,19 +1029,8 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         // re-pushes the row and it stays at the top of the history list.
         // Single choke point shared by every provider (download/online/
         // archive/WebUI proxy). Off the UI thread, mirroring
-        // SpiderQueen.putStartPage's .spm write; skipped when the row does
-        // not exist (SiteDB.updateHistoryPage no-ops then).
-        if (mGalleryInfo != null) {
-            final long gid = mGalleryInfo.gid;
-            final int page = index;
-            IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
-                try {
-                    SiteDB.updateHistoryPage(gid, page);
-                } catch (Throwable e) {
-                    ExceptionUtils.throwIfFatal(e);
-                }
-            });
-        }
+        // SpiderQueen.putStartPage's .spm write.
+        persistHistoryPage(index);
 
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -1032,6 +1038,77 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         }
         task.setData(NotifyTask.KEY_CURRENT_INDEX, index);
         SimpleHandler.getInstance().post(task);
+    }
+
+    /**
+     * Durable HISTORY-row write for the current reading page (plan D2). A
+     * negative index is the GL view's INVALID_INDEX teardown/rebuild artifact —
+     * never a real reading position; persisting it would zero both the HISTORY
+     * row page and the .spm start page and thereby clear the progress.
+     */
+    private void persistHistoryPage(int index) {
+        if (index < 0 || mGalleryInfo == null) {
+            return;
+        }
+        final long gid = mGalleryInfo.gid;
+        mLastPersistedIndex = index;
+        IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
+            try {
+                ensureHistoryRow(gid);
+                SiteDB.updateHistoryPage(gid, index);
+            } catch (Throwable e) {
+                ExceptionUtils.throwIfFatal(e);
+            }
+        });
+    }
+
+    /**
+     * Guarantees a HISTORY row exists for this gallery before the first page
+     * write of the session. The row is normally created by the detail scene on
+     * visit (or DownloadManager when a download is added), but direct reads —
+     * DownloadsScene "read" on an old download, deep links, the WebUI hand-off
+     * — can find none, and {@link SiteDB#updateHistoryPage} silently no-ops
+     * then: the progress would never persist locally nor sync to the server.
+     * Creating it here (once per session, under the SiteDB class lock shared
+     * with updateHistoryPage) keeps "reading creates history" semantics for
+     * every provider at this single choke point.
+     */
+    private void ensureHistoryRow(long gid) {
+        if (mHistoryRowEnsured) {
+            return;
+        }
+        synchronized (SiteDB.class) {
+            // Re-check under the lock: a concurrent writer may have created it.
+            if (SiteDB.loadHistoryInfo(gid) == null) {
+                SiteDB.putHistoryInfo(mGalleryInfo);
+            }
+        }
+        mHistoryRowEnsured = true;
+    }
+
+    /**
+     * Exit flush (plan D2 durability): synchronously persists the current page
+     * when the reader leaves the foreground or is destroyed. The per-page-turn
+     * bridge already writes on every index change, but its write runs on a
+     * shared IO executor — a swipe-kill/crash right after the last page turn
+     * could drop the still-queued task. This flush closes that window (and
+     * covers any index set without a page turn). No-op when the queued bridge
+     * write already carries exactly this page. Safe to call from both onPause
+     * and onDestroy; every SiteDB call is a primary-key read/update.
+     */
+    private void flushReadingProgress() {
+        GalleryInfo info = mGalleryInfo;
+        int index = mCurrentIndex;
+        if (info == null || index < 0 || index == mLastPersistedIndex) {
+            return;
+        }
+        mLastPersistedIndex = index;
+        try {
+            ensureHistoryRow(info.gid);
+            SiteDB.updateHistoryPage(info.gid, index);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+        }
     }
 
     @Override
@@ -1405,10 +1482,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
         private final SwitchCompat mVolumePage;
         private final SwitchCompat mReverseVolumePage;
         private final SwitchCompat mReadingFullscreen;
-        private final SwitchCompat mDuoSim;
-        private final Spinner mDuoSimProfile;
-        private final View mDuoSimProfileRow;
-        private final TextView mDuoSimSummary;
         private final SwitchCompat mCustomScreenLightness;
         private final SeekBar mScreenLightness;
 
@@ -1428,10 +1501,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             mVolumePage = mView.findViewById(R.id.volume_page);
             mReverseVolumePage = mView.findViewById(R.id.reverse_volume_page);
             mReadingFullscreen = mView.findViewById(R.id.reading_fullscreen);
-            mDuoSim = mView.findViewById(R.id.duo_sim);
-            mDuoSimProfile = mView.findViewById(R.id.duo_sim_profile);
-            mDuoSimProfileRow = mView.findViewById(R.id.duo_sim_profile_row);
-            mDuoSimSummary = mView.findViewById(R.id.duo_sim_summary);
             mCustomScreenLightness = mView.findViewById(R.id.custom_screen_lightness);
             mScreenLightness = mView.findViewById(R.id.screen_lightness);
 
@@ -1448,20 +1517,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             mVolumePage.setChecked(Settings.getVolumePage());
             mReverseVolumePage.setChecked(Settings.getReverseVolumePage());
             mReadingFullscreen.setChecked(Settings.getReadingFullscreen());
-            mDuoSim.setChecked(Settings.getDuoSimEnabled());
-            mDuoSimProfile.setSelection(Settings.getDuoSimProfile());
-            mDuoSim.setOnCheckedChangeListener((buttonView, isChecked) -> updateDuoSimVisiblity());
-            mDuoSimProfile.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    updateDuoSimSummary();
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                }
-            });
-            updateDuoSimVisiblity();
             mCustomScreenLightness.setChecked(Settings.getCustomScreenLightness());
             mScreenLightness.setProgress(Settings.getScreenLightness());
             mScreenLightness.setEnabled(Settings.getCustomScreenLightness());
@@ -1476,56 +1531,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             }
 
             mCustomScreenLightness.setOnCheckedChangeListener((buttonView, isChecked) -> mScreenLightness.setEnabled(isChecked));
-        }
-
-        private void updateDuoSimVisiblity() {
-            int visibility = mDuoSim.isChecked() ? View.VISIBLE : View.GONE;
-            mDuoSimProfileRow.setVisibility(visibility);
-            mDuoSimSummary.setVisibility(visibility);
-            updateDuoSimSummary();
-        }
-
-        /**
-         * Shows the on-screen physical size the simulation will produce on this
-         * host panel, so the evaluated configuration is readable at a glance.
-         * Predicts the post-OK state from the current dialog choices (same rule
-         * as applyDuoSim: dual-page form in landscape with a horizontal reading
-         * direction, single panel otherwise).
-         */
-        private void updateDuoSimSummary() {
-            if (mDuoSimSummary == null || mDuoSimProfileRow == null || !mDuoSim.isChecked()) {
-                return;
-            }
-            ViewGroup main = (ViewGroup) GalleryActivity.this.findViewById(R.id.main);
-            if (main == null || main.getWidth() <= 0 || main.getHeight() <= 0) {
-                return;
-            }
-            int profile = mDuoSimProfile.getSelectedItemPosition();
-            int direction = GalleryView.sanitizeLayoutMode(mReadingDirection.getSelectedItemPosition());
-            boolean dual = main.getWidth() > main.getHeight()
-                    && (direction == GalleryView.LAYOUT_LEFT_TO_RIGHT
-                        || direction == GalleryView.LAYOUT_RIGHT_TO_LEFT);
-            DisplayMetrics metrics = getResources().getDisplayMetrics();
-            DuoSimProfiles.Layout layout = DuoSimProfiles.fitLayout(main.getWidth(), main.getHeight(),
-                    profile,
-                    Math.round(Settings.getDuoSimHingeDp() * metrics.density),
-                    dual);
-            DuoSimProfiles.Physical p = DuoSimProfiles.measure(layout, metrics.xdpi, metrics.ydpi);
-            if (p.contentDiagonalIn() <= 0) {
-                mDuoSimSummary.setText("");
-                return;
-            }
-            Resources res = getResources();
-            if (!layout.hinge.isEmpty()) {
-                double real = profile == DuoSimProfiles.DUO2 ? 8.3 : 8.1;
-                int percent = (int) Math.round(p.contentDiagonalIn() / real * 100);
-                double panelDiag = Math.hypot(p.panelWidthIn, p.panelHeightIn);
-                mDuoSimSummary.setText(res.getString(R.string.duo_sim_summary_dual,
-                        p.contentDiagonalIn(), real, percent, panelDiag));
-            } else {
-                mDuoSimSummary.setText(res.getString(R.string.duo_sim_summary_single,
-                        p.contentDiagonalIn()));
-            }
         }
 
         private void onVolumePageChange(CompoundButton compoundButton, boolean b) {            if (compoundButton.isChecked()) {
@@ -1549,7 +1554,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             int layoutMode = GalleryView.sanitizeLayoutMode(mReadingDirection.getSelectedItemPosition());
             int scaleMode = GalleryView.sanitizeScaleMode(mScaleMode.getSelectedItemPosition());
             int startPosition = GalleryView.sanitizeStartPosition(mStartPosition.getSelectedItemPosition());
-            boolean duoSim = mDuoSim.isChecked();
             boolean keepScreenOn = mKeepScreenOn.isChecked();
             boolean showClock = mShowClock.isChecked();
             boolean showProgress = mShowProgress.isChecked();
@@ -1577,8 +1581,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             Settings.putShowPageInterval(showPageInterval);
             Settings.putVolumePage(volumePage);
             Settings.putReadingFullscreen(readingFullscreen);
-            Settings.putDuoSimEnabled(duoSim);
-            Settings.putDuoSimProfile(mDuoSimProfile.getSelectedItemPosition());
             Settings.putCustomScreenLightness(customScreenLightness);
             Settings.putScreenLightness(screenLightness);
             Settings.putReverseVolumePage(reverseVolumePage);
@@ -1605,18 +1607,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             }
             setRequestedOrientation(orientation);
 
-            // Duo simulation models the physical device: one page per panel,
-            // which is the dual-page layout; force it in landscape when on.
-            boolean landscape = getResources().getConfiguration().orientation
-                    == Configuration.ORIENTATION_LANDSCAPE;
-            if (duoSim && landscape
-                    && (layoutMode == GalleryView.LAYOUT_LEFT_TO_RIGHT
-                        || layoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT)) {
-                mGalleryView.setSpreadMode(layoutMode == GalleryView.LAYOUT_LEFT_TO_RIGHT
-                        ? GalleryView.SPREAD_LEFT_TO_RIGHT
-                        : GalleryView.SPREAD_RIGHT_TO_LEFT);
-                layoutMode = GalleryView.LAYOUT_DUAL_PAGE;
-            }
             mGalleryView.setLayoutMode(layoutMode);
             mGalleryView.setScaleMode(scaleMode);
             mGalleryView.setStartPosition(startPosition);
@@ -1641,8 +1631,6 @@ public class GalleryActivity extends SiteActivity implements SeekBar.OnSeekBarCh
             // Update slider
             mLayoutMode = layoutMode;
             updateSlider();
-            // re-fit the Duo simulation viewport (no-op when disabled)
-            applyDuoSim();
 
             if (oldReadingFullscreen != readingFullscreen) {
                 recreate();

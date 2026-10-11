@@ -16,6 +16,7 @@
 
 package com.hippo.anotherviewer.ui.pane;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -46,6 +47,8 @@ import com.hippo.anotherviewer.event.PrivacyMaskChanged;
 import com.hippo.anotherviewer.sync.GalleryDetailTagsSyncTask;
 import com.hippo.anotherviewer.ui.GalleryActivity;
 import com.hippo.anotherviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.scene.Announcer;
+import com.hippo.scene.StageActivity;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
 import com.hippo.widget.LoadImageView;
@@ -67,7 +70,8 @@ import java.lang.ref.WeakReference;
  *     METHOD_GET_GALLERY_DETAIL 请求、GalleryDetailTagsSyncTask
  *     标签同步与历史记录写入，与完整详情场景共享同一份缓存；</li>
  *     <li>只展示封面、标题、分类、评分、页数、日期、标签等只读信息与
- *     "阅读"入口（启动 GalleryActivity），不重复实现下载、评论、收藏等重逻辑。</li>
+ *     "阅读"（启动 GalleryActivity）、"完整详情"（进完整详情场景）两个入口，
+ *     不重复实现下载、评论、收藏等重逻辑。</li>
  * </ul>
  */
 public class GalleryDetailPaneFragment extends Fragment implements View.OnClickListener {
@@ -101,6 +105,8 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
     private TextView mFavoredTimes;
     @Nullable
     private TextView mRead;
+    @Nullable
+    private TextView mFullDetail;
     @Nullable
     private TextView mTip;
     @Nullable
@@ -145,6 +151,8 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
             return;
         }
         bindFirst();
+        // 空状态恢复：面板已有画廊时重新显示"阅读/完整详情"按钮
+        setActionsVisible(true);
         if (!prepareData()) {
             showTip(getString(R.string.error_cannot_find_gallery));
         }
@@ -183,11 +191,13 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
         mPosted = (TextView) view.findViewById(R.id.pane_posted);
         mFavoredTimes = (TextView) view.findViewById(R.id.pane_favored_times);
         mRead = (TextView) view.findViewById(R.id.pane_read);
+        mFullDetail = (TextView) view.findViewById(R.id.pane_full_detail);
         mTip = (TextView) view.findViewById(R.id.pane_tip);
         mProgress = view.findViewById(R.id.pane_progress);
         mTags = (LinearLayout) view.findViewById(R.id.pane_tags);
 
         mRead.setOnClickListener(this);
+        mFullDetail.setOnClickListener(this);
         mTip.setOnClickListener(this);
 
         if (mGalleryInfo != null) {
@@ -197,6 +207,8 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
                 showTip(getString(R.string.error_cannot_find_gallery));
             }
         } else {
+            // 无画廊空状态：隐藏"阅读/完整详情"按钮，避免悬空误导
+            setActionsVisible(false);
             showTip(getString(R.string.detail_pane_hint));
         }
         return view;
@@ -226,6 +238,7 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
         mPosted = null;
         mFavoredTimes = null;
         mRead = null;
+        mFullDetail = null;
         mTip = null;
         mProgress = null;
         mTags = null;
@@ -267,6 +280,8 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
     public void onClick(View v) {
         if (v == mRead) {
             onReadClick();
+        } else if (v == mFullDetail) {
+            onFullDetailClick();
         } else if (v == mTip) {
             // 失败提示点击重试
             prepareData();
@@ -285,11 +300,36 @@ public class GalleryDetailPaneFragment extends Fragment implements View.OnClickL
         startActivity(intent);
     }
 
+    private void onFullDetailClick() {
+        GalleryInfo info = getCurrentGallery();
+        // getActivity() 为 null（面板已脱离）或宿主不是场景宿主时不处理
+        Activity activity = getActivity();
+        if (info == null || !(activity instanceof StageActivity)) {
+            return;
+        }
+        // 与列表场景单屏回退一致：进完整详情场景（无缩略图转场）
+        Bundle args = new Bundle();
+        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
+        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, info);
+        ((StageActivity) activity).startScene(new Announcer(GalleryDetailScene.class).setArgs(args));
+    }
+
     private static boolean isSameGallery(@Nullable GalleryInfo a, @Nullable GalleryInfo b) {
         if (a == null || b == null) {
             return false;
         }
         return a.gid == b.gid && TextUtils.equals(a.token, b.token);
+    }
+
+    /** "阅读/完整详情"按钮整体显隐：无画廊空状态下隐藏，选中画廊后恢复。 */
+    private void setActionsVisible(boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.GONE;
+        if (mRead != null) {
+            mRead.setVisibility(visibility);
+        }
+        if (mFullDetail != null) {
+            mFullDetail.setVisibility(visibility);
+        }
     }
 
     private boolean prepareData() {

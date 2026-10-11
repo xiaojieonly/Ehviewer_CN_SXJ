@@ -1,16 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="horizontal"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- 主栏：窄屏独占整窗（宽度由代码控制），宽屏时固定为窄列显示分类列表 -->
     <FrameLayout
         android:id="@+id/settings"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        android:layout_height="match_parent"/>
 
-</FrameLayout>
+    <!-- 详情栏：宽屏时展示选中分类的设置项；未选中时透出底下的占位文本 -->
+    <FrameLayout
+        android:id="@+id/settings_detail_wrap"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/settings_detail_placeholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="24dp"
+            android:text="@string/settings_detail_placeholder"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="16sp"/>
+
+        <FrameLayout
+            android:id="@+id/settings_detail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </FrameLayout>
+
+</LinearLayout>

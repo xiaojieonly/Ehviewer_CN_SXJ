@@ -40,7 +40,6 @@ import com.hippo.anotherviewer.smb.SmbConfig;
 import com.hippo.anotherviewer.smb.SmbSettings;
 import com.hippo.anotherviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.lib.glgallery.GalleryView;
-import com.hippo.anotherviewer.widget.DuoSimProfiles;
 import com.hippo.unifile.SmbUri;
 import com.hippo.unifile.SmbUriHandler;
 import com.hippo.unifile.UniFile;
@@ -614,42 +613,6 @@ public class Settings {
 
     public static void putPageScaling(int value) {
         putIntToStr(KEY_PAGE_SCALING, value);
-    }
-
-    private static final String KEY_DUO_SIM_ENABLED = "duo_sim_enabled";
-    private static final boolean DEFAULT_DUO_SIM_ENABLED = false;
-
-    /** Surface Duo reading simulation: render pages inside a virtual
-     * Duo panel layout instead of the raw screen. */
-    public static boolean getDuoSimEnabled() {
-        return getBoolean(KEY_DUO_SIM_ENABLED, DEFAULT_DUO_SIM_ENABLED);
-    }
-
-    public static void putDuoSimEnabled(boolean value) {
-        putBoolean(KEY_DUO_SIM_ENABLED, value);
-    }
-
-    private static final String KEY_DUO_SIM_PROFILE = "duo_sim_profile";
-    private static final int DEFAULT_DUO_SIM_PROFILE = DuoSimProfiles.DUO;
-
-    @DuoSimProfiles.Profile
-    public static int getDuoSimProfile() {
-        return DuoSimProfiles.sanitize(getIntFromStr(KEY_DUO_SIM_PROFILE, DEFAULT_DUO_SIM_PROFILE));
-    }
-
-    public static void putDuoSimProfile(int value) {
-        putIntToStr(KEY_DUO_SIM_PROFILE, value);
-    }
-
-    private static final String KEY_DUO_SIM_HINGE_DP = "duo_sim_hinge_dp";
-    private static final int DEFAULT_DUO_SIM_HINGE_DP = 24;
-
-    public static int getDuoSimHingeDp() {
-        return getIntFromStr(KEY_DUO_SIM_HINGE_DP, DEFAULT_DUO_SIM_HINGE_DP);
-    }
-
-    public static void putDuoSimHingeDp(int value) {
-        putIntToStr(KEY_DUO_SIM_HINGE_DP, value);
     }
 
     private static final String KEY_START_POSITION = "start_position";

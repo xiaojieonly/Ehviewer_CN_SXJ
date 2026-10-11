@@ -240,6 +240,7 @@
     <string name="download">下载</string>
     <string name="read">阅读</string>
     <string name="detail_pane_hint">在左侧选择画廊，此处展示详情</string>
+    <string name="detail_pane_full_detail">完整详情</string>
     <string name="more_information">查看更多信息</string>
     <plurals name="page_count">
         <item quantity="other">%d 页</item>
@@ -557,14 +558,6 @@
     <string name="settings_read_reading_direction_right_to_Left">从右至左</string>
     <string name="settings_read_reading_direction_top_to_bottom">从上至下</string>
     <string name="settings_read_dual_page">横屏双页</string>
-    <string name="settings_read_duo_sim">Surface Duo 阅读模拟</string>
-    <string name="settings_read_duo_sim_summary">将页面渲染进虚拟的 Surface Duo 双面板布局（黑边留幅、中间为铰链空隙），每块面板各显示一页，用于评估 Duo 阅读体验；仅改变渲染，不修改系统显示设置。</string>
-    <string name="settings_read_duo_sim_profile">模拟机型</string>
-    <string name="settings_read_duo_sim_profile_duo">Surface Duo（5.6 英寸单屏）</string>
-    <string name="settings_read_duo_sim_profile_duo2">Surface Duo 2（5.8 英寸单屏）</string>
-    <string name="settings_read_duo_sim_hinge">铰链空隙宽度</string>
-    <string name="duo_sim_summary_dual">展开态 ≈ %1$.1f 吋（真机 %2$.1f 吋，%3$d%%）· 单面板 ≈ %4$.1f 吋</string>
-    <string name="duo_sim_summary_single">单面板 ≈ %1$.1f 吋（竖屏满幅）</string>
     <string name="settings_read_first_page_cover">第一页作为封面</string>
     <string name="settings_read_page_scaling">页面缩放</string>
     <string name="settings_read_page_scaling_actual_size">原始尺寸</string>

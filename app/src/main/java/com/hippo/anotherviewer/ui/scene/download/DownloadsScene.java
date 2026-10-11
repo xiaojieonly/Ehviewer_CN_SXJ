@@ -627,9 +627,9 @@ public class DownloadsScene extends ToolbarScene
                 pageSize = newPageSize;
             }
         });
+        // 下载列表固定单列：columnSize=0 时不按宽度自动分列，跨双屏后列表仍保持
+        // 单列（右栏为画廊详情面板），不再随窗宽变成双列
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
-        mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
-        mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
 
         // 设置拖拽动画器
         final GeneralItemAnimator animator = new DraggableItemAnimator();
@@ -1066,6 +1066,8 @@ public class DownloadsScene extends ToolbarScene
             }
 
             DownloadInfo downloadInfo = list.get(positionInList(position));
+
+            // 行体点击恒直达阅读器；双栏详情入口只由缩略图点击触发（见 DownloadAdapter）。
             openDownloadedGallery(downloadInfo);
             return true;
         }

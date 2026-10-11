@@ -50,6 +50,7 @@ import com.hippo.anotherviewer.download.DownloadService;
 import com.hippo.anotherviewer.gallery.A7ZipArchive;
 import com.hippo.anotherviewer.gallery.Pipe;
 import com.hippo.anotherviewer.spider.SpiderInfo;
+import com.hippo.anotherviewer.ui.MainActivity;
 import com.hippo.anotherviewer.ui.scene.TransitionNameFactory;
 import com.hippo.anotherviewer.ui.scene.download.DownloadsScene;
 import com.hippo.anotherviewer.ui.scene.gallery.detail.GalleryDetailScene;
@@ -800,6 +801,12 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             if (thumb == v) {
                 DownloadInfo currentInfo = list.get(mScene.positionInList(index));
+                // 双屏双栏：缩略图点击优先把详情送入右栏面板（行体点击仍直达阅读）。
+                // 单屏（无铰链）恒返回 false，走下方原有分支。
+                MainActivity activity = mScene.getActivity2();
+                if (activity != null && activity.showGalleryDetailPane(currentInfo)) {
+                    return;
+                }
                 if (currentInfo.archiveUri != null && currentInfo.archiveUri.startsWith("content://")) {
                     // imported archive：弹信息对话框展示 URI
                     String message = mScene.getString(R.string.imported_archive_info_message) + "\n\n" + currentInfo.archiveUri;

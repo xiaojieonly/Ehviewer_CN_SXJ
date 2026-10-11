@@ -16,7 +16,7 @@
 
 <!--
   双栏模式下右栏的轻量画廊详情面板（GalleryDetailPaneFragment）。
-  只承载"看详情 + 阅读"入口，下载/评论/预览等重逻辑仍走完整详情场景。
+  只承载"看详情 + 阅读/完整详情"入口，下载/评论/预览等重逻辑仍走完整详情场景。
 -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -90,6 +90,20 @@
                     android:drawablePadding="8dp"
                     android:drawableStart="@drawable/v_book_open_x24"
                     android:text="@string/read"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+                <TextView
+                    android:id="@+id/pane_full_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center_vertical"
+                    android:minHeight="48dip"
+                    android:minWidth="88dip"
+                    android:drawablePadding="8dp"
+                    android:drawableStart="@drawable/v_info_primary_x24"
+                    android:text="@string/detail_pane_full_detail"
                     android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                     android:background="?android:attr/selectableItemBackgroundBorderless" />
 

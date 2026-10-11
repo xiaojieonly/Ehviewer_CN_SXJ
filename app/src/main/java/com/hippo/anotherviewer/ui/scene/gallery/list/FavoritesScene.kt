@@ -612,6 +612,12 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
                 if (gi == null) {
                     return true
                 }
+                // 双屏双栏：出现竖向分隔铰链时，详情改送右栏面板，不进左栏场景栈。
+                // 单屏（无铰链）恒返回 false，走原有流程。
+                val activity = getActivity2()
+                if (activity != null && activity.showGalleryDetailPane(gi)) {
+                    return true
+                }
                 val args = Bundle()
                 args.putString(
                     GalleryDetailScene.KEY_ACTION,

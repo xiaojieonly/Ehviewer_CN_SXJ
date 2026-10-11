@@ -51,30 +51,6 @@
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
-        android:defaultValue="false"
-        android:key="duo_sim_enabled"
-        android:summary="@string/settings_read_duo_sim_summary"
-        android:title="@string/settings_read_duo_sim" />
-
-    <com.hippo.preference.ListPreference
-        android:defaultValue="0"
-        android:dependency="duo_sim_enabled"
-        android:key="duo_sim_profile"
-        android:summary="%s"
-        android:title="@string/settings_read_duo_sim_profile"
-        app:entries="@array/duo_sim_profile_entries"
-        app:entryValues="@array/duo_sim_profile_values" />
-
-    <com.hippo.preference.ListPreference
-        android:defaultValue="24"
-        android:dependency="duo_sim_enabled"
-        android:key="duo_sim_hinge_dp"
-        android:summary="%s"
-        android:title="@string/settings_read_duo_sim_hinge"
-        app:entries="@array/duo_sim_hinge_entries"
-        app:entryValues="@array/duo_sim_hinge_values" />
-
-    <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
         android:key="reading_first_page_cover"
         android:title="@string/settings_read_first_page_cover" />

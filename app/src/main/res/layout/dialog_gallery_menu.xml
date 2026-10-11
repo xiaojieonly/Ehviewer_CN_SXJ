@@ -73,44 +73,6 @@
 
         </LinearLayout>
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/duo_sim"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/settings_read_duo_sim"
-            android:textColor="?android:attr/textColorPrimary" />
-
-        <LinearLayout
-            android:id="@+id/duo_sim_profile_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1"
-                android:text="@string/settings_read_duo_sim_profile"
-                android:textColor="?android:attr/textColorPrimary" />
-
-            <com.hippo.widget.CuteSpinner
-                android:id="@+id/duo_sim_profile"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="2"
-                android:entries="@array/duo_sim_profile_entries" />
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/duo_sim_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="12sp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -13,7 +13,7 @@ This repository contains both the **Android client** and a **local Web App (LAN 
 主要改动包括如下：
 * samba支持：用户可以将自己的缓存库同步/指向本地samba服务器，对于小容量设备更友好
 * 横屏双页：针对折叠屏、平板电脑用户，横屏观看可以同时观看两页内容（具体兼容性视内容尺寸而定），更像实体书籍
-* Surface Duo 适配：阅读器铰链感知双页、单页不跨缝，阅读菜单内置 Duo 阅读模拟（可快速评估），双屏展开时列表+详情两栏浏览（详见 docs/surface-duo-adaptation.md）
+* Surface Duo 适配：真机跨屏自动双页、单屏/折叠自动单页（跟随姿态，无需设置），单页不跨缝；双屏展开时设置页双栏（分类|内容）与下载/历史/收藏/画廊列表右栏联动（缩略图进详情、卡片直接阅读）；Duo 阅读模拟已随真机适配完成而移除（详见 docs/surface-duo-adaptation.md）
 
 Main improvements are as follows:
 * Samba support: You can now mount & sync your local downloads to a samba server, making it more friendly for devices with limited storage.

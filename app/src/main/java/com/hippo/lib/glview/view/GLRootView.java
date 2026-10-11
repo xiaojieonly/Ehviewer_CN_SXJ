@@ -155,22 +155,32 @@ public class GLRootView extends GLSurfaceView
     @Override
     public void setContentPane(GLView content) {
         if (mContentView == content) return;
-        if (mContentView != null) {
-            if (mInDownState) {
-                long now = SystemClock.uptimeMillis();
-                MotionEvent cancelEvent = MotionEvent.obtain(
-                        now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
-                mContentView.dispatchTouchEvent(cancelEvent);
-                cancelEvent.recycle();
-                mInDownState = false;
+        // Detaching the old tree (which mutates its component lists, e.g.
+        // GalleryView releasing its pages in onDetachFromRoot) and attaching
+        // the new one must not interleave with a frame being rendered on the
+        // GL thread. Hold the render lock so the swap is atomic with
+        // onDrawFrameLocked, the same way dispatchTouchEvent is serialized.
+        mRenderLock.lock();
+        try {
+            if (mContentView != null) {
+                if (mInDownState) {
+                    long now = SystemClock.uptimeMillis();
+                    MotionEvent cancelEvent = MotionEvent.obtain(
+                            now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+                    mContentView.dispatchTouchEvent(cancelEvent);
+                    cancelEvent.recycle();
+                    mInDownState = false;
+                }
+                mContentView.detachFromRoot();
+                BasicTexture.yieldAllTextures();
             }
-            mContentView.detachFromRoot();
-            BasicTexture.yieldAllTextures();
-        }
-        mContentView = content;
-        if (content != null) {
-            content.attachToRoot(this);
-            requestLayoutContentPane();
+            mContentView = content;
+            if (content != null) {
+                content.attachToRoot(this);
+                requestLayoutContentPane();
+            }
+        } finally {
+            mRenderLock.unlock();
         }
     }
 

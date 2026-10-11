@@ -973,5 +973,6 @@
     <string name="download_delegate_server">On the server</string>
     <string name="download_delegate_started">Download started on server</string>
     <string name="download_delegate_failed">Server download failed</string>
+    <string name="settings_detail_placeholder">Select a category on the left</string>
 
 </resources>

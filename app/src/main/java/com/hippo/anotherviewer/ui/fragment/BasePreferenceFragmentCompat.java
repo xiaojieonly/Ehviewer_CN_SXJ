@@ -41,7 +41,10 @@ public class BasePreferenceFragmentCompat extends PreferenceFragmentCompat {
             return;
         }
         SettingsActivity settingsActivity = (SettingsActivity) getActivity();
-        settingsActivity.setSettingsTitle(R.string.settings);
+        // 双栏模式下左侧分类列表仍然可见，保留分类标题，不重置回「设置」
+        if (!settingsActivity.isDualPane()){
+            settingsActivity.setSettingsTitle(R.string.settings);
+        }
         super.onDestroyView();
 
     }

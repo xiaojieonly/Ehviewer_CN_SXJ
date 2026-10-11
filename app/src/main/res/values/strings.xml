@@ -328,6 +328,7 @@
     <string name="download">Download</string>
     <string name="read">Read</string>
     <string name="detail_pane_hint">Select a gallery on the left to see its details here</string>
+    <string name="detail_pane_full_detail">Full details</string>
     <string name="more_information">More information</string>
     <plurals name="page_count">
         <item quantity="one">%d page</item>
@@ -646,14 +647,6 @@
     <string name="settings_read_reading_direction_right_to_Left">Right to left</string>
     <string name="settings_read_reading_direction_top_to_bottom">Top to bottom</string>
     <string name="settings_read_dual_page">Dual page in landscape</string>
-    <string name="settings_read_duo_sim">Surface Duo reading simulation</string>
-    <string name="settings_read_duo_sim_summary">Render pages inside virtual Surface Duo panels (letterboxed, with a hinge gap in between), one page per panel, to evaluate the Duo reading experience. Rendering only; no system display settings change.</string>
-    <string name="settings_read_duo_sim_profile">Simulated device</string>
-    <string name="settings_read_duo_sim_profile_duo">Surface Duo (5.6\" panel)</string>
-    <string name="settings_read_duo_sim_profile_duo2">Surface Duo 2 (5.8\" panel)</string>
-    <string name="settings_read_duo_sim_hinge">Hinge gap width</string>
-    <string name="duo_sim_summary_dual">Unfolded ≈ %1$.1f in (real %2$.1f in, %3$d%%) · panel ≈ %4$.1f in</string>
-    <string name="duo_sim_summary_single">Single panel ≈ %1$.1f in (portrait, full screen)</string>
     <string name="settings_read_first_page_cover">First page as cover</string>
     <string name="settings_read_page_scaling">Page scaling</string>
     <string name="settings_read_page_scaling_actual_size">Actual size</string>
@@ -1221,4 +1214,5 @@
     <string name="wifi_connect_failed">通信连接失败</string>
     <string name="wifi_retry_connect">尝试重新链接</string>
     <string name="image_path_error">获取图片路径出错</string>
+    <string name="settings_detail_placeholder">在左侧选择分类，此处展示设置</string>
 </resources>

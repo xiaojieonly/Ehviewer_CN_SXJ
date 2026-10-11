@@ -65,3 +65,4 @@ web-frontend/e2e/test-results/
 /dist/
 __pycache__/
 scripts/audit-api-masking.py
+duo-test-screenshots/

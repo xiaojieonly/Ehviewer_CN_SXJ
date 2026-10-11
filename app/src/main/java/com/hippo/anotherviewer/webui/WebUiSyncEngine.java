@@ -25,6 +25,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hippo.anotherviewer.Settings;
+import com.hippo.anotherviewer.SiteDB;
 import com.hippo.anotherviewer.SiteApplication;
 import com.hippo.anotherviewer.client.PrivacyMask;
 import com.hippo.anotherviewer.client.SiteCookieStore;
@@ -1626,6 +1627,11 @@ public final class WebUiSyncEngine {
         for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
             keys.add(hi.gid);
         }
+        // 上限裁剪（SiteDB.putHistoryInfo 超 MAX_HISTORY_COUNT）的行并非用户删除：
+        // 并入现存集，删除检测不得把它们当成删除推给服务器（否则配对后历史被
+        // 逐条硬删，表现为「历史被清空」）。这些行本地已不存在，重新阅读时自然
+        // 回到本地现存集，排除项随之失效。
+        keys.addAll(SiteDB.getCapPrunedHistoryGids());
         // 剔除 gid<=0 的本地损坏记录（如早期空 token 详情页写入的历史）：它们无法
         // 被服务器接受（token 为空会使 push 400 拒收），必须排除在同步之外。
         keys.removeIf(k -> k <= 0L);

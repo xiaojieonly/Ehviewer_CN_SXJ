@@ -508,6 +508,14 @@ public class GLView implements TouchOwner {
         // render child
         canvas.save();
         for (int i = 0, n = getComponentCount(); i < n; ++i) {
+            // The component list may be mutated concurrently, e.g. the content
+            // pane is swapped via GLRootView.setContentPane() on the main
+            // thread while this tree is still being rendered on the GL thread.
+            // Re-check the size before every get() so a shrink cannot crash
+            // the render loop; children removed mid-frame are simply skipped.
+            if (i >= getComponentCount()) {
+                break;
+            }
             renderChild(canvas, getComponent(i));
         }
         canvas.restore();

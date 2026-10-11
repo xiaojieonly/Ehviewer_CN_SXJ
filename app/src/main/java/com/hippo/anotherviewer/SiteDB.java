@@ -79,10 +79,28 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.HashSet;
 
 public class SiteDB {
 
     private static final String TAG = SiteDB.class.getSimpleName();
+
+    /**
+     * 因 MAX_HISTORY_COUNT 上限被裁剪的历史 gid。这些行本地已不存在但并非
+     * 用户主动删除：WebUiSyncEngine 同步删除检测时必须把它们并入「本地现存」，
+     * 否则上限裁剪会被当作删除推给服务器，把配对设备的历史逐条硬删
+     * （行被裁剪后本地不再存在，不可能再被用户删除，故永久排除是安全的；
+     * 重新阅读同一画廊时行会回到本地现存集，排除项只是冗余不再生效）。
+     */
+    private static final Set<Long> sCapPrunedHistoryGids = new HashSet<>();
+
+    /** 供同步引擎把上限裁剪的 gid 并入删除检测的「本地现存」集合。 */
+    public static Set<Long> getCapPrunedHistoryGids() {
+        synchronized (SiteDB.class) {
+            return new HashSet<>(sCapPrunedHistoryGids);
+        }
+    }
 
     public static int MAX_HISTORY_COUNT = 100;
 
@@ -992,6 +1010,14 @@ public class SiteDB {
             } else {
                 list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
                         .limit(-1).offset(MAX_HISTORY_COUNT).list();
+            }
+            // 记录因上限被裁剪的 gid：这些行本地已不存在但并非用户主动删除，
+            // 同步引擎不得把它们当作删除推给服务器（否则配对后历史被裁到
+            // 上限并逐条硬删服务器端，表现为「历史被清空」）。
+            synchronized (SiteDB.class) {
+                for (HistoryInfo pruned : list) {
+                    sCapPrunedHistoryGids.add(pruned.gid);
+                }
             }
             dao.deleteInTx(list);
         }
