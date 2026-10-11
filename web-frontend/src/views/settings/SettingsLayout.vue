@@ -1,8 +1,9 @@
 <!--
   SettingsLayout.vue — 统一设置面板布局（A5-1 合并原 SettingsLayout/AdminLayout）.
 
-  Wide viewports (≥960px): two-pane — fixed 240px grouped sidebar
-  (偏好 / 服务器) + content column.
+  Wide viewports (≥960px): two-pane — fixed grouped sidebar
+  (`--pane-column-width`, 360px，与列表页详情右栏同一栅格 token)
+  + content column.
   Narrow viewports (<960px): Android 式层级导航 — 侧栏退役，`/settings`
   exact 渲染分组索引页（SettingsIndex），子页顶部显示返回条（C5 goBack）。
   旧窄屏横排标签条（含汉堡避让与右缘渐隐 CSS）随合并退役。
@@ -92,7 +93,9 @@ function goBack(): void {
 
 .settings-layout__sidebar {
   flex: 0 0 auto;
-  width: 240px;
+  /* 次要列与列表页右栏同一栅格 token（--pane-column-width，MD3 360dp）——
+     全局抽屉(280) | 次要列(360) | 内容(flex) 三栏在各页宽度一致。 */
+  width: var(--pane-column-width, 360px);
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-divider);

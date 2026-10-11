@@ -193,6 +193,14 @@
   --drawer-header-height: 160px;     /* nav_header_main.xml layout_height 160dp */
   --toolbar-height: 56px;            /* actionBarSize (Material standard) */
 
+  /* Wide-screen three-column grid (≥960px), shared by every page so the app
+     reads as ONE layout system — same logic as /settings:
+       global drawer | fixed secondary column | flexible content/detail.
+     The secondary column is the MD3 canonical 360dp; consumers:
+     TwoPaneLayout list pane (Home/Search/History/Favorite) and the
+     SettingsLayout grouped sidebar. */
+  --pane-column-width: 360px;
+
   /* -----------------------------------------------------------------------
      FAB (dimens.xml)
      ----------------------------------------------------------------------- */

@@ -31,7 +31,9 @@ const RouterViewStub = defineComponent({
 const mountApp = () => mount(App, { global: { components: { RouterView: RouterViewStub } } })
 
 function appCss(): string {
-  return readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
+  // Windows checkout (core.autocrlf=true) hands the file CRLF — the LF-only
+  // regexes below would false-negative. Normalize before matching.
+  return readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8').replace(/\r\n/g, '\n')
 }
 
 describe('App (UX-13 hamburger reserved slot)', () => {

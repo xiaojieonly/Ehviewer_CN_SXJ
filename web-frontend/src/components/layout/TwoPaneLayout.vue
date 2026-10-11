@@ -27,9 +27,15 @@
 
 <script setup lang="ts">
 /**
- * TwoPaneLayout — 平板对齐（T3，2026-09-20 定案）的共享双栏骨架：宽屏
- * （≥960px，与 Settings 双栏阈值同寿命）下「列表恒驻左栏（360px 固定宽）+
- * 详情右栏」，窄屏（<960px）退化为单列列表（点击进整页详情的现状行为）。
+ * TwoPaneLayout — Web 宽屏三栏的中段骨架：宽屏（≥960px，与 Settings 双栏阈值
+ * 同寿命）下「列表恒驻左栏（--pane-column-width: 360px）+ 详情右栏」，窄屏
+ * （<960px）退化为单列列表（点击进整页详情的现状行为）。
+ *
+ * 「双栏」指本组件的列表+详情两栏；加上全局常驻 NavigationDrawer（≥720px,
+ * 280px）即构成 Web 宽屏的 MD3 三栏（导航/列表/详情），与设置页
+ * （SettingsLayout 分组侧栏 + 内容列）同一栅格——次要列宽统一走
+ * `--pane-column-width` token。Surface Duo 的跨屏双栏是 Android App 端的
+ * 姿态适配，与 Web 无关。
  *
  * 形态判定与 SettingsLayout/SettingsIndex 同源：matchMedia 断点监听
  * （响应式，不做一次性判定），布局由根类名 `two-pane--wide` 驱动——JS 与
@@ -235,11 +241,18 @@ defineExpose({
 }
 
 /* ---------------------------------------------- wide（≥960px）--- */
-/* 列表恒驻左栏（360px 固定宽，需求定案）+ 详情右栏。 */
+/* 列表恒驻左栏（--pane-column-width，与设置页侧栏同一栅格 token）+ 详情右栏。
+   注意方向必须翻回 row：基础形态是 column（窄屏上下堆叠、右栏 display:none），
+   忘了翻方向会让 360px 变成 flex-basis 施加在主轴（= 高度）上——列表缩成
+   360px 高的横条、详情整宽跌落到下方（T3 上线时翻过的车）。 */
+
+.two-pane--wide {
+  flex-direction: row;
+}
 
 .two-pane--wide .two-pane__list {
-  flex: 0 0 var(--two-pane-list-width, 360px);
-  width: var(--two-pane-list-width, 360px);
+  flex: 0 0 var(--pane-column-width, 360px);
+  width: var(--pane-column-width, 360px);
   border-right: 1px solid var(--color-divider);
 }
 
