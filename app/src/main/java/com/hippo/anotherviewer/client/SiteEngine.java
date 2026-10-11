@@ -339,7 +339,9 @@ public class SiteEngine {
         GalleryListParser.Result result;
         int code = -1;
         try {
-            Response response = call.execute();
+            // Direct fetch first; on connection-level failure the page is retried
+            // via the paired WebUI server's tier-2 cache (only when configured).
+            Response response = Tier2PageFetcher.executePageGet(url, call);
             code = response.code();
             headers = response.headers();
             assert response.body() != null;
@@ -438,7 +440,9 @@ public class SiteEngine {
         Headers headers = null;
         int code = -1;
         try {
-            Response response = call.execute();
+            // Direct fetch first; on connection-level failure the page is retried
+            // via the paired WebUI server's tier-2 cache (only when configured).
+            Response response = Tier2PageFetcher.executePageGet(url, call);
             code = response.code();
             headers = response.headers();
             assert response.body() != null;
@@ -474,7 +478,9 @@ public class SiteEngine {
         Headers headers = null;
         int code = -1;
         try {
-            Response response = call.execute();
+            // Direct fetch first; on connection-level failure the page is retried
+            // via the paired WebUI server's tier-2 cache (only when configured).
+            Response response = Tier2PageFetcher.executePageGet(url, call);
             code = response.code();
             headers = response.headers();
             assert response.body() != null;

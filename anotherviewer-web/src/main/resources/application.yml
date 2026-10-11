@@ -62,6 +62,19 @@ anotherviewer:
     probe-url: https://e-hentai.org
     # 单次探测超时（connect/read 合计；DOWN 期间用户手动恢复只需 ≤ 该值等待）。
     probe-timeout-ms: 12000
+  tier2:
+    cache:
+      # Tier-2 EH 页面持久缓存（tier2_page 表）容量上限：每轮后台刷新后裁掉
+      # fetched_at 最旧的超出行；<=0 = 不裁剪。
+      max-entries: 2000
+    refresh:
+      # 后台刷新 Tier-2 缓存行（Tier2PageService.refreshExpiredEntries，
+      # fixedDelay 调度线程）：fetched_at 早于 max-age-ms 的行按最旧优先
+      # 重抓，每轮至多 batch-size 条；availability DOWN 时整轮跳过。
+      enabled: true
+      interval-ms: 1800000
+      max-age-ms: 21600000
+      batch-size: 10
   processing:
     concurrency: 1
     task-ttl-ms: 600000
