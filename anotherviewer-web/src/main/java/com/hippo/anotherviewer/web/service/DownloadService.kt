@@ -339,7 +339,16 @@ class DownloadService(
         sessionManager.requireValidSession()
 
         val entity = downloadRepository.findById(id).orElse(null) ?: return false
-        if (entity.state == 1 || entity.state == 2) return false
+        // 活动态（1 待跑/2 下载中）仅在**确有存活任务**时拒绝——服务重启/进程
+        // 崩溃后 DB 里残留的活动态行没有任何任务（僵尸行），若按状态一律拒绝，
+        // 「开始」与「全部下载」对它们全是空操作，行永远卡在 Wait/Downloading
+        // （历史遗留「状态重建卡住」的一半根因）。已结束但尚未自 map 摘除的
+        // 任务（finished 已计数）不阻止重启——它的终态写已完成，新任务按断点
+        // 续传语义重扫磁盘即可。
+        val live = tasks[id]
+        if ((entity.state == 1 || entity.state == 2) && live != null && live.finished.count > 0L) {
+            return false
+        }
 
         // EH DOWN 熔断（docs/plan-2026-08-30-eh-circuit-breaker.md §3.2）：
         // 启动检查——DOWN 时直接置 FAILED（用户手动 start 可重试），绝不静默
@@ -355,8 +364,14 @@ class DownloadService(
 
         // Rows migrated from another host carry the old machine's absolute
         // paths; resolve against the current root and write the usable path
-        // back so the row self-heals on every (re)start.
-        val downloadDir = DownloadDirs.resolve(config.download.path, entity.gid, entity.downloadDir)
+        // back so the row self-heals on every (re)start. 解析结果不存在但磁盘
+        // 上有该 gid 的既有目录（`{gid}-{title}`：App 推送行 downloadDir 为空、
+        // 旧机器路径失效）→ 采用既有目录：续传进原目录，而不是另建裸 `<gid>`
+        // 目录把整套内容重复下载一遍。
+        var downloadDir = DownloadDirs.resolve(config.download.path, entity.gid, entity.downloadDir)
+        if (!downloadDir.isDirectory) {
+            DownloadDirs.findExisting(config.download.path, entity.gid)?.let { downloadDir = it }
+        }
         updateEntity(id) {
             it.state = 1
             it.error = null
@@ -467,18 +482,27 @@ class DownloadService(
      * 并跳过（state=3, done=total, 零网络），缺失/损坏行走正常下载管线补下。
      */
     fun restartAllDownloads(): Int {
-        // 2026-08-31：点击「全部下载」先强制重扫导目录索引——用户复制/上传
-        // 缓存后无需重启，本次即读到刚落盘的文件（校验/阅读路径共享索引）。
+        // 2026-08-31：点击「全部下载」刷新导目录索引——用户复制/上传缓存后无需
+        // 重启，随后读取/服务路径即读到刚落盘的文件。
+        // 2026-10-11：改为**后台异步**重建。原先的同步全量 walk（9327 目录/
+        // 64 万文件，实测 9.5s 起、冷盘分钟级）在请求线程上执行，前端 await
+        // 该 POST 且无任何忙态反馈——用户观感即「全部下载卡住」。本方法的磁盘
+        // 校验（[isVerifiedOnDisk]）直接列目录、不依赖索引，异步调度不影响其
+        // 正确性；索引早一轮晚一轮只影响读取/服务路径的缓存新鲜度。
         // 索引刷新是只读感知；**不**为磁盘-only 目录建 DB 行（数据库是行数据
         // 的权威，只能由 App 推送/WebUI 添加/导入 .db 产生，磁盘文件夹不得
         // 反向写库——2026-08-31 用户裁决）。
-        downloadDirIndex.refresh()
+        downloadDirIndex.refreshAsync()
+        // 磁盘目录映射一次建表（gid → 既有目录）：行 downloadDir 为空/失效时
+        // 校验按映射找回 `{gid}-{title}` 目录——否则 292MB/1984 页已落盘的行
+        // 永远校验不过、且重启被状态守卫拒绝，卡死在 Wait（2026-10-11 线上实例）。
+        val diskDirs = DownloadDirs.listOurDirs(config.download.path)
         var restarted = 0
         var skippedVerified = 0
         // A7-2（D6）：「全部下载」遍历仅存活行，墓碑不参与重启/完成化。
         downloadRepository.findAllByDeletedFalseOrderById().forEach { entity ->
             val total = entity.total
-            if (isVerifiedOnDisk(entity.gid, entity.downloadDir, total)) {
+            if (isVerifiedOnDisk(entity.gid, entity.downloadDir, total, diskDirs[entity.gid])) {
                 updateEntity(entity.id) {
                     it.state = 3
                     it.done = total
@@ -496,11 +520,26 @@ class DownloadService(
         return restarted
     }
 
-    /** 磁盘校验：目录存在且 %04d.* 文件数 >= total（total<=0 视为未决，不判定完成）。 */
-    private fun isVerifiedOnDisk(gid: Long, storedDir: String?, total: Int): Boolean {
+    /**
+     * 磁盘校验：目录存在且 `%04d.*` 文件数 >= total（total<=0 视为未决，不判定完成）。
+     *
+     * [fallbackDir]：行自身路径解析不到目录时的磁盘既有目录（gid 映射/索引）——
+     * App 推送行 downloadDir 为空、旧机器绝对路径失效等形态下，内容目录以
+     * `{gid}-{title}` 命名在盘上，不回落就永远校验不过。
+     */
+    private fun isVerifiedOnDisk(
+        gid: Long,
+        storedDir: String?,
+        total: Int,
+        fallbackDir: File? = null,
+    ): Boolean {
         if (total <= 0) return false
-        val dir = DownloadDirs.resolve(config.download.path, gid, storedDir)
-        if (!dir.isDirectory) return false
+        val resolved = DownloadDirs.resolve(config.download.path, gid, storedDir)
+        val dir = when {
+            resolved.isDirectory -> resolved
+            fallbackDir?.isDirectory == true -> fallbackDir
+            else -> return false
+        }
         val count = dir.listFiles { f -> f.isFile && f.name.matches(Regex("^\\d{4,}\\..+")) }
             ?.count { it.length() > 0 } ?: 0
         return count >= total
@@ -518,7 +557,10 @@ class DownloadService(
         if (entity.state == 3) return
         val total = entity.total
         if (total <= 0) return
-        if (isVerifiedOnDisk(gid, entity.downloadDir, total)) {
+        // 单行路径用索引做目录回落（索引启动即载入，逐目录扫描交给巡检/TTL 维护），
+        // 与 restartAllDownloads 的 gid 映射同语义：downloadDir 为空/失效而内容
+        // 目录以 `{gid}-{title}` 在盘上时不漏判完成化。
+        if (isVerifiedOnDisk(gid, entity.downloadDir, total, downloadDirIndex.dirFor(gid))) {
             // P-S8 批量：完成化前强制 flush 对应任务的待写进度（完成化是终态写，
             // flush 后该 id 的内存累计清空，后续再无旧帧可写）。
             progressPersister.flush(entity.id)

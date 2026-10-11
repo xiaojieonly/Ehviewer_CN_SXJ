@@ -251,6 +251,75 @@ class DownloadServiceTest {
     }
 
     @Test
+    fun `restartAll verifies blank-downloadDir rows via gid-title disk dir (2026-10-11 stuck-row regression)`() {
+        // 线上实例：gid=3618832 行 downloadDir 为空、state=1、total=1984/done=1984，
+        // 磁盘内容在 `{gid}-{title}` 目录（292MB 全在）——旧校验只找裸 <gid>
+        // 目录 → 永远不通过；旧守卫对 state=1 一律拒绝重启 → 行卡死 Wait。
+        `when`(availability.isBlocked()).thenReturn(false)
+        val downloadsRoot = java.io.File(tempDir, "downloads").apply { mkdirs() }
+        val dir = java.io.File(downloadsRoot, "4246396-Some Title").apply { mkdirs() }
+        java.io.File(dir, "00000001.webp").writeBytes(ByteArray(10))
+        java.io.File(dir, "00000002.webp").writeBytes(ByteArray(10))
+        java.io.File(dir, "00000003.webp").writeBytes(ByteArray(10))
+        val stuck = DownloadInfoEntity().apply {
+            id = 9021L; gid = 4246396L; token = ""; total = 3; done = 3
+            state = 1; downloadDir = "" // App 推送行：无路径记录
+        }
+        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(stuck))
+        `when`(downloadRepository.findById(9021L)).thenReturn(Optional.of(stuck))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        val restarted = service.restartAllDownloads()
+
+        assertEquals(0, restarted)
+        verify(downloadRepository).save(
+            org.mockito.ArgumentMatchers.argThat<DownloadInfoEntity> { it.id == 9021L && it.state == 3 && it.done == 3 }
+        )
+        // 索引刷新改为后台异步：请求线程绝不再吃同步全量 walk。
+        verify(downloadDirIndex).refreshAsync()
+        verify(downloadDirIndex, never()).refresh()
+    }
+
+    @Test
+    fun `startDownload restarts a zombie row in activity state without a live task`() {
+        // 服务重启后 DB 残留 state=1/2 而没有任何任务（僵尸行）：旧守卫按状态
+        // 一律拒绝 → 「开始」「全部下载」全是空操作。用 EH 熔断作探针——必须
+        // 越过分区守卫走到熔断标记 FAILED，才证明僵尸行已可被重新启动。
+        `when`(availability.isBlocked()).thenReturn(true)
+        val zombie = DownloadInfoEntity().apply {
+            id = 7L; gid = 555L; token = "t"; state = 2; total = 10
+        }
+        `when`(downloadRepository.findById(7L)).thenReturn(Optional.of(zombie))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        val started = service.startDownload(7L)
+
+        assertEquals(false, started) // EH DOWN → 不跑；但已越过分区守卫
+        verify(downloadRepository).save(
+            org.mockito.ArgumentMatchers.argThat<DownloadInfoEntity> { it.id == 7L && it.state == 4 }
+        )
+    }
+
+    @Test
+    fun `restartAll restarts a zombie row whose content is incomplete on disk`() {
+        // 僵尸行（state=1、无任务）+ 磁盘未完成 → 必须重新排队下载。
+        // 旧守卫下 state=1 一律拒绝 → restarted=0（行永远卡死）。
+        `when`(availability.isBlocked()).thenReturn(false)
+        val downloadsRoot = java.io.File(tempDir, "downloads").apply { mkdirs() }
+        val zombie = DownloadInfoEntity().apply {
+            id = 11L; gid = 777L; token = "t"; total = 0; done = 2; state = 1
+            downloadDir = java.io.File(downloadsRoot, "777-zombie").absolutePath
+        }
+        `when`(downloadRepository.findAllByDeletedFalseOrderById()).thenReturn(listOf(zombie))
+        `when`(downloadRepository.findById(11L)).thenReturn(Optional.of(zombie))
+        `when`(downloadRepository.save(any(DownloadInfoEntity::class.java))).thenAnswer { it.getArgument(0) }
+
+        val restarted = service.restartAllDownloads()
+
+        assertEquals(1, restarted)
+    }
+
+    @Test
     fun `completeIfVerified only upgrades when disk holds full pages`() {
         val dir = java.io.File("dl-test-99").apply { mkdirs() }
         try {

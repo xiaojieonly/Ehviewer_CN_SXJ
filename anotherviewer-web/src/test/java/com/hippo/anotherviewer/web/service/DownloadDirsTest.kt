@@ -97,4 +97,39 @@ class DownloadDirsTest {
         val resolved = DownloadDirs.resolve(root.absolutePath, 7L, "/some/old/nas/dir", "Alpha")
         assertEquals(File(root, "7-Alpha").path, resolved.path)
     }
+
+    // ── 既有目录发现（2026-10-11）：downloadDir 为空/失效时找回 gid-title 目录 ──
+
+    @Test
+    fun `findExisting prefers exact gid dir then gid-title`() {
+        root.mkdirs()
+        File(root, "123-Titled Dir").mkdirs()
+        // 只有标题目录：命中 gid-*。
+        assertEquals(File(root, "123-Titled Dir").path, DownloadDirs.findExisting(root.absolutePath, 123L)?.path)
+        // 精确 <gid> 存在时优先于标题目录（legacy 判定口径）。
+        File(root, "123").mkdirs()
+        assertEquals(File(root, "123").path, DownloadDirs.findExisting(root.absolutePath, 123L)?.path)
+        // 都不存在 → null（新下载走既定 resolve 路径）。
+        assertNull(DownloadDirs.findExisting(root.absolutePath, 999L))
+    }
+
+    @Test
+    fun `findExisting ignores files and unrelated names`() {
+        root.mkdirs()
+        File(root, "456").writeText("not a dir")
+        File(root, "456-extra.txt").writeText("file with prefix")
+        assertNull(DownloadDirs.findExisting(root.absolutePath, 456L))
+    }
+
+    @Test
+    fun `listOurDirs maps gid to dir and skips foreign names`() {
+        root.mkdirs()
+        File(root, "1").mkdirs()
+        File(root, "2-With Title").mkdirs()
+        File(root, "module-info").mkdirs()
+        File(root, "readme.txt").writeText("x")
+        val dirs = DownloadDirs.listOurDirs(root.absolutePath)
+        assertEquals(setOf(1L, 2L), dirs.keys)
+        assertEquals(File(root, "2-With Title").path, dirs[2L]?.path)
+    }
 }

@@ -344,6 +344,33 @@ describe('DownloadView — WS 进度合帧与索引 (P-F2 ①②)', () => {
     await nextTick()
   })
 
+  it('restart-all 后从服务端重拉权威状态（磁盘校验通过的行不再被乐观翻转成 Waiting）', async () => {
+    // 首次列表：一行进行中（state=2）。点「全部下载」后服务端会做磁盘校验：
+    // 内容已在盘上的行被标记完成且没有任务——收不到任何进度帧。原乐观翻转会
+    // 把它显示成 Waiting 且再无事件纠正；修复后必须以服务端重拉结果为准。
+    await mountWithRows([makeDownload(1, { state: 2, done: 3, total: 10 })])
+    vi.mocked(downloadApi.restartAll).mockResolvedValue(true)
+    vi.mocked(downloadApi.list).mockImplementation(async () => ({
+      downloads: [makeDownload(1, { state: 3, done: 10, total: 10 })],
+      labels: [],
+      total: 1,
+    }))
+    const listCallsBefore = vi.mocked(downloadApi.list).mock.calls.length
+
+    const button = wrapper.findAll('button').find((b) => b.text().includes('全部下载'))
+    expect(button).toBeDefined()
+    await button!.trigger('click')
+    await flushPromises()
+    await flushPromises()
+    await nextTick()
+
+    expect(vi.mocked(downloadApi.restartAll)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(downloadApi.list).mock.calls.length).toBeGreaterThan(listCallsBefore)
+    const row = wrapper.findAllComponents(DownloadProgressRow)[0]
+    expect(row?.props('item').state).toBe(3)
+    expect(row?.props('item').done).toBe(10)
+  })
+
   it('buildItemIndex matches Array#find for every key, first hit wins on duplicates (等价断言)', () => {
     // 重复 gid（9001）：Map 首中语义必须与 find 一致（同键只留首条）。
     const items = [makeDownload(1), makeDownload(2), makeDownload(3, { gid: 9001 })]

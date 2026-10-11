@@ -975,11 +975,9 @@ async function startAll(): Promise<void> {
 async function restartAll(): Promise<void> {
   try {
     await downloadApi.restartAll()
-    for (const item of downloads.value) {
-      if (item.state === STATE_FINISH) continue
-      item.state = STATE_WAIT
-      item.error = null
-    }
+    // 以服务端为准重拉:服务端可能把「磁盘校验通过」的行直接标记完成(无任务
+    // 无进度帧)——原乐观翻转会把这类行显示成 Waiting 且再无事件纠正。
+    await load({ silent: true })
     showToast('All downloads restarted')
   } catch (error) {
     console.error('Failed to restart all downloads', error)

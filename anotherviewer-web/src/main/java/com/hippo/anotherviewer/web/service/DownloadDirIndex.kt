@@ -203,11 +203,23 @@ class DownloadDirIndex(
 
     /**
      * 同步全量重建索引：清表后重扫 root 下全部 `{gid}`/`{gid}-{title}` 目录。
-     * 显式语义保留（「全部下载」前强制重扫，DownloadService.restartAllDownloads）；
-     * P-S3 后 TTL 指纹变化**不走这里**，走 [scheduleRebuild] 后台重建。
+     * 显式语义保留（启动路径/测试）；**请求线程不得调用**——9327 目录/64 万
+     * 文件的全量 walk 实测 9.5s（冷盘更久），会把「全部下载」这类 HTTP 请求
+     * 阻塞成前端观感上的「卡死」。P-S3 后 TTL 指纹变化**不走这里**，走
+     * [scheduleRebuild] 后台重建。
      */
     fun refresh() {
         rebuildRoot(incremental = false, reason = "full rebuild")
+    }
+
+    /**
+     * 非阻塞刷新：调度一次后台增量重建（与 TTL 路径同款机制：单线程 + CAS
+     * 合并，绝不占用请求线程）。「全部下载」等用户触发的新鲜度诉求用它——
+     * 后台 walk 完成后读取/服务路径即读到刚落盘的文件；下载校验路径本身
+     * 直接列目录（不依赖索引），不受调度时序影响。
+     */
+    fun refreshAsync() {
+        scheduleRebuild()
     }
 
     /**

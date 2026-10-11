@@ -103,4 +103,31 @@ object DownloadDirs {
      * Match a directory name as an ours layout: `{gid}` or `{gid}-{title}`.
      */
     fun isOursDir(dirName: String): Boolean = parseGid(dirName) != null
+
+    /**
+     * 根目录一次 listFiles → gid → 目录（同名冲突保留首个）。
+     *
+     * 「全部下载」的磁盘校验逐行调用 [findExisting] 会退化成 N 次根目录扫描
+     * （9000+ 目录规模下明显）；批量入口用它一次建表，逐行走 Map。
+     */
+    fun listOurDirs(rootPath: String): Map<Long, File> =
+        File(rootPath).listFiles { f -> f.isDirectory && isOursDir(f.name) }
+            .orEmpty()
+            .mapNotNull { f -> parseGid(f.name)?.let { it to f } }
+            .toMap()
+
+    /**
+     * 找到 gid 在磁盘上的既有目录：精确 `{gid}` 优先，其次任意 `{gid}-*`
+     * （标题后缀，Android/新下载命名）。无既有目录时返回 null。
+     *
+     * 用途：DB 行的 downloadDir 为空/失效（App 推送行、旧机器绝对路径）而磁盘
+     * 上已有内容目录时，让下载/校验找回它——否则会另建裸 `<gid>` 目录重复
+     * 下载，或校验永远不过导致行卡死在 Wait/Downloading。
+     */
+    fun findExisting(rootPath: String, gid: Long): File? {
+        val root = File(rootPath)
+        val exact = File(root, gid.toString())
+        if (exact.isDirectory) return exact
+        return root.listFiles { f -> f.isDirectory && f.name.startsWith("$gid-") }?.firstOrNull()
+    }
 }
