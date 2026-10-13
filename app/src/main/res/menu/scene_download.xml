@@ -107,6 +107,10 @@
                         android:id="@+id/unknown"
                         android:title="@string/unknown"
                         app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/local_import"
+                        android:title="@string/imported_archive_category"
+                        app:showAsAction="ifRoom"/>
                 </menu>
             </item>
 
