@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="com.hippo.ehviewer.ui.scene.gallery.list.GalleryNavigationTestActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.Main" />
+        <activity
+            android:name="com.hippo.ehviewer.ui.scene.GalleryPreviewNavigationTestActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.Main" />
+    </application>
+</manifest>

@@ -206,6 +206,10 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
         return null;
     }
 
+    protected abstract boolean onItemClick(View view, GalleryInfo galleryInfo);
+
+    protected abstract boolean onItemLongClick(View view, GalleryInfo galleryInfo);
+
     @Override
     public void onBindViewHolder(GalleryAdapterNew.GalleryHolder holder, int position) {
         GalleryInfo gi = getDataAt(position);
@@ -317,6 +321,28 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
             simpleLanguage = itemView.findViewById(R.id.simple_language);
             favourite = itemView.findViewById(R.id.favourited);
             downloaded = itemView.findViewById(R.id.downloaded);
+
+            // EasyRecyclerView's item listeners handle touch events only. Give the
+            // focused card its own click handlers for Android's A/center/Enter keys.
+            itemView.setOnClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                GalleryInfo galleryInfo = getDataAt(position);
+                if (galleryInfo != null) {
+                    onItemClick(itemView, galleryInfo);
+                }
+            });
+            itemView.setOnLongClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    return false;
+                }
+                GalleryInfo galleryInfo = getDataAt(position);
+                return galleryInfo != null && onItemLongClick(itemView, galleryInfo);
+            });
+
             if (mType == 0) {
                 thumb.setOnClickListener(v -> {
                     if (onThumbItemClickListener != null) {

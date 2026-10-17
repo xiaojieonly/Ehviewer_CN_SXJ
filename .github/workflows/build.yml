@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./gradlew
-          ./gradlew app:assembleDebug
+          ./gradlew app:assembleDebug app:assembleDebugAndroidTest
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
