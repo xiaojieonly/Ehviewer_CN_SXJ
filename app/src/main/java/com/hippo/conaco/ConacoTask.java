@@ -227,16 +227,28 @@ public class ConacoTask<V> {
                     if (isp != null) {
                         value = mHelper.decode(isp,hardware);
                     }
+                    // Keep a copy in disk cache so recycled list items can reload
+                    // after DataContainer is dropped on view re-attach.
+                    if (value != null && mKey != null && mUseDiskCache) {
+                        putFromDataContainerToDiskCache(mKey, mCache, mDataContainer);
+                    }
                 }
 
                 // Then check disk cache
                 if (mKey != null) {
+                    boolean triedDiskCache = false;
                     if (value == null && mUseDiskCache) {
+                        triedDiskCache = true;
                         value = mCache.getFromDisk(mKey,hardware);
                         // Put back to data container
                         if (value != null && mDataContainer != null && mDataContainer.isEnabled()) {
                             putFromDiskCacheToDataContainer(mKey, mCache, mDataContainer);
                         }
+                    }
+
+                    if (triedDiskCache && value == null) {
+                        // Decode failed on existing cache entry, evict to avoid repeated failures.
+                        mCache.removeFromDisk(mKey);
                     }
 
                     if (value != null && mUseMemoryCache && mHelper.useMemoryCache(mKey, value)) {

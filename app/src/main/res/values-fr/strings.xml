@@ -406,7 +406,14 @@
     <string name="download_stop_all">Arrêter tout</string>
     <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
     <string name="reset_reading_progress_message">Réinitialiser les progrès de lecture de toutes les galeries téléchargées ?</string>
+    <string name="reset_reading_progress_processing">Réinitialisation des progrès de lecture...</string>
+    <string name="reset_reading_progress_done">Progrès de lecture réinitialisés</string>
     <string name="download_service_label">Service du téléchargement EhViewer</string>
+    <string name="archiver_download_service_label">Téléchargement d\'archives EhViewer</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Reprendre</string>
+    <string name="archiver_download_paused">En pause</string>
+    <string name="archiver_download_restart_no_range">Le serveur ne prend pas en charge la reprise ; le téléchargement redémarre</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, encore %2$s</string>
     <string name="remember_download_label">Enregistrer le label de téléchargement</string>
@@ -516,6 +523,12 @@
     <string name="settings_read_screen_rotation_default">Par défaut</string>
     <string name="settings_read_screen_rotation_portrait">Portrait</string>
     <string name="settings_read_screen_rotation_landscape">Landscape</string>
+    <string name="settings_read_refresh_rate">Taux de rafraîchissement</string>
+    <string name="settings_read_refresh_rate_default">Par défaut</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">Maximum de l\'écran</string>
     <string name="settings_read_reading_direction">Direction de lecture</string>
     <string name="settings_read_reading_direction_left_to_right">De gauche à droite</string>
     <string name="settings_read_reading_direction_right_to_Left">De droite à gauche</string>
@@ -569,6 +582,8 @@
     <string name="settings_download_download_list_pagination_summary">La fonction de pagination ne prendra effet que lorsque la longueur de la liste est supérieure à 500</string>
     <string name="settings_download_download_order_by_asc">Ordre de téléchargement croissant</string>
     <string name="settings_download_download_order_by_asc_summary">Télécharger dans l\'ordre lors du téléchargement de toutes les galeries</string>
+    <string name="settings_download_sync_while_reading">Téléchargement synchronisé pendant la lecture</string>
+    <string name="settings_download_sync_while_reading_summary">Lors de la navigation dans une galerie non téléchargée, enregistre automatiquement les images consultées dans le répertoire de téléchargement</string>
     <string name="settings_download_restore_download_items">Rétablir les galeries téléchargées</string>
     <string name="settings_download_restore_download_items_summary">Rétablir tous objets déjà téléchargés dans la destination de téléchargement</string>
     <string name="settings_download_restoring">Rétablissement en cours</string>
@@ -614,6 +629,14 @@
     <string name="settings_advanced_wifi_sander_summary">Migration de données via point d\'accès Wi-Fi</string>
     <string name="settings_advanced_wifi_client">Réception de données de migration Wi-Fi</string>
     <string name="settings_advanced_wifi_client_summary">Recevoir les données de migration depuis les points d\'accès Wi-Fi</string>
+    <string name="wifi_send_download_location">Migrer le répertoire de téléchargement</string>
+    <string name="wifi_download_dir_empty">Aucun dossier de galerie migrable trouvé</string>
+    <string name="wifi_download_dir_no_location">Le répertoire de téléchargement n\'est pas défini sur cet appareil</string>
+    <string name="wifi_download_dir_migrating">Migration de %1$s (%2$d/%3$d fichiers)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d) : ignorer %4$d, transférer %5$d</string>
+    <string name="wifi_download_dir_file_done">Fichier reçu : %s</string>
+    <string name="wifi_download_dir_files_progress">%d fichiers reçus</string>
+    <string name="wifi_download_dir_file_failed">Échec de la somme de contrôle du fichier, fichier ignoré</string>
 
     <string name="settings_about">À propos de l\'application</string>
     <string name="settings_about_declaration_summary">EhViewer ne s\'affilie à E-Hentai de aucune manière.</string>
@@ -870,6 +893,13 @@
     <string name="imported_archive_info_title">Informations d\'importation locale</string>
     <string name="imported_archive_info_message">Il s\'agit d\'un élément importé depuis le stockage local</string>
     <string name="imported_archive_category">Importation locale</string>
+    <string name="import_local_album">Importer un album local</string>
+    <string name="import_album_title">Sélectionner le dossier d\'images</string>
+    <string name="import_album_processing">Importation de l\'album…</string>
+    <string name="import_album_failed">Échec de l\'importation de l\'album</string>
+    <string name="import_album_no_images">Aucune image prise en charge dans le dossier sélectionné</string>
+    <string name="import_album_already_imported">Album déjà importé</string>
+    <string name="import_album_success">%d images importées avec succès</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Page précédente</string>

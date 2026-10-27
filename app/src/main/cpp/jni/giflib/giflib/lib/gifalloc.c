@@ -46,7 +46,14 @@ GifMakeMapObject(int ColorCount, const GifColorType *ColorMap)
     if (ColorCount != (1 << GifBitSize(ColorCount))) {
         return ((ColorMapObject *) NULL);
     }
-    
+
+    /* GIF spec limits color tables to 256 entries (8 bits per pixel max).
+     * Reject oversized ColorCount values that are attacker-controlled and
+     * could cause memcpy to read beyond the source ColorMap buffer. */
+    if (ColorCount <= 0 || ColorCount > 256) {
+        return ((ColorMapObject *) NULL);
+    }
+
     Object = (ColorMapObject *)malloc(sizeof(ColorMapObject));
     if (Object == (ColorMapObject *) NULL) {
         return ((ColorMapObject *) NULL);
@@ -246,7 +253,18 @@ GifAddExtensionBlock(int *ExtensionBlockCount,
     ep = &(*ExtensionBlocks)[(*ExtensionBlockCount)++];
 
     ep->Function = Function;
+    /* GIF extension sub-blocks are at most 255 bytes each; application
+     * extension data is bounded by the GIF file size.  Cap at 65535 bytes
+     * to prevent attacker-controlled Len values from causing oversized
+     * heap allocations and out-of-bounds memcpy reads. */
+    if (Len > 65535U) {
+        return (GIF_ERROR);
+    }
     ep->ByteCount=Len;
+    if (ep->ByteCount == 0) {
+        ep->Bytes = NULL;
+        return (GIF_OK);
+    }
     ep->Bytes = (GifByteType *)malloc(ep->ByteCount);
     if (ep->Bytes == NULL)
         return (GIF_ERROR);
@@ -355,6 +373,20 @@ GifMakeSavedImage(GifFileType *GifFile, const SavedImage *CopyFrom)
             }
 
             /* next, the raster */
+            /* Validate source pointer and guard against dimension overflow.
+             * Height and Width are attacker-controlled GIF header fields;
+             * an integer overflow in their product would cause reallocarray
+             * to allocate a too-small buffer and memcpy to write beyond it. */
+            if (CopyFrom->RasterBits == NULL) {
+                FreeLastSavedImage(GifFile);
+                return (SavedImage *)(NULL);
+            }
+            if (CopyFrom->ImageDesc.Height > 0 &&
+                CopyFrom->ImageDesc.Width > 0 &&
+                (size_t)CopyFrom->ImageDesc.Height > (size_t)65536 / (size_t)CopyFrom->ImageDesc.Width) {
+                FreeLastSavedImage(GifFile);
+                return (SavedImage *)(NULL);
+            }
             sp->RasterBits = (unsigned char *)reallocarray(NULL,
                                                   (CopyFrom->ImageDesc.Height *
                                                   CopyFrom->ImageDesc.Width),

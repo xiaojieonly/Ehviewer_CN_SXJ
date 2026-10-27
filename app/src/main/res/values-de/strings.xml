@@ -359,6 +359,11 @@
     <string name="download_start_all">Alle starten</string>
     <string name="download_stop_all">Alle stoppen</string>
     <string name="download_service_label">EhViewer-Download-Dienst</string>
+    <string name="archiver_download_service_label">EhViewer-Archiv-Download</string>
+    <string name="archiver_download_pause">Pausieren</string>
+    <string name="archiver_download_resume">Fortsetzen</string>
+    <string name="archiver_download_paused">Pausiert</string>
+    <string name="archiver_download_restart_no_range">Der Server unterstützt kein Fortsetzen; Download wird neu gestartet</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, noch %2$s übrig</string>
     <string name="remember_download_label">Download-Etikette merken</string>
@@ -469,6 +474,12 @@
     <string name="settings_read_screen_rotation_portrait">Hochformat</string>
     <string name="settings_read_screen_rotation_landscape">Querformat</string>
     <string name="settings_read_screen_rotation_sensor">Automatisch drehen</string>
+    <string name="settings_read_refresh_rate">Bildwiederholrate</string>
+    <string name="settings_read_refresh_rate_default">Standard</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">Maximum des Bildschirms</string>
     <string name="settings_read_reading_direction">Richtung des Lesens</string>
     <string name="settings_read_reading_direction_left_to_right">Von links nach rechts</string>
     <string name="settings_read_reading_direction_right_to_Left">Von rechts nach links</string>
@@ -519,6 +530,8 @@
     <string name="settings_download_download_origin_image_summary">Es ist gefährlich! Du könntest einen 509-Fehler bekommen</string>
     <string name="settings_download_download_order_by_asc">Download-Reihenfolge aufsteigend</string>
     <string name="settings_download_download_order_by_asc_summary">Beim Herunterladen aller Galerien in Reihenfolge herunterladen</string>
+    <string name="settings_download_sync_while_reading">Synchron beim Lesen herunterladen</string>
+    <string name="settings_download_sync_while_reading_summary">Beim Durchsuchen einer nicht heruntergeladenen Galerie werden angesehene Bilder automatisch im Download-Verzeichnis gespeichert</string>
     <string name="settings_download_restore_download_items">Download-Elemente wiederherstellen</string>
     <string name="settings_download_restore_download_items_summary">Alle Download-Elemente im Downloadpfad wiederherstellen</string>
     <string name="settings_download_restoring">Elemente werden wiederhergestellt</string>
@@ -687,6 +700,8 @@
     <string name="settings_advanced_custom_hosts_summary">Hostname auf die angepassten IP umstellen\nDie Regeln können die von der App festgelegt überschreiben</string>
     <string name="download_reset_reading_progress">Lesefortschritte zurücksetzen</string>
     <string name="reset_reading_progress_message">Lesefortschritte aus allen heruntergeladenen Galerie zurücksetzen?</string>
+    <string name="reset_reading_progress_processing">Lesefortschritte werden zurückgesetzt...</string>
+    <string name="reset_reading_progress_done">Lesefortschritte zurückgesetzt</string>
     <string name="settings_eh_theme">Theme</string>
     <string name="settings_eh_theme_light">Weiß</string>
     <string name="settings_eh_theme_dark">Dunkel</string>
@@ -777,6 +792,14 @@
     <string name="wifi_send_bookmark">Lesezeichen migrieren</string>
     <string name="wifi_send_favorite">Favoriten migrieren</string>
     <string name="wifi_send_download">Download-Daten migrieren</string>
+    <string name="wifi_send_download_location">Download-Verzeichnis migrieren</string>
+    <string name="wifi_download_dir_empty">Keine migrierbaren Galerie-Ordner gefunden</string>
+    <string name="wifi_download_dir_no_location">Auf diesem Gerät ist kein Download-Verzeichnis festgelegt</string>
+    <string name="wifi_download_dir_migrating">%1$s wird migriert (%2$d/%3$d Dateien)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): %4$d übersprungen, %5$d zu übertragen</string>
+    <string name="wifi_download_dir_file_done">Datei empfangen: %s</string>
+    <string name="wifi_download_dir_files_progress">%d Dateien empfangen</string>
+    <string name="wifi_download_dir_file_failed">Dateiprüfsumme fehlgeschlagen, verworfen</string>
     <string name="wifi_send_done">Datenmigration abgeschlossen</string>
     <string name="wifi_send_start">Migration %s starten</string>
     <string name="wifi_send_stop">Migration %s stoppen</string>
@@ -888,4 +911,11 @@
     <string name="imported_archive_info_title">Lokaler Import-Info</string>
     <string name="imported_archive_info_message">Dies ist ein Element, das aus dem lokalen Speicher importiert wurde</string>
     <string name="imported_archive_category">Lokaler Import</string>
+    <string name="import_local_album">Lokales Album importieren</string>
+    <string name="import_album_title">Bildordner auswählen</string>
+    <string name="import_album_processing">Album wird importiert…</string>
+    <string name="import_album_failed">Albumimport fehlgeschlagen</string>
+    <string name="import_album_no_images">Keine unterstützten Bilder im ausgewählten Ordner</string>
+    <string name="import_album_already_imported">Album wurde bereits importiert</string>
+    <string name="import_album_success">%d Bilder erfolgreich importiert</string>
 </resources>

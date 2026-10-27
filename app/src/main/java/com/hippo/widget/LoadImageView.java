@@ -68,7 +68,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private Conaco<Image> mConaco;
     private String mKey;
     private String mUrl;
+    @Nullable
+    private DataContainer mDataContainer;
     private boolean mUseNetwork;
+    private boolean mHardware;
     private int mOffsetX = Integer.MIN_VALUE;
     private int mOffsetY = Integer.MIN_VALUE;
     private int mClipWidth = Integer.MIN_VALUE;
@@ -126,7 +129,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             if (mFailed) {
                 onFailure();
             } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
-                load(mKey, mUrl, mUseNetwork);
+                load(mKey, mUrl, mDataContainer, mUseNetwork, mHardware);
             }
         }
     }
@@ -243,7 +246,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         mKey = key;
         mUrl = url;
+        mDataContainer = dataContainer;
         mUseNetwork = useNetwork;
+        mHardware = hardware;
 
         ConacoTask.Builder<Image> builder = new ConacoTask.Builder<Image>()
                 .setUnikery(this)
@@ -276,6 +281,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         mConaco.cancel(this);
         mKey = null;
         mUrl = null;
+        mDataContainer = null;
         clearDrawable();
     }
 

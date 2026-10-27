@@ -32,4 +32,7 @@
     <item name="fab_translation_y" type="id"/>
     <item name="fab_translation_y_animator" type="id"/>
 
+    <item name="navigation_bar_padding_applied" type="id"/>
+    <item name="navigation_bar_padding_origin_bottom" type="id"/>
+
 </resources>

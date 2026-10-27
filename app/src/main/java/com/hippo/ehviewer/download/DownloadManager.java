@@ -49,7 +49,6 @@ import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -354,9 +353,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             return;
         }
 
-        // Do nothing in the case of a local compressed file.
+        // Do nothing for locally imported archives or albums.
         if (galleryInfo instanceof DownloadInfo downloadInfo) {
-            if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")){
+            if (downloadInfo.archiveUri != null) {
                 return;
             }
         }
@@ -365,6 +364,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         DownloadInfo info = mAllInfoMap.get(galleryInfo.gid);
 
         if (info != null) { // Get it in download list
+            if (info.archiveUri != null) {
+                return;
+            }
             if (info.state != DownloadInfo.STATE_WAIT) {
                 // Set state DownloadInfo.STATE_WAIT
                 info.state = DownloadInfo.STATE_WAIT;
@@ -430,6 +432,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     Log.d(TAG, "Can't get download info with gid: " + gid);
                     continue;
                 }
+                if (info.archiveUri != null) {
+                    continue;
+                }
 
                 if (info.state == DownloadInfo.STATE_NONE ||
                         info.state == DownloadInfo.STATE_FAILED ||
@@ -449,6 +454,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 DownloadInfo info = mAllInfoMap.get(gid);
                 if (null == info) {
                     Log.d(TAG, "Can't get download info with gid: " + gid);
+                    continue;
+                }
+                if (info.archiveUri != null) {
                     continue;
                 }
 
@@ -773,7 +781,17 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     @SuppressLint("StaticFieldLeak")
     public void resetAllReadingProgress() {
+        resetAllReadingProgress(null);
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    public void resetAllReadingProgress(@Nullable Runnable onComplete) {
         LinkedList<DownloadInfo> list = new LinkedList<>(mAllInfoList);
+
+        // Keep an already running reader in sync with the persisted reset.
+        for (DownloadInfo downloadInfo : list) {
+            SpiderQueen.resetReadingProgress(downloadInfo.gid);
+        }
 
         new AsyncTask<Void, Void, Void>() {
             @Override
@@ -803,13 +821,17 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     }
                     spiderInfo.startPage = 0;
 
-                    try {
-                        spiderInfo.write(file.openOutputStream());
-                    } catch (IOException e) {
-                        Log.e(TAG, "Can't write SpiderInfo", e);
-                    }
+                    // Keep the download file and the spider-info cache in sync.
+                    spiderInfo.writeNewSpiderInfoToLocal(new SpiderDen(galleryInfo), mContext);
                 }
                 return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void unused) {
+                if (onComplete != null) {
+                    onComplete.run();
+                }
             }
         }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
     }

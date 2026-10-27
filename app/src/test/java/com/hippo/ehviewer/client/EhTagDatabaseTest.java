@@ -19,8 +19,15 @@ package com.hippo.ehviewer.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import android.util.Base64;
+import android.util.Pair;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import okio.BufferedSource;
 import okio.Okio;
 import org.junit.Test;
@@ -50,5 +57,34 @@ public class EhTagDatabaseTest {
     assertEquals("123", db.getTranslation("abc"));
     assertEquals("1234", db.getTranslation("abcd"));
     assertNull(db.getTranslation("21"));
+  }
+
+  @Test
+  public void locationNamespaceMapsToLocPrefix() {
+    assertEquals("loc:", EhTagDatabase.namespaceToPrefix("location"));
+    assertEquals("location", EhTagDatabase.prefixToNamespace("loc:"));
+  }
+
+  @Test
+  public void locPrefixLooksUpAndSuggestsFullNamespace() throws IOException {
+    String encoded = Base64.encodeToString("沙滩".getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+    byte[] line = ("loc:beach\r" + encoded + "\n").getBytes(StandardCharsets.UTF_8);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(out);
+    dos.writeInt(line.length);
+    dos.write(line);
+
+    EhTagDatabase db;
+    try (BufferedSource source = Okio.buffer(Okio.source(new ByteArrayInputStream(out.toByteArray())))) {
+      db = new EhTagDatabase("location-test", source);
+    }
+
+    assertEquals("沙滩", db.getTranslation("loc:beach"));
+
+    List<Pair<String, String>> hints = db.suggest("location:beach");
+    assertEquals(1, hints.size());
+    assertEquals("沙滩", hints.get(0).first);
+    assertEquals("location:beach", hints.get(0).second);
   }
 }

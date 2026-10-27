@@ -424,7 +424,14 @@
     <string name="download_search_gallery">갤러리 검색</string>
     <string name="download_search_hint">키워드 입력</string>
     <string name="reset_reading_progress_message">다운로드한 모든 갤러리의 독서 진행도를 초기화하시겠습니까?</string>
+    <string name="reset_reading_progress_processing">독서 진행도를 초기화하는 중...</string>
+    <string name="reset_reading_progress_done">독서 진행도가 초기화되었습니다</string>
     <string name="download_service_label">EhViewer 다운로드 서비스</string>
+    <string name="archiver_download_service_label">EhViewer 아카이브 다운로드</string>
+    <string name="archiver_download_pause">일시정지</string>
+    <string name="archiver_download_resume">재개</string>
+    <string name="archiver_download_paused">일시정지됨</string>
+    <string name="archiver_download_restart_no_range">서버가 이어받기를 지원하지 않아 다운로드를 다시 시작합니다</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s 남음</string>
     <string name="remember_download_label">다운로드 레이블 기억</string>
@@ -571,6 +578,12 @@
     <string name="settings_read_screen_rotation_portrait">세로 모드</string>
     <string name="settings_read_screen_rotation_landscape">가로 모드</string>
     <string name="settings_read_screen_rotation_sensor">자동 회전</string>
+    <string name="settings_read_refresh_rate">주사율</string>
+    <string name="settings_read_refresh_rate_default">기본값</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">화면 최고</string>
     <string name="settings_read_reading_direction">읽기 방향</string>
     <string name="settings_read_reading_direction_left_to_right">왼쪽에서 오른쪽으로</string>
     <string name="settings_read_reading_direction_right_to_Left">오른쪽에서 왼쪽으로</string>
@@ -620,6 +633,8 @@
     <string name="settings_download_download_origin_image_summary">이 옵션은 위험합니다! 509 오류가 발생할 수 있습니다.</string>
     <string name="settings_download_download_order_by_asc">오름차순으로 다운로드</string>
     <string name="settings_download_download_order_by_asc_summary">모든 갤러리를 다운로드할 때 순서대로 다운로드</string>
+    <string name="settings_download_sync_while_reading">읽기 중 동기화 다운로드</string>
+    <string name="settings_download_sync_while_reading_summary">다운로드하지 않은 갤러리를 탐색할 때 보는 이미지를 자동으로 다운로드 디렉터리에 저장합니다</string>
     <string name="settings_download_media_scan">미디어 스캔 허용</string>
     <string name="settings_download_media_scan_summary_on">다른 사람들에게 갤러리 앱을 들키지 마세요.</string>
     <string name="settings_download_media_scan_summary_off">대부분의 갤러리 앱에서 다운로드 경로에 있는 사진을 무시합니다.</string>
@@ -671,6 +686,14 @@
     <string name="settings_advanced_wifi_sander_summary">Wi-Fi 핫스팟을 통한 데이터 마이그레이션</string>
     <string name="settings_advanced_wifi_client">WiFi 마이그레이션 데이터 수신</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi 핫스팟에서 마이그레이션 데이터 수신</string>
+    <string name="wifi_send_download_location">다운로드 디렉터리 마이그레이션</string>
+    <string name="wifi_download_dir_empty">마이그레이션 가능한 갤러리 폴더를 찾을 수 없습니다</string>
+    <string name="wifi_download_dir_no_location">이 기기에 다운로드 디렉터리가 설정되어 있지 않습니다</string>
+    <string name="wifi_download_dir_migrating">%1$s 마이그레이션 중 (%2$d/%3$d개 파일)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): 건너뜀 %4$d, 전송 %5$d</string>
+    <string name="wifi_download_dir_file_done">파일 수신: %s</string>
+    <string name="wifi_download_dir_files_progress">%d개 파일 수신됨</string>
+    <string name="wifi_download_dir_file_failed">파일 체크섬 검증 실패, 폐기됨</string>
 
     <string name="settings_about">앱 정보</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -940,6 +963,13 @@
     <string name="imported_archive_info_title">로컬 가져오기 정보</string>
     <string name="imported_archive_info_message">로컬 저장소에서 가져온 항목입니다</string>
     <string name="imported_archive_category">로컬 가져오기</string>
+    <string name="import_local_album">로컬 앨범 가져오기</string>
+    <string name="import_album_title">이미지 폴더 선택</string>
+    <string name="import_album_processing">앨범 가져오는 중…</string>
+    <string name="import_album_failed">앨범 가져오기 실패</string>
+    <string name="import_album_no_images">선택한 폴더에 지원되는 이미지가 없습니다</string>
+    <string name="import_album_already_imported">이미 가져온 앨범입니다</string>
+    <string name="import_album_success">이미지 %d장을 가져왔습니다</string>
 
 
 </resources>

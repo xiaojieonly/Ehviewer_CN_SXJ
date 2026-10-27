@@ -20,6 +20,7 @@ import com.hippo.unifile.UniFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,8 +49,6 @@ public class DownloadListInfosExecutor {
 
     private final String mSearchKey;
 
-    private DownloadManager mDownloadManager;
-
     public DownloadListInfosExecutor(@Nullable List<DownloadInfo> mList, String searchKey) {
         this.mList = mList;
         this.mSearchKey = searchKey;
@@ -58,7 +57,6 @@ public class DownloadListInfosExecutor {
     public DownloadListInfosExecutor(@Nullable List<DownloadInfo> mList, DownloadManager downloadManager) {
         this.mList = mList;
         this.mSearchKey = "";
-        mDownloadManager = downloadManager;
     }
 
     public void setDownloadSearchingListener(DownloadSearchCallback downloadSearchCallback) {
@@ -124,6 +122,9 @@ public class DownloadListInfosExecutor {
                 case R.id.unknown:
                     resultList = filterDownloadKind(id);
                     break;
+                case R.id.local_import:
+                    resultList = filterLocalImport();
+                    break;
                 case R.id.all:
                 case R.id.sort_by_default:
                 default:
@@ -145,7 +146,7 @@ public class DownloadListInfosExecutor {
             return new ArrayList<>();
         }
         DownloadInfo[] arr = new DownloadInfo[mList.size()];
-        mList.toArray(arr);
+        mList.<DownloadInfo>toArray(arr);
 
         // 如果是按文件大小排序，先计算所有文件大小
         if (type == R.id.sort_by_file_size_asc || type == R.id.sort_by_file_size_desc) {
@@ -178,7 +179,7 @@ public class DownloadListInfosExecutor {
                 merge(arr, left, mid, n - 1, type);
             }
         }
-        return Arrays.asList(arr);
+        return Arrays.<DownloadInfo>asList(arr);
     }
 
     // 合并函数，把两个有序的数组合并起来
@@ -345,6 +346,19 @@ public class DownloadListInfosExecutor {
         return list;
     }
 
+    private List<DownloadInfo> filterLocalImport() {
+        List<DownloadInfo> list = new ArrayList<>();
+        if (mList == null) {
+            return list;
+        }
+        for (DownloadInfo info : mList) {
+            if (info.archiveUri != null && !info.archiveUri.isEmpty()) {
+                list.add(info);
+            }
+        }
+        return list;
+    }
+
 
     protected List<DownloadInfo> searchingInBackground() {
         if (mDownloadSearchCallback == null) {
@@ -371,26 +385,112 @@ public class DownloadListInfosExecutor {
     }
 
     private boolean matchTag(String mSearchKey, DownloadInfo info) {
-        if (info.tgList == null || info.tgList.isEmpty()) {
-            info.tgList = searchTagList(info.gid);
-        }
-        if (info.tgList == null) {
+        ArrayList<String> searchableTags = getSearchableTags(info);
+        if (searchableTags.isEmpty()) {
             return false;
         }
 
-        String[] searchTags = mSearchKey.split("  ");
+        String[] searchTags = splitSearchTags(mSearchKey);
+        if (searchTags.length == 0) {
+            return false;
+        }
 
-        boolean result = true;
         for (String searchTag : searchTags) {
-            if (!info.tgList.contains(searchTag)) {
-                result = false;
-                break;
+            boolean matched = false;
+            for (String tag : searchableTags) {
+                if (matchSingleTag(tag, searchTag)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                return false;
             }
         }
 
-
-        return result;
+        return true;
     }
+
+    private ArrayList<String> getSearchableTags(DownloadInfo info) {
+        if (info.tgList != null && !info.tgList.isEmpty()) {
+            return info.tgList;
+        }
+
+        ArrayList<String> tagList = new ArrayList<>();
+        if (info.simpleTags != null) {
+            for (String tag : info.simpleTags) {
+                if (tag != null && !tag.isEmpty()) {
+                    tagList.add(tag);
+                }
+            }
+        }
+
+        if (tagList.isEmpty()) {
+            ArrayList<String> dbTags = searchTagList(info.gid);
+            if (dbTags != null && !dbTags.isEmpty()) {
+                tagList.addAll(dbTags);
+            }
+        }
+
+        info.tgList = tagList;
+        return tagList;
+    }
+
+    private static String[] splitSearchTags(String searchKey) {
+        if (searchKey == null) {
+            return new String[0];
+        }
+        String normalized = searchKey.trim();
+        if (normalized.isEmpty()) {
+            return new String[0];
+        }
+        // Keep compatibility: double-space means multi-tag search.
+        String[] rawTags = normalized.split("\\s{2,}");
+        ArrayList<String> tags = new ArrayList<>(rawTags.length);
+        for (String rawTag : rawTags) {
+            String tag = rawTag == null ? null : rawTag.trim();
+            if (tag != null && !tag.isEmpty()) {
+                tags.add(tag);
+            }
+        }
+        return tags.<String>toArray(new String[0]);
+    }
+
+    private static boolean matchSingleTag(String tag, String searchTag) {
+        if (tag == null || searchTag == null) {
+            return false;
+        }
+
+        String normalizedTag = tag.trim().toLowerCase(Locale.ROOT);
+        String normalizedSearchTag = searchTag.trim().toLowerCase(Locale.ROOT);
+        if (normalizedTag.isEmpty() || normalizedSearchTag.isEmpty()) {
+            return false;
+        }
+
+        int tagIndex = normalizedTag.indexOf(':');
+        String tagNamespace = tagIndex >= 0 ? normalizedTag.substring(0, tagIndex) : null;
+        String tagName = tagIndex >= 0 ? normalizedTag.substring(tagIndex + 1) : normalizedTag;
+
+        int searchTagIndex = normalizedSearchTag.indexOf(':');
+        String searchNamespace = searchTagIndex >= 0 ? normalizedSearchTag.substring(0, searchTagIndex) : null;
+        String searchName = searchTagIndex >= 0 ? normalizedSearchTag.substring(searchTagIndex + 1) : normalizedSearchTag;
+
+        if (searchNamespace != null && (tagNamespace == null || !tagNamespace.equals(searchNamespace))) {
+            return false;
+        }
+
+        if (searchName.isEmpty()) {
+            return false;
+        }
+
+        if (tagName.equals(searchName)) {
+            return true;
+        }
+
+        // Search hint is "keyword", so allow contains match on tag name.
+        return tagName.contains(searchName);
+    }
+
 
     private ArrayList<String> searchTagList(long gid) {
         GalleryTags tags = EhDB.queryGalleryTags(gid);
@@ -414,6 +514,7 @@ public class DownloadListInfosExecutor {
         tagList.addAll(parserList("other", tags.other));
         tagList.addAll(parserList("parody", tags.parody));
         tagList.addAll(parserList("reclass", tags.reclass));
+        tagList.addAll(parserList("location", tags.location));
 
         return tagList;
     }
@@ -427,7 +528,11 @@ public class DownloadListInfosExecutor {
         String[] tagNames = content.split(",");
 
         for (String s : tagNames) {
-            list.add(name + ":" + s);
+            String normalized = s == null ? null : s.trim();
+            if (normalized == null || normalized.isEmpty()) {
+                continue;
+            }
+            list.add(name + ":" + normalized);
         }
 
         return list;
