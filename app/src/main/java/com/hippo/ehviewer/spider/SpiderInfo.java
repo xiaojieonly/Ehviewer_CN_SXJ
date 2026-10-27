@@ -149,6 +149,42 @@ public class SpiderInfo {
         return read(is, false);
     }
 
+    /**
+     * 从 CBOR 格式的 .ehviewer 读取 gid 和 token，不加载 pTokenMap。
+     * 文件打不开、不是 CBOR map，或缺少 gid/token 时返回 null。
+     */
+    @Nullable
+    public static SpiderInfo readCborHeader(@Nullable UniFile file) {
+        if (file == null) {
+            return null;
+        }
+        InputStream is = null;
+        try {
+            is = file.openInputStream();
+            return readCborHeader(is);
+        } catch (IOException | OutOfMemoryError e) {
+            return null;
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+    }
+
+    /**
+     * 从 CBOR 输入流读取 gid 和 token。格式无效或字段缺失时返回 null。
+     * 返回对象只填这两个字段，不能写回磁盘。
+     */
+    @Nullable
+    public static SpiderInfo readCborHeader(@Nullable InputStream is) {
+        CborSpiderHeader.Fields fields = CborSpiderHeader.read(is);
+        if (fields == null) {
+            return null;
+        }
+        SpiderInfo spiderInfo = new SpiderInfo();
+        spiderInfo.gid = fields.gid;
+        spiderInfo.token = fields.token;
+        return spiderInfo;
+    }
+
     @Nullable
     public static SpiderInfo read(@Nullable InputStream is, boolean includePTokens) {
         if (null == is) {

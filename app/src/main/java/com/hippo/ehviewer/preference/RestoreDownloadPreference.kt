@@ -32,6 +32,8 @@ import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.GalleryInfo
+import com.hippo.ehviewer.client.parser.ComicInfoParser
+import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.spider.SpiderInfo
 import com.hippo.ehviewer.spider.SpiderQueen
@@ -104,24 +106,57 @@ class RestoreDownloadPreference : Preference {
             mProgressDialog!!.show()
         }
 
+        /**
+         * 从下载子目录取出 gid 和 token。
+         * 先读文本 .ehviewer，失败再读同一文件的 CBOR，仍失败则读 ComicInfo.xml。
+         * 目录无效、三种来源都没有 gid/token，或该画廊已在下载列表中时返回 null。
+         */
         fun getRestoreItem(file: UniFile?): RestoreItem? {
             if (null == file || !file.isDirectory()) {
                 return null
             }
-            val siFile = file.findFile(SpiderQueen.SPIDER_INFO_FILENAME) ?: return null
-
-            // Only need gid/token for restore; avoid failing on corrupt pToken lines.
-            val spiderInfo = SpiderInfo.readHeader(siFile) ?: return null
-            val gid = spiderInfo.gid
+            var gid = -1L
+            var token: String? = null
+            val siFile = file.findFile(SpiderQueen.SPIDER_INFO_FILENAME)
+            if (siFile != null) {
+                val spiderInfo = SpiderInfo.readHeader(siFile) ?: SpiderInfo.readCborHeader(siFile)
+                if (spiderInfo != null && spiderInfo.gid >= 0 && !spiderInfo.token.isNullOrEmpty()) {
+                    gid = spiderInfo.gid
+                    token = spiderInfo.token
+                }
+            }
+            if (gid < 0L || token.isNullOrEmpty()) {
+                val comicInfo = readComicInfo(file)
+                if (comicInfo != null && comicInfo.gid >= 0 && !comicInfo.token.isNullOrEmpty()) {
+                    gid = comicInfo.gid
+                    token = comicInfo.token
+                }
+            }
+            if (gid < 0L || token.isNullOrEmpty()) {
+                return null
+            }
             if (mManager.containDownloadInfo(gid)) {
                 return null
             }
-            val token = spiderInfo.token
             val restoreItem = RestoreItem()
             restoreItem.gid = gid
             restoreItem.token = token
             restoreItem.dirname = file.getName()
             return restoreItem
+        }
+
+        /**
+         * 读取目录中的 ComicInfo.xml，并从 Web 地址解析 gid 和 token。
+         * 文件不存在、超过大小上限或地址无法解析时返回 null。
+         */
+        private fun readComicInfo(dir: UniFile): GalleryDetailUrlParser.Result? {
+            val comicFile = dir.findFile(ComicInfoParser.FILENAME) ?: return null
+            return try {
+                comicFile.openInputStream().use { ComicInfoParser.parse(it) }
+            } catch (e: Throwable) {
+                throwIfFatal(e)
+                null
+            }
         }
 
         private fun doInBackground(): Any? {
@@ -155,18 +190,14 @@ class RestoreDownloadPreference : Preference {
 
             publishProgress(-1, -1)
 
-            return try {
-                EhEngine.fillGalleryListByApi(
-                    null,
-                    mHttpClient,
-                    ArrayList<GalleryInfo?>(restoreItemList),
-                    EhUrl.getReferer()
-                )
-            } catch (e: Throwable) {
-                throwIfFatal(e)
-                e.printStackTrace()
-                null
-            }
+            val galleryInfoList = ArrayList<GalleryInfo?>(restoreItemList)
+            EhEngine.fillGalleryListByApiBestEffort(
+                null,
+                mHttpClient,
+                galleryInfoList,
+                EhUrl.getReferer()
+            )
+            return galleryInfoList
         }
 
         private fun publishProgress(progress: Int, max: Int) {
@@ -239,14 +270,13 @@ class RestoreDownloadPreference : Preference {
                     val n = list.size
                     while (i < n) {
                         val item = list.get(i)
-                        // Avoid failed gallery info
-                        if (null != item.title) {
-                            // Put to download
-                            mManager.addDownload(item, null)
-                            // Put download dir to DB
-                            EhDB.putDownloadDirname(item.gid, item.dirname)
-                            count++
+                        if (item.title.isNullOrEmpty()) {
+                            item.title = item.dirname?.takeIf { it.isNotEmpty() }
+                                ?: item.gid.toString()
                         }
+                        mManager.addDownload(item, null)
+                        EhDB.putDownloadDirname(item.gid, item.dirname)
+                        count++
                         i++
                     }
                     Toast.makeText(

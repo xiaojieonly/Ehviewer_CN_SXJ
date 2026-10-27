@@ -690,6 +690,7 @@ public class DownloadsScene extends ToolbarScene
             case R.id.non_h:
             case R.id.western:
             case R.id.unknown:
+            case R.id.local_import:
                 mSearchController.gotoFilterAndSort(id);
                 return true;
             case R.id.import_local_archive:
