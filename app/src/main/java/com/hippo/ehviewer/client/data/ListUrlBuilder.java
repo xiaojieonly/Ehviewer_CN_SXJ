@@ -32,6 +32,7 @@ import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.QuickSearch;
+import com.hippo.ehviewer.util.TagSearchQueryHelper;
 import com.hippo.ehviewer.widget.AdvanceSearchTable;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.network.UrlBuilder;
@@ -623,10 +624,26 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                 return sb.toString();
             }
             case MODE_TAG: {
+                String keyword = TagSearchQueryHelper.normalizeSpecifiedTagQuery(mKeyword);
+                if (TagSearchQueryHelper.shouldUseTagSearch(keyword)) {
+                    UrlBuilder ub = new UrlBuilder(EhUrl.getHost());
+                    try {
+                        ub.addQuery("f_search", URLEncoder.encode(keyword, "UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        // Empty
+                    }
+                    ub.addQuery("advsearch", "1");
+                    ub.addQuery("f_stags", "on");
+                    if (mPageIndex != 0) {
+                        ub.addQuery("page", mPageIndex);
+                    }
+                    return ub.build();
+                }
+
                 StringBuilder sb = new StringBuilder(EhUrl.getHost());
                 sb.append("tag/");
                 try {
-                    sb.append(URLEncoder.encode(mKeyword, "UTF-8"));
+                    sb.append(URLEncoder.encode(keyword, "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     // Empty
                 }
