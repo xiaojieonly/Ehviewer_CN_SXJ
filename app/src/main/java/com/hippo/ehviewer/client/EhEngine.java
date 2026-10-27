@@ -313,6 +313,29 @@ public class EhEngine {
         return galleryInfoList;
     }
 
+    /**
+     * 与 {@link #fillGalleryListByApi} 一样每批最多 25 条，但某一批失败只记日志并继续下一批。
+     * 已经补上的画廊信息会保留。供恢复下载使用，避免一次失败丢掉整份本地列表。
+     */
+    public static List<GalleryInfo> fillGalleryListByApiBestEffort(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
+                                                                   List<GalleryInfo> galleryInfoList, String referer) {
+        final int MAX_REQUEST_SIZE = 25;
+        List<GalleryInfo> requestItems = new ArrayList<>(MAX_REQUEST_SIZE);
+        for (int i = 0, size = galleryInfoList.size(); i < size; i++) {
+            requestItems.add(galleryInfoList.get(i));
+            if (requestItems.size() == MAX_REQUEST_SIZE || i == size - 1) {
+                try {
+                    doFillGalleryListByApi(task, okHttpClient, requestItems, referer);
+                } catch (Throwable e) {
+                    ExceptionUtils.throwIfFatal(e);
+                    Log.e(TAG, "gdata batch failed", e);
+                }
+                requestItems.clear();
+            }
+        }
+        return galleryInfoList;
+    }
+
     private static void doFillGalleryListByApi(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                                List<GalleryInfo> galleryInfoList, String referer) throws Throwable {
         JSONObject json = new JSONObject();
