@@ -19,6 +19,7 @@ package com.hippo.ehviewer.ui;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
 

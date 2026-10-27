@@ -69,6 +69,7 @@ public class EhClient {
     public static final int METHOD_GET_NEWS = 24;
     public static final int METHOD_GET_HOME = 25;
     public static final int METHOD_RESET_LIMIT = 26;
+    public static final int METHOD_GET_EDIT_COMMENT = 29;
 
     private final ThreadPoolExecutor mRequestThreadPool;
     private final OkHttpClient mOkHttpClient;
@@ -165,6 +166,9 @@ public class EhClient {
                         return EhEngine.rateGallery(this, mOkHttpClient, (Long) params[0], (String) params[1], (Long) params[2], (String) params[3], (Float) params[4]);
                     case METHOD_GET_COMMENT_GALLERY:
                         return EhEngine.commentGallery(this, mOkHttpClient, (String) params[0], (String) params[1], (String) params[2]);
+                    case METHOD_GET_EDIT_COMMENT:
+                        return EhEngine.getEditComment(this, mOkHttpClient, (Long) params[0], (String) params[1],
+                                (Long) params[2], (String) params[3], (Long) params[4]);
                     case METHOD_GET_GALLERY_TOKEN:
                         return EhEngine.getGalleryToken(this, mOkHttpClient, (Long) params[0], (String) params[1], (Integer) params[2]);
                     case METHOD_GET_FAVORITES:

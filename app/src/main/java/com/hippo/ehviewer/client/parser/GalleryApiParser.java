@@ -39,6 +39,11 @@ public class GalleryApiParser {
             if (gi == null) {
                 continue;
             }
+            // A removed or rejected gallery has "error" and no title. Skip it so one bad
+            // item does not abort the rest of this batch.
+            if (g.has("error") || g.isNull("title")) {
+                continue;
+            }
             gi.title = ParserUtils.trim(g.getString("title"));
             gi.titleJpn = ParserUtils.trim(g.getString("title_jpn"));
             gi.category = EhUtils.getCategory(g.getString("category"));

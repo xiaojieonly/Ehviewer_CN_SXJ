@@ -38,6 +38,7 @@ import android.os.Looper;
 import android.os.StrictMode;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -83,6 +84,7 @@ import com.hippo.lib.glgallery.GalleryView;
 import com.hippo.lib.glgallery.SimpleAdapter;
 import com.hippo.lib.glview.view.GLRootView;
 import com.hippo.unifile.UniFile;
+import com.hippo.ehviewer.util.ReadingRefreshRate;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.SystemUiHelper;
 import com.hippo.widget.ColorView;
@@ -417,6 +419,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
+        applyReadingRefreshRate();
+
         // Orientation
         int orientation;
         switch (Settings.getScreenRotation()) {
@@ -547,6 +551,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     protected void onResume() {
         super.onResume();
 
+        applyReadingRefreshRate();
         if (mGLRootView != null) {
             mGLRootView.onResume();
         }
@@ -936,6 +941,29 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
         }
         w.setAttributes(lp);
+    }
+
+    private void applyReadingRefreshRate() {
+        if (!ReadingRefreshRate.isSupported()) {
+            return;
+        }
+        Window window = getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        int setting = Settings.getReadingRefreshRateHz();
+        if (setting == ReadingRefreshRate.SYSTEM_DEFAULT) {
+            lp.preferredRefreshRate = 0f;
+            lp.preferredDisplayModeId = 0;
+        } else {
+            Display.Mode mode = ReadingRefreshRate.findBestMode(getDisplay(), setting);
+            if (mode != null) {
+                lp.preferredDisplayModeId = mode.getModeId();
+                lp.preferredRefreshRate = 0f;
+            } else {
+                lp.preferredRefreshRate = 0f;
+                lp.preferredDisplayModeId = 0;
+            }
+        }
+        window.setAttributes(lp);
     }
 
     private void shareImage(int page) {

@@ -32,6 +32,8 @@ class UpdateDialog(private val activity: Activity) {
         const val GITHUB_RELEASE_URL = "https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases"
         const val GITHUB_README_URL =
             "https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/README.md"
+        const val GITHUB_SUPPORT_URL =
+            "https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md"
         const val INSTALL_PERMISSION_CODE = 1002
 
         // TODO more lock for different language
@@ -98,6 +100,7 @@ class UpdateDialog(private val activity: Activity) {
 //                        gotoGithub(dialog, id)
                         downloadApk(dialog, id, downloadUrl, version)
                     }
+                    setNeutralButton(R.string.update_dialog_sponsor, null)
                     if (!mustUpdate) {
                         setNegativeButton(R.string.cancel) { dialog, _ ->
                             dialog.dismiss()
@@ -107,6 +110,12 @@ class UpdateDialog(private val activity: Activity) {
                     }
                 }.create()
                 if (isActivityAlive()) {
+                    alertDialog.setOnShowListener {
+                        alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                            val intent = Intent(Intent.ACTION_VIEW, GITHUB_SUPPORT_URL.toUri())
+                            activity.startActivity(intent)
+                        }
+                    }
                     alertDialog.show()
                 }
             }

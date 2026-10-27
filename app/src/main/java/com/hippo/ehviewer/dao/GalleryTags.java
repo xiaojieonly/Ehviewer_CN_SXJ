@@ -27,6 +27,7 @@ public class GalleryTags {
 	public String reclass;
 	public java.util.Date create_time;
 	public java.util.Date update_time;
+	public String location;
 
 	@Generated
 	public GalleryTags() {
@@ -39,7 +40,7 @@ public class GalleryTags {
 	@Generated
 	public GalleryTags(long gid, String rows, String artist, String cosplayer, String character, String female,
 			String group, String language, String male, String misc, String mixed, String other, String parody,
-			String reclass, java.util.Date create_time, java.util.Date update_time) {
+			String reclass, java.util.Date create_time, java.util.Date update_time, String location) {
 		this.gid = gid;
 		this.rows = rows;
 		this.artist = artist;
@@ -56,6 +57,7 @@ public class GalleryTags {
 		this.reclass = reclass;
 		this.create_time = create_time;
 		this.update_time = update_time;
+		this.location = location;
 	}
 
 	public long getGid() {
@@ -184,6 +186,14 @@ public class GalleryTags {
 
 	public void setUpdate_time(java.util.Date update_time) {
 		this.update_time = update_time;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
 	}
 
 	@Override

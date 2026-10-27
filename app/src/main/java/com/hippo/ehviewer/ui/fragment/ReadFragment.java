@@ -19,9 +19,11 @@ package com.hippo.ehviewer.ui.fragment;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
-import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.Preference;
 
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.util.ReadingRefreshRate;
 
 public class ReadFragment extends BasePreferenceFragmentCompat {
 
@@ -33,5 +35,11 @@ public class ReadFragment extends BasePreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.read_settings);
+        if (!ReadingRefreshRate.isSupported()) {
+            Preference preference = findPreference(Settings.KEY_READING_REFRESH_RATE);
+            if (preference != null) {
+                getPreferenceScreen().removePreference(preference);
+            }
+        }
     }
 }

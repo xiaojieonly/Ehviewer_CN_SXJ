@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- Android 14+ 前台服务类型 -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于获取wifi状态 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 使用系统自带下载器 -->
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" /> <!-- 自动安装apk -->
@@ -25,6 +26,9 @@
         android:required="true" /> <!-- 鼠标适配 -->
     <uses-feature
         android:name="android.hardware.type.pc"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
         android:required="false" />
 
     <application
@@ -245,6 +249,10 @@
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
+        <service
+            android:name=".download.ArchiverDownloadService"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/archiver_download_service_label" />
 
         <provider
             android:name="com.hippo.content.FileProvider"

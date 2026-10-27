@@ -9,7 +9,7 @@ import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTING;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_LABEL_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.FAVORITE_INFO_DATA_KEY;
-import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_DIR_ACK;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_SERVER;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.QUICK_SEARCH_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_ERROR;
@@ -41,45 +41,49 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
+import com.hippo.ehviewer.client.wifi.WiFiDownloadMigrationHelper;
+import com.hippo.ehviewer.client.wifi.WiFiFrame;
+import com.hippo.ehviewer.client.wifi.WiFiFrameCodec;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.ui.ToolbarActivity;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.unifile.UniFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 
 public class WiFiServerActivity extends ToolbarActivity implements AdapterView.OnItemSelectedListener {
 
     private static final int REQUEST_CODE = 996;
 
-    /**
-     * 连接线程
-     */
     private ConnectThread connectThread;
 
-    /**
-     * 监听线程
-     */
     private ListenerThread listenerThread;
 
-    /**
-     * 端口号
-     */
     private static final int PORT = 54321;
 
     private WiFiServerHandler handler;
 
-    private boolean sending = false;
+    private volatile boolean sending = false;
 
-    private final LinkedList<WiFiDataHand> dataHands = new LinkedList<>();
+    private final LinkedList<WiFiFrame> sendQueue = new LinkedList<>();
+
+    private final Map<String, WiFiDownloadMigrationHelper.GalleryDirEntry> dirEntryMap = new HashMap<>();
+
+    private final Map<String, Map<String, WiFiDownloadMigrationHelper.FileMeta>> dirFileMetaMap =
+            new HashMap<>();
 
     private Context mContext;
     private TextView textState;
@@ -110,7 +114,7 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE) {// If request is cancelled, the result arrays are empty.
+        if (requestCode == REQUEST_CODE) {
             if (grantResults.length > 0 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openConnectThread();
@@ -125,24 +129,15 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         if (handler == null) {
             handler = new WiFiServerHandler(getMainLooper());
         }
-        //        开启连接线程
         new Thread(() -> {
+            listenerThread = new ListenerThread(PORT, handler);
+            listenerThread.start();
             try {
-                listenerThread = new ListenerThread(PORT, handler);
-                listenerThread.start();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Log.i("ip", "getWifiApIpAddress()" + getWifiApIpAddress());
-                //本地路由开启通信
-                openSocket();
-
-            } catch (IOException e) {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> textState.setText(R.string.wifi_server_connection_fail));
             }
+            Log.i("ip", "getWifiApIpAddress()" + getWifiApIpAddress());
         }).start();
     }
 
@@ -155,16 +150,6 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         return true;
     }
 
-    private void openSocket() throws IOException {
-        String ip = getWifiApIpAddress();
-        if (ip == null) {
-            ip = "192.168.43.1";
-        }
-        Socket socket = new Socket(ip, PORT);
-        connectThread = new ConnectThread(WiFiServerActivity.this, socket, handler, IS_SERVER);
-        connectThread.start();
-    }
-
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
       selectIndex = position;
@@ -175,15 +160,24 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         selectIndex = 999;
     }
 
+    private void stopMigration() {
+        sending = false;
+        sendQueue.clear();
+        updateStatusButton();
+    }
+
     private void onStatusChange(View view) {
         if (sending) {
-            sending = false;
-            updateStatusButton();
+            stopMigration();
             return;
         }
-        if (!dataHands.isEmpty()){
+        if (!sendQueue.isEmpty()){
+            sending = true;
+            updateStatusButton();
             sendNextPage();
         }else{
+            sending = true;
+            updateStatusButton();
             switch (selectIndex){
                 case 0:
                     createBookmarkData();
@@ -194,6 +188,9 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                 case 2:
                     createDownloadData();
                     break;
+                case 3:
+                    createDownloadDirData();
+                    break;
                 default:
                     break;
             }
@@ -201,10 +198,6 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
     }
 
     private void createFavoriteData() {
-        if (sending) {
-            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
-            return;
-        }
         List<GalleryInfo> list = EhDB.getAllLocalFavorites();
         new Thread(() -> {
             int pageSize = 10;
@@ -224,17 +217,13 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                     objects.add(galleryInfo.toJson());
                 }
                 wiFiDataHand.addData(FAVORITE_INFO_DATA_KEY, objects);
-                dataHands.add(wiFiDataHand);
+                enqueueHand(wiFiDataHand);
             }
             sendNextPage();
         }).start();
     }
 
     private void createBookmarkData() {
-        if (sending) {
-            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
-            return;
-        }
         List<QuickSearch> list = EhDB.getAllQuickSearch();
         new Thread(() -> {
             int pageSize = 10;
@@ -254,17 +243,13 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                     objects.add(quickSearch.toJson());
                 }
                 wiFiDataHand.addData(QUICK_SEARCH_DATA_KEY, objects);
-                dataHands.add(wiFiDataHand);
+                enqueueHand(wiFiDataHand);
             }
             sendNextPage();
         }).start();
     }
 
     private void createDownloadData() {
-        if (sending) {
-            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
-            return;
-        }
         new Thread(() -> {
             List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
             WiFiDataHand dataHand = new WiFiDataHand(WiFiDataHand.SEND);
@@ -275,7 +260,7 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
 
             }
             dataHand.addData(DOWNLOAD_LABEL_KEY, labelArray);
-            dataHands.add(dataHand);
+            enqueueHand(dataHand);
 
             List<DownloadInfo> allInfo = EhDB.getAllDownloadInfo();
 
@@ -295,27 +280,75 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                     infoArray.add(downloadInfo.toJson());
                 }
                 infoHand.addData(DOWNLOAD_INFO_DATA_KEY, infoArray);
-                dataHands.add(infoHand);
+                enqueueHand(infoHand);
             }
             sendNextPage();
         }).start();
     }
 
+    private void createDownloadDirData() {
+        new Thread(() -> {
+            dirEntryMap.clear();
+            dirFileMetaMap.clear();
+            List<WiFiDownloadMigrationHelper.GalleryDirEntry> entries =
+                    WiFiDownloadMigrationHelper.scanGalleryDirs();
+            if (entries.isEmpty()) {
+                sending = false;
+                runOnUiThread(() -> {
+                    Toast.makeText(mContext,
+                            R.string.wifi_download_dir_empty, Toast.LENGTH_LONG).show();
+                    updateStatusButton();
+                });
+                return;
+            }
+            int total = entries.size();
+            for (int i = 0; i < total; i++) {
+                if (!sending) {
+                    return;
+                }
+                WiFiDownloadMigrationHelper.GalleryDirEntry entry = entries.get(i);
+                List<WiFiDownloadMigrationHelper.FileMeta> files =
+                        WiFiDownloadMigrationHelper.scanGalleryDir(entry.dir);
+                String key = dirKey(entry.gid, entry.dirname);
+                dirEntryMap.put(key, entry);
+                Map<String, WiFiDownloadMigrationHelper.FileMeta> metaMap = new HashMap<>();
+                for (WiFiDownloadMigrationHelper.FileMeta meta : files) {
+                    metaMap.put(meta.name, meta);
+                }
+                dirFileMetaMap.put(key, metaMap);
+                sendQueue.add(WiFiFrameCodec.encodeManifest(
+                        entry.gid, entry.dirname, files, i + 1, total));
+            }
+            if (sending) {
+                sendNextPage();
+            }
+        }).start();
+    }
+
+    @NonNull
+    private static String dirKey(long gid, @NonNull String dirname) {
+        return gid + ":" + dirname;
+    }
+
+    private void enqueueHand(@NonNull WiFiDataHand hand) {
+        sendQueue.add(WiFiFrameCodec.encode(hand));
+    }
+
     private void updateStatusButton(){
         String content;
         if (!sending) {
-            if (dataHands.isEmpty()){
+            if (sendQueue.isEmpty()){
                 content = getString(R.string.wifi_send_start,"");
             }else{
-                content = getString(R.string.wifi_send_start,"("+dataHands.size()+")");
+                content = getString(R.string.wifi_send_start,"("+sendQueue.size()+")");
             }
             statusButton.setText(content);
             return;
         }
-        if (dataHands.isEmpty()){
+        if (sendQueue.isEmpty()){
             content = getString(R.string.wifi_send_stop,"");
         }else{
-            content = getString(R.string.wifi_send_stop,"("+dataHands.size()+")");
+            content = getString(R.string.wifi_send_stop,"("+sendQueue.size()+")");
         }
         statusButton.setText(content);
     }
@@ -331,29 +364,129 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
     }
 
     private void sendNextPage() {
-        if (dataHands.isEmpty()) {
+        if (!sending) {
+            return;
+        }
+        if (sendQueue.isEmpty()) {
             sending = false;
+            runOnUiThread(() -> {
+                updateStatusButton();
+                Toast.makeText(mContext, R.string.wifi_send_done, Toast.LENGTH_LONG).show();
+            });
             return;
         }
 
         new Thread(() -> {
-            sending = true;
-            if (connectThread != null) {
-                WiFiDataHand dataHand = dataHands.removeFirst();
-                runOnUiThread(this::updateStatusButton);
-                if (connectThread.isSocketClose()) {
-                    try {
-                        openSocket();
-                    } catch (IOException e) {
-                        Analytics.recordException(e);
-                    }
-                }
-                connectThread.sendData(dataHand);
+            if (!sending) {
+                return;
+            }
+            if (connectThread != null && !connectThread.isSocketClose()) {
+                WiFiFrame frame = sendQueue.removeFirst();
+                connectThread.sendFrame(frame);
             } else {
-                runOnUiThread(() -> Toast.makeText(getBaseContext(), R.string.wifi_server_connect_unable, Toast.LENGTH_LONG).show());
-                Log.w("AAA", "connectThread == null");
+                sending = false;
+                runOnUiThread(() -> Toast.makeText(getBaseContext(),
+                        R.string.wifi_server_connect_unable, Toast.LENGTH_LONG).show());
+                Log.w("WiFiServer", "connectThread unavailable");
             }
         }).start();
+    }
+
+    private void onDirAck(@NonNull WiFiDownloadMigrationHelper.DirAck ack) {
+        new Thread(() -> {
+            if (!sending) {
+                return;
+            }
+            String key = dirKey(ack.gid, ack.dirname);
+            WiFiDownloadMigrationHelper.GalleryDirEntry entry = dirEntryMap.get(key);
+            Map<String, WiFiDownloadMigrationHelper.FileMeta> metaMap = dirFileMetaMap.get(key);
+            if (entry == null || metaMap == null || connectThread == null) {
+                if (sending) {
+                    sendNextPage();
+                }
+                return;
+            }
+            int fileTotal = ack.filesNeeded.size();
+            int fileIndex = 0;
+            for (String name : ack.filesNeeded) {
+                if (!sending) {
+                    return;
+                }
+                WiFiDownloadMigrationHelper.FileMeta meta = metaMap.get(name);
+                if (meta == null) {
+                    continue;
+                }
+                fileIndex++;
+                final int currentIndex = fileIndex;
+                final String dirname = ack.dirname;
+                runOnUiThread(() -> textState.setText(getString(
+                        R.string.wifi_download_dir_migrating,
+                        dirname, currentIndex, fileTotal)));
+                if (!sendFileChunks(entry, meta)) {
+                    if (sending) {
+                        Analytics.recordException(new IOException(
+                                "Failed to send file: " + name));
+                    }
+                }
+            }
+            if (sending) {
+                sendNextPage();
+            }
+        }).start();
+    }
+
+    private boolean sendFileChunks(@NonNull WiFiDownloadMigrationHelper.GalleryDirEntry entry,
+            @NonNull WiFiDownloadMigrationHelper.FileMeta meta) {
+        UniFile file = WiFiDownloadMigrationHelper.resolveFileInGallery(entry.dir, meta.name);
+        if (file == null || !file.isFile()) {
+            return false;
+        }
+        InputStream is = null;
+        try {
+            is = file.openInputStream();
+            if (is == null) {
+                return false;
+            }
+            int chunkSize = WiFiDownloadMigrationHelper.FILE_CHUNK_SIZE;
+            long fileLen = meta.size > 0 ? meta.size : file.length();
+            int chunkTotal = (int) ((fileLen + chunkSize - 1) / chunkSize);
+            if (chunkTotal <= 0) {
+                chunkTotal = 1;
+            }
+            byte[] buffer = new byte[chunkSize];
+            int chunkIndex = 0;
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                if (!sending) {
+                    return false;
+                }
+                int chunkLen = read;
+                byte[] data = copyOf(buffer, chunkLen);
+                boolean last = chunkIndex + 1 >= chunkTotal;
+                WiFiFrame frame = WiFiFrameCodec.encodeFileChunk(
+                        entry.gid, meta.name, meta.md5, chunkIndex, chunkTotal, data, last);
+                connectThread.sendFrame(frame);
+                chunkIndex++;
+            }
+            if (chunkIndex == 0) {
+                WiFiFrame frame = WiFiFrameCodec.encodeFileChunk(
+                        entry.gid, meta.name, meta.md5, 0, 1, new byte[0], true);
+                connectThread.sendFrame(frame);
+            }
+            return true;
+        } catch (IOException e) {
+            Analytics.recordException(e);
+            return false;
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+    }
+
+    @NonNull
+    private static byte[] copyOf(@NonNull byte[] src, int len) {
+        byte[] out = new byte[len];
+        System.arraycopy(src, 0, out, 0, len);
+        return out;
     }
 
     public String getWifiApIpAddress() {
@@ -403,19 +536,31 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case DEVICE_CONNECTING:
-                    if (connectThread == null) {
+                    if (listenerThread == null || listenerThread.getSocket() == null) {
                         return;
                     }
-                    connectThread.closeConnect();
-                    connectThread = new ConnectThread(WiFiServerActivity.this, listenerThread.getSocket(), handler, IS_SERVER);
+                    if (connectThread != null) {
+                        connectThread.closeConnect();
+                        connectThread = null;
+                    }
+                    connectThread = new ConnectThread(WiFiServerActivity.this,
+                            listenerThread.getSocket(), handler, IS_SERVER);
                     connectThread.start();
                     break;
                 case DEVICE_CONNECTED:
                     textState.setText(R.string.wifi_server_connection_succeeded);
                     break;
+                case ConnectThread.DEVICE_DISCONNECTED:
+                    textState.setText(R.string.wifi_server_disconnect);
+                    break;
                 case SEND_MSG_SUCCESS:
-                    textState.setText(getString(R.string.wifi_server_send_success, msg.getData().getString("MSG")));
-                    if (dataHands.isEmpty()){
+                    textState.setText(getString(R.string.wifi_server_send_success,
+                            msg.getData().getString("MSG")));
+                    if (!sending) {
+                        updateStatusButton();
+                        break;
+                    }
+                    if (sendQueue.isEmpty()){
                         Toast.makeText(mContext,R.string.wifi_send_done,Toast.LENGTH_LONG).show();
                         sending = false;
                         updateStatusButton();
@@ -424,11 +569,17 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                     sendNextPage();
                     break;
                 case SEND_MSG_ERROR:
-                    textState.setText(getString(R.string.wifi_server_send_fail, msg.getData().getString("MSG")));
+                    textState.setText(getString(R.string.wifi_server_send_fail,
+                            msg.getData().getString("MSG")));
                     sending = false;
+                    updateStatusButton();
                     break;
-                case GET_MSG:
-                    textState.setText(getString(R.string.wifi_server_receive_message, msg.getData().getString("MSG")));
+                case GET_DIR_ACK:
+                    if (sending && msg.obj instanceof WiFiDownloadMigrationHelper.DirAck) {
+                        onDirAck((WiFiDownloadMigrationHelper.DirAck) msg.obj);
+                    }
+                    break;
+                default:
                     break;
             }
         }

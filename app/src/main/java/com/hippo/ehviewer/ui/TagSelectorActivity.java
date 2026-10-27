@@ -295,6 +295,7 @@ public class TagSelectorActivity extends EhActivity {
         allGroups.add(new TagGroup("Group", "group", 12));
         allGroups.add(new TagGroup("Artist", "artist", 12));
         allGroups.add(new TagGroup("Cosplayer", "cosplayer", 12));
+        allGroups.add(new TagGroup("Location", "location", 12));
 
         // Preload standard groups
         // 预加载其他分组

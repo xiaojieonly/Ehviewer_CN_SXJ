@@ -36,23 +36,25 @@ public class ListenerThread extends Thread {
         try {
             while (!interrupted()) {
                 Log.i("ListennerThread", "阻塞");
-                //阻塞，等待设备连接
-                if (serverSocket != null) {
-                    socket = serverSocket.accept();
-                } else {
+                if (serverSocket == null) {
                     try {
-                        serverSocket = new ServerSocket(port);//监听本机的12345端口
+                        serverSocket = new ServerSocket(port);
                         serverSocket.setReuseAddress(true);
                     } catch (IOException ignore) {
-
+                        continue;
                     }
                 }
+                Socket accepted = serverSocket.accept();
+                socket = accepted;
                 Message message = Message.obtain();
                 message.what = DEVICE_CONNECTING;
+                message.obj = accepted;
                 handler.sendMessage(message);
                 Thread.sleep(500);
             }
-            serverSocket.close();
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         } catch (IOException | InterruptedException e) {
             Log.i("ListennerThread", "error:" + e.getMessage());
             e.printStackTrace();
@@ -65,12 +67,22 @@ public class ListenerThread extends Thread {
     }
 
     public void closeConnect() {
-        try {
-            socket.close();
-            serverSocket.close();
-            interrupt();
-        } catch (IOException | NullPointerException e) {
-            e.printStackTrace();
+        interrupt();
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            socket = null;
+        }
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            serverSocket = null;
         }
     }
 }

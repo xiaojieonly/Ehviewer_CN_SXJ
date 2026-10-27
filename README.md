@@ -8,27 +8,167 @@
 
 An E-Hentai Application for Android.
 
+# 点击前往赏饭：
+
+- [要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)
+
+唯一X账号：https://x.com/Sherloc21784244    
+Telegram群: https://telegram.me/+WyclP8pPlk-JfbwS   
+Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
+
 # Download
 
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1koygBtTteJtDHZTQYL8wXQ) 提取码：iqev
-- [夸克网盘](https://pan.quark.cn/s/b41421a61e70) 提取码：MrnK
-- [蓝奏云](https://wwbfg.lanzouu.com/iNSBF3m1jveb)，电脑端可正常下载 提取码：i4f8
+- [百度云](https://pan.baidu.com/s/1Wh2RFStPi3kXZfcukrzMFA) 提取码：7ygg
+- [夸克网盘](https://pan.quark.cn/s/208df8b1b622) 提取码：wjVU
+- [蓝奏云](https://wwbfg.lanzoum.com/ip60n4cuuj0b)，电脑端可正常下载 提取码：a8rq
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:8488a933608f5b3901de8a2bedc669e20ff94839&xt=urn:btmh:1220dbe6fffcb6aff255e089e3bb0cefeb33940c27d82e37163252abe4813c987e33&dn=EhViewer-2.0.1.6.apk&xl=27702785
+- Torrent链接:magnet:?xt=urn:btih:998657a2387c0b12ff251fb74b586e0c3f3fdeba&xt=urn:btmh:122070097613c643682396a645c26a601777e7b127e999621aa417f224113e8363a8&dn=EhViewer-2.0.2.6.apk&xl=28229547
 
-
-点击前往赏饭：
-
-- [要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)
-
-唯一X账号：https://x.com/Sherloc21784244    
-Telegram群: https://t.me/+WyclP8pPlk-JfbwS    
-Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
+
+## 2026/10/21
+### 新版发布2.0.2.6 
+- 表站图床host过期，紧急修复
+
+
+## 2026/10/01
+### 新版发布2.0.2.5 国庆节快乐~
+
+- 为 Gallery_Tags 增加 LOCATION 标签分类，并同步更新相关数据库处理
+- 改进 SpiderInfo 解析并增强 RestoreDownloadPreference 功能
+- 添加阅读刷新率设置功能
+- 重构下载页，新增下载归档导入、批量操作、选择监听器、搜索控制器及分页控制器
+- 修复阅读进度重置功能 by: Mios-dream
+- 添加本地相册导入功能
+- 修复归档解压因文件名超长导致的导入失败
+- [百度云](https://pan.baidu.com/s/1COJPa_ZtIWFtvEvuYmZd7A) 提取码：e13i
+- [夸克网盘](https://pan.quark.cn/s/1e9696cf63ae) 提取码：dY97
+- [蓝奏云](https://wwbfg.lanzouu.com/iNrjO4afcy0b)，电脑端可正常下载 提取码：fobb
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:9566ada427877a16f0a95e26c54223c10e131fa3&xt=urn:btmh:1220b9a286b9fd236df79d91f6fdc1c77682890e2f6b368ae66d58740cb2cdad433a&dn=EhViewer-2.0.2.5.apk&xl=28229476
+
+
+## 2026/09/01 
+### 新版发布2.0.2.4 
+
+- 更新Gradle插件和Gradle包装器版本
+- 增强异常处理，捕获 NoSuchElementException 以避免潜在的错误
+- 添加读取画廊信息头的功能，优化内存处理并增强异常捕获
+- 添加封面图像对话框功能，优化下载服务通知和动画效果
+- 重构SelectItemWithIconAdapter为Kotlin并删除旧Java实现
+- 更新归档下载功能，重构下载管理器为Kotlin，添加新服务和进度通知，添加暂停继续下载功能
+- 在更新对话框中增加支持链接与赞助按钮
+- 猫尾草: 抽离下载信息监听器接口
+- [百度云](https://pan.baidu.com/s/1pJl_NzCt46YlLv494kUuKw) 提取码：9mej
+- [夸克网盘](https://pan.quark.cn/s/873901763b79) 提取码：ULkh
+- [蓝奏云](https://wwbfg.lanzouu.com/iqgrh3zxrdah)，电脑端可正常下载 提取码：73tu
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:7289464887abcd77f106c84f7ab395e5d6e74465&xt=urn:btmh:122013a4f6850078100eab8e49819aa9a34f29c1f88856089413cf2bf236453d4302&dn=EhViewer-2.0.2.3.apk&xl=27747455
+
+
+## 2026/09/01
+### 新版发布2.0.2.4
+
+- 更新Gradle插件和Gradle包装器版本
+- 增强异常处理，捕获 NoSuchElementException 以避免潜在的错误
+- 添加读取画廊信息头的功能，优化内存处理并增强异常捕获
+- 添加封面图像对话框功能，优化下载服务通知和动画效果
+- 重构SelectItemWithIconAdapter为Kotlin并删除旧Java实现
+- 更新归档下载功能，重构下载管理器为Kotlin，添加新服务和进度通知，添加暂停继续下载功能
+- 在更新对话框中增加支持链接与赞助按钮
+- 猫尾草: 抽离下载信息监听器接口
+
+
+## 2026/08/01
+### 新版发布2.0.2.3 建军节快乐~
+
+- 修复页码显示延迟的问题
+- 添加重置阅读进度功能以更新UI
+- 更新 AboutFragment 以使用 setPreferencesFromResource，确保仅在满足条件时设置偏好项点击监听器
+- 修复drawable赋值逻辑以避免潜在的空指针异常
+- 增强图像解码错误处理，避免空值返回并记录警告
+- 添加获取可编辑评论的功能，更新相关解析器和UI逻辑
+- [百度云](https://pan.baidu.com/s/1pJl_NzCt46YlLv494kUuKw) 提取码：9mej
+- [夸克网盘](https://pan.quark.cn/s/873901763b79) 提取码：ULkh
+- [蓝奏云](https://wwbfg.lanzouu.com/iqgrh3zxrdah)，电脑端可正常下载 提取码：73tu
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:7289464887abcd77f106c84f7ab395e5d6e74465&xt=urn:btmh:122013a4f6850078100eab8e49819aa9a34f29c1f88856089413cf2bf236453d4302&dn=EhViewer-2.0.2.3.apk&xl=27747455
+
+
+## 2026/08/01
+### 新版发布2.0.2.2
+
+- 修复了浏览历史未正确保存的问题
+- 修复评论时输入框被键盘遮挡的问题
+- [百度云](https://pan.baidu.com/s/1rh-lvEc-QjiMtfPi6T1BKA) 提取码：7p6z
+- [夸克网盘](https://pan.quark.cn/s/0de32f69e12a) 提取码：SnVD
+- [蓝奏云](https://wwbfg.lanzouu.com/iWAFL3uefh8d)，电脑端可正常下载 提取码：3txx
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:ec1403341edaba853b0836d2d3c5976498572a3c&xt=urn:btmh:1220453fdf4272b27c81d88a4ddae25a64ca524a13e53f835430b4acacb2e7ae3bcb&dn=EhViewer-2.0.2.2.apk&xl=27747451
+
+
+## 2026/07/01 
+### 新版发布2.0.2.1
+
+- 修复底部导航栏导致的页面遮蔽问题
+- 修复浏览画廊时图片会自动下载到下载目录的问题
+- 实现WiFi下载迁移功能：将数据传世方式从json变更为二进制帧，新增了下载目录的迁移项
+- 添加多语言支持的下载目录迁移字符串资源
+- 添加“阅读时同步下载”功能：设置-下载-观看时同步下载
+- 增强下载恢复功能：添加了在从层次结构中分离时取消任务的逻辑
+- 更新 Gradle 版本和插件
+- [百度云](https://pan.baidu.com/s/19ZEEdF3waR3hkMghbmu7rw) 提取码：gxsj
+- [夸克网盘](https://pan.quark.cn/s/bffd976d75c4) 提取码：TJDR
+- [蓝奏云](https://wwbfg.lanzouu.com/iZPct3u2hxef)，电脑端可正常下载 提取码：1obh
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:76cf0c1951465d0ab5e4e6fc0b4f371aceec8f9c&xt=urn:btmh:12201dbee30e3448b93d0b725ba19c5fe6a19b042dd662fe9ef898d92c3e67ca6c80&dn=EhViewer-2.0.2.1.apk&xl=27747322
+
+
+
+## 2026/06/01 祝大家六一儿童节快乐~
+### 新版发布2.0.1.8
+
+- 将 jsoup 从 1.18.1 降级到 1.15.4，以避免在某些 Android 环境中出现 NoClassDefFoundError
+- 在 EhDB 中添加了空检查，以防止快速搜索操作期间潜在的 NullPointerExceptions
+- 增强了 EhEngine 中 TopListParser 的错误处理，以在运行时错误上引发更具描述性的 ParseException
+- 重构SpiderDen，确保访问下载目录时的线程安全
+- 改进了 ArchiverDownloadDialog 中的文件名处理，以防止非法路径和长文件名
+- 添加了 ArchiverDownloadCompleter 来处理存档器任务的下载完成和状态检查
+- 在 EhApplication 中集成挂起的下载恢复
+- 增强设置，提供管理待处理存档下载的方法
+- 更新了 ArchiverDownloadDialog 以利用 ArchiverDownloadCompleter 进行下载处理
+- 改进了 ArchiverDownloadProgress 中的下载进度跟踪
+- 确保在 SpiderDen 中创建下载目录
+- 猫尾草：添加小米系统优化助手，优化后台下载和通知管理
+- 猫尾草：add gradle wrapper jar and properties for CI build
+- Cololi：沉浸式底部导航栏 (#2597)
+- [百度云](https://pan.baidu.com/s/1hFLjNrU-_c1u8iugt82d6g) 提取码：wz2h
+- [夸克网盘](https://pan.quark.cn/s/133080ed0571) 提取码：ekzT
+- [蓝奏云](https://wwbfg.lanzouu.com/i1hv53qtvjba)，电脑端可正常下载 提取码：eg80
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:a14acab7edec4b1c5f10d291296fda3e19449a0d&xt=urn:btmh:1220f25dba401d5db2cfb2d864114728418c1e7bf746679182a3155ef3e1714539cb&dn=EhViewer-2.0.1.8.apk&xl=27739161
+
+
+## 2026/05/01 祝大家五一劳动节快乐~
+### 新版发布2.0.1.7
+
+- 修复SpiderInfo读取时的OOM风险并升级JDK至21
+- 修复图片搜索无法使用的问题
+- orbisai0security：the vendored giflib library performs multiple m... in gifalloc.c
+- 增加对 WebView/CookieManager 初始化失败的异常处理
+- En：修复了已下载项目的按标签搜索功能
+- 猫尾草：restore gradle wrapper jar and properties
+- 升级Gradle至9.3.1及Android插件至9.1.1
+- [百度云](https://pan.baidu.com/s/17a5zwo0HeTp_Iqh9P2QwXQ) 提取码：7y92
+- [夸克网盘](https://pan.quark.cn/s/036dd4d5f09d) 提取码：B6J6
+- [蓝奏云](https://wwbfg.lanzouu.com/iFc783oecgmh)，电脑端可正常下载 提取码：dfg8
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:c3aab1194eb843bac7274b87873dc94041310e52&xt=urn:btmh:1220c3640ed2ef7f588376f7dadeffc99463d764608b577beb038378788996fc1ad5&dn=EhViewer-2.0.1.7.apk&xl=27705830
+
 
 ## 2026/04/01 祝大家愚人节伤心
 ### 新版发布2.0.1.6
@@ -45,6 +185,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - miki sayaga：新增一个多标签搜索组合页面（未完成）
 - 修复部分多标签搜索组合页面bug
 - 将部分代码从java迁移到kotlin
+- [百度云](https://pan.baidu.com/s/1koygBtTteJtDHZTQYL8wXQ) 提取码：iqev
+- [夸克网盘](https://pan.quark.cn/s/b41421a61e70) 提取码：MrnK
+- [蓝奏云](https://wwbfg.lanzouu.com/iNSBF3m1jveb)，电脑端可正常下载 提取码：i4f8
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:8488a933608f5b3901de8a2bedc669e20ff94839&xt=urn:btmh:1220dbe6fffcb6aff255e089e3bb0cefeb33940c27d82e37163252abe4813c987e33&dn=EhViewer-2.0.1.6.apk&xl=27702785
+
 
 ## 2026/03/01 提前祝大家元宵节快乐
 ### 新版发布2.0.1.5
@@ -121,7 +267,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 
 
-- [2024年更新日志-人生的不起落落落落](feedauthor/year2025-life-broken-down.md)  
+- [2025年更新日志-人生的不起落落落落](feedauthor/year2025-life-broken-down.md)  
 - [2024年更新日志-感谢大家的支持](feedauthor/year2024-thanks.md)  
 - [2023年更新日志-时间过的好快](feedauthor/year2023-boom.md)  
 - [2022年更新日志-成长](feedauthor/year2022-growing-up.md)  
