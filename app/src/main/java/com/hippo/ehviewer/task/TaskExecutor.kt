@@ -4,8 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.hippo.ehviewer.BackgroundTaskManager
-import com.hippo.ehviewer.util.UiThreadHelper
+//import com.hippo.ehviewer.BackgroundTaskManager
+//import com.hippo.ehviewer.util.UiThreadHelper
 
 /**
  * Java 兼容的任务执行器
