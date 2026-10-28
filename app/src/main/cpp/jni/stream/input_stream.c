@@ -50,10 +50,17 @@ InputStream* create_input_stream(JNIEnv* env, jobject is)
   InputStream* inputStream = (InputStream*) malloc(sizeof(InputStream));
   if (inputStream == NULL) {
     LOGE(MSG("Out of memory"));
+    (*env)->DeleteGlobalRef(env, buffer);
     return NULL;
   }
 
   inputStream->is = (*env)->NewGlobalRef(env, is);
+  if (inputStream->is == NULL) {
+    LOGE(MSG("Can't create input stream ref"));
+    (*env)->DeleteGlobalRef(env, buffer);
+    free(inputStream);
+    return NULL;
+  }
   inputStream->readMID = readMID;
   inputStream->closeMID = closeMID;
   inputStream->buffer = buffer;

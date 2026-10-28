@@ -50,10 +50,17 @@ OutputStream* create_output_stream(JNIEnv* env, jobject os)
   OutputStream* outputStream = (OutputStream*) malloc(sizeof(OutputStream));
   if (outputStream == NULL) {
     LOGE(MSG("Out of memory"));
+    (*env)->DeleteGlobalRef(env, buffer);
     return NULL;
   }
 
   outputStream->os = (*env)->NewGlobalRef(env, os);
+  if (outputStream->os == NULL) {
+    LOGE(MSG("Can't create output stream ref"));
+    (*env)->DeleteGlobalRef(env, buffer);
+    free(outputStream);
+    return NULL;
+  }
   outputStream->writeMID = writeMID;
   outputStream->closeMID = closeMID;
   outputStream->buffer = buffer;
