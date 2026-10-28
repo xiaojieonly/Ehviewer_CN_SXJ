@@ -19,6 +19,7 @@ import android.annotation.SuppressLint
 import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.recyclerview.widget.RecyclerView
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.callBack.SpiderInfoReadCallBack
 import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.dao.DownloadInfo
@@ -127,6 +128,7 @@ class DownloadPaginationController(private val mHost: Host) {
         }
     }
 
+    /** 返回列表时读取归档或普通下载的进度。 */
     @SuppressLint("NotifyDataSetChanged")
     fun updateReadProcess(result: ActivityResult) {
         if (result.resultCode == DownloadsScene.LOCAL_GALLERY_INFO_CHANGE) {
@@ -134,17 +136,9 @@ class DownloadPaginationController(private val mHost: Host) {
             if (data != null) {
                 val info = data.getParcelableExtra<GalleryInfo?>("info")
 
-                // Check if this is an imported archive - skip SpiderInfo processing
-                var isImportedArchive = false
-                if (info is DownloadInfo) {
-                    isImportedArchive = info.archiveUri != null &&
-                            info.archiveUri.startsWith("content://")
-                }
-
-                if (!isImportedArchive && info != null) {
-                    // Only process SpiderInfo for regular downloads, not imported archives
+                if (info != null) {
                     spiderInfoMap.remove(info.gid)
-                    val spiderInfo = SpiderInfo.getSpiderInfo(info)
+                    val spiderInfo = getReadingProgressInfo(info)
                     if (spiderInfo != null) {
                         spiderInfoMap[info.gid] = spiderInfo
                     }
@@ -211,17 +205,28 @@ class DownloadPaginationController(private val mHost: Host) {
         spiderInfoMap.keys.retainAll(keep)
     }
 
+    /** 刷新当前页归档进度，仅对普通下载异步读取 SpiderInfo。 */
+    @SuppressLint("NotifyDataSetChanged")
     fun queryUnreadSpiderInfo() {
         val list = mHost.list ?: return
         trimSpiderInfoMapToCurrentPage()
         val pageList = this.currentPageList
         val requestList: MutableList<DownloadInfo> = ArrayList<DownloadInfo>()
+        var hasArchives = false
         for (i in pageList.indices) {
             val info = pageList[i]
+            // 本地归档没有下载目录中的 SpiderInfo，必须读取专用存储。
+            if (isImportedArchive(info)) {
+                hasArchives = true
+                spiderInfoMap.remove(info.gid)
+                getReadingProgressInfo(info)?.let { spiderInfoMap[info.gid] = it }
+                continue
+            }
             if (!spiderInfoMap.containsKey(info.gid) || spiderInfoMap[info.gid] == null) {
                 requestList.add(info)
             }
         }
+        if (hasArchives) mHost.notifyAdapter?.notifyDataSetChanged()
         if (requestList.isEmpty()) {
             return
         }
@@ -272,5 +277,23 @@ class DownloadPaginationController(private val mHost: Host) {
             }
         }
         return index
+    }
+    /** 判断记录是否引用本地归档。 */
+    private fun isImportedArchive(info: DownloadInfo): Boolean = info.archiveUri?.startsWith("content://") == true
+
+    /** 归档使用独立进度存储，普通下载保持上游读取路径。 */
+    private fun getReadingProgressInfo(info: GalleryInfo): SpiderInfo? {
+        if (info is DownloadInfo && isImportedArchive(info)) {
+            val start = Settings.getArchiveReadingProgress(info.gid)
+            val count = Settings.getArchivePageCount(info.gid)
+            if (start == 0 && count == 0) return null
+            return SpiderInfo().apply {
+                gid = info.gid
+                token = info.token
+                startPage = start
+                pages = count
+            }
+        }
+        return SpiderInfo.getSpiderInfo(info)
     }
 }
