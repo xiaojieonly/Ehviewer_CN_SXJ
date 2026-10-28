@@ -333,6 +333,14 @@
     <string name="add_to_favorite_failure">新增收藏失敗</string>
     <string name="remove_from_favorite_failure">移除收藏失敗</string>
     <string name="filter_the_uploader">封鎖上傳者“%s”？</string>
+    <string name="uploader_action_title">你想對這個上傳者做什麼？</string>
+    <string name="subscribe_the_uploader">訂閱該上傳者</string>
+    <string name="unsubscribe_the_uploader">取消訂閱該上傳者</string>
+    <string name="unsubscribe_the_uploader_success">已取消訂閱</string>
+    <string name="subscription_feed_tags">只看訂閱標籤</string>
+    <string name="subscription_feed_uploaders">只看訂閱上傳者</string>
+    <string name="subscription_feed_both">同時顯示訂閱標籤和上傳者</string>
+    <string name="block_the_uploader">封鎖該上傳者</string>
     <string name="filter_the_tag">封鎖標籤“%s”？</string>
     <string name="filter_added">已新增封鎖項</string>
     <string name="copy_tag">複製</string>
