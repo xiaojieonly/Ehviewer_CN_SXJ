@@ -21,18 +21,31 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
+- [百度云](https://pan.baidu.com/s/1Vp7H8NhuUix33BZCpfX_pA) 提取码：26d1
+- [夸克网盘](https://pan.quark.cn/s/a2a1bdc3a742) 提取码：S31f
+- [蓝奏云](https://wwbfg.lanzoum.com/i4AyK4eewfmh)，电脑端可正常下载 提取码：f3bu
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:9952183b0cfe6436777c0e98647b3b679918d3fa&xt=urn:btmh:12204c2d4243e981d7677c80bb16bcc1192051fe5b85569905974fd152a54682ecf6&dn=EhViewer-2.0.2.7.apk&xl=28245951
+
+
+# Changelog
+
+## 2026/11/02
+### 新版发布2.0.2.7
+- 添加本地导入筛选功能
+- 修复导入本地画廊信息时可能崩溃的问题
+- 新增从 CBOR 格式读取本地画廊的功能
+- 汞齐 ：avoid leaking the buffer global ref in create stream helpers (#2878)
+
+## 2026/10/21
+### 新版发布2.0.2.6 
+- 表站图床host过期，紧急修复
 - [百度云](https://pan.baidu.com/s/1Wh2RFStPi3kXZfcukrzMFA) 提取码：7ygg
 - [夸克网盘](https://pan.quark.cn/s/208df8b1b622) 提取码：wjVU
 - [蓝奏云](https://wwbfg.lanzoum.com/ip60n4cuuj0b)，电脑端可正常下载 提取码：a8rq
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - Torrent链接:magnet:?xt=urn:btih:998657a2387c0b12ff251fb74b586e0c3f3fdeba&xt=urn:btmh:122070097613c643682396a645c26a601777e7b127e999621aa417f224113e8363a8&dn=EhViewer-2.0.2.6.apk&xl=28229547
 
-
-# Changelog
-
-## 2026/10/21
-### 新版发布2.0.2.6 
-- 表站图床host过期，紧急修复
 
 
 ## 2026/10/01

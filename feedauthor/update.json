@@ -1,12 +1,15 @@
 {
-  "version": "2.0.2.6",
+  "version": "2.0.2.7",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
     "title": "新版发布2.0.2.6",
     "content": [
-      "表站图床host过期，紧急修复"
+      "添加本地导入筛选功能",
+      "修复导入本地画廊信息时可能崩溃的问题",
+      "新增从 CBOR 格式读取本地画廊的功能",
+      "汞齐 ：avoid leaking the buffer global ref in create stream helpers (#2878)"
     ]
   }
 }
