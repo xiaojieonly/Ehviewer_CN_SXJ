@@ -42,6 +42,7 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.parser.FavoritesParser;
 import com.hippo.ehviewer.client.parser.GalleryListParser;
+import com.hippo.ehviewer.widget.ControllerRecyclerView;
 import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -137,6 +138,7 @@ public class ContentLayout extends FrameLayout {
     }
 
     public void showFastScroll() {
+        mFastScroller.setVisibility(View.VISIBLE);
         if (!mFastScroller.isAttached()) {
             mFastScroller.attachToRecyclerView(mRecyclerView);
         }
@@ -144,6 +146,7 @@ public class ContentLayout extends FrameLayout {
 
     public void hideFastScroll() {
         mFastScroller.detachedFromRecyclerView();
+        mFastScroller.setVisibility(View.GONE);
     }
 
     public void setFitPaddingTop(int fitPaddingTop) {
@@ -358,6 +361,7 @@ public class ContentLayout extends FrameLayout {
             mViewTransition.setOnShowViewListener(this);
 
             mRecyclerView.addOnScrollListener(mOnScrollListener);
+            ((ControllerRecyclerView) mRecyclerView).setOnBoundaryListener(this::onControllerBoundary);
             mRefreshLayout.setOnRefreshListener(mOnRefreshListener);
 
             //点击刷新页面
@@ -369,6 +373,22 @@ public class ContentLayout extends FrameLayout {
 //                    refresh();
 //                }
 //            });
+        }
+
+        private boolean onControllerBoundary(int direction) {
+            if (!mRefreshLayout.isEnabled() || !isContentShowing() || mData.isEmpty()) {
+                return false;
+            }
+            if (!mRefreshLayout.isRefreshing()) {
+                if (direction == View.FOCUS_UP) {
+                    mRefreshLayout.setHeaderRefreshing(true);
+                    mOnRefreshListener.onHeaderRefresh();
+                } else if (direction == View.FOCUS_DOWN) {
+                    mRefreshLayout.setFooterRefreshing(true);
+                    mOnRefreshListener.onFooterRefresh();
+                }
+            }
+            return true;
         }
 
         /**
@@ -774,6 +794,10 @@ public class ContentLayout extends FrameLayout {
         }
 
         private void onTypeRefresh(int pages, int nextPage, List<E> data) {
+            View focusedItem = mRecyclerView.getFocusedChild();
+            int focusPosition = focusedItem != null && mRecyclerView.hasWindowFocus()
+                    && !mRecyclerView.isInTouchMode()
+                    ? mRecyclerView.getChildAdapterPosition(focusedItem) : RecyclerView.NO_POSITION;
             mStartPage = 0;
             mEndPage = 1;
             mPages = pages;
@@ -794,6 +818,11 @@ public class ContentLayout extends FrameLayout {
                 mData.addAll(data);
                 onAddData(data);
                 notifyDataSetChanged();
+
+                if (focusPosition != RecyclerView.NO_POSITION) {
+                    // Replacing every card can move native focus out to the toolbar.
+                    ((ControllerRecyclerView) mRecyclerView).restoreItemFocusAfterLayout(focusPosition);
+                }
 
                 // Ui change, show content
                 mRefreshLayout.setHeaderRefreshing(false);
