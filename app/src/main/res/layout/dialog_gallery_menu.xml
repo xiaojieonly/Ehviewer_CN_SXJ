@@ -69,7 +69,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="2"
-                android:entries="@array/reading_direction_entries" />
+                android:entries="@array/reading_direction_entries_gallery" />
 
         </LinearLayout>
 
