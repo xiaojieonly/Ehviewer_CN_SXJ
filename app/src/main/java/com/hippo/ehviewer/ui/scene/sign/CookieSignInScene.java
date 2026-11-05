@@ -243,33 +243,67 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
             ClipData data = clipboardManager.getPrimaryClip();
             ClipData.Item item = data.getItemAt(0);
             String cookieData = String.valueOf(item.getText());
-            String[] cookieRows = cookieData.split("\n");
-            if (cookieRows.length < 2) {
-                Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
-                return;
-            }
+            // Accept both the legacy "key:value" per-line format and the common
+            // "key=value; key=value" cookie header format. Entries may be separated
+            // by newlines and/or semicolons; key and value by ':' or '='.
+            String[] cookieRows = cookieData.split("[\\n;]");
+            boolean found = false;
             for (String cookieRow : cookieRows) {
-                handleCookie(cookieRow);
+                if (handleCookie(cookieRow)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
             }
         }catch (NullPointerException e){
             Toast.makeText(getContext(), R.string.cookie_in_clipboard_incorrect, Toast.LENGTH_LONG).show();
         }
     }
 
-    public void handleCookie(String cookieRow) {
-        String cleanRow = cookieRow.replace(" ", "");
-        String[] cookieData = cleanRow.split(":");
-        if (cookieData.length != 2) {
-            Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
-            return;
+    // Returns true if the row contained a recognized cookie that was applied.
+    public boolean handleCookie(String cookieRow) {
+        if (cookieRow == null) {
+            return false;
         }
-        if (cookieData[0].equals(EhCookieStore.KEY_IPD_PASS_HASH) && mIpbPassHash != null) {
-            mIpbPassHash.setText(cookieData[1]);
-        } else if (cookieData[0].equals(EhCookieStore.KEY_IPD_MEMBER_ID) && mIpbMemberId != null) {
-            mIpbMemberId.setText(cookieData[1]);
-        } else if (cookieData[0].equals(EhCookieStore.KEY_IGNEOUS) && mIgneous != null) {
-            mIgneous.setText(cookieData[1]);
+        String cleanRow = cookieRow.trim();
+        if (cleanRow.isEmpty()) {
+            return false;
         }
+        // Key and value may be separated by ':' or '='; use the first one that appears.
+        int sep = separatorIndex(cleanRow);
+        if (sep <= 0) {
+            return false;
+        }
+        String key = cleanRow.substring(0, sep).trim();
+        String value = cleanRow.substring(sep + 1).trim();
+        if (key.isEmpty() || value.isEmpty()) {
+            return false;
+        }
+        if (key.equals(EhCookieStore.KEY_IPD_PASS_HASH) && mIpbPassHash != null) {
+            mIpbPassHash.setText(value);
+            return true;
+        } else if (key.equals(EhCookieStore.KEY_IPD_MEMBER_ID) && mIpbMemberId != null) {
+            mIpbMemberId.setText(value);
+            return true;
+        } else if (key.equals(EhCookieStore.KEY_IGNEOUS) && mIgneous != null) {
+            mIgneous.setText(value);
+            return true;
+        }
+        return false;
+    }
+
+    // Index of the first ':' or '=' in the row, or -1 if neither is present.
+    private static int separatorIndex(String row) {
+        int colon = row.indexOf(':');
+        int equal = row.indexOf('=');
+        if (colon < 0) {
+            return equal;
+        }
+        if (equal < 0) {
+            return colon;
+        }
+        return Math.min(colon, equal);
     }
 
     private static Cookie newCookie(String name, String value, String domain) {
