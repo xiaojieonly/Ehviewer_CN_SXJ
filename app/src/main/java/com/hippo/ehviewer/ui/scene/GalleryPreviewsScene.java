@@ -148,7 +148,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
         mAdapter = new GalleryPreviewAdapter();
         mRecyclerView.setAdapter(mAdapter);
-        int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+        int columnWidth = Settings.getThumbSizePx(resources);
         AutoGridLayoutManager layoutManager = new AutoGridLayoutManager(context, columnWidth);
         layoutManager.setStrategy(AutoGridLayoutManager.STRATEGY_SUITABLE_SIZE);
         mRecyclerView.setLayoutManager(layoutManager);
