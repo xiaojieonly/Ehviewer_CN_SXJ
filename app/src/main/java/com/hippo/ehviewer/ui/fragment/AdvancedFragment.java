@@ -161,18 +161,32 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Arrays.sort(files);
         new AlertDialog.Builder(context).setItems(files, (dialog, which) -> {
             dialog.dismiss();
-            showProgress(context, dir, files, which);
+            chooseImportMode(context, dir, files, which);
         }).show();
         return false;
     }
 
-    private void showProgress(final Context context, File dir, String[] files, int which) {
+    private void chooseImportMode(final Context context, File dir, String[] files, int which) {
+        CharSequence[] modes = new CharSequence[]{
+                context.getString(R.string.import_mode_merge),
+                context.getString(R.string.import_mode_overwrite)
+        };
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.import_mode_title)
+                .setItems(modes, (dialog, mode) -> {
+                    dialog.dismiss();
+                    // mode 0 = merge (legacy), mode 1 = overwrite
+                    showProgress(context, dir, files, which, mode == 1);
+                }).show();
+    }
+
+    private void showProgress(final Context context, File dir, String[] files, int which, boolean overwrite) {
 
         File file = new File(dir, files[which]);
         ProgressHelper.showDialog(context, context.getString(R.string.loading_db_file));
         new Thread(
                 () -> {
-                    String error = EhDB.importDB(context, file, dbSyncHandle);
+                    String error = EhDB.importDB(context, file, dbSyncHandle, overwrite);
                     Message message = new Message();
                     Bundle bundle = new Bundle();
                     bundle.putString("error", error);
