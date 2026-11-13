@@ -925,6 +925,43 @@ public class ContentLayout extends FrameLayout {
             mRefreshLayout.setFooterRefreshing(false);
         }
 
+        /**
+         * 目标页是否落在已加载窗口内，且页边界数组有对应项。
+         * 窗口下标与 {@code mPageDivider} 长度不一致时返回 false，调用方应重新请求该页。
+         */
+        private boolean pageDividerCovers(int page) {
+            if (mPageDivider == null || page < mStartPage || page >= mEndPage) {
+                return false;
+            }
+            return page - mStartPage < mPageDivider.size();
+        }
+
+        /**
+         * 已加载页窗口是否与页边界条数一致。
+         * 恢复状态时两者可能被拆开保存，不一致就不能按本地数据滚动。
+         */
+        private boolean pageDividerMatchesWindow() {
+            return mPageDivider != null
+                    && mEndPage >= mStartPage
+                    && mPageDivider.size() == mEndPage - mStartPage;
+        }
+
+        /**
+         * 拷贝页边界后再写入 Bundle。
+         * Bundle 在真正序列化前会持有传入对象；若直接放入 {@code mPageDivider}，后续 clear/add 会改掉已保存的那一份。
+         */
+        private IntList copyPageDivider() {
+            IntList source = mPageDivider;
+            if (source == null) {
+                return new IntList();
+            }
+            IntList copy = new IntList(source.size());
+            for (int i = 0, n = source.size(); i < n; i++) {
+                copy.add(source.get(i));
+            }
+            return copy;
+        }
+
         private int getPageStart(int page) {
             if (mStartPage == page) {
                 return 0;
@@ -982,7 +1019,7 @@ public class ContentLayout extends FrameLayout {
 //                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
             } else if (page < 0 || page >= mPages) {
                 throw new IndexOutOfBoundsException("Page count is " + mPages + ", page is " + page);
-            } else if (page >= mStartPage && page < mEndPage) {
+            } else if (pageDividerCovers(page)) {
                 cancelCurrentTask();
 
                 int position = getPageStart(page);
@@ -1035,7 +1072,7 @@ public class ContentLayout extends FrameLayout {
             bundle.putInt(KEY_DATA, mSavedDataId);
 
             bundle.putInt(KEY_NEXT_ID, mIdGenerator.nextId());
-            bundle.putParcelable(KEY_PAGE_DIVIDER, mPageDivider);
+            bundle.putParcelable(KEY_PAGE_DIVIDER, copyPageDivider());
             bundle.putInt(KEY_START_PAGE, mStartPage);
             bundle.putInt(KEY_END_PAGE, mEndPage);
             bundle.putInt(KEY_PAGES, mPages);
@@ -1066,6 +1103,9 @@ public class ContentLayout extends FrameLayout {
 
                 mIdGenerator.setNextId(bundle.getInt(KEY_NEXT_ID));
                 mPageDivider = bundle.getParcelable(KEY_PAGE_DIVIDER);
+                if (mPageDivider == null) {
+                    mPageDivider = new IntList();
+                }
                 mStartPage = bundle.getInt(KEY_START_PAGE);
                 mEndPage = bundle.getInt(KEY_END_PAGE);
                 mPages = bundle.getInt(KEY_PAGES);
@@ -1075,14 +1115,17 @@ public class ContentLayout extends FrameLayout {
                 nextHref = bundle.getString(KEY_NEXT_HREF);
                 lastHref = bundle.getString(KEY_LAST_HREF);
 
-                notifyDataSetChanged();
-
-                if (newData == null) {
+                if (newData == null || !pageDividerMatchesWindow()) {
+                    mData.clear();
+                    onClearData();
                     mPageDivider.clear();
                     mStartPage = 0;
                     mEndPage = 0;
                     mPages = 0;
+                    notifyDataSetChanged();
                     firstRefresh();
+                } else {
+                    notifyDataSetChanged();
                 }
 
                 return bundle.getParcelable(KEY_SUPER);
