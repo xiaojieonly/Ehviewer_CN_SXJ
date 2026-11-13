@@ -460,26 +460,18 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+    /**
+     * 只确认系统能拿到默认 EGL display。
+     * 不能在主线程调用 eglInitialize 或 eglTerminate：EGL_DEFAULT_DISPLAY 是进程级的，
+     * eglTerminate 会把 GL 线程正在使用的 display 拆掉，随后 eglChooseConfig 返回 0x3001。
+     */
     private boolean isEglAvailable() {
-        EGL10 egl = (EGL10) EGLContext.getEGL();
-        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-        if (display == null || display == EGL10.EGL_NO_DISPLAY) {
-            return false;
-        }
-
-        int[] version = new int[2];
-        if (!egl.eglInitialize(display, version)) {
-            return false;
-        }
-
         try {
-            int[] numConfig = new int[1];
-            return egl.eglChooseConfig(display, new int[]{EGL10.EGL_NONE}, null, 0, numConfig)
-                    && numConfig[0] > 0;
+            EGL10 egl = (EGL10) EGLContext.getEGL();
+            EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+            return display != null && display != EGL10.EGL_NO_DISPLAY;
         } catch (Throwable e) {
             return false;
-        } finally {
-            egl.eglTerminate(display);
         }
     }
 

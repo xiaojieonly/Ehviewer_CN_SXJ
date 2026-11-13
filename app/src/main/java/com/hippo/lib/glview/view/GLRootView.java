@@ -637,27 +637,19 @@ public class GLRootView extends GLSurfaceView
     private class ConfigChooser implements EGLConfigChooser {
 
         private final int[] mValue = new int[1];
+        private int mLastEglError = EGL10.EGL_SUCCESS;
         private static final int EGL_OPENGL_ES2_BIT = 0x0004;
         private static final int EGL_NOT_INITIALIZED = 0x3001;
 
         @Override
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
-            // Check if display is valid
             if (display == null || display == EGL10.EGL_NO_DISPLAY) {
-                int error = egl.eglGetError();
-                throw new IllegalArgumentException("Invalid EGL display, error: 0x" + 
-                        Integer.toHexString(error));
+                throw new IllegalArgumentException("Invalid EGL display");
             }
 
-            // Some vendor EGL drivers sporadically report EGL_NOT_INITIALIZED here.
-            // Retry once after explicit eglInitialize to avoid startup crash.
+            // GLSurfaceView 进入这里之前已经在 GL 线程调用过 eglInitialize。
+            // 只有 eglChooseConfig 当场返回 EGL_NOT_INITIALIZED 时才补一次初始化。
             for (int attempt = 0; attempt < 2; attempt++) {
-                if (!ensureDisplayInitialized(egl, display)) {
-                    int error = egl.eglGetError();
-                    throw new IllegalArgumentException("EGL display not initialized, error: 0x" +
-                            Integer.toHexString(error));
-                }
-
                 try {
                     EGLConfig config = chooseConfigInternal(egl, display);
                     int renderableType = findConfigAttrib(egl, display, config, EGL10.EGL_RENDERABLE_TYPE);
@@ -668,12 +660,10 @@ public class GLRootView extends GLSurfaceView
                     }
                     return config;
                 } catch (IllegalArgumentException e) {
-                    int error = egl.eglGetError();
-                    if (attempt == 0 && error == EGL_NOT_INITIALIZED) {
+                    if (attempt == 0 && mLastEglError == EGL_NOT_INITIALIZED
+                            && tryInitializeDisplay(egl, display)) {
                         Log.w(TAG, "eglChooseConfig hit EGL_NOT_INITIALIZED, retrying eglInitialize once");
-                        if (tryInitializeDisplay(egl, display)) {
-                            continue;
-                        }
+                        continue;
                     }
                     throw e;
                 }
@@ -682,19 +672,10 @@ public class GLRootView extends GLSurfaceView
             throw new IllegalArgumentException("eglChooseConfig failed after reinitialize retry");
         }
 
-        private boolean ensureDisplayInitialized(EGL10 egl, EGLDisplay display) {
-            int[] numConfig = new int[1];
-            if (egl.eglGetConfigs(display, null, 0, numConfig)) {
-                return true;
-            }
-            int error = egl.eglGetError();
-            if (error != EGL_NOT_INITIALIZED) {
-                return false;
-            }
-            return tryInitializeDisplay(egl, display) &&
-                    egl.eglGetConfigs(display, null, 0, numConfig);
-        }
-
+        /**
+         * 在当前 GL 线程补一次 eglInitialize。
+         * 调用方已经确认 eglChooseConfig 返回了 EGL_NOT_INITIALIZED，这里不再主动 eglTerminate。
+         */
         private boolean tryInitializeDisplay(EGL10 egl, EGLDisplay display) {
             int[] version = new int[2];
             boolean initialized = egl.eglInitialize(display, version);
@@ -705,80 +686,80 @@ public class GLRootView extends GLSurfaceView
             return initialized;
         }
 
+        /**
+         * 统计符合 configSpec 的配置数量。
+         * 失败时立刻读取 eglGetError；若是 EGL_NOT_INITIALIZED，写入 {@link #mLastEglError} 并返回 -1，
+         * 让外层在同一次错误码还没被清掉时决定要不要重试初始化。
+         */
+        private int countMatchingConfigs(EGL10 egl, EGLDisplay display, int[] configSpec,
+                                         int[] numConfig, String label) {
+            if (egl.eglChooseConfig(display, configSpec, null, 0, numConfig) && numConfig[0] > 0) {
+                return numConfig[0];
+            }
+            int error = egl.eglGetError();
+            if (error == EGL_NOT_INITIALIZED) {
+                mLastEglError = error;
+                return -1;
+            }
+            Log.w(TAG, "eglChooseConfig (" + label + ") failed with error: 0x" + Integer.toHexString(error));
+            numConfig[0] = 0;
+            return 0;
+        }
+
         private EGLConfig chooseConfigInternal(EGL10 egl, EGLDisplay display) {
-            int[] num_config = new int[1];
-            int[] configSpec;
-            int error;
-
-            // First try: basic config without RENDERABLE_TYPE (most compatible)
-            configSpec = new int[]{
-                    EGL10.EGL_RED_SIZE, 8,
-                    EGL10.EGL_GREEN_SIZE, 8,
-                    EGL10.EGL_BLUE_SIZE, 8,
-                    EGL10.EGL_ALPHA_SIZE, 8,
-                    EGL10.EGL_NONE
-            };
-
-            if (egl.eglChooseConfig(display, configSpec, null, 0, num_config) && num_config[0] > 0) {
-                // Success with basic config
-            } else {
-                error = egl.eglGetError();
-                Log.w(TAG, "eglChooseConfig (basic) failed with error: 0x" + Integer.toHexString(error));
-                
-                // Second try: OpenGL ES 2.0 compatible config
-                // Use EGL_OPENGL_ES2_BIT constant (0x0004) but only if supported
-                configSpec = new int[]{
-                        EGL10.EGL_RED_SIZE, 8,
-                        EGL10.EGL_GREEN_SIZE, 8,
-                        EGL10.EGL_BLUE_SIZE, 8,
-                        EGL10.EGL_ALPHA_SIZE, 8,
-                        EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-                        EGL10.EGL_NONE
-                };
-                
-                if (egl.eglChooseConfig(display, configSpec, null, 0, num_config) && num_config[0] > 0) {
-                    // Success with ES 2.0 config
-                } else {
-                    error = egl.eglGetError();
-                    Log.w(TAG, "eglChooseConfig (ES2) failed with error: 0x" + Integer.toHexString(error));
-                    
-                    // Third try: minimal config without RENDERABLE_TYPE
-                    configSpec = new int[]{
+            mLastEglError = EGL10.EGL_SUCCESS;
+            int[] numConfig = new int[1];
+            int[][] specs = new int[][]{
+                    new int[]{
+                            EGL10.EGL_RED_SIZE, 8,
+                            EGL10.EGL_GREEN_SIZE, 8,
+                            EGL10.EGL_BLUE_SIZE, 8,
+                            EGL10.EGL_ALPHA_SIZE, 8,
+                            EGL10.EGL_NONE
+                    },
+                    new int[]{
+                            EGL10.EGL_RED_SIZE, 8,
+                            EGL10.EGL_GREEN_SIZE, 8,
+                            EGL10.EGL_BLUE_SIZE, 8,
+                            EGL10.EGL_ALPHA_SIZE, 8,
+                            EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                            EGL10.EGL_NONE
+                    },
+                    new int[]{
                             EGL10.EGL_RED_SIZE, 5,
                             EGL10.EGL_GREEN_SIZE, 6,
                             EGL10.EGL_BLUE_SIZE, 5,
                             EGL10.EGL_ALPHA_SIZE, 0,
                             EGL10.EGL_NONE
-                    };
-                    
-                    if (egl.eglChooseConfig(display, configSpec, null, 0, num_config) && num_config[0] > 0) {
-                        // Success with minimal config
-                    } else {
-                        error = egl.eglGetError();
-                        Log.w(TAG, "eglChooseConfig (minimal) failed with error: 0x" + Integer.toHexString(error));
-                        
-                        // Last resort: try with EGL_NONE only (let system choose)
-                        configSpec = new int[]{EGL10.EGL_NONE};
-                        if (!egl.eglChooseConfig(display, configSpec, null, 0, num_config)) {
-                            error = egl.eglGetError();
-                            throw new IllegalArgumentException("eglChooseConfig failed with error: 0x" + 
-                                    Integer.toHexString(error));
-                        }
-                    }
+                    },
+                    new int[]{EGL10.EGL_NONE}
+            };
+            String[] labels = new String[]{"basic", "ES2", "minimal", "default"};
+
+            int[] configSpec = null;
+            int numConfigs = 0;
+            for (int i = 0; i < specs.length; i++) {
+                int count = countMatchingConfigs(egl, display, specs[i], numConfig, labels[i]);
+                if (count < 0) {
+                    throw new IllegalArgumentException("eglChooseConfig failed with error: 0x" +
+                            Integer.toHexString(mLastEglError));
+                }
+                if (count > 0) {
+                    configSpec = specs[i];
+                    numConfigs = count;
+                    break;
                 }
             }
 
-            int numConfigs = num_config[0];
-
-            if (numConfigs <= 0) {
-                throw new IllegalArgumentException(
-                        "No configs match configSpec");
+            if (configSpec == null || numConfigs <= 0) {
+                throw new IllegalArgumentException("No configs match configSpec");
             }
 
             EGLConfig[] configs = new EGLConfig[numConfigs];
-            if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, num_config)) {
-                error = egl.eglGetError();
-                throw new IllegalArgumentException("eglChooseConfig#2 failed with error: 0x" + 
+            if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, numConfig)) {
+                int error = egl.eglGetError();
+                mLastEglError = error;
+                throw new IllegalArgumentException("eglChooseConfig#2 failed with error: 0x" +
                         Integer.toHexString(error));
             }
             EGLConfig config = chooseConfig(egl, display, configs);
