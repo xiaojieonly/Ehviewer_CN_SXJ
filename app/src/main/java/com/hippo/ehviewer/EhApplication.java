@@ -177,10 +177,10 @@ public class EhApplication extends RecordingApplication {
         GetText.initialize(this);
         StatusCodeException.initialize(this);
         Settings.initialize(this);
+        AppConfig.initialize(this);
         ArchiverDownloader.resumePending(this);
         ReadableTime.initialize(this);
         Html.initialize(this);
-        AppConfig.initialize(this);
         SpiderDen.initialize(this);
         EhDB.initialize(this);
         EhEngine.initialize();
