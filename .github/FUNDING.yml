@@ -1,2 +1,4 @@
-# 仓库顶部 Sponsor 按钮指向爱发电主页
-custom: ['https://ifdian.net/a/Ehviewer_CN_SXJ']
+# 仓库顶部 Sponsor 按钮：爱发电与收款码页
+custom:
+  - 'https://ifdian.net/a/Ehviewer_CN_SXJ'
+  - 'https://xiaojieonly.github.io/Ehviewer_CN_SXJ/'
