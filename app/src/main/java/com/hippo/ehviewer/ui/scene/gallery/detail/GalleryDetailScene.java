@@ -52,6 +52,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
@@ -313,6 +314,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private GalleryListSceneDialog tagDialog;
 
     private boolean useNetWorkLoadThumb = false;
+    private boolean mUserTagListRequested;
 
     private Context mContext;
     private MainActivity activity;
@@ -1105,7 +1107,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         ehTags = Settings.getShowTagTranslations() ? EhTagDatabase.getInstance(context) : null;
 
+        ensureUserTagList(context);
+        UserTagList userTagList = EhApplication.getUserTagList(context);
         int colorTag = AttrResources.getAttrColor(context, R.attr.tagBackgroundColor);
+        int colorWatched = getWatchedTagColor(context, colorTag);
         int colorName = AttrResources.getAttrColor(context, R.attr.tagGroupBackgroundColor);
         for (GalleryTagGroup tg : tagGroups) {
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.gallery_tag_group, mTags, false);
@@ -1140,8 +1145,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 }
 
                 tag.setText(readableTag != null ? readableTag : tagStr);
-                tag.setBackgroundDrawable(new RoundSideRectDrawable(colorTag));
-                tag.setTag(R.id.tag, tg.groupName + ":" + tagStr);
+                String fullTag = tg.groupName + ":" + tagStr;
+                int backgroundColor = (userTagList != null && userTagList.isWatched(fullTag))
+                        ? colorWatched : colorTag;
+                tag.setBackgroundDrawable(new RoundSideRectDrawable(backgroundColor));
+                tag.setTag(R.id.tag, fullTag);
                 tag.setOnClickListener(this);
                 tag.setOnLongClickListener(this);
             }
@@ -1715,7 +1723,41 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @Override
     public void setTagList(UserTagList result) {
-        super.setTagList(result);
+        Context context = getEHContext();
+        if (context != null && result != null) {
+            EhApplication.saveUserTagList(context, result);
+        }
+        if (mGalleryDetail != null) {
+            bindTags(mGalleryDetail.tags);
+        }
+    }
+
+    private int getWatchedTagColor(Context context, int colorTag) {
+        int colorPrimary = ContextCompat.getColor(context, R.color.colorPrimary);
+        if (colorTag == colorPrimary) {
+            return ContextCompat.getColor(context, R.color.light_green_600);
+        }
+        return colorPrimary;
+    }
+
+    private void ensureUserTagList(Context context) {
+        if (!Settings.isLogin() || mUserTagListRequested || EhApplication.getUserTagList(context) != null) {
+            return;
+        }
+        MainActivity mainActivity = getActivity2();
+        if (mainActivity == null) {
+            return;
+        }
+        mUserTagListRequested = true;
+        EhRequest request = new EhRequest()
+                .setMethod(EhClient.METHOD_GET_WATCHED)
+                .setArgs(EhUrl.getMyTag())
+                .setCallback(new GetUserTagListListener(context, mainActivity.getStageId(), getTag()));
+        EhApplication.getEhClient(context).execute(request);
+    }
+
+    void onUserTagListLoadFailed() {
+        mUserTagListRequested = false;
     }
 
     @Override
@@ -2277,6 +2319,44 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         @Override
         public void onCancel() {
+        }
+
+        @Override
+        public boolean isInstance(SceneFragment scene) {
+            return scene instanceof GalleryDetailScene;
+        }
+    }
+
+    private static class GetUserTagListListener extends EhCallback<GalleryDetailScene, UserTagList> {
+
+        public GetUserTagListListener(Context context, int stageId, String sceneTag) {
+            super(context, stageId, sceneTag);
+        }
+
+        @Override
+        public void onSuccess(UserTagList result) {
+            GalleryDetailScene scene = getScene();
+            if (scene != null) {
+                scene.setTagList(result);
+            } else if (result != null) {
+                EhApplication.saveUserTagList(getApplication(), result);
+            }
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            GalleryDetailScene scene = getScene();
+            if (scene != null) {
+                scene.onUserTagListLoadFailed();
+            }
+        }
+
+        @Override
+        public void onCancel() {
+            GalleryDetailScene scene = getScene();
+            if (scene != null) {
+                scene.onUserTagListLoadFailed();
+            }
         }
 
         @Override
