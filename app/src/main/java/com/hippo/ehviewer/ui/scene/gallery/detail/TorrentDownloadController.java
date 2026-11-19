@@ -321,7 +321,7 @@ class TorrentDownloadController {
         private void downLoadPlanB(int position, @NonNull Context context) {
             try {
                 String url = torrentList[position].url;
-                String name = torrentList[position].name + ".torrent";
+                String name = DownloadTorrentManager.createTorrentFileName(torrentList[position].name, url);
                 String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/" + TORRENT_PATH;
                 DownloadTorrentManager downloadTorrentManager = DownloadTorrentManager.get(okHttpClient);
                 if (!EhApplication.addDownloadTorrent(context, url)) {
