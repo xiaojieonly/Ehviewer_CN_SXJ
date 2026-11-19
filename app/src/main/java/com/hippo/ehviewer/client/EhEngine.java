@@ -36,6 +36,7 @@ import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.HomeDetail;
+import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.data.TorrentInfo;
 import com.hippo.ehviewer.client.data.userTag.TagPushParam;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
@@ -58,6 +59,7 @@ import com.hippo.ehviewer.client.parser.GalleryPageParser;
 import com.hippo.ehviewer.client.parser.GalleryTokenApiParser;
 import com.hippo.ehviewer.client.parser.GetEditCommentParser;
 import com.hippo.ehviewer.client.parser.MyTagLitParser;
+import com.hippo.ehviewer.client.parser.ParserUtils;
 import com.hippo.ehviewer.client.parser.ProfileParser;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.client.parser.SignInParser;
@@ -72,7 +74,10 @@ import com.hippo.lib.yorozuya.AssertUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -290,11 +295,147 @@ public class EhEngine {
 
         fillGalleryList(task, okHttpClient, result.galleryInfoList, url, true);
 
+        if (mode == ListUrlBuilder.MODE_SUBSCRIPTION) {
+            mergeSubscribedUploaderGalleries(task, okHttpClient, result, url);
+        }
+
         if (code == 200 && url.equals("https://exhentai.org/") && body.isEmpty()) {
             result.customErrorString = GetText.getString(R.string.error_igneous_wrong);
         }
 
         return result;
+    }
+
+    private static boolean isFirstSubscriptionPage(String url) {
+        if (url == null) {
+            return true;
+        }
+        return !url.contains("page=") && !url.contains("next=") && !url.contains("prev=")
+                && !url.contains("seek=");
+    }
+
+    private static long galleryPostedTime(GalleryInfo info) {
+        if (info == null) {
+            return 0L;
+        }
+        long posted = ParserUtils.parseDate(info.posted);
+        if (posted != 0L) {
+            return posted;
+        }
+        return info.gid;
+    }
+
+    private static void mergeSubscribedUploaderGalleries(@Nullable EhClient.Task task,
+            OkHttpClient okHttpClient, GalleryListParser.Result result, String url) throws Throwable {
+        int feedMode = Settings.getSubscriptionFeedMode();
+        if (feedMode == Settings.SUBSCRIPTION_FEED_TAGS) {
+            return;
+        }
+
+        Set<String> uploaders = Settings.getSubscribedUploaders();
+        if (uploaders.isEmpty()) {
+            if (feedMode == Settings.SUBSCRIPTION_FEED_UPLOADERS) {
+                result.galleryInfoList = new ArrayList<>();
+            }
+            return;
+        }
+
+        List<GalleryInfo> merged = result.galleryInfoList == null || result.galleryInfoList.isEmpty()
+                ? new ArrayList<GalleryInfo>()
+                : new ArrayList<>(result.galleryInfoList);
+        Set<Long> gids = new HashSet<>();
+        long lowTime = Long.MAX_VALUE;
+        long highTime = 0L;
+        for (GalleryInfo info : merged) {
+            gids.add(info.gid);
+            long posted = galleryPostedTime(info);
+            if (posted > 0L && posted < lowTime) {
+                lowTime = posted;
+            }
+            if (posted > highTime) {
+                highTime = posted;
+            }
+        }
+        if (lowTime == Long.MAX_VALUE) {
+            lowTime = 0L;
+        }
+        boolean firstPage = isFirstSubscriptionPage(url);
+        boolean uploadersOnly = feedMode == Settings.SUBSCRIPTION_FEED_UPLOADERS;
+        if (uploadersOnly) {
+            merged.clear();
+            gids.clear();
+            if (firstPage) {
+                lowTime = 0L;
+                highTime = 0L;
+            }
+        }
+
+        int maxPages = (uploadersOnly && firstPage) ? 1 : 5;
+        for (String name : uploaders) {
+            if (TextUtils.isEmpty(name)) {
+                continue;
+            }
+            addUploaderGalleriesInWindow(task, okHttpClient, name, merged, gids, lowTime, highTime,
+                    firstPage, maxPages);
+        }
+
+        Collections.sort(merged, (a, b) -> {
+            int cmp = Long.compare(galleryPostedTime(b), galleryPostedTime(a));
+            if (cmp != 0) {
+                return cmp;
+            }
+            return Long.compare(b.gid, a.gid);
+        });
+        result.galleryInfoList = merged;
+        if (!merged.isEmpty()) {
+            result.noWatchedTags = false;
+        }
+    }
+
+    private static void addUploaderGalleriesInWindow(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
+            String name, List<GalleryInfo> merged, Set<Long> gids, long lowTime, long highTime,
+            boolean firstPage, int maxPages) throws Throwable {
+        for (int page = 0; page < maxPages; page++) {
+            ListUrlBuilder builder = new ListUrlBuilder();
+            builder.setMode(ListUrlBuilder.MODE_UPLOADER);
+            builder.setKeyword(name);
+            builder.setPageIndex(page);
+            GalleryListParser.Result extra;
+            try {
+                extra = getGalleryList(task, okHttpClient, builder.build(), ListUrlBuilder.MODE_UPLOADER);
+            } catch (Throwable e) {
+                ExceptionUtils.throwIfFatal(e);
+                if (e instanceof CancelledException) {
+                    throw e;
+                }
+                Log.d(TAG, "Failed to merge subscribed uploader: " + name, e);
+                return;
+            }
+            if (extra.galleryInfoList == null || extra.galleryInfoList.isEmpty()) {
+                return;
+            }
+            boolean reachedOlderThanWindow = false;
+            for (GalleryInfo info : extra.galleryInfoList) {
+                if (info == null) {
+                    continue;
+                }
+                long posted = galleryPostedTime(info);
+                if (posted < lowTime) {
+                    reachedOlderThanWindow = true;
+                    continue;
+                }
+                if (!firstPage && highTime > 0L && posted > highTime) {
+                    continue;
+                }
+                if (gids.add(info.gid)) {
+                    merged.add(info);
+                }
+            }
+            GalleryInfo last = extra.galleryInfoList.get(extra.galleryInfoList.size() - 1);
+            if (reachedOlderThanWindow || galleryPostedTime(last) < lowTime) {
+                return;
+            }
+        }
     }
 
     // At least, GalleryInfo contain valid gid and token
