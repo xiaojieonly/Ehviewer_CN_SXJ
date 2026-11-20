@@ -1516,13 +1516,25 @@ public final class SpiderQueen implements Runnable {
 
                         // check download size
                         if (contentLength >= 0) {
-                            if (receivedSize < contentLength) {
+                            if (!DownloadVerifier.isSizeSufficient(contentLength, receivedSize)) {
                                 Log.e(TAG, "Can't download all of image data");
                                 error = "Incomplete";
                                 forceHtml = true;
                                 continue;
                             } else if (receivedSize > contentLength) {
                                 Log.w(TAG, "Received data is more than contentLength");
+                            }
+                        } else {
+                            // No content length (e.g. a chunked response): fall
+                            // back to the byte count embedded in the image URL
+                            // when it is present.
+                            long expectedSize = DownloadVerifier.expectedSizeFromUrl(targetImageUrl);
+                            if (!DownloadVerifier.isSizeSufficient(expectedSize, receivedSize)) {
+                                Log.e(TAG, "Can't download all of image data, expected "
+                                        + expectedSize + " bytes, got " + receivedSize);
+                                error = "Incomplete";
+                                forceHtml = true;
+                                continue;
                             }
                         }
                     } finally {
@@ -1532,10 +1544,21 @@ public final class SpiderQueen implements Runnable {
                         }
                     }
 
+                    // When this run wrote into the download dir, the freshly
+                    // downloaded bytes sit in an uncommitted temporary file;
+                    // read those back for the plain-text check. Otherwise read
+                    // through the regular pipe (read cache).
+                    boolean wroteToDownloadDir = false;
                     InputStreamPipe isPipe = null;
+                    if (mSpiderDen.shouldWriteToDownloadDir()) {
+                        isPipe = mSpiderDen.openDownloadTempInputStreamPipe(index, extension);
+                        wroteToDownloadDir = isPipe != null;
+                    }
                     try {
                         // Get InputStreamPipe
-                        isPipe = mSpiderDen.openInputStreamPipe(index);
+                        if (isPipe == null) {
+                            isPipe = mSpiderDen.openInputStreamPipe(index);
+                        }
                         if (isPipe == null) {
                             // Can't get pipe
                             error = GetText.getString(R.string.error_reading_failed);
@@ -1573,6 +1596,15 @@ public final class SpiderQueen implements Runnable {
                         interrupt = true;
                         error = "Interrupted";
                         break;
+                    }
+
+                    // Publish the verified file under its final name before
+                    // marking the page as finished. A failure here retries the
+                    // download instead of leaving a partial file behind.
+                    if (wroteToDownloadDir && !mSpiderDen.commitDownloadFile(index, extension)) {
+                        Log.e(TAG, "Can't commit the downloaded file, index = " + index);
+                        error = GetText.getString(R.string.error_write_failed);
+                        continue;
                     }
 
                     if (DEBUG_LOG) {
