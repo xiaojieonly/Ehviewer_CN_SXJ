@@ -55,6 +55,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
@@ -126,11 +127,13 @@ public class GLRootView extends GLSurfaceView
         mFlags |= FLAG_INITIALIZED;
         setBackgroundDrawable(null);
 
-        final int eglContextClientVersion = 2;
-        setEGLContextClientVersion(eglContextClientVersion);
-        setEGLConfigChooser(new ConfigChooser());
+        mEGLContextClientVersion = 2;
+        setEGLContextClientVersion(mEGLContextClientVersion);
+        ConfigChooser configChooser = new ConfigChooser();
+        setEGLConfigChooser(configChooser);
+        setEGLContextFactory(configChooser);
         setRenderer(new GLRootRenderer());
-        getHolder().setFormat(PixelFormat.RGB_888);
+        getHolder().setFormat(PixelFormat.RGBA_8888);
 
         // Uncomment this to enable gl error check.
         // setDebugFlags(DEBUG_CHECK_GL_ERROR);
@@ -633,12 +636,14 @@ public class GLRootView extends GLSurfaceView
         }
     }
 
-    // Always chose a config
-    private class ConfigChooser implements EGLConfigChooser {
+    // Always choose a verified window config and honor the resolved GLES client version
+    private class ConfigChooser implements EGLConfigChooser, EGLContextFactory {
 
         private final int[] mValue = new int[1];
         private int mLastEglError = EGL10.EGL_SUCCESS;
+        private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
         private static final int EGL_OPENGL_ES2_BIT = 0x0004;
+        private static final int EGL_WINDOW_BIT = 0x0004;
         private static final int EGL_NOT_INITIALIZED = 0x3001;
 
         @Override
@@ -651,14 +656,7 @@ public class GLRootView extends GLSurfaceView
             // 只有 eglChooseConfig 当场返回 EGL_NOT_INITIALIZED 时才补一次初始化。
             for (int attempt = 0; attempt < 2; attempt++) {
                 try {
-                    EGLConfig config = chooseConfigInternal(egl, display);
-                    int renderableType = findConfigAttrib(egl, display, config, EGL10.EGL_RENDERABLE_TYPE);
-                    if ((renderableType & EGL_OPENGL_ES2_BIT) == EGL_OPENGL_ES2_BIT) {
-                        mEGLContextClientVersion = 2;
-                    } else {
-                        mEGLContextClientVersion = 1;
-                    }
-                    return config;
+                    return chooseConfigInternal(egl, display);
                 } catch (IllegalArgumentException e) {
                     if (attempt == 0 && mLastEglError == EGL_NOT_INITIALIZED
                             && tryInitializeDisplay(egl, display)) {
@@ -709,19 +707,17 @@ public class GLRootView extends GLSurfaceView
         private EGLConfig chooseConfigInternal(EGL10 egl, EGLDisplay display) {
             mLastEglError = EGL10.EGL_SUCCESS;
             int[] numConfig = new int[1];
+            // 优先匹配显式携带 EGL_OPENGL_ES2_BIT 与 EGL_WINDOW_BIT 的配置：
+            // 根据 Khronos EGL 规范，省略 EGL_RENDERABLE_TYPE 时默认按 EGL_OPENGL_ES_BIT (ES 1.x) 过滤；
+            // 在 PowerVR GX6250 等将纯 ES 1.1 与 ES 2.0 配置分离暴露的 GPU 上，若先尝试不带
+            // EGL_RENDERABLE_TYPE 的规格会命中纯 ES 1.1 配置，进而导致创建 ES 2.0 上下文触发 EGL_BAD_CONFIG。
             int[][] specs = new int[][]{
                     new int[]{
                             EGL10.EGL_RED_SIZE, 8,
                             EGL10.EGL_GREEN_SIZE, 8,
                             EGL10.EGL_BLUE_SIZE, 8,
                             EGL10.EGL_ALPHA_SIZE, 8,
-                            EGL10.EGL_NONE
-                    },
-                    new int[]{
-                            EGL10.EGL_RED_SIZE, 8,
-                            EGL10.EGL_GREEN_SIZE, 8,
-                            EGL10.EGL_BLUE_SIZE, 8,
-                            EGL10.EGL_ALPHA_SIZE, 8,
+                            EGL10.EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                             EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                             EGL10.EGL_NONE
                     },
@@ -730,79 +726,181 @@ public class GLRootView extends GLSurfaceView
                             EGL10.EGL_GREEN_SIZE, 6,
                             EGL10.EGL_BLUE_SIZE, 5,
                             EGL10.EGL_ALPHA_SIZE, 0,
+                            EGL10.EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+                            EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                            EGL10.EGL_NONE
+                    },
+                    new int[]{
+                            EGL10.EGL_RED_SIZE, 8,
+                            EGL10.EGL_GREEN_SIZE, 8,
+                            EGL10.EGL_BLUE_SIZE, 8,
+                            EGL10.EGL_ALPHA_SIZE, 8,
+                            EGL10.EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+                            EGL10.EGL_NONE
+                    },
+                    new int[]{
+                            EGL10.EGL_RED_SIZE, 5,
+                            EGL10.EGL_GREEN_SIZE, 6,
+                            EGL10.EGL_BLUE_SIZE, 5,
+                            EGL10.EGL_ALPHA_SIZE, 0,
+                            EGL10.EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                             EGL10.EGL_NONE
                     },
                     new int[]{EGL10.EGL_NONE}
             };
-            String[] labels = new String[]{"basic", "ES2", "minimal", "default"};
+            String[] labels = new String[]{"ES2-8888", "ES2-565", "basic-8888", "minimal-565", "default"};
 
-            int[] configSpec = null;
-            int numConfigs = 0;
             for (int i = 0; i < specs.length; i++) {
                 int count = countMatchingConfigs(egl, display, specs[i], numConfig, labels[i]);
                 if (count < 0) {
                     throw new IllegalArgumentException("eglChooseConfig failed with error: 0x" +
                             Integer.toHexString(mLastEglError));
                 }
-                if (count > 0) {
-                    configSpec = specs[i];
-                    numConfigs = count;
-                    break;
+                if (count == 0) {
+                    continue;
+                }
+
+                EGLConfig[] configs = new EGLConfig[count];
+                if (!egl.eglChooseConfig(display, specs[i], configs, count, numConfig)) {
+                    int error = egl.eglGetError();
+                    mLastEglError = error;
+                    throw new IllegalArgumentException("eglChooseConfig#2 failed with error: 0x" +
+                            Integer.toHexString(error));
+                }
+
+                int actualCount = Math.min(count, numConfig[0]);
+                if (actualCount <= 0) {
+                    continue;
+                }
+
+                EGLConfig config = chooseVerifiedConfig(egl, display, configs, actualCount);
+                if (config != null) {
+                    return config;
                 }
             }
 
-            if (configSpec == null || numConfigs <= 0) {
-                throw new IllegalArgumentException("No configs match configSpec");
-            }
-
-            EGLConfig[] configs = new EGLConfig[numConfigs];
-            if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, numConfig)) {
-                int error = egl.eglGetError();
-                mLastEglError = error;
-                throw new IllegalArgumentException("eglChooseConfig#2 failed with error: 0x" +
-                        Integer.toHexString(error));
-            }
-            EGLConfig config = chooseConfig(egl, display, configs);
-            if (config == null) {
-                throw new IllegalArgumentException("No config chosen");
-            }
-            return config;
+            throw new IllegalArgumentException("No working EGLConfig matched any configSpec");
         }
 
-        private EGLConfig chooseConfig(EGL10 egl, EGLDisplay display, EGLConfig[] configs) {
-            // Use score to avoid "No config chosen"
-            int configIndex = 0;
-            int maxScore = 0;
+        private EGLConfig chooseVerifiedConfig(EGL10 egl, EGLDisplay display,
+                                               EGLConfig[] configs, int count) {
+            int[] idx = new int[count];
+            int[] scores = new int[count];
+            int n = 0;
 
-            for (int i = 0, n = configs.length; i < n; i++) {
+            for (int i = 0; i < count; i++) {
                 final EGLConfig config = configs[i];
-                final int redSize = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_RED_SIZE);
-                final int greenSize = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_GREEN_SIZE);
-                final int blueSize = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_BLUE_SIZE);
-                final int alphaSize = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_ALPHA_SIZE);
-                final int sampleBuffers = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_SAMPLE_BUFFERS);
-                final int samples = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_SAMPLES);
-                final int depth = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_DEPTH_SIZE);
-                final int stencil = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_STENCIL_SIZE);
+                if (config == null) continue;
 
-                final int score = redSize + greenSize + blueSize + alphaSize +
-                        sampleBuffers + samples - depth - stencil;
+                final int surf = findConfigAttrib(egl, display, config, EGL10.EGL_SURFACE_TYPE);
+                if ((surf & EGL_WINDOW_BIT) == 0) continue;
 
-                if (score > maxScore) {
-                    maxScore = score;
-                    configIndex = i;
-                }
+                final int redSize = findConfigAttrib(egl, display, config, EGL10.EGL_RED_SIZE);
+                final int greenSize = findConfigAttrib(egl, display, config, EGL10.EGL_GREEN_SIZE);
+                final int blueSize = findConfigAttrib(egl, display, config, EGL10.EGL_BLUE_SIZE);
+                final int alphaSize = findConfigAttrib(egl, display, config, EGL10.EGL_ALPHA_SIZE);
+                if (redSize > 8 || greenSize > 8 || blueSize > 8 || alphaSize > 8) continue;
+
+                final int caveat = findConfigAttrib(egl, display, config, EGL10.EGL_CONFIG_CAVEAT);
+                final int renderableType = findConfigAttrib(egl, display, config, EGL10.EGL_RENDERABLE_TYPE);
+                final int sampleBuffers = findConfigAttrib(egl, display, config, EGL10.EGL_SAMPLE_BUFFERS);
+                final int samples = findConfigAttrib(egl, display, config, EGL10.EGL_SAMPLES);
+                final int depth = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE);
+                final int stencil = findConfigAttrib(egl, display, config, EGL10.EGL_STENCIL_SIZE);
+                final int visualId = findConfigAttrib(egl, display, config, EGL10.EGL_NATIVE_VISUAL_ID);
+
+                int score = 0;
+                if (caveat == EGL10.EGL_NONE) score += 20000;
+                if ((renderableType & EGL_OPENGL_ES2_BIT) != 0) score += 10000;
+                if (redSize == 8 && greenSize == 8 && blueSize == 8 && alphaSize == 8) score += 4000;
+                else if (redSize == 8 && greenSize == 8 && blueSize == 8 && alphaSize == 0) score += 3500;
+                else score += (redSize + greenSize + blueSize + alphaSize) * 50;
+
+                if (visualId == PixelFormat.RGBA_8888) score += 1000;
+                else if (visualId == PixelFormat.RGBX_8888) score += 800;
+
+                if (sampleBuffers == 0 && samples == 0) score += 500;
+                else score -= samples * 30;
+
+                score -= (depth + stencil);
+
+                idx[n] = i;
+                scores[n] = score;
+                n++;
             }
 
-            return configs[configIndex];
+            for (int i = 1; i < n; i++) {
+                int ki = idx[i], ks = scores[i];
+                int j = i - 1;
+                while (j >= 0 && scores[j] < ks) {
+                    idx[j + 1] = idx[j];
+                    scores[j + 1] = scores[j];
+                    j--;
+                }
+                idx[j + 1] = ki;
+                scores[j + 1] = ks;
+            }
+
+            // 优先验证能否真实创建 OpenGL ES 2.0 上下文；若均不支持则验证 ES 1.1 回退
+            for (int k = 0; k < n; k++) {
+                EGLConfig cand = configs[idx[k]];
+                int rt = findConfigAttrib(egl, display, cand, EGL10.EGL_RENDERABLE_TYPE);
+                if ((rt & EGL_OPENGL_ES2_BIT) != 0 && canCreateContext(egl, display, cand, 2)) {
+                    mEGLContextClientVersion = 2;
+                    return cand;
+                }
+            }
+            for (int k = 0; k < n; k++) {
+                EGLConfig cand = configs[idx[k]];
+                if (canCreateContext(egl, display, cand, 1)) {
+                    mEGLContextClientVersion = 1;
+                    Log.w(TAG, "Fell back to verified OpenGL ES 1.1 config");
+                    return cand;
+                }
+            }
+            return null;
+        }
+
+        private boolean canCreateContext(EGL10 egl, EGLDisplay display, EGLConfig config, int version) {
+            int[] attribs = (version == 2)
+                    ? new int[]{EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE}
+                    : null;
+            EGLContext ctx = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, attribs);
+            if (ctx != null && ctx != EGL10.EGL_NO_CONTEXT) {
+                egl.eglDestroyContext(display, ctx);
+                return true;
+            }
+            egl.eglGetError();
+            return false;
+        }
+
+        @Override
+        public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig config) {
+            // GLSurfaceView 内部 mEGLContextClientVersion 为私有字段，GLRootView 同名字段无法覆盖父类行为；
+            // 由自定义 EGLContextFactory 按实际选定的版本创建上下文，确保 ES 2.0 与 ES 1.1 回退均真正生效。
+            int ver = mEGLContextClientVersion;
+            int[] attribs = (ver == 2)
+                    ? new int[]{EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE}
+                    : null;
+            EGLContext ctx = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, attribs);
+            if (ctx != null && ctx != EGL10.EGL_NO_CONTEXT) {
+                return ctx;
+            }
+            if (ver == 2) {
+                EGLContext ctx1 = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, null);
+                if (ctx1 != null && ctx1 != EGL10.EGL_NO_CONTEXT) {
+                    mEGLContextClientVersion = 1;
+                    return ctx1;
+                }
+            }
+            return EGL10.EGL_NO_CONTEXT;
+        }
+
+        @Override
+        public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
+            if (!egl.eglDestroyContext(display, context)) {
+                Log.e(TAG, "eglDestroyContext failed: 0x" + Integer.toHexString(egl.eglGetError()));
+            }
         }
 
         private int findConfigAttrib(EGL10 egl, EGLDisplay display,
