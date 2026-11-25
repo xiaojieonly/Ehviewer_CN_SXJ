@@ -44,6 +44,7 @@ import com.hippo.lib.yorozuya.Utilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 
@@ -301,6 +302,19 @@ public final class SpiderDen {
         }
     }
 
+    /**
+     * Normalize the download file extension the same way for opening the
+     * output pipe, reading back the temporary file and committing.
+     */
+    @NonNull
+    private String normalizeDownloadExtension(@Nullable String extension) {
+        if (extension == null || !extension.contains(".")) {
+            return fixExtension('.' + extension);
+        } else {
+            return fixExtension(extension);
+        }
+    }
+
     private boolean copyFromCacheToDownloadDir(int index) {
         if (sCache == null) {
             return false;
@@ -333,14 +347,28 @@ public final class SpiderDen {
             }
             // Fix extension
             extension = fixExtension(extension);
-            // Copy from cache to download dir
-            UniFile file = dir.createFile(generateImageFilename(index, extension));
-            if (file == null) {
+            // Copy from cache to download dir through a temporary file: the
+            // final name is only published after the copy succeeded, so an
+            // interrupted copy can never leave a truncated file behind.
+            String finalFilename = generateImageFilename(index, extension);
+            removeDownloadDirTempFiles(dir, index);
+            UniFile tempFile = dir.createFile(DownloadVerifier.tempFilename(finalFilename));
+            if (tempFile == null) {
                 return false;
             }
-            os = file.openOutputStream();
-            IOUtils.copy(pipe.open(), os);
-            return true;
+            boolean success = false;
+            try {
+                os = tempFile.openOutputStream();
+                IOUtils.copy(pipe.open(), os);
+                IOUtils.closeQuietly(os);
+                os = null;
+                success = publishDownloadFile(dir, index, finalFilename, tempFile);
+            } finally {
+                if (!success) {
+                    removeDownloadDirTempFiles(dir, index);
+                }
+            }
+            return success;
         } catch (IOException e) {
             return false;
         } finally {
@@ -382,8 +410,28 @@ public final class SpiderDen {
             if (file != null) {
                 result |= file.delete();
             }
+            // Remove the temporary file of an interrupted download too.
+            UniFile tempFile = dir.subFile(DownloadVerifier.tempFilename(filename));
+            if (tempFile != null) {
+                result |= tempFile.delete();
+            }
         }
         return result;
+    }
+
+    /**
+     * Delete every temporary download file of {@code index} (all extension
+     * variants), e.g. leftovers of an interrupted download.
+     */
+    private static void removeDownloadDirTempFiles(UniFile dir, int index) {
+        for (int i = 0, n = GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS.length; i < n; i++) {
+            String tempFilename = DownloadVerifier.tempFilename(
+                    generateImageFilename(index, GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS[i]));
+            UniFile file = dir.subFile(tempFilename);
+            if (file != null) {
+                file.delete();
+            }
+        }
     }
 
     public boolean remove(int index) {
@@ -411,18 +459,88 @@ public final class SpiderDen {
         if (dir == null) {
             return null;
         }
-        if (extension==null||!extension.contains(".")){
-            extension = fixExtension('.' + extension);
-        }else {
-            extension = fixExtension(extension);
-        }
+        extension = normalizeDownloadExtension(extension);
 
-        UniFile file = dir.createFile(generateImageFilename(index, extension));
+        // Download into a temporary file first: it is renamed onto its final
+        // name by commitDownloadFile() after every check passed, so an
+        // interrupted download can never be picked up as a finished image.
+        removeDownloadDirTempFiles(dir, index);
+        String tempFilename = DownloadVerifier.tempFilename(generateImageFilename(index, extension));
+        UniFile file = dir.findFile(tempFilename);
+        if (file == null) {
+            file = dir.createFile(tempFilename);
+        }
         if (file != null) {
             return new UniFileOutputStreamPipe(file);
         } else {
             return null;
         }
+    }
+
+    /**
+     * Publish the verified temporary download file under its final name.
+     *
+     * @return false when there is no temporary file (or the download dir is
+     * not available); the caller must then retry instead of marking the page
+     * as finished.
+     */
+    public boolean commitDownloadFile(int index, @Nullable String extension) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return false;
+        }
+
+        String finalFilename = generateImageFilename(index, normalizeDownloadExtension(extension));
+        UniFile tempFile = dir.findFile(DownloadVerifier.tempFilename(finalFilename));
+        if (tempFile == null) {
+            return false;
+        }
+
+        return publishDownloadFile(dir, index, finalFilename, tempFile);
+    }
+
+    /**
+     * Publish a fully written temporary file under its final name: keeps at
+     * most one final file per index, renames when the provider supports it
+     * and falls back to a copy when it does not.
+     */
+    private static boolean publishDownloadFile(UniFile dir, int index, String finalFilename, UniFile tempFile) {
+        // Only one final file may exist per index: drop leftovers of older
+        // (possibly truncated) downloads before publishing the new one.
+        for (int i = 0, n = GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS.length; i < n; i++) {
+            UniFile file = dir.subFile(generateImageFilename(index, GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS[i]));
+            if (file != null) {
+                file.delete();
+            }
+        }
+
+        if (tempFile.renameTo(finalFilename)) {
+            return true;
+        }
+
+        // Some providers cannot rename; fall back to copying the completed
+        // temporary file and drop it afterwards.
+        UniFile finalFile = dir.createFile(finalFilename);
+        if (finalFile == null) {
+            return false;
+        }
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = tempFile.openInputStream();
+            os = finalFile.openOutputStream();
+            IOUtils.copy(is, os);
+            os.flush();
+        } catch (IOException e) {
+            android.util.Log.w("SpiderDen", "Failed to publish the downloaded file " + finalFilename, e);
+            finalFile.delete();
+            return false;
+        } finally {
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(os);
+        }
+        tempFile.delete();
+        return true;
     }
 
     @Nullable
@@ -479,6 +597,24 @@ public final class SpiderDen {
             return null;
         }
         UniFile file = findImageFile(dir, index);
+        return file != null ? new UniFileInputStreamPipe(file) : null;
+    }
+
+    /**
+     * Input pipe of the temporary download file written by the current
+     * download attempt, used to verify freshly downloaded bytes before
+     * commit. Returns null when there is no temporary file.
+     */
+    @Nullable
+    public InputStreamPipe openDownloadTempInputStreamPipe(int index, @Nullable String extension) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return null;
+        }
+
+        String tempFilename = DownloadVerifier.tempFilename(
+                generateImageFilename(index, normalizeDownloadExtension(extension)));
+        UniFile file = dir.findFile(tempFilename);
         return file != null ? new UniFileInputStreamPipe(file) : null;
     }
 
