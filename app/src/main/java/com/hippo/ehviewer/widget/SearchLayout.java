@@ -41,6 +41,7 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.MarginItemDecoration;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ripple.Ripple;
@@ -87,6 +88,7 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     private RadioGridGroup mNormalSearchMode;
     private ImageView mNormalSearchModeHelp;
     private SwitchCompat mEnableAdvanceSwitch;
+    private SwitchCompat mSortByRatingSwitch;
 
     private View mAdvanceView;
     private AdvanceSearchTable mTableAdvanceSearch;
@@ -143,6 +145,11 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         Ripple.addRipple(mNormalSearchModeHelp, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme));
         mEnableAdvanceSwitch.setOnCheckedChangeListener(SearchLayout.this);
         mEnableAdvanceSwitch.setSwitchPadding(resources.getDimensionPixelSize(R.dimen.switch_padding));
+
+        mSortByRatingSwitch = (SwitchCompat) normalView.findViewById(R.id.search_sort_by_rating);
+        mSortByRatingSwitch.setChecked(Settings.getSortByRating());
+        mSortByRatingSwitch.setSwitchPadding(resources.getDimensionPixelSize(R.dimen.switch_padding));
+        mSortByRatingSwitch.setOnCheckedChangeListener(SearchLayout.this);
 
         // Create advance view
         mAdvanceView = mInflater.inflate(R.layout.search_advance, null);
@@ -255,6 +262,8 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                     mHelper.onChangeSearchMode();
                 }
             }
+        } else if (buttonView == mSortByRatingSwitch) {
+            Settings.putSortByRating(isChecked);
         }
     }
 

@@ -67,7 +67,14 @@
 
     </com.hippo.widget.RadioGridGroup>
 
-    <!-- 3. 底部的帮助图标和高级选项开关 -->
+    <!-- 3. 按星级排序开关 -->
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/search_sort_by_rating"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/search_sort_by_rating"/>
+
+    <!-- 4. 底部的帮助图标和高级选项开关 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
