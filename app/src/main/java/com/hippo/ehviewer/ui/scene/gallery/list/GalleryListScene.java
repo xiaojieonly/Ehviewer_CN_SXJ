@@ -29,6 +29,8 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -79,6 +81,7 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.callBack.SubscriptionCallback;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
+import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
@@ -136,9 +139,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
+import okhttp3.OkHttpClient;
 
 public final class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
@@ -174,6 +181,16 @@ public final class GalleryListScene extends BaseScene
     final static int STATE_SEARCH_SHOW_LIST = 3;
 
     private static final long ANIMATE_TIME = 300L;
+
+    // 完整排序：先抓取全部搜索结果页，再按星级排序，之后本地分页展示
+    private static final int FULL_SORT_PAGE_SIZE = 25;
+    private static final int FULL_SORT_CONFIRM_PAGES = 50;
+    private static final int FULL_SORT_MAX_PAGES = 1000;
+
+    @Nullable
+    private List<GalleryInfo> mFullSortedData;
+    private int mFullSortedTaskId = -1;
+    private volatile int mFullSortTaskId = -1;
 
     private boolean showReadProgress = false;
     private boolean filterOpen = false;
@@ -1965,9 +1982,198 @@ public final class GalleryListScene extends BaseScene
             }
 
             mHelper.setEmptyString(emptyString);
-//            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
-            mHelper.onGetPageData(taskId, result, result.galleryInfoList);
+
+            if (Settings.getSortByRating()
+                    && mHelper.mLastRequestType == GalleryInfoContentHelper.TYPE_REFRESH
+                    && mUrlBuilder.getMode() != ListUrlBuilder.MODE_IMAGE_SEARCH
+                    && hasMorePages(result)
+                    && result.galleryInfoList != null && !result.galleryInfoList.isEmpty()) {
+                Log.d(TAG, "full sort: pages = " + result.pages + ", nextPage = " + result.nextPage
+                        + ", nextHref = " + result.nextHref);
+                startFullSort(result, taskId);
+            } else {
+                mHelper.onGetPageData(taskId, result, sortByRatingIfEnabled(result.galleryInfoList));
+            }
         }
+    }
+
+    // 页码可能解析不到（pages == -1），此时靠站点返回的下一页链接判断
+    private static boolean hasMorePages(GalleryListParser.Result result) {
+        return result.pages > 1 || result.nextPage > 0 || !TextUtils.isEmpty(result.nextHref);
+    }
+
+    // 站点搜索不支持按评分排序，这里先抓取全部结果页，再整体按星级降序排列
+    private void startFullSort(GalleryListParser.Result firstResult, int taskId) {
+        final int mode = mUrlBuilder.getMode();
+        final int totalPages = firstResult.pages > 0 ? firstResult.pages
+                : (firstResult.nextPage > 0 ? firstResult.nextPage + 1 : -1);
+
+        if (totalPages > FULL_SORT_MAX_PAGES) {
+            Toast.makeText(getEHContext(), R.string.gallery_list_full_sort_too_many, Toast.LENGTH_LONG).show();
+            mHelper.onGetPageData(taskId, firstResult, sortByRatingIfEnabled(firstResult.galleryInfoList));
+            return;
+        }
+
+        if (totalPages > FULL_SORT_CONFIRM_PAGES) {
+            new AlertDialog.Builder(getEHContext())
+                    .setTitle(R.string.gallery_list_full_sort_title)
+                    .setMessage(getString(R.string.gallery_list_full_sort_message, totalPages, totalPages * FULL_SORT_PAGE_SIZE))
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> doFullSort(firstResult, taskId, mode))
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                        if (mHelper != null && mHelper.isCurrentTask(taskId)) {
+                            mHelper.onGetPageData(taskId, firstResult, sortByRatingIfEnabled(firstResult.galleryInfoList));
+                        }
+                    })
+                    .show();
+        } else {
+            doFullSort(firstResult, taskId, mode);
+        }
+    }
+
+    private void doFullSort(GalleryListParser.Result firstResult, int taskId, int mode) {
+        if (mHelper == null || mFullSortTaskId != -1) {
+            return;
+        }
+        mFullSortTaskId = taskId;
+        mFullSortedData = null;
+        mFullSortedTaskId = -1;
+
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Context context = getEHContext();
+        final OkHttpClient okHttpClient = EhApplication.getOkHttpClient(context);
+        final List<GalleryInfo> all = new ArrayList<>();
+        final Set<Long> seen = new HashSet<>();
+        addAllWithoutDuplicate(all, seen, firstResult.galleryInfoList);
+
+        // 优先按站点给出的下一页链接链式抓取，兼容没有页码的新版列表；否则用页码构造 URL
+        final boolean useChain = !TextUtils.isEmpty(firstResult.nextHref);
+        final List<String> urls = new ArrayList<>();
+        if (!useChain) {
+            int pages = firstResult.pages > 0 ? firstResult.pages : 1;
+            int oldPageIndex = mUrlBuilder.getPageIndex();
+            for (int i = 1; i < pages && i < FULL_SORT_MAX_PAGES; i++) {
+                mUrlBuilder.setPageIndex(i);
+                String url = mUrlBuilder.build();
+                if (!TextUtils.isEmpty(url)) {
+                    urls.add(url);
+                }
+            }
+            mUrlBuilder.setPageIndex(oldPageIndex);
+        }
+        final int totalHint = firstResult.pages > 0 ? firstResult.pages : -1;
+        final boolean[] capped = {false};
+
+        showFullSortProgress(context, 1, totalHint);
+
+        new Thread(() -> {
+            Throwable error = null;
+            String next = firstResult.nextHref;
+            int loaded = 1;
+            try {
+                while (true) {
+                    if (mFullSortTaskId != taskId || getActivity2() == null) {
+                        // 被新的搜索、刷新取消，或页面已离开
+                        mFullSortTaskId = -1;
+                        return;
+                    }
+                    if (!useChain && loaded - 1 >= urls.size()) {
+                        break;
+                    }
+                    if (loaded >= FULL_SORT_MAX_PAGES) {
+                        capped[0] = true;
+                        break;
+                    }
+                    if (useChain && TextUtils.isEmpty(next)) {
+                        break;
+                    }
+                    String url = useChain ? next : urls.get(loaded - 1);
+                    GalleryListParser.Result result = EhEngine.getGalleryList(null, okHttpClient, url, mode);
+                    if (result == null) {
+                        break;
+                    }
+                    addAllWithoutDuplicate(all, seen, result.galleryInfoList);
+                    loaded++;
+                    final int shown = loaded;
+                    handler.post(() -> showFullSortProgress(context, shown, totalHint));
+                    next = result.nextHref;
+                }
+            } catch (Throwable e) {
+                error = e;
+            }
+            final Throwable finalError = error;
+            final boolean finalCapped = capped[0];
+            handler.post(() -> onFullSortFinished(taskId, all, finalError, finalCapped));
+        }, "gallery-list-full-sort").start();
+    }
+
+    private void showFullSortProgress(Context context, int loaded, int totalHint) {
+        if (mHelper == null) {
+            return;
+        }
+        String text = totalHint > 0
+                ? context.getString(R.string.gallery_list_full_sort_progress, loaded, totalHint)
+                : context.getString(R.string.gallery_list_full_sort_progress_unknown, loaded);
+        mHelper.showText(text);
+    }
+
+    private void onFullSortFinished(int taskId, List<GalleryInfo> all, @Nullable Throwable error, boolean capped) {
+        mFullSortTaskId = -1;
+        if (mHelper == null || !mHelper.isCurrentTask(taskId)) {
+            return;
+        }
+        if (all.isEmpty()) {
+            mHelper.onGetException(taskId, error instanceof Exception ? (Exception) error : new Exception(String.valueOf(error)));
+            return;
+        }
+        if (error != null || capped) {
+            Toast.makeText(getEHContext(), R.string.gallery_list_full_sort_partial, Toast.LENGTH_LONG).show();
+        }
+
+        Collections.sort(all, (o1, o2) -> Float.compare(o2.rating, o1.rating));
+        mFullSortedData = all;
+        mFullSortedTaskId = taskId;
+
+        int pages = (all.size() + FULL_SORT_PAGE_SIZE - 1) / FULL_SORT_PAGE_SIZE;
+        int end = Math.min(FULL_SORT_PAGE_SIZE, all.size());
+        mHelper.onGetPageData(taskId, pages, 1, new ArrayList<>(all.subList(0, end)));
+    }
+
+    @Nullable
+    private List<GalleryInfo> getCachedPage(int page) {
+        if (mFullSortedData == null) {
+            return null;
+        }
+        int start = page * FULL_SORT_PAGE_SIZE;
+        if (start < 0 || start >= mFullSortedData.size()) {
+            return null;
+        }
+        int end = Math.min(start + FULL_SORT_PAGE_SIZE, mFullSortedData.size());
+        return new ArrayList<>(mFullSortedData.subList(start, end));
+    }
+
+    private static void addAllWithoutDuplicate(List<GalleryInfo> dst, Set<Long> seen, @Nullable List<GalleryInfo> src) {
+        if (src == null) {
+            return;
+        }
+        for (GalleryInfo info : src) {
+            if (info == null) {
+                continue;
+            }
+            if (info.gid > 0 && !seen.add(info.gid)) {
+                continue;
+            }
+            dst.add(info);
+        }
+    }
+
+    // 完整排序不可用时的兜底：仅对当前加载页做本地排序（评分未知的排在最后）
+    private List<GalleryInfo> sortByRatingIfEnabled(List<GalleryInfo> infoList) {
+        if (!Settings.getSortByRating() || infoList == null || infoList.size() < 2) {
+            return infoList;
+        }
+        List<GalleryInfo> sorted = new ArrayList<>(infoList);
+        Collections.sort(sorted, (o1, o2) -> Float.compare(o2.rating, o1.rating));
+        return sorted;
     }
 
     private void onGetGalleryListFailure(Exception e, int taskId) {
@@ -2082,8 +2288,27 @@ public final class GalleryListScene extends BaseScene
 
     class GalleryListHelper extends GalleryInfoContentHelper {
 
+        private int mLastRequestType = -1;
+
         @Override
         protected void getPageData(int taskId, int type, int page) {
+            mLastRequestType = type;
+
+            if (type == GalleryInfoContentHelper.TYPE_REFRESH) {
+                // 重新搜索或下拉刷新，丢弃旧的完整排序结果
+                mFullSortTaskId = -1;
+                mFullSortedData = null;
+                mFullSortedTaskId = -1;
+            } else if (mFullSortedData != null && mFullSortedTaskId == taskId) {
+                // 完整排序后的数据分页交给本地处理，不再请求网络
+                List<GalleryInfo> cached = getCachedPage(page);
+                if (cached != null) {
+                    int pages = (mFullSortedData.size() + FULL_SORT_PAGE_SIZE - 1) / FULL_SORT_PAGE_SIZE;
+                    mHelper.onGetPageData(taskId, pages, page + 1, cached);
+                    return;
+                }
+            }
+
             MainActivity activity = getActivity2();
             if (null == activity || null == mClient || null == mUrlBuilder) {
                 return;

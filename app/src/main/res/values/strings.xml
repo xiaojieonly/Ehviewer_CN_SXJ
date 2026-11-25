@@ -266,6 +266,13 @@
     <string name="search_specify_uploader">Specify uploader</string>
     <string name="search_specify_tag">Specify tag</string>
     <string name="search_enable_advance">Enable advance options</string>
+    <string name="search_sort_by_rating">Sort by rating (may take a long time)</string>
+    <string name="gallery_list_full_sort_progress">Fetching search results… %1$d/%2$d</string>
+    <string name="gallery_list_full_sort_progress_unknown">Fetching search results… %1$d pages so far</string>
+    <string name="gallery_list_full_sort_title">Sort by rating</string>
+    <string name="gallery_list_full_sort_message">%1$d pages in total (about %2$d works). Complete sorting requires fetching every result page, which takes a while and sends many requests. Continue?</string>
+    <string name="gallery_list_full_sort_partial">Some result pages failed to load, the sorted list may be incomplete</string>
+    <string name="gallery_list_full_sort_too_many">Too many result pages, only the current page is sorted</string>
 
     <string name="search_tip">Normal search: Simply search.\n\nSubscription search: Search in subscriptions.\n\nSpecify uploader: Search for galleries uploaded by the specified uploader. All other options will be ignored.\n\nSpecify tag: Search for galleries that contain the specified tag. Only one tag accepted. Other options will be ignored.</string>
 

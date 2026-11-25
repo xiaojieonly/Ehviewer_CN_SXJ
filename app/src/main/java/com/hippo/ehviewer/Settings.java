@@ -367,6 +367,17 @@ public class Settings {
         putBoolean(KEY_QUICK_SEARCH_TIP, value);
     }
 
+    private static final String KEY_SORT_BY_RATING = "sort_by_rating";
+    private static final boolean DEFAULT_SORT_BY_RATING = false;
+
+    public static boolean getSortByRating() {
+        return getBoolean(KEY_SORT_BY_RATING, DEFAULT_SORT_BY_RATING);
+    }
+
+    public static void putSortByRating(boolean value) {
+        putBoolean(KEY_SORT_BY_RATING, value);
+    }
+
     /********************
      ****** Eh
      ********************/

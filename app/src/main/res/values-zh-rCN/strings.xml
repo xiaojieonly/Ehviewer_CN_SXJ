@@ -181,6 +181,13 @@
     <string name="search_specify_uploader">指定上传者</string>
     <string name="search_specify_tag">指定标签</string>
     <string name="search_enable_advance">启用高级选项</string>
+    <string name="search_sort_by_rating">按星级排序（可能需要较长时间）</string>
+    <string name="gallery_list_full_sort_progress">正在抓取搜索结果… %1$d/%2$d 页</string>
+    <string name="gallery_list_full_sort_progress_unknown">正在抓取搜索结果… 已抓取 %1$d 页</string>
+    <string name="gallery_list_full_sort_title">按星级排序</string>
+    <string name="gallery_list_full_sort_message">共 %1$d 页（约 %2$d 项）。完整排序需要抓取全部结果页，耗时较长且请求较频繁，是否继续？</string>
+    <string name="gallery_list_full_sort_partial">部分结果页抓取失败，排序结果可能不完整</string>
+    <string name="gallery_list_full_sort_too_many">搜索结果页数过多，仅对当前页排序</string>
 
     <string name="search_tip">一般搜索：就是搜索。\n\n订阅搜素：在订阅中搜索。\n\n指定上传者：列出该上传者上传的画廊。其他选项会被忽略。\n\n指定标签：列出含有该标签的画廊。其他选项会被忽略。</string>
 
