@@ -18,9 +18,10 @@
     style="@style/CardView.Reactive"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="2dp">
-    <!--    android:descendantFocusability="blocksDescendants"
-    android:focusable="false"-->
+    android:layout_margin="2dp"
+    android:focusable="true"
+    android:descendantFocusability="blocksDescendants"
+    android:foreground="?android:attr/selectableItemBackground">
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">

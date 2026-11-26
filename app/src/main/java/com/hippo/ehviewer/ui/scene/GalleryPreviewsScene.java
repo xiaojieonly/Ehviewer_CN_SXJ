@@ -264,6 +264,12 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
             image = (LoadImageView) itemView.findViewById(R.id.image);
             text = (TextView) itemView.findViewById(R.id.text);
+            image.setOnClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION && mRecyclerView != null) {
+                    onItemClick(mRecyclerView, itemView, position, RecyclerView.NO_ID);
+                }
+            });
         }
     }
 

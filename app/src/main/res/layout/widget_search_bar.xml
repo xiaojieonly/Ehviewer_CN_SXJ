@@ -31,6 +31,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="left|center_vertical"
+                android:background="?android:attr/selectableItemBackground"
+                android:focusable="true"
                 android:padding="12dp"/>
 
             <TextView
@@ -40,6 +42,8 @@
                 android:layout_gravity="center_vertical"
                 android:layout_marginLeft="48dp"
                 android:layout_marginRight="48dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:focusable="true"
                 android:textSize="@dimen/text_little_large"
                 android:textColor="?android:attr/textColorSecondary"
                 android:singleLine="true"
@@ -50,6 +54,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="right|center_vertical"
+                android:background="?android:attr/selectableItemBackground"
+                android:focusable="true"
                 android:padding="12dp"/>
 
             <com.hippo.ehviewer.widget.SearchEditText

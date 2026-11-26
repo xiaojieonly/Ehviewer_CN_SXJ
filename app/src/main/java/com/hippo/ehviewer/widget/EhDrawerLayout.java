@@ -20,10 +20,13 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.ViewCompat;
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.R;
@@ -32,16 +35,93 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CoordinatorLayout.DefaultBehavior(EhDrawerLayout.Behavior.class)
-public class EhDrawerLayout extends DrawerLayout {
+public class EhDrawerLayout extends DrawerLayout implements DrawerLayout.DrawerListener {
 
     private List<View> mAboveSnackViewList;
+    private DrawerListener mDrawerListener;
+    private View mContentFocus;
 
     public EhDrawerLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        super.setDrawerListener(this);
     }
 
     public EhDrawerLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        super.setDrawerListener(this);
+    }
+
+    @Override
+    public void setDrawerListener(DrawerListener listener) {
+        mDrawerListener = listener;
+    }
+
+    @Override
+    public void openDrawer(View drawerView) {
+        if (!isInTouchMode() && !isDrawersVisible()) {
+            mContentFocus = findFocus();
+        }
+        super.openDrawer(drawerView);
+    }
+
+    @Override
+    public void addFocusables(ArrayList<View> views, int direction, int focusableMode) {
+        if (getDescendantFocusability() == FOCUS_BLOCK_DESCENDANTS) {
+            return;
+        }
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            int gravity = ((LayoutParams) child.getLayoutParams()).gravity;
+            if ((gravity == Gravity.LEFT || gravity == Gravity.RIGHT) && isDrawerOpen(child)) {
+                // Focus must stay inside the drawer while it covers the page.
+                child.addFocusables(views, direction, focusableMode);
+                return;
+            }
+        }
+        super.addFocusables(views, direction, focusableMode);
+    }
+
+    @Override
+    public void onDrawerOpened(View drawerView) {
+        if (!isInTouchMode()) {
+            NavigationView navigation = drawerView.findViewById(R.id.nav_view);
+            MenuItem checked = navigation != null ? navigation.getCheckedItem() : null;
+            View item = checked != null ? navigation.findViewById(checked.getItemId()) : null;
+            if (item == null || !item.requestFocus()) {
+                drawerView.requestFocus(FOCUS_DOWN);
+            }
+        }
+        if (mDrawerListener != null) {
+            mDrawerListener.onDrawerOpened(drawerView);
+        }
+    }
+
+    @Override
+    public void onDrawerClosed(View drawerView) {
+        if (!isDrawersVisible()) {
+            if (!isInTouchMode() && mContentFocus != null && mContentFocus.isAttachedToWindow()
+                    && mContentFocus.isShown()) {
+                mContentFocus.requestFocus();
+            }
+            mContentFocus = null;
+        }
+        if (mDrawerListener != null) {
+            mDrawerListener.onDrawerClosed(drawerView);
+        }
+    }
+
+    @Override
+    public void onDrawerSlide(View drawerView, float percent) {
+        if (mDrawerListener != null) {
+            mDrawerListener.onDrawerSlide(drawerView, percent);
+        }
+    }
+
+    @Override
+    public void onDrawerStateChanged(View drawerView, int newState) {
+        if (mDrawerListener != null) {
+            mDrawerListener.onDrawerStateChanged(drawerView, newState);
+        }
     }
 
     public void addAboveSnackView(View view) {

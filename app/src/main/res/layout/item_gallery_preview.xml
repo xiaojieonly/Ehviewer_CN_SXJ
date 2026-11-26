@@ -15,10 +15,13 @@
   ~ limitations under the License.
   -->
 
-<LinearLayout
+<com.hippo.ehviewer.widget.GalleryPreviewView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:focusable="true"
+    android:descendantFocusability="blocksDescendants"
+    android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical">
 
     <com.hippo.ehviewer.widget.FixedThumb
@@ -37,4 +40,4 @@
         android:layout_height="wrap_content"
         android:gravity="center"/>
 
-</LinearLayout>
+</com.hippo.ehviewer.widget.GalleryPreviewView>
