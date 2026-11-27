@@ -215,10 +215,31 @@ public class EhDB {
                 context.getApplicationContext(), "eh.db", null);
 
         SQLiteDatabase db = helper.getWritableDatabase();
+        ensureServerBrowseIndexes(db);
         DaoMaster daoMaster = new DaoMaster(db);
 
         sDaoSession = daoMaster.newSession();
         MAX_HISTORY_COUNT = Settings.getHistoryInfoSize();
+    }
+
+    /**
+     * Server browse uses label/tag filtering heavily; keep indexes in sync on every startup.
+     */
+    private static void ensureServerBrowseIndexes(@NonNull SQLiteDatabase db) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_DOWNLOADS_LABEL ON DOWNLOADS (LABEL)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_ARTIST ON Gallery_Tags (ARTIST)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_ROWS ON Gallery_Tags (ROWS)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_COSPLAYER ON Gallery_Tags (COSPLAYER)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_CHARACTER ON Gallery_Tags (CHARACTER)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_FEMALE ON Gallery_Tags (FEMALE)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_GROUP ON Gallery_Tags (\"GROUP\")");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_LANGUAGE ON Gallery_Tags (LANGUAGE)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_MALE ON Gallery_Tags (MALE)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_MISC ON Gallery_Tags (MISC)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_MIXED ON Gallery_Tags (MIXED)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_OTHER ON Gallery_Tags (OTHER)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_PARODY ON Gallery_Tags (PARODY)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_GALLERY_TAGS_RECLASS ON Gallery_Tags (RECLASS)");
     }
 
     public static boolean needMerge() {
