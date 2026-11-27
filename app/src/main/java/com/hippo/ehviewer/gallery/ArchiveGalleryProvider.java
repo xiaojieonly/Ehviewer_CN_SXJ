@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import com.hippo.a7zip.ArchiveException;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.Image1;
@@ -49,6 +50,9 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
   private static final AtomicInteger sIdGenerator = new AtomicInteger();
 
   private final UniFile file;
+  private final long galleryId;
+  private final Object startPageLock = new Object();
+  private int startPage;
 
   private Thread archiveThread;
   private Thread decodeThread;
@@ -62,7 +66,17 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
   private final AtomicInteger decodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
 
   public ArchiveGalleryProvider(Context context, Uri uri) {
+    this(context, uri, -1L);
+  }
+
+  public ArchiveGalleryProvider(Context context, Uri uri, long galleryId) {
     file = UniFile.fromUri(context, uri);
+    this.galleryId = galleryId;
+    int savedStartPage = Settings.getArchiveReadingProgress(galleryId);
+    int savedPageCount = Settings.getArchivePageCount(galleryId);
+    startPage = savedPageCount > 0
+        ? Math.min(savedStartPage, savedPageCount - 1)
+        : savedStartPage;
   }
 
   @Override
@@ -97,6 +111,27 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
   @Override
   public int size() {
     return size;
+  }
+
+  @Override
+  public int getStartPage() {
+    synchronized (startPageLock) {
+      return startPage;
+    }
+  }
+
+  @Override
+  public void putStartPage(int page) {
+    if (galleryId < 0 || page < 0) {
+      return;
+    }
+    synchronized (startPageLock) {
+      if (page == startPage) {
+        return;
+      }
+      startPage = page;
+      Settings.putArchiveReadingProgress(galleryId, page);
+    }
   }
 
   @Override
@@ -165,6 +200,9 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
         }
       }
       if (uraf == null) {
+        synchronized (startPageLock) {
+          Settings.putArchivePageCount(galleryId, 0);
+        }
         size = STATE_ERROR;
         error = GetText.getString(R.string.error_reading_failed);
         notifyDataChanged();
@@ -178,6 +216,9 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
         e.printStackTrace();
       }
       if (archive == null) {
+        synchronized (startPageLock) {
+          Settings.putArchivePageCount(galleryId, 0);
+        }
         size = STATE_ERROR;
         error = GetText.getString(R.string.error_invalid_archive);
         notifyDataChanged();
@@ -188,7 +229,20 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
       Collections.sort(entries, naturalComparator);
 
       // Update size and notify changed
-      size = entries.size();
+      int archiveSize = entries.size();
+      synchronized (startPageLock) {
+        if (archiveSize == 0) {
+          if (startPage != 0) {
+            startPage = 0;
+            Settings.putArchiveReadingProgress(galleryId, 0);
+          }
+        } else if (startPage >= archiveSize) {
+          startPage = archiveSize - 1;
+          Settings.putArchiveReadingProgress(galleryId, startPage);
+        }
+        Settings.putArchivePageCount(galleryId, archiveSize);
+      }
+      size = archiveSize;
       notifyDataChanged();
 
       while (!Thread.currentThread().isInterrupted()) {
