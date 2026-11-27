@@ -108,6 +108,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private static final int METHOD_ON_ATTACH_TO_ROOT = 20;
     private static final int METHOD_SET_PAGER_INTERVAL = 21;
     private static final int METHOD_SET_SCROLL_INTERVAL = 22;
+    private static final int METHOD_SET_ONE_HAND_MODE = 23;
 
     private final Context mContext;
     private Adapter mAdapter;
@@ -130,6 +131,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private final int mBackgroundColor;
     private int mPagerInterval;
     private int mScrollInterval;
+    private boolean mOneHandMode;
     private final int mPageMinHeight;
     private final int mPageInfoInterval;
     private final int mProgressColor;
@@ -418,6 +420,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         }
     }
 
+    private void setOneHandModeInternal(boolean oneHandMode) {
+        mOneHandMode = oneHandMode;
+    }
+
     @Override
     public void onAttachToRoot(GLRoot root) {
         super.onAttachToRoot(root);
@@ -563,6 +569,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
     public void setScrollInterval(int interval) {
         postMethod(METHOD_SET_SCROLL_INTERVAL, interval);
+    }
+
+    public void setOneHandMode(boolean oneHandMode) {
+        postMethod(METHOD_SET_ONE_HAND_MODE, oneHandMode ? 1 : 0);
     }
 
     @Override
@@ -714,7 +724,12 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                 mListener.onTapMenuArea();
             }
         } else if (mLeftArea.contains((int) x, (int) y)) {
-            mLayoutManager.onPageLeft();
+            // 单手模式（锁定为从左至右排版）：原本翻上一页的左区域改为翻下一页
+            if (mOneHandMode) {
+                mLayoutManager.onPageRight();
+            } else {
+                mLayoutManager.onPageLeft();
+            }
         } else if (mRightArea.contains((int) x, (int) y)) {
             mLayoutManager.onPageRight();
         }
@@ -1006,6 +1021,9 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                     break;
                 case METHOD_SET_SCROLL_INTERVAL:
                     setScrollIntervalInternal((Integer) args[0]);
+                    break;
+                case METHOD_SET_ONE_HAND_MODE:
+                    setOneHandModeInternal((Integer) args[0] != 0);
                     break;
             }
         }
