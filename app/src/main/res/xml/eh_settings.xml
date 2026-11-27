@@ -124,6 +124,13 @@
         app:entries="@array/thumb_size_entries"
         app:entryValues="@array/thumb_size_entry_values" />
 
+    <com.hippo.preference.SeekBarPreference
+        android:defaultValue="200"
+        android:key="thumb_size_custom"
+        android:title="@string/settings_eh_thumb_size_custom_size"
+        app:allowDividerAbove="true"
+        app:max="400" />
+
     <com.hippo.preference.ListPreference
         android:defaultValue="100"
         android:key="history_info_size"
