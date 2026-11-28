@@ -969,6 +969,16 @@ public final class WebUiSyncEngine {
         // next cycle (see PageHashStore's push ledger).
         pushIntegrityEvidence(config);
 
+        // Best-effort thumbnail prefetch: make WebUI/server-cached thumbnails
+        // available offline on this device after sync.
+        try {
+            android.content.Context app = SiteApplication.getInstance();
+            if (app != null) {
+                WebUiThumbPrefetcher.prefetch(app, config);
+            }
+        } catch (Throwable ignored) {
+        }
+
         result.serverTimestamp = pull.serverTimestamp;
         return result;
     }
