@@ -464,15 +464,34 @@ describe('GalleryDetailView (T-F2) — share with clipboard fallback', () => {
     expect(writeText).toHaveBeenCalledWith('https://exhentai.org/g/42/tok42/')
   })
 
-  it('degrades to "Unable to share" when the clipboard rejects', async () => {
+  it('falls back to legacy copy when the clipboard API rejects', async () => {
     const writeText = vi.fn().mockRejectedValue(new Error('denied'))
+    const execCommand = vi.fn().mockReturnValue(true)
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: execCommand, writable: true })
     wrapper = await mountDetail()
 
     await wrapper.find('.detail-actions__btn--share').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.gallery-detail__toast').text()).toBe('Unable to share')
+    expect(execCommand).toHaveBeenCalledWith('copy')
+    expect(wrapper.find('.gallery-detail__toast').text()).toBe('Link copied to clipboard')
+  })
+
+  it('prompts for manual copy when all copy methods fail', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'))
+    const execCommand = vi.fn().mockReturnValue(false)
+    const prompt = vi.fn().mockReturnValue(null)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: execCommand, writable: true })
+    vi.stubGlobal('prompt', prompt)
+    wrapper = await mountDetail({ galleryUrl: 'https://exhentai.org/g/42/tok42/' })
+
+    await wrapper.find('.detail-actions__btn--share').trigger('click')
+    await flushPromises()
+
+    expect(prompt).toHaveBeenCalledWith('Copy this link', 'https://exhentai.org/g/42/tok42/')
+    vi.unstubAllGlobals()
   })
 
   it('uses navigator.share when available and never touches the clipboard', async () => {

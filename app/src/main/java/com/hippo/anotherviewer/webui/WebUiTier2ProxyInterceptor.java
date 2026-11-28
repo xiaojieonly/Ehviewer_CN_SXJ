@@ -28,6 +28,7 @@ import com.hippo.anotherviewer.SiteApplication;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.HttpUrl;
@@ -55,22 +56,33 @@ import okhttp3.Response;
  * breaking. The decision is read per request, so a tier or pairing change
  * takes effect immediately without rebuilding the client.
  *
- * <p>Server-outage resilience: when the paired server is unreachable (a
- * connection-level failure) or its transparent proxy returns BAD_GATEWAY
- * (the server is up but its upstream Gallery Site fetch failed), the request
- * is retried once against the site directly and browsing stays degraded to
- * direct for a short window before the proxy is tried again. This keeps a
- * dead server from stalling every request, and recovers automatically once
- * the server comes back.
+ * <p>Server-outage resilience (ADR-0007 D7, 滞回版): a single failure no
+ * longer flips browsing into direct mode. A connection-level failure still
+ * degrades — but only for a short window ({@link #DEGRADE_WINDOW_MS}) — and a
+ * direct attempt that fails too shrinks the window to
+ * {@link #FAILED_FALLBACK_RETRY_MS}: direct is no better than the proxy then,
+ * so the server is retried almost immediately (the user-reported 「偶发转直连
+ * 导致不可用」 case). A 502 from the transparent proxy means the server is
+ * <em>alive</em> (only its upstream fetch failed): it is retried inline once,
+ * and only {@link #BAD_GATEWAY_DEGRADE_THRESHOLD} consecutive persistent-502
+ * requests degrade at all.
  */
 public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
     /**
      * How long to keep browsing direct after the paired server was seen
      * unreachable, before the proxy is retried. Bounds the blast radius of a
-     * dead server without hammering it with per-request probes.
+     * dead server without hammering it with per-request probes. ADR-0007 D7：
+     * 60s → 15s —— 坏链路上的单次抖动不值得把服务器关一整个分钟；直连兜底
+     * 也失败时会进一步把窗口缩到 {@link #FAILED_FALLBACK_RETRY_MS}。
      */
-    private static final long DEGRADE_WINDOW_MS = 60_000L;
+    private static final long DEGRADE_WINDOW_MS = 15_000L;
+
+    /** 窗口内直连兜底也失败 → 窗口缩到最短（直连无用，尽快回服务器重试）。 */
+    private static final long FAILED_FALLBACK_RETRY_MS = 3_000L;
+
+    /** 连续 N 次「内联重试后仍 502」才按服务器级故障进入降级窗口（ADR-0007 D7）。 */
+    private static final int BAD_GATEWAY_DEGRADE_THRESHOLD = 3;
 
     private final WebUiSettings settings;
 
@@ -79,6 +91,9 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
     /** Whether browsing is currently in degraded (direct) mode. */
     private final AtomicBoolean mDegraded = new AtomicBoolean(false);
+
+    /** 连续「重试后仍 502」的请求数；任何代理成功即清零（ADR-0007 D7）。 */
+    private final AtomicInteger mConsecutiveBadGateways = new AtomicInteger();
 
     public WebUiTier2ProxyInterceptor(@NonNull WebUiSettings settings) {
         this.settings = settings;
@@ -128,10 +143,12 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
             // The server was recently unreachable: fall straight back to
             // direct Gallery Site access instead of failing against the
             // proxy again (recovery retries after the window expires).
-            return chain.proceed(request);
+            return proceedDirect(chain, request);
         }
 
-        HttpUrl proxied = proxyUrl(base, request.url());
+        HttpUrl proxied = isImageCacheCandidate(request)
+                ? imageProxyUrl(base, request.url())
+                : proxyUrl(base, request.url());
         Request.Builder builder = request.newBuilder().url(proxied);
         attachBearer(builder, config.getToken());
         // Drop site Referer/Origin instead of rewriting them: the server-side
@@ -139,31 +156,74 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         // and a forwarded Origin makes the POST a cross-origin request in the
         // server's CORS filter, which answers 403 before the proxy runs.
         builder.removeHeader("Referer").removeHeader("Origin");
+        Response response;
         try {
-            Response response = chain.proceed(builder.build());
-            if (response.code() == HTTP_BAD_GATEWAY) {
-                // The server is up but its upstream site fetch failed
-                // (BAD_GATEWAY envelope from the transparent proxy): direct
-                // access may still succeed where the server's egress cannot.
-                response.close();
-                degrade();
-                return chain.proceed(request);
-            }
-            // A successful proxy response means the server is reachable again:
-            // leave degraded mode, tell the user and push local changes that
-            // accumulated while browsing direct (history/reading progress/...).
-            if (mDegraded.compareAndSet(true, false)) {
-                notifyTransition(R.string.webui_proxy_recovered);
-                WebUiAutoSyncScheduler.triggerOnce(SiteApplication.getInstance());
-            }
-            return response;
+            response = chain.proceed(builder.build());
         } catch (IOException e) {
             // Connection-level failure: the server is unreachable. Retry the
             // request once against the site directly and stay degraded for
-            // the window; if direct fails too, the exception propagates.
+            // the (short) window; a direct failure shrinks the window further
+            // (see proceedDirect).
             degrade();
-            return chain.proceed(request);
+            return proceedDirect(chain, request);
         }
+        if (response.code() == HTTP_BAD_GATEWAY) {
+            // 服务器活着（它答复了 502，只是上游抓取失败）——这不是「服务器
+            // 不可达」。上游抖动大多瞬态：先原样重试一次代理；仍 502 才计入
+            // 连续计数，达到阈值才进入短降级窗口（ADR-0007 D7：单次 502 不再
+            // 把整个浏览切到直连——「偶发转直连导致不可用」的实测痛点）。
+            response.close();
+            Response retry = chain.proceed(builder.build());
+            if (retry.code() != HTTP_BAD_GATEWAY) {
+                mConsecutiveBadGateways.set(0);
+                announceRecoveredIfNeeded();
+                return retry;
+            }
+            retry.close();
+            if (mConsecutiveBadGateways.incrementAndGet() >= BAD_GATEWAY_DEGRADE_THRESHOLD) {
+                degrade();
+            }
+            // 本次请求兜底直连一次（改变的只是本次请求，不是全局模式）。
+            return proceedDirect(chain, request);
+        }
+        mConsecutiveBadGateways.set(0);
+        announceRecoveredIfNeeded();
+        return response;
+    }
+
+    /**
+     * 直连兜底（降级窗口内与各失败路径共用）：成功即按原节拍等窗口到期；
+     * 失败则把窗口缩到最短——直连并不比服务器好用，下一个请求尽快回到
+     * 服务器重试。直连异常原样向上抛（调用方看到的就是直连失败）。
+     */
+    private Response proceedDirect(@NonNull Chain chain, @NonNull Request request) throws IOException {
+        try {
+            return chain.proceed(request);
+        } catch (IOException e) {
+            shrinkDegradeWindow();
+            throw e;
+        }
+    }
+
+    /**
+     * 代理答以成功：离开降级态、报恢复并补一轮同步（状态翻转守卫——一次
+     * 中断只在恢复时提示一次）。
+     */
+    private void announceRecoveredIfNeeded() {
+        if (mDegraded.compareAndSet(true, false)) {
+            notifyTransition(R.string.webui_proxy_recovered);
+            WebUiAutoSyncScheduler.triggerOnce(SiteApplication.getInstance());
+        }
+    }
+
+    /**
+     * 直连兜底失败：直连并不比服务器更好用——把降级窗口缩到最短，让下一个
+     * 请求尽快回到服务器（ADR-0007 D7）。只缩短、不建立：{@code 0}（未降级）
+     * 经 min 后仍为 0，已过期的窗口保持过期。
+     */
+    private void shrinkDegradeWindow() {
+        long target = System.currentTimeMillis() + FAILED_FALLBACK_RETRY_MS;
+        mDegradedUntil.accumulateAndGet(target, Math::min);
     }
 
     /**
@@ -190,6 +250,32 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         }
         new Handler(Looper.getMainLooper()).post(() ->
                 Toast.makeText(app, app.getString(resId), Toast.LENGTH_SHORT).show());
+    }
+
+    /**
+     * 缩略图/图片资源走服务器 image proxy，与 Web 前端的 rewriteSiteAssetUrl
+     * 共用同一 URL-keyed 磁盘缓存，实现 WebUI ↔ App 双向可见：任一端先取到的
+     * ehgt 缩略图都会落入服务器缓存，另一端再取时命中缓存。仅对 GET + ehgt
+     * 主机生效，避免把 HTML/API POST 误送进只读图片端点。
+     */
+    private static boolean isImageCacheCandidate(@NonNull Request request) {
+        if (!"GET".equals(request.method())) {
+            return false;
+        }
+        String host = request.url().host();
+        return host.equals("ehgt.org") || host.endsWith(".ehgt.org");
+    }
+
+    /**
+     * {@code {base}/api/v1/image/proxy?url=<percent-encoded site url>} — the
+     * shared image cache endpoint used by the web frontend and, for thumbnail
+     * hosts, by Tier-2 app traffic.
+     */
+    private static HttpUrl imageProxyUrl(@NonNull HttpUrl base, @NonNull HttpUrl siteUrl) {
+        return base.newBuilder()
+                .addPathSegments("api/v1/image/proxy")
+                .addQueryParameter("url", siteUrl.toString())
+                .build();
     }
 
     /**

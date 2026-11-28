@@ -540,6 +540,34 @@ async function toggleFavorite() {
   }
 }
 
+async function copyText(text: string): Promise<boolean> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      /* fall through to legacy copy */
+    }
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.left = '-9999px'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    ta.setSelectionRange(0, text.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
 /** Web Share API with clipboard fallback (Android `share` → system sheet). */
 async function share() {
   const g = gallery.value
@@ -553,17 +581,16 @@ async function share() {
   if (typeof navigator.share === 'function') {
     try {
       await navigator.share({ title, url })
+      return
     } catch {
-      /* User dismissed the share sheet — not an error. */
+      /* User dismissed or share failed — fall back to copy. */
     }
-    return
   }
-  try {
-    await navigator.clipboard.writeText(url)
+  const copied = await copyText(url)
+  if (copied) {
     showToast('Link copied to clipboard')
-  } catch (e) {
-    console.error('Failed to copy link', e)
-    showToast('Unable to share')
+  } else {
+    window.prompt('Copy this link', url)
   }
 }
 

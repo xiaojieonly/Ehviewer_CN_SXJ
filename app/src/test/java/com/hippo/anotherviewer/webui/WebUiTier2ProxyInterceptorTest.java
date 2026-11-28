@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 
@@ -314,6 +315,33 @@ public class WebUiTier2ProxyInterceptorTest {
         assertEquals("http://e-hentai.org/tag/alpha", proceeded.url().queryParameter("url"));
     }
 
+    @Test
+    public void testEhgtThumbRoutesThroughImageProxyCache() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+
+        Request proceeded = proceed(new Request.Builder()
+                .url("https://ehgt.org/t/12/34/123456_250.jpg")
+                .build());
+
+        assertEquals("/api/v1/image/proxy", proceeded.url().encodedPath());
+        assertEquals("https://ehgt.org/t/12/34/123456_250.jpg",
+                proceeded.url().queryParameter("url"));
+    }
+
+    @Test
+    public void testEhgtPostIsNotRoutedThroughImageProxy() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+
+        Request proceeded = proceed(new Request.Builder()
+                .url("https://ehgt.org/t/12/34/123456_250.jpg")
+                .post(okhttp3.RequestBody.create(new byte[0], MediaType.get("application/octet-stream")))
+                .build());
+
+        assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
+    }
+
     // ------------------------------------------------------------------
     // Bearer attachment (auth-on servers must accept the paired request)
     // ------------------------------------------------------------------
@@ -604,22 +632,106 @@ public class WebUiTier2ProxyInterceptorTest {
     }
 
     @Test
-    public void testBadGatewayFromProxyFallsBackToDirect() throws Exception {
+    public void testSingleBadGatewayRetriesProxyInlineWithoutDegrading() throws Exception {
         settings.saveConfig(SERVER);
         settings.setClientTier(2);
         Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
         FakeChain chain = new FakeChain(request);
-        chain.badGatewayFirst = 1; // first (proxy) attempt answers 502, direct succeeds
+        chain.badGatewayFirst = 1; // proxy 502 → 内联重试成功
 
         try (Response response = interceptor.intercept(chain)) {
-            assertEquals("direct retry must win over the 502",
-                    200, response.code());
+            assertEquals("内联重试须赢过单次 502", 200, response.code());
         }
 
-        assertEquals(2, chain.proceededAll.size());
+        assertEquals("两次都是代理请求：单次 502 不落到直连（ADR-0007 D7）",
+                2, chain.proceededAll.size());
         assertEquals("/api/v1/site/proxy", chain.proceededAll.get(0).url().encodedPath());
+        assertEquals("/api/v1/site/proxy", chain.proceededAll.get(1).url().encodedPath());
+        assertFalse("单次 502 不得降级（服务器活着）", interceptor.isDegraded());
+    }
+
+    @Test
+    public void testPersistentBadGatewayDegradesOnlyAfterThreshold() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        // 前两次：代理 + 内联重试都 502 → 本次兜底直连，但不降级（未达阈值）。
+        for (int i = 0; i < 2; i++) {
+            FakeChain chain = new FakeChain(request);
+            chain.badGatewayFirst = 2; // proxy 502 → 内联重试 502 → 直连兜底 200
+            try (Response response = interceptor.intercept(chain)) {
+                assertEquals(200, response.code());
+            }
+            assertEquals("代理+重试+兜底共 3 次 proceed",
+                    3, chain.proceededAll.size());
+            assertFalse("第 " + (i + 1) + " 次持续 502 仍不降级", interceptor.isDegraded());
+        }
+
+        // 第三次：达阈值 → 进入降级窗口。
+        FakeChain third = new FakeChain(request);
+        third.badGatewayFirst = 2;
+        try (Response response = interceptor.intercept(third)) {
+            assertEquals(200, response.code());
+        }
+        assertTrue("连续三次持续 502 后降级", interceptor.isDegraded());
+
+        // 降级生效：窗口内请求直达直连、不再碰代理。
+        FakeChain inWindow = new FakeChain(request);
+        try (Response response = interceptor.intercept(inWindow)) {
+            assertEquals(200, response.code());
+        }
+        assertEquals("窗口内直达直连", 1, inWindow.proceededAll.size());
         assertEquals("https://e-hentai.org/g/1001/aaa/",
-                chain.proceededAll.get(1).url().toString());
+                inWindow.proceededAll.get(0).url().toString());
+    }
+
+    @Test
+    public void testDirectFailureInsideDegradeWindowShrinksWindow() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        // 触发降级（15s 窗口）。
+        FakeChain failing = new FakeChain(request);
+        failing.failCount = 1;
+        try (Response ignored = interceptor.intercept(failing)) {
+        }
+        long armed = degradedUntil();
+        assertTrue("降级窗口已建立", armed > System.currentTimeMillis());
+
+        // 窗口内请求：直连兜底也失败 → 直连无用 → 窗口缩到最短。
+        FakeChain directFails = new FakeChain(request);
+        directFails.failCount = 1; // 该请求的唯一一次 proceed（直连）失败
+        try {
+            interceptor.intercept(directFails);
+            fail("直连失败必须向上抛");
+        } catch (java.io.IOException expected) {
+        }
+        long shrunk = degradedUntil();
+        assertTrue("窗口被缩短", shrunk < armed);
+        assertTrue("缩到最短重试（≤3s）",
+                shrunk - System.currentTimeMillis() <= 3_000L);
+    }
+
+    @Test
+    public void testDirectSuccessInsideWindowLeavesItArmed() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+        Request request = new Request.Builder().url("https://e-hentai.org/g/1001/aaa/").build();
+
+        FakeChain failing = new FakeChain(request);
+        failing.failCount = 1;
+        try (Response ignored = interceptor.intercept(failing)) {
+        }
+        long armed = degradedUntil();
+
+        // 直连成功：窗口按原节拍保留（服务器真的挂了但直连可用的一类用户）。
+        FakeChain directOk = new FakeChain(request);
+        try (Response response = interceptor.intercept(directOk)) {
+            assertEquals(200, response.code());
+        }
+        assertEquals("直连成功不改变窗口", armed, degradedUntil());
     }
 
     @Test
@@ -718,6 +830,18 @@ public class WebUiTier2ProxyInterceptorTest {
             field.setAccessible(true);
             ((AtomicLong) field.get(interceptor))
                     .set(System.currentTimeMillis() - 1_000L);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /** Reads the degrade window's deadline (ms since epoch; 0 = not degraded). */
+    private long degradedUntil() {
+        try {
+            java.lang.reflect.Field field =
+                    WebUiTier2ProxyInterceptor.class.getDeclaredField("mDegradedUntil");
+            field.setAccessible(true);
+            return ((AtomicLong) field.get(interceptor)).get();
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }
